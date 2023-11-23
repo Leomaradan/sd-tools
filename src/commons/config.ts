@@ -1,5 +1,7 @@
 import fs from 'fs';
 
+import { logger } from './logger';
+
 type Key = [string, string] | string;
 type Keys = Key[];
 
@@ -19,6 +21,9 @@ export const readConfig = (configFile: string) => {
 
   if (typeof data.pattern === 'string') {
     config.pattern = data.pattern;
+    if (!config.pattern.endsWith('.png')) {
+      config.pattern += '.png';
+    }
   }
 
   if (typeof data.folderPattern === 'string') {
@@ -32,7 +37,7 @@ export const readConfig = (configFile: string) => {
 
       if (Array.isArray(values)) {
         values.forEach((value) => {
-          if (value === 'string') {
+          if (typeof value === 'string') {
             normalizedValues.push(value as Key);
           } else if (Array.isArray(value)) {
             normalizedValues.push(value.map(String) as [string, string]);
@@ -56,15 +61,23 @@ export const executeConfig = (config: IConfig, source: string, promptData: strin
 
   let { folderPattern, pattern } = config;
 
+  if (!pattern || pattern === '') {
+    return ['', undefined];
+  }
+
   Object.keys(config.keys).forEach((key) => {
+    logger(`Searching for ${key} in "${source}"`);
+
     const found = config.keys[key].find((element) => {
       const item = Array.isArray(element) ? element[0] : element;
+
+      logger(`Searching for ${key} value "${item}" in "${source}"`);
 
       return promptData[0].includes(item);
     });
 
     if (!found) {
-      console.log(`${key} not found in ${source}`);
+      logger(`${key} not found in ${source}`);
       return;
     }
 
@@ -77,20 +90,20 @@ export const executeConfig = (config: IConfig, source: string, promptData: strin
 
     counters[searchName] += 1;
 
-    const regexKey = new RegExp(`{${key}}`, 'gi');
-    const regexCounter = new RegExp(`[counter]`, 'gi');
-    const regexCounterKey = new RegExp(`[counter(${key})]`, 'gi');
+    //const regexKey = new RegExp(`\{${key}\}`, 'gi');
+    //const regexCounter = new RegExp(`\[counter\]`, 'gi');
+    //const regexCounterKey = new RegExp(`\[counter\(${key}\)\]`, 'gi');
 
     pattern = pattern
-      .replace(regexKey, replaceName)
-      .replace(regexCounter, String(counters.all))
-      .replace(regexCounterKey, String(counters[searchName]));
+      .replace(`{${key}}`, replaceName)
+      .replace('[counter]', String(counters.all))
+      .replace(`[counter(${key})]`, String(counters[searchName]));
 
     if (folderPattern) {
       folderPattern = folderPattern
-        .replace(regexKey, replaceName)
-        .replace(regexCounter, String(counters.all))
-        .replace(regexCounterKey, String(counters[searchName]));
+        .replace(`{${key}}`, replaceName)
+        .replace('[counter]', String(counters.all))
+        .replace(`[counter(${key})]`, String(counters[searchName]));
     }
   });
 

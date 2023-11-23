@@ -5,6 +5,7 @@ export enum ControlNetModels {
   ip2p = 'control_v11e_sd15_ip2p [c4bb465c]',
   lineart = 'control_v11p_sd15_lineart [43d4be0d]',
   lineartAnime = 'control_v11p_sd15s2_lineart_anime [3825e83e]',
+  lineartXl = 't2i-adapter_diffusers_xl_lineart [bae0efef]',
   mlsd = 'control_v11p_sd15_mlsd [aca30ff0]',
   normal = 'control_v11p_sd15_normalbae [316696f1]',
   openPose = 'control_v11p_sd15_openpose [cab727d4]',

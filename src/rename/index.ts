@@ -1,11 +1,12 @@
 import path from 'path';
 import yargs from 'yargs';
 
+import { logger } from '../commons/logger';
 import { rename } from './rename';
 
 interface IRenameOptions {
-  'config-file'?: string;
-  keys?: any[];
+  config?: string;
+  keys?: unknown[];
   pattern?: string;
   source: string;
   target: string;
@@ -26,7 +27,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .options({
-      'config-file': {
+      config: {
         alias: 'c',
         describe: 'config file',
         type: 'string'
@@ -43,7 +44,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       }
     })
     .fail((msg) => {
-      console.log(msg);
+      logger(msg);
       process.exit(1);
     });
 };
@@ -52,7 +53,12 @@ export const handler = (argv: IRenameOptions) => {
   const source = path.resolve(argv.source);
   const target = path.resolve(argv.target);
 
-  if (argv['config-file']) {
-    rename(source, target, argv['config-file']);
+  if (argv.config) {
+    rename(source, target, argv.config);
+  } else if (argv.keys && argv.pattern) {
+    //rename(source, target, argv.keys, argv.pattern);
+  } else {
+    logger('Either config or keys and pattern must be provided');
+    process.exit(1);
   }
 };

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { getBase64Image } from './file';
+import { logger } from './logger';
 import { IBaseQuery, IImg2ImgQuery, ITxt2ImgQuery, RedrawMode, TargetSizeType, Upscaler } from './types';
 
 const headerRequest = {
@@ -26,6 +27,7 @@ const defaultQuery: IBaseQuery = {
   sampler_name: 'DPM++ 2M Karras',
   save_images: true,
   seed: -1,
+  send_images: false,
   steps: 20,
   styles: [],
   width: 512
@@ -68,18 +70,16 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
       TargetSizeType.CustomSize, // target_size_type
       ultimateSdUpscale.width, // custom_width
       ultimateSdUpscale.height, // custom_height
-      2 // custom_scale
+      ultimateSdUpscale.scale // custom_scale
     ];
   }
 
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `api/${type}/`;
   //override_settings_restore_afterwards
-  console.log(`Executing query to ${endpoint}`);
-  const { init_images: _init_images, ...exported } = baseQuery as unknown as IImg2ImgQuery;
-  console.log(`Parameters:`, exported);
+  logger(`Executing query to ${endpoint}`);
   await axios.post(`http://127.0.0.1:7860/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-    console.log(`Error: `);
-    console.log(error);
+    logger(`Error: `);
+    logger(error.message);
   });
 };
 
@@ -87,7 +87,14 @@ interface IInterrogateResponse {
   prompt: string;
 }
 
+const interrogatorCache: Record<string, IInterrogateResponse> = {};
+
 export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
+  if (interrogatorCache[imagePath]) {
+    return interrogatorCache[imagePath];
+  }
+
+  logger(`Executing query to interrogator for ${imagePath}`);
   const base64Image = getBase64Image(imagePath);
 
   const query = {
@@ -96,13 +103,19 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
     mode: 'fast'
   };
 
-  return await axios
+  const response = await axios
     .post<IInterrogateResponse>(`http://127.0.0.1:7860/interrogator/prompt`, query, headerRequest)
     .then((response) => {
       return response.data;
     })
     .catch((error) => {
-      console.log(`Error: `);
-      console.log(error);
+      logger(`Error: `);
+      logger(error.message);
     });
+
+  if (response) {
+    interrogatorCache[imagePath] = response;
+  }
+
+  return response;
 };

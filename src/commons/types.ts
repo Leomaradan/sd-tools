@@ -116,17 +116,13 @@ export interface IImg2ImgQuery extends ITxt2ImgQuery {
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 
-export interface ICommonRenderOptions {
-  checkpoint?: Checkpoints;
-  scheduler?: boolean;
-  upscaler?: Upscaler;
-  upscales?: number;
-}
-
 export interface IRedrawOptions {
   addToPrompt?: string;
+  denoising?: number[];
+  recursive?: boolean;
   scheduler?: boolean;
+  sdxl?: boolean;
   style: 'anime' | 'realism';
   upscaler?: Upscaler;
-  upscales?: number;
+  upscales?: number[];
 }

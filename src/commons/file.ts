@@ -4,6 +4,8 @@ import path from 'path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
+import { logger } from './logger';
+
 const readFile = (path: string): string[] | undefined => {
   try {
     const buffer = fs.readFileSync(path);
@@ -27,7 +29,7 @@ const readFile = (path: string): string[] | undefined => {
       return texData.split('\n');
     }
   } catch (error) {
-    console.log(error);
+    logger(String(error));
     return undefined;
   }
 };
@@ -36,17 +38,25 @@ export interface IFile {
   data: string[] | undefined;
   file: string;
   filename: string;
+  fullpath: string;
   height: number;
+  prefix?: string;
   width: number;
 }
 
-export const readFiles = (sourcepath: string): IFile[] => {
+export const readFiles = (sourcepath: string, root: string, recursive?: boolean): IFile[] => {
   const files = fs.readdirSync(sourcepath);
   const result: IFile[] = [];
 
   files.forEach((file) => {
+    if (recursive && fs.lstatSync(path.resolve(sourcepath, file)).isDirectory()) {
+      result.push(...readFiles(path.resolve(sourcepath, file), root, recursive));
+    }
+
+    const prefix = recursive ? path.relative(root, sourcepath).split(path.sep).join(', ') : undefined;
+
     if (file.endsWith('.png')) {
-      console.log(`Read ${file}`);
+      logger(`Read ${file}`);
       const filename = path.resolve(sourcepath, file);
       const data = readFile(filename);
       const sizes = sizeOf(filename);
@@ -55,13 +65,41 @@ export const readFiles = (sourcepath: string): IFile[] => {
         data,
         file,
         filename,
+        fullpath: path.resolve(sourcepath, file),
         height: sizes.height ?? -1,
+        prefix,
+        width: sizes.width ?? -1
+      });
+    }
+
+    if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
+      logger(`Read ${file}`);
+      const filename = path.resolve(sourcepath, file);
+      const sizes = sizeOf(filename);
+
+      result.push({
+        data: undefined,
+        file,
+        filename,
+        fullpath: path.resolve(sourcepath, file),
+        height: sizes.height ?? -1,
+        prefix,
         width: sizes.width ?? -1
       });
     }
   });
 
   return result;
+};
+
+export const getFiles = (source: string, recursive?: boolean) => {
+  const filesList: IFile[] = [];
+
+  readFiles(source, source, recursive).forEach((file) => {
+    filesList.push(file);
+  });
+
+  return filesList;
 };
 
 const imageCache: Record<string, { data: string; height: number; width: number }> = {};

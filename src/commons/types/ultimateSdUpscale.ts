@@ -19,6 +19,7 @@ export enum TargetSizeType {
 
 export interface IUltimateSDUpscale {
   height: number;
+  scale: number;
   tileHeight?: number;
   tileWidth?: number;
   width: number;

@@ -1,13 +1,8 @@
 import path from 'path';
 import yargs from 'yargs';
 
-import { extract } from './extract';
-
-interface IExtractOptions {
-  addBefore?: string;
-  output?: string;
-  source: string;
-}
+import { logger } from '../commons/logger';
+import { IExtractOptions, IExtractOptionsFull, extract } from './extract';
 
 export const command = 'extract <source>';
 export const describe = 'extract prompts from directory';
@@ -28,16 +23,27 @@ export const builder = (builder: yargs.Argv<object>) => {
         alias: 'o',
         describe: 'Optional output. If omitted, will print to stdout',
         type: 'string'
+      },
+      recursive: {
+        alias: 'r',
+        describe: 'Recursively extract prompts from subdirectories',
+        type: 'boolean'
       }
     })
     .fail((msg) => {
-      console.log(msg);
+      logger(msg);
       process.exit(1);
     });
 };
 
-export const handler = (argv: IExtractOptions) => {
+export const handler = (argv: IExtractOptionsFull) => {
   const source = path.resolve(argv.source);
 
-  extract(source, argv.addBefore, argv.output);
+  const options: IExtractOptions = {
+    addBefore: argv.addBefore ?? undefined,
+    output: argv.output ?? undefined,
+    recursive: argv.recursive ?? false
+  };
+
+  extract(source, options);
 };
