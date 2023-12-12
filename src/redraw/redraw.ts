@@ -11,7 +11,8 @@ import {
   ControlNetModules,
   ControlNetResizes,
   IImg2ImgQuery,
-  IRedrawOptions
+  IRedrawOptions,
+  Samplers
 } from '../commons/types';
 
 const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
@@ -46,7 +47,8 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   }
 
   if (sampler !== undefined) {
-    baseParams.sampler_name = sampler;
+    const foundSampler = Object.values(Samplers).find((samplerName) => samplerName === sampler);
+    baseParams.sampler_name = foundSampler;
   }
 
   if (cfg !== undefined) {

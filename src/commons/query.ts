@@ -2,7 +2,7 @@ import axios from 'axios';
 
 import { getBase64Image } from './file';
 import { logger } from './logger';
-import { IBaseQuery, IImg2ImgQuery, ITxt2ImgQuery, RedrawMode, TargetSizeType, Upscaler } from './types';
+import { IBaseQuery, IImg2ImgQuery, ITxt2ImgQuery, RedrawMode, Samplers, TargetSizeType, Upscaler } from './types';
 
 const headerRequest = {
   headers: {
@@ -24,7 +24,7 @@ const defaultQuery: IBaseQuery = {
   override_settings_restore_afterwards: true,
   prompt: '',
   restore_faces: false,
-  sampler_name: 'DPM++ 2M Karras',
+  sampler_name: Samplers.DPMPlusPlus2MKarras,
   save_images: true,
   seed: -1,
   send_images: false,
@@ -39,7 +39,7 @@ type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img', useScheduler?: boole
 type Query = Txt2ImgQuery & Img2ImgQuery;
 
 export const renderQuery: Query = async (query, type, useScheduler) => {
-  const { controlNet, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const baseQuery = { ...defaultQuery, ...baseQueryRaw } as IBaseQuery;
 
@@ -47,6 +47,14 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
 
   if (controlNet) {
     baseQuery.alwayson_scripts['controlnet'] = controlNet;
+  }
+
+  if (adetailer) {
+    baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
+  }
+
+  if (cutOff) {
+    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, ...cutOff.tokens, cutOff.weight ?? 1] };
   }
 
   if (!script && ultimateSdUpscale && type === 'img2img') {
@@ -77,6 +85,8 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `api/${type}/`;
   //override_settings_restore_afterwards
   logger(`Executing query to ${endpoint}`);
+  // console.log(JSON.stringify(baseQuery, null, 2));
+
   await axios.post(`http://127.0.0.1:7860/${endpoint}`, baseQuery, headerRequest).catch((error) => {
     logger(`Error: `);
     logger(error.message);

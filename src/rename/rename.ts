@@ -4,6 +4,7 @@ import path from 'path';
 import { executeConfig, readConfig } from '../commons/config';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
+import renameSchema from '../commons/schema/rename.json';
 
 export const rename = (source: string, target: string, configPath: string) => {
   if (!fs.existsSync(source)) {
@@ -20,7 +21,7 @@ export const rename = (source: string, target: string, configPath: string) => {
     fs.mkdirSync(target, { recursive: true });
   }
 
-  const config = readConfig(configPath);
+  const config = readConfig(configPath, renameSchema);
 
   const filesList = getFiles(source);
 

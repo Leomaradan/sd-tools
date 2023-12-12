@@ -1,8 +1,10 @@
-import { IControlNet } from './types/controlNet';
-import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './types/ultimateSdUpscale';
+import { IAdetailer } from './extensions/adetailer';
+import { IControlNet } from './extensions/controlNet';
+import { ICutOff } from './extensions/cutoff';
+import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
-export * from './types/controlNet';
-export * from './types/ultimateSdUpscale';
+export * from './extensions/controlNet';
+export * from './extensions/ultimateSdUpscale';
 
 export enum Upscaler {
   ESRGAN = 'ESRGAN_4x',
@@ -69,7 +71,50 @@ export enum Checkpoints {
   ZovyaPhotoreal = '1.5/realistic/aZovyaPhotoreal_v2.safetensors [5594efef1c]'
 }
 
-export type AlwaysOnScripts = IControlNet;
+export enum VAE {
+  AnythingV3 = 'Anything-V3.0.pt',
+  Blessed = 'blessed2.vae.pt',
+  DiffConsistency = 'difconsistencyRAWVAE_v10.pt',
+  KL_F8_Anime = 'kl-f8-anime.ckpt',
+  MSE840000 = 'vae-ft-mse-840000-ema-pruned.ckpt',
+  SDXL = 'sdxl_vae.safetensors'
+}
+
+export enum Samplers {
+  DDIM = 'DDIM',
+  DPM2 = 'DPM2',
+  DPM2Karras = 'DPM2 Karras',
+  DPM2a = 'DPM2 a',
+  DPM2aKarras = 'DPM2 a Karras',
+  DPMAdaptative = 'DPM adaptive',
+  DPMFast = 'DPM fast',
+  DPMPlusPlus2M = 'DPM++ 2M',
+  DPMPlusPlus2MKarras = 'DPM++ 2M Karras',
+  DPMPlusPlus2MSDE = 'DPM++ 2M SDE',
+  DPMPlusPlus2MSDEExpo = 'DPM++ 2M SDE Exponential',
+  DPMPlusPlus2MSDEHeun = 'DPM++ 2M SDE Heun',
+  DPMPlusPlus2MSDEHeunExpo = 'DPM++ 2M SDE Heun Exponential',
+  DPMPlusPlus2MSDEHeunKarras = 'DPM++ 2M SDE Heun Karras',
+  DPMPlusPlus2MSDEKarras = 'DPM++ 2M SDE Karras',
+  DPMPlusPlus2Sa = 'DPM++ 2S a',
+  DPMPlusPlus2SaKarras = 'DPM++ 2S a Karras',
+  DPMPlusPlus3MSDE = 'DPM++ 3M SDE',
+  DPMPlusPlus3MSDEExpo = 'DPM++ 3M SDE Exponential',
+  DPMPlusPlus3MSDEKarras = 'DPM++ 3M SDE Karras',
+  DPMPlusPlusSDE = 'DPM++ SDE',
+  DPMPlusPlusSDEKarras = 'DPM++ SDE Karras',
+  Euler = 'Euler',
+  EulerA = 'Euler a',
+  Heun = 'Heun',
+  LCM = 'LCM',
+  LMS = 'LMS',
+  LMSKarras = 'LMS Karras',
+  PLMS = 'PLMS',
+  Restart = 'Restart',
+  UniPC = 'UniPC'
+}
+
+export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | IControlNet;
 
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
@@ -84,6 +129,8 @@ export interface IBaseQuery {
   denoising_strength?: number;
   enable_hr?: boolean;
   height?: number;
+  hr_negative_prompt?: string;
+  hr_prompt?: string;
   hr_scale?: number;
   hr_upscaler?: Upscaler;
   negative_prompt?: string;
@@ -91,7 +138,7 @@ export interface IBaseQuery {
   override_settings_restore_afterwards?: boolean;
   prompt: string;
   restore_faces?: boolean;
-  sampler_name?: string;
+  sampler_name?: Samplers;
   save_images?: boolean;
   script_args?: ScriptsArgs;
   script_name?: string;
@@ -99,12 +146,15 @@ export interface IBaseQuery {
   send_images?: boolean;
   steps?: number;
   styles?: string[];
+  vae?: VAE;
   width?: number;
 }
 
 export interface ITxt2ImgQuery
   extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
+  adetailer?: IAdetailer[];
   controlNet?: IControlNet;
+  cutOff?: ICutOff;
   //ultimateSdUpscale?: number;
 
   //init_images: string[];

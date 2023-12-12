@@ -3,6 +3,7 @@ import { basename } from 'path';
 
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
+import { getModelSamplers } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
 import {
   Checkpoints,
@@ -60,7 +61,10 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   }
 
   if (sampler !== undefined) {
-    baseParams.sampler_name = sampler;
+    const foundSampler = getModelSamplers(sampler);
+    if (foundSampler) {
+      baseParams.sampler_name = foundSampler[1];
+    }
   }
 
   if (cfg !== undefined) {

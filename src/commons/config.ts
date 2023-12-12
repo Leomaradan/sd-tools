@@ -1,18 +1,30 @@
 import fs from 'fs';
+import { Validator } from 'jsonschema';
 
 import { logger } from './logger';
 
 type Key = [string, string] | string;
 type Keys = Key[];
 
-interface IConfig {
+const validator = new Validator();
+
+export interface IConfig {
   folderPattern?: string;
   keys: Record<string, Keys>;
   pattern: string;
 }
 
-export const readConfig = (configFile: string) => {
+export const readConfig = (configFile: string, validationSchema?: any) => {
   const data: Partial<IConfig> = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+
+  if (validationSchema) {
+    const validation = validator.validate(data, validationSchema);
+
+    if (!validation.valid) {
+      logger(`JSON has invalid properties : ${validation.toString()}`);
+      process.exit(1);
+    }
+  }
 
   const config: IConfig = {
     keys: {},

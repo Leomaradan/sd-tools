@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "Record<string,Keys>": {
+            "additionalProperties": false,
+            "type": "object"
+        }
+    },
+    "properties": {
+        "folderPattern": {
+            "type": "string"
+        },
+        "keys": {
+            "$ref": "#/definitions/Record<string,Keys>"
+        },
+        "pattern": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "keys",
+        "pattern"
+    ],
+    "type": "object"
+}
+

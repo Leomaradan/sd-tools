@@ -3,6 +3,7 @@
   "dependencies": {
     "axios": "^1.6.2",
     "image-size": "^1.0.2",
+    "jsonschema": "^1.4.1",
     "png-chunk-text": "^1.0.0",
     "png-chunks-extract": "^1.0.0",
     "yargs": "^17.7.2"
@@ -21,7 +22,8 @@
     "eslint-plugin-perfectionist": "^2.4.0",
     "eslint-plugin-sonarjs": "^0.23.0",
     "prettier": "^3.1.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "typescript-json-schema": "^0.62.0"
   },
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js",
