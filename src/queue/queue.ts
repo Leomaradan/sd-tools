@@ -7,7 +7,7 @@ import { logger } from '../commons/logger';
 import { getModelAdetailers, getModelCheckpoint, getModelUpscaler, getModelVAE } from '../commons/models';
 import { renderQuery } from '../commons/query';
 import queueSchema from '../commons/schema/queue.json';
-import { ITxt2ImgQuery, Samplers } from '../commons/types';
+import { ITxt2ImgQuery } from '../commons/types';
 
 interface IAdetailerPrompt {
   height?: number;
@@ -31,7 +31,7 @@ export interface IPrompt {
   pattern?: string;
   prompt: string;
   restoreFaces?: boolean;
-  sampler?: Samplers;
+  sampler?: string;
   seed?: number;
   steps?: number;
   upscaler?: string;
@@ -49,7 +49,7 @@ export const queue = async (source: string, scheduler: boolean) => {
     process.exit(1);
   }
 
-  let jsonContent: IPrompt[] = [];
+  let jsonContent: IPrompts = [];
   try {
     const data = fs.readFileSync(source, 'utf8');
     jsonContent = JSON.parse(data);
@@ -176,7 +176,6 @@ export const queue = async (source: string, scheduler: boolean) => {
   });
 
   for await (const queryParams of queries) {
-    //console.log(queryParams);
     await renderQuery(queryParams, 'txt2img', scheduler);
   }
 };

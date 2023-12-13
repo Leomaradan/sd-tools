@@ -1,62 +1,106 @@
-import { AdetailerModels } from './extensions/adetailer';
-import { Checkpoints, Samplers, Upscaler, VAE } from './types';
+import { Config } from './config';
+import { BaseAdetailerModels } from './extensions/adetailer';
 
-export const getModelUpscaler = (upscalerName: string) => {
-  return Object.entries(Upscaler).find(([key, value]) => {
-    if (key.includes(upscalerName)) {
-      return value;
-    }
+export const getModelUpscaler = (...upscaleName: string[]): string | undefined => {
+  const AllModels = Config.get('upscalers');
 
-    if (value.includes(upscalerName)) {
-      return value;
-    }
+  return AllModels.find((model) => {
+    return upscaleName.find((name) => {
+      if (model.name.includes(name)) {
+        return model.name;
+      }
+
+      if (model.filename?.includes(name)) {
+        return model.name;
+      }
+    });
+  })?.name;
+};
+
+export const getIndexUpscaler = (...upscaleName: string[]): number | undefined => {
+  const AllModels = Config.get('upscalers');
+
+  return AllModels.find((model) => {
+    return upscaleName.find((name) => {
+      if (model.name.includes(name)) {
+        return model.index;
+      }
+
+      if (model.filename?.includes(name)) {
+        return model.index;
+      }
+    });
+  })?.index;
+};
+
+export const getModelCheckpoint = (...modelsName: string[]): string | undefined => {
+  const AllModels = Config.get('models');
+
+  return AllModels.find((model) => {
+    return modelsName.find((name) => {
+      if (model.name.includes(name)) {
+        return model.name;
+      }
+
+      if (model.hash?.includes(name)) {
+        return model.name;
+      }
+    });
+  })?.name;
+};
+
+export const getModelVAE = (...vaeName: string[]): string | undefined => {
+  const AllModels = Config.get('vae');
+
+  return AllModels.find((name) => {
+    return vaeName.find((key) => {
+      if (key.includes(name)) {
+        return key;
+      }
+    });
   });
 };
 
-export const getModelCheckpoint = (checkpointsName: string) => {
-  return Object.entries(Checkpoints).find(([key, value]) => {
-    if (key.includes(checkpointsName)) {
-      return value;
-    }
+export const getModelSamplers = (...sampleName: string[]): string | undefined => {
+  const AllModels = Config.get('samplers');
 
-    if (value.includes(checkpointsName)) {
-      return value;
-    }
+  return AllModels.find((sampler) => {
+    return sampleName.find((name) => {
+      if (sampler.name.includes(name)) {
+        return sampler.name;
+      }
+
+      if (sampler.aliases.find((alias) => alias.includes(name))) {
+        return sampler.name;
+      }
+    });
+  })?.name;
+};
+
+export const getModelAdetailers = (...adetaileName: string[]): string | undefined => {
+  const AllModels = [...BaseAdetailerModels, ...Config.get('adetailersCustomModels')];
+
+  return AllModels.find((name) => {
+    return adetaileName.find((key) => {
+      if (key.includes(name)) {
+        return key;
+      }
+    });
   });
 };
 
-export const getModelVAE = (vaeName: string) => {
-  return Object.entries(VAE).find(([key, value]) => {
-    if (key.includes(vaeName)) {
-      return value;
-    }
+export const getModelControlnet = (...modelsName: string[]): string | undefined => {
+  const AllModels = Config.get('controlnetModels');
 
-    if (value.includes(vaeName)) {
-      return value;
-    }
-  });
-};
+  return AllModels.find((model) => {
+    return modelsName.find((name) => {
+      if (model.name.includes(name)) {
+        return model.name;
+      }
 
-export const getModelSamplers = (samplersName: string) => {
-  return Object.entries(Samplers).find(([key, value]) => {
-    if (key.includes(samplersName)) {
-      return value;
-    }
-
-    if (value.includes(samplersName)) {
-      return value;
-    }
-  });
-};
-
-export const getModelAdetailers = (adetaileName: string) => {
-  return Object.entries(AdetailerModels).find(([key, value]) => {
-    if (key.includes(adetaileName)) {
-      return value;
-    }
-
-    if (value.includes(adetaileName)) {
-      return value;
-    }
-  });
+      if (model.hash?.includes(name)) {
+        return model.name;
+      }
+    });
+  })?.name;
 };

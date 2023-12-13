@@ -1,8 +1,10 @@
 import path from 'path';
 import yargs from 'yargs';
 
+import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { IRedrawOptions, Upscaler } from '../commons/types';
+import { getModelUpscaler } from '../commons/models';
+import { IRedrawOptions } from '../commons/types';
 import { redraw } from './redraw';
 
 interface IRedrawArgsOptions {
@@ -81,11 +83,17 @@ export const builder = (builder: yargs.Argv<object>) => {
             return undefined;
           }
 
-          if (!Object.values(Upscaler).includes(arg as Upscaler)) {
-            throw new Error(`Upscaler ${arg} is not supported. Supported values are: ${Object.values(Upscaler).join(', ')}`);
+          const foundUpscaler = getModelUpscaler(arg);
+
+          if (!foundUpscaler) {
+            throw new Error(
+              `Upscaler ${arg} is not supported. Supported values are: ${Config.get('upscalers')
+                .map((up) => up.name)
+                .join(', ')}`
+            );
           }
 
-          return arg as Upscaler;
+          return arg;
         },
         describe: 'upscaler',
         type: 'string'
@@ -122,14 +130,21 @@ export const builder = (builder: yargs.Argv<object>) => {
 export const handler = (argv: IRedrawArgsOptions) => {
   const source = path.resolve(argv.source);
 
+  const initialized = Config.get('initialized');
+
+  if (!initialized) {
+    logger('Config must be initialized first');
+    process.exit(1);
+  }
+
   const options: IRedrawOptions = {
     addToPrompt: argv['add-before'] ?? undefined,
     denoising: argv.denoising ?? undefined,
     recursive: argv.recursive ?? false,
-    scheduler: argv.scheduler ?? false,
+    scheduler: argv.scheduler ?? Config.get('scheduler'),
     sdxl: argv.sdxl ?? false,
     style: argv.style as 'anime' | 'realism',
-    upscaler: (argv.upscaler as Upscaler) ?? undefined,
+    upscaler: argv.upscaler ?? undefined,
     upscales: argv.upscaling ?? undefined
   }; //0.55 //1
 

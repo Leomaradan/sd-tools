@@ -1,27 +1,63 @@
-import { Checkpoints } from './types';
-
-export const allCheckpoints = Object.values(Checkpoints).map((full) => {
-  const filenameMatch = /\/([^/]+)\.(safetensors|ckpt)/i.exec(full);
-
-  const hashMatch = /\[([a-z0-9]+)\]/i.exec(full) as RegExpExecArray;
-
-  let filename;
-  let hash;
-
-  if (filenameMatch) {
-    filename = filenameMatch[1];
-  }
-
-  if (hashMatch) {
-    hash = hashMatch[1];
-  }
-
-  //const filename = (/\/([^/]+)\.(safetensors|ckpt)/i.exec(full) as RegExpExecArray)[1];
-  //const hash = (/\[([a-z0-9]+)\]/i.exec(full) as RegExpExecArray)[1];
-
-  return {
-    filename,
-    full,
-    hash
-  };
-});
+export const ratedCheckpoints = {
+  anime15: [
+    'ghostmix_v20Bakedvae',
+    'ghostmix_v20Novae',
+    'ghostmix_v12',
+    'ghostmix_v12',
+    'ghostmix_v12Bakedvae',
+    'ghostmix_v12Bakedvae',
+    'ghostmix_v11',
+    'ghostmix_v11Bakedvae',
+    'divineelegancemix_V9',
+    'divineelegancemix_V8',
+    'divineelegancemix_V7',
+    'kl-f8-anime2',
+    'cetusMix_Whalefall2',
+    'cetusMix_v4',
+    'cetusMix_Coda2',
+    'cetusMix_Codaedition',
+    'cetusMix_whalefall',
+    'cetusMix_Version35',
+    'revAnimated_v122EOL',
+    'revAnimated_v121',
+    'revAnimated_v11',
+    'anythingV3_fp16',
+    'anyloraCheckpoint_bakedvaeBlessedFp16',
+    'meinamix_meinaV11',
+    'meinapastel_v6Pastel',
+    'meinaunreal_v41,'
+  ],
+  animeXL: [
+    'animeArtDiffusionXL_alpha3',
+    'duchaitenAiartSDXL_v09',
+    'duchaitenAiartSDXL_v099',
+    'duchaitenAiartSDXL_v10',
+    'duchaitenAiartSDXL_v20'
+  ],
+  realist15: [
+    'aZovyaPhotoreal_v2',
+    'photon_v1',
+    'majicmixRealistic_v7',
+    'majicmixRealistic_betterV2V25',
+    'majicmixRealistic_v6',
+    'majicmixRealistic_v5',
+    'absolutereality_v181',
+    'cyberrealistic_v33',
+    'cyberrealistic_v40',
+    'epicphotogasm_lastUnicorn',
+    'realisticVisionV51_v51VAE'
+  ],
+  realistXL: [
+    'albedobaseXL_v13',
+    'albedobaseXL_v12',
+    'albedobaseXL_v11',
+    'albedobaseXL_v10',
+    'albedobaseXL_v04',
+    'thinkdiffusionxl_v10',
+    'sdvn6Realxl_detailface',
+    'xl6HEPHAISTOSSD10XLSFW_v33BakedVAE',
+    'juggernautXL_version5.safetensor',
+    'juggernautXL_version6Rundiffusion',
+    'copaxTimelessxlSDXL1_v8'
+  ]
+};

@@ -1,19 +1,12 @@
 import fs from 'fs';
 import { basename } from 'path';
 
+import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
+import { getModelControlnet, getModelSamplers } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
-import {
-  Checkpoints,
-  ControlNetMode,
-  ControlNetModels,
-  ControlNetModules,
-  ControlNetResizes,
-  IImg2ImgQuery,
-  IRedrawOptions,
-  Samplers
-} from '../commons/types';
+import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IRedrawOptions } from '../commons/types';
 
 const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   const baseParams = { ...baseParamsProps };
@@ -21,11 +14,11 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
 
   const negativePrompt = negativePromptRaw.replace('Negative prompt: ', '');
 
-  const stepsTest = /Steps: ([0-9]+),/.exec(otherParams);
+  const stepsTest = /Steps: (\d+),/.exec(otherParams);
   const samplerTest = /Sampler: ([a-z0-9 +]+), /i.exec(otherParams);
   const cfgTest = /CFG scale: ([0-9.]+), /i.exec(otherParams);
-  const seedTest = /Seed: ([0-9]+),/i.exec(otherParams);
-  const sizesTest = /Size: ([0-9]+)x([0-9]+),/i.exec(otherParams);
+  const seedTest = /Seed: (\d+),/i.exec(otherParams);
+  const sizesTest = /Size: (\d+)x(\d+),/i.exec(otherParams);
 
   const steps = stepsTest ? Number(stepsTest[1]) : undefined;
   const sampler = samplerTest ? samplerTest[1] : undefined;
@@ -47,7 +40,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   }
 
   if (sampler !== undefined) {
-    const foundSampler = Object.values(Samplers).find((samplerName) => samplerName === sampler);
+    const foundSampler = getModelSamplers(sampler);
     baseParams.sampler_name = foundSampler;
   }
 
@@ -71,16 +64,17 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
 };
 
 const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
-  let sd_model_checkpoint = Checkpoints.CyberRealistic4;
+  const redrawModels = Config.get('redrawModels');
+  let sd_model_checkpoint = redrawModels.realist15;
 
   if (style === 'anime') {
     if (sdxl) {
-      sd_model_checkpoint = Checkpoints.AnimeArtXL;
+      sd_model_checkpoint = redrawModels.animeXL;
     } else {
-      sd_model_checkpoint = Checkpoints.MeinaMix;
+      sd_model_checkpoint = redrawModels.anime15;
     }
   } else if (sdxl) {
-    sd_model_checkpoint = Checkpoints.ThinkDiffusionXL;
+    sd_model_checkpoint = redrawModels.realistXL;
   }
 
   return sd_model_checkpoint;
@@ -96,17 +90,25 @@ const prepareQuery = async (file: IFile, style: 'anime' | 'realism', denoising_s
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
+  const controlnetModelName = sdxl ? 't2i-adapter_diffusers_xl_lineart' : 'control_v11p_sd15_lineart';
+  const controlnet_model = getModelControlnet(controlnetModelName);
+
+  if (!controlnet_model) {
+    logger(`Controlnet model ${controlnetModelName} not found`);
+    process.exit(1);
+  }
+
   let baseParams: IImg2ImgQuery = {
     controlNet: {
       control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model: sdxl ? ControlNetModels.lineartXl : ControlNetModels.lineart,
+      controlnet_model,
       controlnet_module: ControlNetModules.LineArt,
       resize_mode: ControlNetResizes.Resize
     },
     denoising_strength,
     height,
     init_images: [getBase64Image(file.filename)],
-    negative_prompt: `(bad-hands-5:1.0), (badhandv4:1.0), (easynegative:0.8), (bad-artist-anime:0.8), (bad-artist:0.8), (bad_prompt:0.8), (bad-picture-chill-75v:0.8), (bad_prompt_version2:0.8), (bad-image-v2-39000:0.8) (verybadimagenegative_v1.3:0.8)`,
+    negative_prompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
     override_settings: {
       samples_filename_pattern: `[datetime]-${denoising_strength}-${basename(file.file)
         .replace('.png', '')
@@ -167,17 +169,13 @@ export const redraw = async (
 
   const filesList = getFiles(source, recursive);
 
-  const denoising = denoisingArray ? denoisingArray : [0.55];
-  const upscaling = upscalingArray ? upscalingArray : [1];
+  const denoising = denoisingArray ?? [0.55];
+  const upscaling = upscalingArray ?? [1];
 
   const combinations = getCombination(filesList, denoising, upscaling);
 
-  //console.log({ filesList });
-
   for await (const combination of combinations) {
-    //console.log(file.data);
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
-    //const addBeforePrompts = addBefore ? addBefore.split("|") : [""];
     const query = await prepareQuery(combination.file, style, combination.denoising_strength, prefix, sdxl);
 
     if (query) {
@@ -200,7 +198,6 @@ export const redraw = async (
   //checkpoint: "481d75ae9d",
 
   for await (const queryParams of queries) {
-    //console.log(queryParams);
     await renderQuery(queryParams, 'img2img', scheduler);
   }
 };

@@ -1,19 +1,12 @@
 import fs from 'fs';
 import { basename } from 'path';
 
+import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { getModelSamplers } from '../commons/models';
+import { getModelControlnet, getModelSamplers } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
-import {
-  Checkpoints,
-  ControlNetMode,
-  ControlNetModels,
-  ControlNetModules,
-  ControlNetResizes,
-  IImg2ImgQuery,
-  IUltimateSDUpscale
-} from '../commons/types';
+import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 
 export interface IUpscaleOptions {
   checkpoint?: string;
@@ -33,11 +26,11 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
 
   const negativePrompt = negativePromptRaw.replace('Negative prompt: ', '');
 
-  const stepsTest = /Steps: ([0-9]+),/.exec(otherParams);
+  const stepsTest = /Steps: (\d+),/.exec(otherParams);
   const samplerTest = /Sampler: ([a-z0-9 +]+), /i.exec(otherParams);
   const cfgTest = /CFG scale: ([0-9.]+), /i.exec(otherParams);
-  const seedTest = /Seed: ([0-9]+),/i.exec(otherParams);
-  const sizesTest = /Size: ([0-9]+)x([0-9]+),/i.exec(otherParams);
+  const seedTest = /Seed: (\d+),/i.exec(otherParams);
+  const sizesTest = /Size: (\d+)x(\d+),/i.exec(otherParams);
 
   const steps = stepsTest ? Number(stepsTest[1]) : undefined;
   const sampler = samplerTest ? samplerTest[1] : undefined;
@@ -99,14 +92,14 @@ const prepareQuery = async (file: IFile, scaleFactor: number, denoising_strength
   let baseParams: IImg2ImgQuery = {
     controlNet: {
       control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model: ControlNetModels.tile,
+      controlnet_model: getModelControlnet('tile') as string,
       controlnet_module: ControlNetModules.TileResample,
       resize_mode: ControlNetResizes.Resize
     },
     denoising_strength,
     init_images: [getBase64Image(file.filename)],
 
-    negative_prompt: `(bad-hands-5:1.0), (badhandv4:1.0), (easynegative:0.8), (bad-artist-anime:0.8), (bad-artist:0.8), (bad_prompt:0.8), (bad-picture-chill-75v:0.8), (bad_prompt_version2:0.8), (bad-image-v2-39000:0.8) (verybadimagenegative_v1.3:0.8)`,
+    negative_prompt: Config.get('commonNegative'),
     override_settings: {
       samples_filename_pattern: `[datetime]-x${scaleFactor}-${basename(file.file)
         .replace('.png', '')
@@ -168,8 +161,8 @@ export const upscaleTiles = async (
 
   const filesList = getFiles(source, recursive);
 
-  const denoising = denoisingArray ? denoisingArray : [0.3];
-  const upscaling = upscalingArray ? upscalingArray : [2];
+  const denoising = denoisingArray ?? [0.3];
+  const upscaling = upscalingArray ?? [2];
 
   const combinations = getCombination(filesList, denoising, upscaling);
 
@@ -180,7 +173,7 @@ export const upscaleTiles = async (
       const { baseParams } = query;
 
       if (checkpoint) {
-        baseParams.override_settings.sd_model_checkpoint = checkpoint as Checkpoints;
+        baseParams.override_settings.sd_model_checkpoint = checkpoint;
       }
 
       queries.push(baseParams);

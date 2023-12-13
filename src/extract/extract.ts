@@ -61,11 +61,11 @@ const getPrompts = (data: string[], addBeforePrompts: string[]) => {
 
   const negativePrompt = negativePromptRaw.replace('Negative prompt: ', '');
 
-  const stepsTest = /Steps: ([0-9]+),/.exec(otherParams);
+  const stepsTest = /Steps: (\d+),/.exec(otherParams);
   const samplerTest = /Sampler: ([a-z0-9 +]+), /i.exec(otherParams);
   const cfgTest = /CFG scale: ([0-9.]+), /i.exec(otherParams);
-  const seedTest = /Seed: ([0-9]+),/i.exec(otherParams);
-  const sizesTest = /Size: ([0-9]+)x([0-9]+),/i.exec(otherParams);
+  const seedTest = /Seed: (\d+),/i.exec(otherParams);
+  const sizesTest = /Size: (\d+)x(\d+),/i.exec(otherParams);
 
   const steps = stepsTest ? Number(stepsTest[1]) : NaN;
   const sampler = samplerTest ? samplerTest[1] : '';

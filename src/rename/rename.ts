@@ -1,19 +1,17 @@
 import fs from 'fs';
+import { Validator } from 'jsonschema';
 import path from 'path';
 
-import { executeConfig, readConfig } from '../commons/config';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import renameSchema from '../commons/schema/rename.json';
+import { IRenameConfig, executeConfig } from './config';
 
-export const rename = (source: string, target: string, configPath: string) => {
+const validator = new Validator();
+
+export const renameConfig = (source: string, target: string, config: IRenameConfig) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
-  }
-
-  if (!fs.existsSync(configPath)) {
-    logger(`Config ${configPath} does not exist`);
     process.exit(1);
   }
 
@@ -21,7 +19,12 @@ export const rename = (source: string, target: string, configPath: string) => {
     fs.mkdirSync(target, { recursive: true });
   }
 
-  const config = readConfig(configPath, renameSchema);
+  const validation = validator.validate(config, renameSchema);
+
+  if (!validation.valid) {
+    logger(`JSON has invalid properties : ${validation.toString()}`);
+    process.exit(1);
+  }
 
   const filesList = getFiles(source);
 
@@ -42,4 +45,28 @@ export const rename = (source: string, target: string, configPath: string) => {
       }
     }
   });
+};
+
+export const renameKeyPattern = (source: string, target: string, keys: string[], pattern: string) => {
+  const config: IRenameConfig = {
+    keys: {},
+    pattern
+  };
+
+  keys.forEach((keyString) => {
+    const [recordKey, recordValueRaw] = keyString.split(':');
+    const recordValues = recordValueRaw.split(';');
+
+    if (!config.keys[recordKey]) {
+      config.keys[recordKey] = [];
+    }
+
+    if (recordValues.length === 1) {
+      config.keys[recordKey].push(recordValues[0]);
+    } else {
+      config.keys[recordKey].push([recordValues[0], recordValues[1]]);
+    }
+  });
+
+  renameConfig(source, target, config);
 };

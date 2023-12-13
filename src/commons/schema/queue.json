@@ -1,131 +1,136 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "IAdetailerPrompt": {
-      "additionalProperties": false,
-      "properties": {
-        "height": {
-          "type": "number"
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "IAdetailerPrompt": {
+            "additionalProperties": false,
+            "properties": {
+                "height": {
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "negative": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "strength": {
+                    "type": "number"
+                },
+                "width": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "model"
+            ],
+            "type": "object"
         },
-        "model": {
-          "type": "string"
-        },
-        "negative": {
-          "type": "string"
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "strength": {
-          "type": "number"
-        },
-        "width": {
-          "type": "number"
+        "IPrompt": {
+            "additionalProperties": false,
+            "properties": {
+                "adetailer": {
+                    "items": {
+                        "$ref": "#/definitions/IAdetailerPrompt"
+                    },
+                    "type": "array"
+                },
+                "autoCutOff": {
+                    "type": "boolean"
+                },
+                "cfg": {
+                    "type": "number"
+                },
+                "checkpoints": {
+                    "type": "string"
+                },
+                "denoising": {
+                    "type": "number"
+                },
+                "enableHighRes": {
+                    "type": "boolean"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "number"
+                },
+                "negative": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "restoreFaces": {
+                    "type": "boolean"
+                },
+                "sampler": {
+                    "enum": [
+                        "DDIM",
+                        "DPM adaptive",
+                        "DPM fast",
+                        "DPM++ 2M",
+                        "DPM++ 2M Karras",
+                        "DPM++ 2M SDE",
+                        "DPM++ 2M SDE Exponential",
+                        "DPM++ 2M SDE Heun",
+                        "DPM++ 2M SDE Heun Exponential",
+                        "DPM++ 2M SDE Heun Karras",
+                        "DPM++ 2M SDE Karras",
+                        "DPM++ 2S a",
+                        "DPM++ 2S a Karras",
+                        "DPM++ 3M SDE",
+                        "DPM++ 3M SDE Exponential",
+                        "DPM++ 3M SDE Karras",
+                        "DPM++ SDE",
+                        "DPM++ SDE Karras",
+                        "DPM2",
+                        "DPM2 Karras",
+                        "DPM2 a",
+                        "DPM2 a Karras",
+                        "Euler",
+                        "Euler a",
+                        "Heun",
+                        "LCM",
+                        "LMS",
+                        "LMS Karras",
+                        "PLMS",
+                        "Restart",
+                        "UniPC"
+                    ],
+                    "type": "string"
+                },
+                "seed": {
+                    "type": "number"
+                },
+                "steps": {
+                    "type": "number"
+                },
+                "upscaler": {
+                    "type": "string"
+                },
+                "vae": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "prompt"
+            ],
+            "type": "object"
         }
-      },
-      "required": ["model"],
-      "type": "object"
     },
-    "IPrompt": {
-      "additionalProperties": false,
-      "properties": {
-        "adetailer": {
-          "items": {
-            "$ref": "#/definitions/IAdetailerPrompt"
-          },
-          "type": "array"
-        },
-        "autoCutOff": {
-          "type": "boolean"
-        },
-        "cfg": {
-          "type": "number"
-        },
-        "checkpoints": {
-          "type": "string"
-        },
-        "denoising": {
-          "type": "number"
-        },
-        "enableHighRes": {
-          "type": "boolean"
-        },
-        "filename": {
-          "type": "string"
-        },
-        "height": {
-          "type": "number"
-        },
-        "negative": {
-          "type": "string"
-        },
-        "pattern": {
-          "type": "string"
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "restoreFaces": {
-          "type": "boolean"
-        },
-        "sampler": {
-          "enum": [
-            "DDIM",
-            "DPM adaptive",
-            "DPM fast",
-            "DPM++ 2M",
-            "DPM++ 2M Karras",
-            "DPM++ 2M SDE",
-            "DPM++ 2M SDE Exponential",
-            "DPM++ 2M SDE Heun",
-            "DPM++ 2M SDE Heun Exponential",
-            "DPM++ 2M SDE Heun Karras",
-            "DPM++ 2M SDE Karras",
-            "DPM++ 2S a",
-            "DPM++ 2S a Karras",
-            "DPM++ 3M SDE",
-            "DPM++ 3M SDE Exponential",
-            "DPM++ 3M SDE Karras",
-            "DPM++ SDE",
-            "DPM++ SDE Karras",
-            "DPM2",
-            "DPM2 Karras",
-            "DPM2 a",
-            "DPM2 a Karras",
-            "Euler",
-            "Euler a",
-            "Heun",
-            "LCM",
-            "LMS",
-            "LMS Karras",
-            "PLMS",
-            "Restart",
-            "UniPC"
-          ],
-          "type": "string"
-        },
-        "seed": {
-          "type": "number"
-        },
-        "steps": {
-          "type": "number"
-        },
-        "upscaler": {
-          "type": "string"
-        },
-        "vae": {
-          "type": "string"
-        },
-        "width": {
-          "type": "number"
-        }
-      },
-      "required": ["prompt"],
-      "type": "object"
-    }
-  },
-  "items": {
-    "$ref": "#/definitions/IPrompt"
-  },
-  "type": "array"
+    "items": {
+        "$ref": "#/definitions/IPrompt"
+    },
+    "type": "array"
 }
+

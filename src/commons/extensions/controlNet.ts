@@ -1,4 +1,4 @@
-export enum ControlNetModels {
+/* export enum ControlNetModels {
   canny = 'control_v11p_sd15_canny [d14c016b]',
   depth = 'control_v11f1p_sd15_depth [cfd03158]',
   inpaint = 'control_v11p_sd15_inpaint [ebff9138]',
@@ -14,7 +14,7 @@ export enum ControlNetModels {
   shuffle = 'control_v11e_sd15_shuffle [526bfdae]',
   softEdge = 'control_v11p_sd15_softedge [a8575a2a]',
   tile = 'control_v11f1e_sd15_tile [a371b31b]'
-}
+} */
 
 export enum ControlNetModules {
   Blur = 'blur_gaussian',
@@ -87,7 +87,7 @@ export enum ControlNetMode {
 
 export interface IControlNet {
   control_mode: ControlNetMode;
-  controlnet_model: ControlNetModels;
+  controlnet_model: string;
   controlnet_module: ControlNetModules;
   resize_mode: ControlNetResizes;
 }

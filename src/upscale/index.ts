@@ -1,9 +1,9 @@
 import path from 'path';
 import yargs from 'yargs';
 
-import { allCheckpoints } from '../commons/checkpoints';
+import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { Checkpoints } from '../commons/types';
+import { getModelCheckpoint } from '../commons/models';
 import { IUpscaleOptions, IUpscaleOptionsFull, upscaleTiles } from './upscaleTiles';
 
 export const command = 'upscale <source>';
@@ -23,23 +23,13 @@ export const builder = (builder: yargs.Argv<object>) => {
             return undefined;
           }
 
-          const found = allCheckpoints.find(({ filename, full, hash }) => {
-            if (full === arg) {
-              return true;
-            }
+          const foundModel = getModelCheckpoint(arg);
 
-            if (filename !== undefined && filename === arg) {
-              return true;
-            }
-
-            return hash === arg;
-          });
-
-          if (!found) {
+          if (!foundModel) {
             throw new Error(`Checkpoint ${arg} is not supported.`);
           }
 
-          return found.full as Checkpoints;
+          return foundModel;
         },
         describe: 'checkpoint',
         type: 'string'
@@ -108,11 +98,18 @@ export const builder = (builder: yargs.Argv<object>) => {
 export const handler = (argv: IUpscaleOptionsFull) => {
   const source = path.resolve(argv.source);
 
+  const initialized = Config.get('initialized');
+
+  if (!initialized) {
+    logger('Config must be initialized first');
+    process.exit(1);
+  }
+
   const options: IUpscaleOptions = {
-    checkpoint: (argv.checkpoint as Checkpoints) ?? undefined,
+    checkpoint: argv.checkpoint ?? undefined,
     denoising: argv.denoising ?? undefined,
     recursive: argv.recursive ?? false,
-    scheduler: argv.scheduler ?? false,
+    scheduler: argv.scheduler ?? Config.get('scheduler'),
     upscaling: argv.upscaling ?? undefined
   };
 

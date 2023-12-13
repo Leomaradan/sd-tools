@@ -16,6 +16,7 @@ module.exports = {
       'warn',
       { argsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_', ignoreRestSiblings: true }
     ],
-    'no-console': 'warn'
+    'no-console': 'warn',
+    'sonarjs/cognitive-complexity': 'off'
   }
 };

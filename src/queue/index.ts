@@ -1,6 +1,7 @@
 import path from 'path';
 import yargs from 'yargs';
 
+import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { queue } from './queue';
 
@@ -34,5 +35,12 @@ export const builder = (builder: yargs.Argv<object>) => {
 export const handler = (argv: IQueueArgsOptions) => {
   const source = path.resolve(argv.source);
 
-  queue(source, argv.scheduler ?? false);
+  const initialized = Config.get('initialized');
+
+  if (!initialized) {
+    logger('Config must be initialized first');
+    process.exit(1);
+  }
+
+  queue(source, argv.scheduler ?? Config.get('scheduler'));
 };
