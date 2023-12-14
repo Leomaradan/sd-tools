@@ -9,7 +9,7 @@ export const getCutOffTokens = (prompt: string): string[] => {
   let tokens = prompt.split(/,|BREAK|SEP|SKIP/i);
   tokens = tokens.map((token) => token.trim());
 
-  const autoTokens = Config.get('cutoffTokens');
+  const autoTokens = Array.from(Config.get('cutoffTokens'));
 
   return tokens.filter((token) => {
     return autoTokens.some((autoToken) => {

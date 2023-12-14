@@ -1,7 +1,8 @@
 import { Config } from './config';
 import { BaseAdetailerModels } from './extensions/adetailer';
+import { Lora, Model, Sampler, Upscaler } from './types';
 
-export const getModelUpscaler = (...upscaleName: string[]): string | undefined => {
+export const getModelUpscaler = (...upscaleName: string[]): Upscaler | undefined => {
   const AllModels = Config.get('upscalers');
 
   return AllModels.find((model) => {
@@ -14,26 +15,10 @@ export const getModelUpscaler = (...upscaleName: string[]): string | undefined =
         return model.name;
       }
     });
-  })?.name;
+  });
 };
 
-export const getIndexUpscaler = (...upscaleName: string[]): number | undefined => {
-  const AllModels = Config.get('upscalers');
-
-  return AllModels.find((model) => {
-    return upscaleName.find((name) => {
-      if (model.name.includes(name)) {
-        return model.index;
-      }
-
-      if (model.filename?.includes(name)) {
-        return model.index;
-      }
-    });
-  })?.index;
-};
-
-export const getModelCheckpoint = (...modelsName: string[]): string | undefined => {
+export const getModelCheckpoint = (...modelsName: string[]): Model | undefined => {
   const AllModels = Config.get('models');
 
   return AllModels.find((model) => {
@@ -46,7 +31,7 @@ export const getModelCheckpoint = (...modelsName: string[]): string | undefined 
         return model.name;
       }
     });
-  })?.name;
+  });
 };
 
 export const getModelVAE = (...vaeName: string[]): string | undefined => {
@@ -61,7 +46,7 @@ export const getModelVAE = (...vaeName: string[]): string | undefined => {
   });
 };
 
-export const getModelSamplers = (...sampleName: string[]): string | undefined => {
+export const getModelSamplers = (...sampleName: string[]): Sampler | undefined => {
   const AllModels = Config.get('samplers');
 
   return AllModels.find((sampler) => {
@@ -74,11 +59,11 @@ export const getModelSamplers = (...sampleName: string[]): string | undefined =>
         return sampler.name;
       }
     });
-  })?.name;
+  });
 };
 
 export const getModelAdetailers = (...adetaileName: string[]): string | undefined => {
-  const AllModels = [...BaseAdetailerModels, ...Config.get('adetailersCustomModels')];
+  const AllModels = Array.from(new Set([...BaseAdetailerModels, ...Config.get('adetailersCustomModels')]));
 
   return AllModels.find((name) => {
     return adetaileName.find((key) => {
@@ -89,7 +74,7 @@ export const getModelAdetailers = (...adetaileName: string[]): string | undefine
   });
 };
 
-export const getModelControlnet = (...modelsName: string[]): string | undefined => {
+export const getModelControlnet = (...modelsName: string[]): Model | undefined => {
   const AllModels = Config.get('controlnetModels');
 
   return AllModels.find((model) => {
@@ -102,5 +87,21 @@ export const getModelControlnet = (...modelsName: string[]): string | undefined 
         return model.name;
       }
     });
-  })?.name;
+  });
+};
+
+export const getModelLoras = (...loraName: string[]): Lora | undefined => {
+  const AllModels = Config.get('loras');
+
+  return AllModels.find((model) => {
+    return loraName.find((name) => {
+      if (model.name.includes(name)) {
+        return model;
+      }
+
+      if (model.alias.includes(name)) {
+        return model;
+      }
+    });
+  });
 };

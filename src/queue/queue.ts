@@ -21,6 +21,7 @@ interface IAdetailerPrompt {
 export interface IPrompt {
   adetailer?: IAdetailerPrompt[];
   autoCutOff?: boolean;
+  autoLCM?: boolean;
   cfg?: number;
   checkpoints?: string;
   denoising?: number;
@@ -78,11 +79,13 @@ export const queue = async (source: string, scheduler: boolean) => {
       denoising_strength: jsonQuery.denoising,
       enable_hr: jsonQuery.enableHighRes,
       height: jsonQuery.height,
+      lcm: jsonQuery.autoLCM ?? false,
       negative_prompt: jsonQuery.negative,
       override_settings: {},
       prompt: jsonQuery.prompt,
       restore_faces: jsonQuery.restoreFaces,
       sampler_name: jsonQuery.sampler,
+      sdxl: false,
       seed: jsonQuery.seed,
       steps: jsonQuery.steps,
       width: jsonQuery.width
@@ -106,7 +109,7 @@ export const queue = async (source: string, scheduler: boolean) => {
       const foundUpscaler = getModelUpscaler(jsonQuery.upscaler);
 
       if (foundUpscaler) {
-        query.hr_upscaler = foundUpscaler[1];
+        query.hr_upscaler = foundUpscaler.name;
       }
     }
 
@@ -129,7 +132,7 @@ export const queue = async (source: string, scheduler: boolean) => {
         if (foundModel) {
           const adetailerQuery: IAdetailer = {
             ad_denoising_strength: adetailer.strength,
-            ad_model: foundModel[1],
+            ad_model: foundModel,
             ad_negative_prompt: adetailer.negative,
             ad_prompt: adetailer.prompt
           };
@@ -150,7 +153,7 @@ export const queue = async (source: string, scheduler: boolean) => {
     if (jsonQuery.checkpoints && typeof jsonQuery.checkpoints === 'string') {
       const modelCheckpoint = getModelCheckpoint(jsonQuery.checkpoints);
       if (modelCheckpoint) {
-        query.override_settings.sd_model_checkpoint = modelCheckpoint[1];
+        query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
         logger(`Invalid checkpoints ${jsonQuery.checkpoints} in ${source}`);
         process.exit(1);

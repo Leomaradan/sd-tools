@@ -1,21 +1,3 @@
-/* export enum ControlNetModels {
-  canny = 'control_v11p_sd15_canny [d14c016b]',
-  depth = 'control_v11f1p_sd15_depth [cfd03158]',
-  inpaint = 'control_v11p_sd15_inpaint [ebff9138]',
-  ip2p = 'control_v11e_sd15_ip2p [c4bb465c]',
-  lineart = 'control_v11p_sd15_lineart [43d4be0d]',
-  lineartAnime = 'control_v11p_sd15s2_lineart_anime [3825e83e]',
-  lineartXl = 't2i-adapter_diffusers_xl_lineart [bae0efef]',
-  mlsd = 'control_v11p_sd15_mlsd [aca30ff0]',
-  normal = 'control_v11p_sd15_normalbae [316696f1]',
-  openPose = 'control_v11p_sd15_openpose [cab727d4]',
-  scribble = 'control_v11p_sd15_scribble [d4ba51ff]',
-  segment = 'control_v11p_sd15_seg [e1f51eb9]',
-  shuffle = 'control_v11e_sd15_shuffle [526bfdae]',
-  softEdge = 'control_v11p_sd15_softedge [a8575a2a]',
-  tile = 'control_v11f1e_sd15_tile [a371b31b]'
-} */
-
 export enum ControlNetModules {
   Blur = 'blur_gaussian',
   Canny = 'canny',
@@ -29,8 +11,8 @@ export enum ControlNetModules {
   Hed = 'hed',
   HedSafe = 'hed_safe',
   IPAdapter = 'ip-adapter_clip_sd15',
-  IPAdapterPlus = 'ip-adapter_clip_sdxl_plus_vith',
   IPAdapterXL = 'ip-adapter_clip_sdxl',
+  IPAdapterXLPlus = 'ip-adapter_clip_sdxl_plus_vith',
   Inpaint = 'inpaint',
   InpaintOnly = 'inpaint_only',
   InpaintOnlyLama = 'inpaint_only+lama',
@@ -89,5 +71,6 @@ export interface IControlNet {
   control_mode: ControlNetMode;
   controlnet_model: string;
   controlnet_module: ControlNetModules;
+  input_image?: string;
   resize_mode: ControlNetResizes;
 }

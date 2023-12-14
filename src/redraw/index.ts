@@ -10,6 +10,7 @@ import { redraw } from './redraw';
 interface IRedrawArgsOptions {
   'add-before'?: string;
   denoising?: number[];
+  method: string;
   recursive?: boolean;
   scheduler?: boolean;
   sdxl?: boolean;
@@ -19,7 +20,7 @@ interface IRedrawArgsOptions {
   upscaling?: number[];
 }
 
-export const command = 'redraw <source> <style>';
+export const command = 'redraw <source> <style> <method>';
 export const describe = 'redraw image in specific style';
 export const builder = (builder: yargs.Argv<object>) => {
   return builder
@@ -29,9 +30,15 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .positional('style', {
-      choices: ['realism', 'anime'],
+      choices: ['realism', 'anime', 'both'],
       demandOption: true,
-      describe: 'source directory',
+      describe: 'style of render',
+      type: 'string'
+    })
+    .positional('method', {
+      choices: ['lineart', 'ip-adapter', 'both'],
+      demandOption: true,
+      describe: 'method to draw image',
       type: 'string'
     })
     .options({
@@ -140,10 +147,11 @@ export const handler = (argv: IRedrawArgsOptions) => {
   const options: IRedrawOptions = {
     addToPrompt: argv['add-before'] ?? undefined,
     denoising: argv.denoising ?? undefined,
+    method: argv.method as 'both' | 'ip-adapter' | 'lineart',
     recursive: argv.recursive ?? false,
     scheduler: argv.scheduler ?? Config.get('scheduler'),
     sdxl: argv.sdxl ?? false,
-    style: argv.style as 'anime' | 'realism',
+    style: argv.style as 'anime' | 'both' | 'realism',
     upscaler: argv.upscaler ?? undefined,
     upscales: argv.upscaling ?? undefined
   }; //0.55 //1

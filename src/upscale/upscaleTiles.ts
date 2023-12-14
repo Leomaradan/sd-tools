@@ -56,7 +56,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   if (sampler !== undefined) {
     const foundSampler = getModelSamplers(sampler);
     if (foundSampler) {
-      baseParams.sampler_name = foundSampler[1];
+      baseParams.sampler_name = foundSampler.name;
     }
   }
 
@@ -92,14 +92,14 @@ const prepareQuery = async (file: IFile, scaleFactor: number, denoising_strength
   let baseParams: IImg2ImgQuery = {
     controlNet: {
       control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model: getModelControlnet('tile') as string,
+      controlnet_model: getModelControlnet('tile')?.name as string,
       controlnet_module: ControlNetModules.TileResample,
       resize_mode: ControlNetResizes.Resize
     },
     denoising_strength,
     init_images: [getBase64Image(file.filename)],
-
     negative_prompt: Config.get('commonNegative'),
+
     override_settings: {
       samples_filename_pattern: `[datetime]-x${scaleFactor}-${basename(file.file)
         .replace('.png', '')
@@ -107,6 +107,7 @@ const prepareQuery = async (file: IFile, scaleFactor: number, denoising_strength
         .replace('.jpeg', '')}`
     },
     prompt: '',
+    sdxl: false,
     ultimateSdUpscale: {
       height: height * scaleFactor,
       scale: scaleFactor,

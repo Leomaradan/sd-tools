@@ -29,7 +29,7 @@ export const builder = (builder: yargs.Argv<object>) => {
             throw new Error(`Checkpoint ${arg} is not supported.`);
           }
 
-          return foundModel;
+          return foundModel.name;
         },
         describe: 'checkpoint',
         type: 'string'

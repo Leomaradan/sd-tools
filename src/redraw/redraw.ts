@@ -6,9 +6,9 @@ import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { getModelControlnet, getModelSamplers } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
-import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IRedrawOptions } from '../commons/types';
+import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IRedrawOptions, ITxt2ImgQuery } from '../commons/types';
 
-const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
+const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
@@ -29,7 +29,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   const promptHeight = sizesTest ? Number(sizesTest[2]) : undefined;
 
   baseParams.prompt += basePrompt;
-  baseParams.init_images = [getBase64Image(file.filename)];
+  // baseParams.init_images = [getBase64Image(file.filename)];
 
   if (negativePrompt !== undefined && negativePrompt !== '') {
     baseParams.negative_prompt += negativePrompt;
@@ -41,7 +41,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
 
   if (sampler !== undefined) {
     const foundSampler = getModelSamplers(sampler);
-    baseParams.sampler_name = foundSampler;
+    baseParams.sampler_name = foundSampler?.name;
   }
 
   if (cfg !== undefined) {
@@ -69,18 +69,24 @@ const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
 
   if (style === 'anime') {
     if (sdxl) {
-      sd_model_checkpoint = redrawModels.animeXL;
+      sd_model_checkpoint = redrawModels.animexl;
     } else {
       sd_model_checkpoint = redrawModels.anime15;
     }
   } else if (sdxl) {
-    sd_model_checkpoint = redrawModels.realistXL;
+    sd_model_checkpoint = redrawModels.realistxl;
   }
 
   return sd_model_checkpoint;
 };
 
-const prepareQuery = async (file: IFile, style: 'anime' | 'realism', denoising_strength: number, addToPrompt?: string, sdxl?: boolean) => {
+const prepareQueryLineart = async (
+  file: IFile,
+  style: 'anime' | 'realism',
+  denoising_strength: number,
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
   let { height, width } = file;
 
   if (width === -1 || height === -1) {
@@ -90,11 +96,12 @@ const prepareQuery = async (file: IFile, style: 'anime' | 'realism', denoising_s
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  const controlnetModelName = sdxl ? 't2i-adapter_diffusers_xl_lineart' : 'control_v11p_sd15_lineart';
-  const controlnet_model = getModelControlnet(controlnetModelName);
+  const controlnetModelName = sdxl ? ['t2i-adapter_diffusers_xl_lineart'] : ['control_v11p_sd15_lineart'];
+
+  const controlnet_model = getModelControlnet(...controlnetModelName)?.name;
 
   if (!controlnet_model) {
-    logger(`Controlnet model ${controlnetModelName} not found`);
+    logger(`Controlnet models "${controlnetModelName.join(', ')}" not found`);
     process.exit(1);
   }
 
@@ -118,6 +125,79 @@ const prepareQuery = async (file: IFile, style: 'anime' | 'realism', denoising_s
     },
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
     restore_faces: true,
+    sdxl: !!sdxl,
+    width
+  };
+
+  let ready = false;
+  if (file.data) {
+    baseParams = prepareQueryData(baseParams, file) as IImg2ImgQuery;
+
+    width = baseParams.width ?? width;
+    height = baseParams.height ?? height;
+
+    ready = true;
+  } else {
+    const prompt = await interrogateQuery(file.filename);
+
+    if (prompt) {
+      baseParams.prompt += prompt.prompt;
+      ready = true;
+    }
+  }
+
+  if (ready) {
+    return { baseParams, height, width };
+  }
+};
+
+const prepareQueryIpAdapter = async (
+  file: IFile,
+  style: 'anime' | 'realism',
+  denoising_strength: number,
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let { height, width } = file;
+
+  if (width === -1 || height === -1) {
+    width = 512;
+    height = 512;
+  }
+
+  const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
+
+  const controlnetModelName = sdxl ? ['ip-adapter_xl'] : ['ip-adapter_sd15_plus', 'ip-adapter_sd15'];
+
+  const controlnet_model = getModelControlnet(...controlnetModelName)?.name;
+
+  if (!controlnet_model) {
+    logger(`Controlnet models "${controlnetModelName.join(', ')}" not found`);
+    process.exit(1);
+  }
+
+  let baseParams: ITxt2ImgQuery = {
+    controlNet: {
+      control_mode: ControlNetMode.ControleNetImportant,
+      controlnet_model,
+      controlnet_module: sdxl ? ControlNetModules.IPAdapterXL : ControlNetModules.IPAdapter,
+      input_image: getBase64Image(file.filename),
+      resize_mode: ControlNetResizes.Resize
+    },
+    denoising_strength,
+    height,
+    // ,
+    negative_prompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
+    override_settings: {
+      samples_filename_pattern: `[datetime]-${denoising_strength}-${basename(file.file)
+        .replace('.png', '')
+        .replace('.jpg', '')
+        .replace('.jpeg', '')}`,
+      sd_model_checkpoint
+    },
+    prompt: addToPrompt ? `${addToPrompt}, ` : '',
+    restore_faces: true,
+    sdxl: !!sdxl,
     width
   };
 
@@ -143,12 +223,32 @@ const prepareQuery = async (file: IFile, style: 'anime' | 'realism', denoising_s
   }
 };
 
-const getCombination = (filesList: IFile[], denoising: number[], scaleFactors: number[]) => {
-  const combinations: Array<{ denoising_strength: number; file: IFile; scaleFactor: number }> = [];
+const getCombination = (
+  filesList: IFile[],
+  denoising: number[],
+  scaleFactors: number[],
+  styles: 'anime' | 'both' | 'realism',
+  methods: 'both' | 'ip-adapter' | 'lineart'
+) => {
+  const combinations: Array<{
+    denoising_strength: number;
+    file: IFile;
+    method: 'ip-adapter' | 'lineart';
+    scaleFactor: number;
+    style: 'anime' | 'realism';
+  }> = [];
+
+  const methodArray: Array<'ip-adapter' | 'lineart'> = methods === 'both' ? ['ip-adapter', 'lineart'] : [methods];
+  const stylesArray: Array<'anime' | 'realism'> = styles === 'both' ? ['anime', 'realism'] : [styles];
+
   for (const file of filesList) {
     for (const denoising_strength of denoising) {
       for (const scaleFactor of scaleFactors) {
-        combinations.push({ denoising_strength, file, scaleFactor });
+        for (const style of stylesArray) {
+          for (const method of methodArray) {
+            combinations.push({ denoising_strength, file, method, scaleFactor, style });
+          }
+        }
       }
     }
   }
@@ -158,25 +258,30 @@ const getCombination = (filesList: IFile[], denoising: number[], scaleFactors: n
 
 export const redraw = async (
   source: string,
-  { addToPrompt, denoising: denoisingArray, recursive, scheduler, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
+  { addToPrompt, denoising: denoisingArray, method, recursive, scheduler, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
 
-  const queries: IImg2ImgQuery[] = [];
+  const queriesImg2Img: IImg2ImgQuery[] = [];
+  const queriesTxt2Img: ITxt2ImgQuery[] = [];
 
   const filesList = getFiles(source, recursive);
 
   const denoising = denoisingArray ?? [0.55];
   const upscaling = upscalingArray ?? [1];
 
-  const combinations = getCombination(filesList, denoising, upscaling);
+  const combinations = getCombination(filesList, denoising, upscaling, style, method);
 
   for await (const combination of combinations) {
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
-    const query = await prepareQuery(combination.file, style, combination.denoising_strength, prefix, sdxl);
+
+    const store = combination.method === 'ip-adapter' ? queriesTxt2Img : queriesImg2Img;
+    const prepareQuery = combination.method === 'ip-adapter' ? prepareQueryIpAdapter : prepareQueryLineart;
+
+    const query = await prepareQuery(combination.file, combination.style, combination.denoising_strength, prefix, sdxl);
 
     if (query) {
       const { baseParams, height, width } = query;
@@ -191,13 +296,25 @@ export const redraw = async (
         baseParams.hr_upscaler = upscaler;
       }
 
-      queries.push(baseParams);
+      store.push(baseParams);
     }
   }
 
   //checkpoint: "481d75ae9d",
 
-  for await (const queryParams of queries) {
+  queriesTxt2Img.sort((a, b) =>
+    (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
+  );
+
+  queriesImg2Img.sort((a, b) =>
+    (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
+  );
+
+  for await (const queryParams of queriesTxt2Img) {
+    await renderQuery(queryParams, 'txt2img', scheduler);
+  }
+
+  for await (const queryParams of queriesImg2Img) {
     await renderQuery(queryParams, 'img2img', scheduler);
   }
 };

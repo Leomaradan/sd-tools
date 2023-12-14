@@ -4,7 +4,9 @@ import path from 'path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
+import { Config } from './config';
 import { logger } from './logger';
+import { IMetadata } from './types';
 
 const readFile = (path: string): string[] | undefined => {
   try {
@@ -120,4 +122,42 @@ export const getBase64Image = (url: string) => {
   };
 
   return data;
+};
+
+export const getMetadata = (url: string): IMetadata | undefined => {
+  const cacheMetadata = Config.get('cacheMetadata');
+  if (cacheMetadata[url] !== undefined) {
+    return cacheMetadata[url];
+  }
+
+  try {
+    if (fs.existsSync(url)) {
+      const content = fs.readFileSync(url, 'utf8');
+      const metadata = JSON.parse(content);
+
+      const result: IMetadata = {
+        // description: metadata.description,
+        preferredWeight: metadata['preferred weight'],
+        sdVersion: 'unknown' //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
+      };
+
+      if (metadata['sd version']) {
+        if (metadata['sd version'].toLowerCase().includes('xl')) {
+          result.sdVersion = 'sdxl';
+        } else if (metadata['sd version'].toLowerCase().includes('1.5') || metadata['sd version'].toLowerCase().includes('sd1')) {
+          result.sdVersion = 'sd15';
+        }
+      }
+
+      cacheMetadata[url] = result;
+
+      Config.set('cacheMetadata', cacheMetadata);
+
+      return result;
+    }
+  } catch (error: any) {
+    logger(`Error while reading metadata for ${url} : ${error.message}`);
+  }
+
+  return undefined;
 };

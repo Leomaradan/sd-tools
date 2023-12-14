@@ -40,6 +40,9 @@
                 "autoCutOff": {
                     "type": "boolean"
                 },
+                "autoLCM": {
+                    "type": "boolean"
+                },
                 "cfg": {
                     "type": "number"
                 },
@@ -71,39 +74,6 @@
                     "type": "boolean"
                 },
                 "sampler": {
-                    "enum": [
-                        "DDIM",
-                        "DPM adaptive",
-                        "DPM fast",
-                        "DPM++ 2M",
-                        "DPM++ 2M Karras",
-                        "DPM++ 2M SDE",
-                        "DPM++ 2M SDE Exponential",
-                        "DPM++ 2M SDE Heun",
-                        "DPM++ 2M SDE Heun Exponential",
-                        "DPM++ 2M SDE Heun Karras",
-                        "DPM++ 2M SDE Karras",
-                        "DPM++ 2S a",
-                        "DPM++ 2S a Karras",
-                        "DPM++ 3M SDE",
-                        "DPM++ 3M SDE Exponential",
-                        "DPM++ 3M SDE Karras",
-                        "DPM++ SDE",
-                        "DPM++ SDE Karras",
-                        "DPM2",
-                        "DPM2 Karras",
-                        "DPM2 a",
-                        "DPM2 a Karras",
-                        "Euler",
-                        "Euler a",
-                        "Heun",
-                        "LCM",
-                        "LMS",
-                        "LMS Karras",
-                        "PLMS",
-                        "Restart",
-                        "UniPC"
-                    ],
                     "type": "string"
                 },
                 "seed": {
