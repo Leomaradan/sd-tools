@@ -19,7 +19,7 @@ export const writeLog = (...data: any[]) => {
 
   fs.appendFileSync(
     logFile,
-    `${JSON.stringify(data, (key, value) => {
+    `${Date.now()} ${JSON.stringify(data, (key, value) => {
       if (['input_image'].includes(key)) {
         return (value as string).substring(0, 100);
       }

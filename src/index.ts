@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 
+import { Config } from './commons/config';
 import * as configGet from './config/configGet';
 import * as configSet from './config/configSet';
 import * as init from './config/init';
@@ -8,6 +9,8 @@ import * as queue from './queue';
 import * as redraw from './redraw';
 import * as rename from './rename';
 import * as upscale from './upscale';
+
+Config.migrate();
 
 yargs(process.argv.slice(2))
   .command(init)

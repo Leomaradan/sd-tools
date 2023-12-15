@@ -4,17 +4,21 @@
     "definitions": {
         "Record<string,Keys>": {
             "additionalProperties": false,
+            "title": "Record<string,Keys>",
             "type": "object"
         }
     },
     "properties": {
         "folderPattern": {
+            "title": "folderPattern",
             "type": "string"
         },
         "keys": {
-            "$ref": "#/definitions/Record<string,Keys>"
+            "$ref": "#/definitions/Record<string,Keys>",
+            "title": "keys"
         },
         "pattern": {
+            "title": "pattern",
             "type": "string"
         }
     },

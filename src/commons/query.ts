@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Config } from './config';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
-import { getModelSamplers, getModelUpscaler } from './models';
+import { findSampler, findUpscaler } from './models';
 import { IBaseQuery, IImg2ImgQuery, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
 
 const headerRequest = {
@@ -20,13 +20,13 @@ const getDefaultQuery = () => ({
   enable_hr: false,
   height: 512,
   hr_scale: 2,
-  hr_upscaler: getModelUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
+  hr_upscaler: findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
   negative_prompt: '',
   override_settings: {},
   override_settings_restore_afterwards: true,
   prompt: '',
   restore_faces: false,
-  sampler_name: getModelSamplers('DPM++ 2M Karras', 'Euler a')?.name as string,
+  sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
   save_images: true,
   seed: -1,
   send_images: false,
@@ -35,12 +35,12 @@ const getDefaultQuery = () => ({
   width: 512
 });
 
-type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img', useScheduler?: boolean) => Promise<void>;
-type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img', useScheduler?: boolean) => Promise<void>;
+type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
+type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
 
 type Query = Txt2ImgQuery & Img2ImgQuery;
 
-export const renderQuery: Query = async (query, type, useScheduler) => {
+export const renderQuery: Query = async (query, type) => {
   const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const baseQuery = { ...getDefaultQuery(), ...baseQueryRaw } as IBaseQuery;
@@ -53,6 +53,14 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
 
   if (adetailer) {
     baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
+  }
+
+  if (Config.get('autoTiledVAE')) {
+    baseQuery.alwayson_scripts['Tiled VAE'] = { args: ['True'] };
+  }
+
+  if (Config.get('autoTiledDiffusion') !== false) {
+    baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
   }
 
   const autoCutOff = Config.get('cutoff');
@@ -70,7 +78,7 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
       baseQuery.prompt = `<lora:${lcmModel}:1> ${baseQuery.prompt}`;
       baseQuery.cfg_scale = 1.5;
       baseQuery.steps = 3;
-      baseQuery.sampler_name = getModelSamplers('DPM++ SDE', 'Euler a')?.name as string;
+      baseQuery.sampler_name = findSampler('DPM++ SDE', 'Euler a')?.name as string;
     }
   }
 
@@ -86,7 +94,7 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
       64, // seams_fix_width
       0.35, // seams_fix_denoise
       32, // seams_fix_padding
-      getModelUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.index ?? 0, // 10, // upscaler_index
+      findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.index ?? 0, // 10, // upscaler_index
       true, // save_upscaled_image a.k.a Upscaled
       RedrawMode.None, // redraw_mode
       false, // save_seams_fix_image a.k.a Seams fix
@@ -99,12 +107,12 @@ export const renderQuery: Query = async (query, type, useScheduler) => {
     ];
   }
 
-  const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `api/${type}/`;
-  logger(`Executing query to ${endpoint}`);
+  const endpoint = Config.get('scheduler') ? `agent-scheduler/v1/queue/${type}` : `api/${type}/`;
+  logger(`Executing query to ${Config.get('endpoint')}/${endpoint}`);
 
   writeLog(endpoint, baseQuery);
 
-  await axios.post(`http://127.0.0.1:7860/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+  await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
     logger(`Error: `);
     logger(error.message);
   });
@@ -131,7 +139,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
   };
 
   const response = await axios
-    .post<IInterrogateResponse>(`http://127.0.0.1:7860/interrogator/prompt`, query, headerRequest)
+    .post<IInterrogateResponse>(`${Config.get('endpoint')}/interrogator/prompt`, query, headerRequest)
     .then((response) => {
       return response.data;
     })
@@ -153,17 +161,18 @@ type MiscQueryApi =
   | 'controlnet/module_list'
   | 'sdapi/v1/embeddings'
   | 'sdapi/v1/loras'
+  | 'sdapi/v1/prompt-styles'
   | 'sdapi/v1/samplers'
   | 'sdapi/v1/scripts'
   | 'sdapi/v1/sd-models'
   | 'sdapi/v1/sd-vae'
   | 'sdapi/v1/upscalers';
 
-export const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> => {
+const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> => {
   logger(`Executing misc query ${api}`);
 
   return await axios
-    .get(`http://127.0.0.1:7860/${api}`, headerRequest)
+    .get(`${Config.get('endpoint')}/${api}`, headerRequest)
     .then((response) => {
       return response.data;
     })
@@ -172,3 +181,16 @@ export const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response |
       logger(error.message);
     });
 };
+
+export const getModelsQuery = () => miscQuery<{ filename: string; model_name: string; title: string }[]>('sdapi/v1/sd-models');
+export const getVAEQuery = () => miscQuery<{ model_name: string }[]>('sdapi/v1/sd-vae');
+export const getSamplersQuery = () => miscQuery<{ aliases: string[]; name: string }[]>('sdapi/v1/samplers');
+export const getUpscalersQuery = () => miscQuery<{ model_path: null | string; name: string }[]>('sdapi/v1/upscalers');
+export const getExtensionsQuery = () => miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
+export const getSchedulerQuery = () => miscQuery<{ tasks: string[] }>('agent-scheduler/v1/history?limit=1');
+export const getLORAsQuery = () => miscQuery<{ alias: string; name: string; path: string }[]>('sdapi/v1/loras');
+export const getEmbeddingsQuery = () => miscQuery<{ loaded: Record<string, any>; skipped: Record<string, any> }>('sdapi/v1/embeddings');
+export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
+
+export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list');
+export const getControlnetModulesQuery = () => miscQuery<{ module_list: string[] }>('controlnet/module_list');

@@ -6,8 +6,8 @@ import { logger } from '../commons/logger';
 import { queue } from './queue';
 
 interface IQueueArgsOptions {
-  scheduler?: boolean;
   source: string;
+  validate?: boolean;
 }
 
 export const command = 'queue <source>';
@@ -20,9 +20,10 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .options({
-      scheduler: {
-        alias: 's',
-        describe: 'If set, the Agent Scheduler endpoint will be used',
+      validate: {
+        alias: 'v',
+        default: false,
+        describe: 'If set, the configuration will be validated, but no requests will be sent',
         type: 'boolean'
       }
     })
@@ -42,5 +43,5 @@ export const handler = (argv: IQueueArgsOptions) => {
     process.exit(1);
   }
 
-  queue(source, argv.scheduler ?? Config.get('scheduler'));
+  queue(source, argv.validate ?? false);
 };

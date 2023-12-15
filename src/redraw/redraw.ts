@@ -4,9 +4,18 @@ import { basename } from 'path';
 import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { getModelControlnet, getModelSamplers } from '../commons/models';
+import { findControlnetModel, findSampler } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
-import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IRedrawOptions, ITxt2ImgQuery } from '../commons/types';
+import {
+  ControlNetMode,
+  ControlNetModules,
+  ControlNetResizes,
+  IImg2ImgQuery,
+  IRedrawMethod,
+  IRedrawOptions,
+  IRedrawStyle,
+  ITxt2ImgQuery
+} from '../commons/types';
 
 const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: IFile) => {
   const baseParams = { ...baseParamsProps };
@@ -29,7 +38,6 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: 
   const promptHeight = sizesTest ? Number(sizesTest[2]) : undefined;
 
   baseParams.prompt += basePrompt;
-  // baseParams.init_images = [getBase64Image(file.filename)];
 
   if (negativePrompt !== undefined && negativePrompt !== '') {
     baseParams.negative_prompt += negativePrompt;
@@ -40,7 +48,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: 
   }
 
   if (sampler !== undefined) {
-    const foundSampler = getModelSamplers(sampler);
+    const foundSampler = findSampler(sampler);
     baseParams.sampler_name = foundSampler?.name;
   }
 
@@ -98,7 +106,7 @@ const prepareQueryLineart = async (
 
   const controlnetModelName = sdxl ? ['t2i-adapter_diffusers_xl_lineart'] : ['control_v11p_sd15_lineart'];
 
-  const controlnet_model = getModelControlnet(...controlnetModelName)?.name;
+  const controlnet_model = findControlnetModel(...controlnetModelName)?.name;
 
   if (!controlnet_model) {
     logger(`Controlnet models "${controlnetModelName.join(', ')}" not found`);
@@ -169,7 +177,7 @@ const prepareQueryIpAdapter = async (
 
   const controlnetModelName = sdxl ? ['ip-adapter_xl'] : ['ip-adapter_sd15_plus', 'ip-adapter_sd15'];
 
-  const controlnet_model = getModelControlnet(...controlnetModelName)?.name;
+  const controlnet_model = findControlnetModel(...controlnetModelName)?.name;
 
   if (!controlnet_model) {
     logger(`Controlnet models "${controlnetModelName.join(', ')}" not found`);
@@ -223,13 +231,7 @@ const prepareQueryIpAdapter = async (
   }
 };
 
-const getCombination = (
-  filesList: IFile[],
-  denoising: number[],
-  scaleFactors: number[],
-  styles: 'anime' | 'both' | 'realism',
-  methods: 'both' | 'ip-adapter' | 'lineart'
-) => {
+const getCombination = (filesList: IFile[], denoising: number[], scaleFactors: number[], styles: IRedrawStyle, methods: IRedrawMethod) => {
   const combinations: Array<{
     denoising_strength: number;
     file: IFile;
@@ -258,7 +260,7 @@ const getCombination = (
 
 export const redraw = async (
   source: string,
-  { addToPrompt, denoising: denoisingArray, method, recursive, scheduler, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
+  { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
@@ -311,10 +313,10 @@ export const redraw = async (
   );
 
   for await (const queryParams of queriesTxt2Img) {
-    await renderQuery(queryParams, 'txt2img', scheduler);
+    await renderQuery(queryParams, 'txt2img');
   }
 
   for await (const queryParams of queriesImg2Img) {
-    await renderQuery(queryParams, 'img2img', scheduler);
+    await renderQuery(queryParams, 'img2img');
   }
 };

@@ -1,6 +1,7 @@
 import { IAdetailer } from './extensions/adetailer';
 import { IControlNet } from './extensions/controlNet';
 import { ICutOff } from './extensions/cutoff';
+import { TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
 export * from './extensions/controlNet';
@@ -11,6 +12,7 @@ export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { arg
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
 export interface IOverrideSettings {
+  CLIP_stop_at_last_layers: number;
   samples_filename_pattern: string;
   sd_model_checkpoint: string;
 }
@@ -60,62 +62,89 @@ export interface IImg2ImgQuery extends ITxt2ImgQuery {
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 
+export enum Version {
+  SD15 = 'sd15',
+  SDXL = 'sdxl',
+  Unknown = 'unknown'
+}
+
+export enum IRedrawMethod {
+  Both = 'both',
+  IPAdapter = 'ip-adapter',
+  Lineart = 'lineart'
+}
+
+export enum IRedrawStyle {
+  Anime = 'anime',
+  Both = 'both',
+  Realism = 'realism'
+}
+
 export interface IRedrawOptions {
   addToPrompt?: string;
   denoising?: number[];
-  method: 'both' | 'ip-adapter' | 'lineart';
+  method: IRedrawMethod;
   recursive?: boolean;
-  scheduler?: boolean;
   sdxl?: boolean;
-  style: 'anime' | 'both' | 'realism';
+  style: IRedrawStyle;
   upscaler?: string;
   upscales?: number[];
 }
 
-export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'ultimate-sd-upscale';
-export interface Model {
+export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
+export interface IModel {
   hash?: string;
   name: string;
-  version: 'sd15' | 'sdxl' | 'unknown';
+  version: Version;
 }
 
-export interface Lora {
+export interface ILora {
   alias: string;
   name: string;
-  version: 'sd15' | 'sdxl' | 'unknown';
+  version: Version;
 }
 
-export interface Sampler {
+export interface ISampler {
   aliases: string[];
   name: string;
 }
 
-export interface Upscaler {
+export interface IUpscaler {
   filename?: string;
   index: number;
   name: string;
 }
 
+export interface IStyle {
+  name: string;
+  negativePrompt: string;
+  prompt: string;
+}
+
 export interface IMetadata {
   // description: string;
   preferredWeight?: string;
-  sdVersion: 'sd15' | 'sdxl' | 'unknown';
+  sdVersion: Version;
 }
 export type CacheMetadata = Record<string, IMetadata>;
 
 export interface IConfig {
   adetailersCustomModels: string[];
+  autoTiledDiffusion: TiledDiffusionMethods | false;
+  autoTiledVAE: boolean;
   cacheMetadata: CacheMetadata;
   commonNegative?: string;
   commonNegativeXL?: string;
   commonPositive?: string;
   commonPositiveXL?: string;
-  controlnetModels: Model[];
+  configVersion: number;
+  controlnetModels: IModel[];
   controlnetModules: string[];
   cutoff: boolean;
   cutoffTokens: string[];
   cutoffWeight: number;
   embeddings: string[];
+  endpoint: string;
   extensions: Extensions[];
   initialized: boolean;
   lcm: {
@@ -123,16 +152,17 @@ export interface IConfig {
     sd15?: string;
     sdxl?: string;
   };
-  loras: Lora[];
-  models: Model[];
+  loras: ILora[];
+  models: IModel[];
   redrawModels: {
     anime15?: string;
     animexl?: string;
     realist15?: string;
     realistxl?: string;
   };
-  samplers: Sampler[];
+  samplers: ISampler[];
   scheduler: boolean;
-  upscalers: Upscaler[];
+  styles: IStyle[];
+  upscalers: IUpscaler[];
   vae: string[];
 }

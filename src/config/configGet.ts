@@ -3,7 +3,11 @@ import yargs from 'yargs';
 import { Config } from '../commons/config.js';
 import { logger } from '../commons/logger.js';
 import {
+  Options,
   getConfigAddDetailerCustomModels,
+  getConfigAutoLCM,
+  getConfigAutoTiledDiffusion,
+  getConfigAutoTiledVAE,
   getConfigCommonNegative,
   getConfigCommonNegativeXL,
   getConfigCommonPositive,
@@ -13,57 +17,48 @@ import {
   getConfigCutoffTokens,
   getConfigCutoffWeight,
   getConfigEmbeddings,
+  getConfigEndpoint,
   getConfigExtensions,
+  getConfigLCM,
   getConfigLoras,
   getConfigModels,
   getConfigRedrawModels,
   getConfigSamplers,
   getConfigScheduler,
+  getConfigStyles,
   getConfigUpscalers,
-  getConfigVAE
+  getConfigVAE,
+  getConfigVersion
 } from './functions.js';
 
-type Options =
-  | 'adetailers-custom-models'
-  | 'common-negative'
-  | 'common-negative-xl'
-  | 'common-positive'
-  | 'common-positive-xl'
-  | 'controlnet-models'
-  | 'controlnet-modules'
-  | 'cutoff'
-  | 'cutoff-tokens'
-  | 'cutoff-weight'
-  | 'embeddings'
-  | 'extensions'
-  | 'loras'
-  | 'models'
-  | 'redraw-models'
-  | 'samplers'
-  | 'scheduler'
-  | 'upscalers'
-  | 'vae';
-
-const options = [
+const options: Options[] = [
   'adetailers-custom-models',
+  'auto-lcm',
+  'auto-tiled-diffusion',
+  'auto-tiled-vae',
   'common-negative',
   'common-negative-xl',
   'common-positive',
   'common-positive-xl',
+  'config-version',
   'controlnet-models',
   'controlnet-modules',
   'cutoff',
   'cutoff-tokens',
   'cutoff-weight',
   'embeddings',
+  'endpoint',
   'extensions',
+  'lcm',
   'loras',
   'models',
+  'redraw-models',
   'samplers',
   'scheduler',
+  'scheduler',
+  'styles',
   'upscalers',
-  'vae',
-  'redraw-models'
+  'vae'
 ];
 
 export const command = 'config-get <config>';
@@ -93,35 +88,14 @@ export const handler = (argv: { config: string }) => {
   }
 
   switch (config) {
-    case 'adetailers-custom-models':
-      getConfigAddDetailerCustomModels();
-      break;
-    case 'common-negative':
-      getConfigCommonNegative();
-      break;
-    case 'common-negative-xl':
-      getConfigCommonNegativeXL();
-      break;
-    case 'common-positive':
-      getConfigCommonPositive();
-      break;
-    case 'common-positive-xl':
-      getConfigCommonNegativeXL();
+    case 'config-version':
+      getConfigVersion();
       break;
     case 'controlnet-models':
       getConfigControlnetModels();
       break;
     case 'controlnet-modules':
       getConfigControlnetModules();
-      break;
-    case 'cutoff':
-      getConfigCutoff();
-      break;
-    case 'cutoff-tokens':
-      getConfigCutoffTokens();
-      break;
-    case 'cutoff-weight':
-      getConfigCutoffWeight();
       break;
     case 'embeddings':
       getConfigEmbeddings();
@@ -135,14 +109,11 @@ export const handler = (argv: { config: string }) => {
     case 'models':
       getConfigModels();
       break;
-    case 'redraw-models':
-      getConfigRedrawModels();
-      break;
     case 'samplers':
       getConfigSamplers();
       break;
-    case 'scheduler':
-      getConfigScheduler();
+    case 'styles':
+      getConfigStyles();
       break;
     case 'upscalers':
       getConfigUpscalers();
@@ -150,6 +121,54 @@ export const handler = (argv: { config: string }) => {
     case 'vae':
       getConfigVAE();
       break;
+
+    case 'adetailers-custom-models':
+      getConfigAddDetailerCustomModels();
+      break;
+    case 'auto-lcm':
+      getConfigAutoLCM();
+      break;
+    case 'auto-tiled-diffusion':
+      getConfigAutoTiledDiffusion();
+      break;
+    case 'auto-tiled-vae':
+      getConfigAutoTiledVAE();
+      break;
+    case 'common-negative':
+      getConfigCommonNegative();
+      break;
+    case 'common-negative-xl':
+      getConfigCommonNegativeXL();
+      break;
+    case 'common-positive':
+      getConfigCommonPositive();
+      break;
+    case 'common-positive-xl':
+      getConfigCommonNegativeXL();
+      break;
+    case 'cutoff':
+      getConfigCutoff();
+      break;
+    case 'cutoff-tokens':
+      getConfigCutoffTokens();
+      break;
+    case 'cutoff-weight':
+      getConfigCutoffWeight();
+      break;
+
+    case 'endpoint':
+      getConfigEndpoint();
+      break;
+    case 'lcm':
+      getConfigLCM();
+      break;
+    case 'redraw-models':
+      getConfigRedrawModels();
+      break;
+    case 'scheduler':
+      getConfigScheduler();
+      break;
+
     default:
       break;
   }

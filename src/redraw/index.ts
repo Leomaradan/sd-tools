@@ -3,8 +3,8 @@ import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { getModelUpscaler } from '../commons/models';
-import { IRedrawOptions } from '../commons/types';
+import { findUpscaler } from '../commons/models';
+import { IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
 import { redraw } from './redraw';
 
 interface IRedrawArgsOptions {
@@ -12,7 +12,6 @@ interface IRedrawArgsOptions {
   denoising?: number[];
   method: string;
   recursive?: boolean;
-  scheduler?: boolean;
   sdxl?: boolean;
   source: string;
   style: string;
@@ -74,11 +73,6 @@ export const builder = (builder: yargs.Argv<object>) => {
         describe: 'Recursively upscale images from subdirectories',
         type: 'boolean'
       },
-      scheduler: {
-        alias: 's',
-        describe: 'If set, the Agent Scheduler endpoint will be used',
-        type: 'boolean'
-      },
       sdxl: {
         describe: 'If set, the SDXL models will be used',
         type: 'boolean'
@@ -90,7 +84,7 @@ export const builder = (builder: yargs.Argv<object>) => {
             return undefined;
           }
 
-          const foundUpscaler = getModelUpscaler(arg);
+          const foundUpscaler = findUpscaler(arg);
 
           if (!foundUpscaler) {
             throw new Error(
@@ -147,11 +141,10 @@ export const handler = (argv: IRedrawArgsOptions) => {
   const options: IRedrawOptions = {
     addToPrompt: argv['add-before'] ?? undefined,
     denoising: argv.denoising ?? undefined,
-    method: argv.method as 'both' | 'ip-adapter' | 'lineart',
+    method: argv.method as IRedrawMethod,
     recursive: argv.recursive ?? false,
-    scheduler: argv.scheduler ?? Config.get('scheduler'),
     sdxl: argv.sdxl ?? false,
-    style: argv.style as 'anime' | 'both' | 'realism',
+    style: argv.style as IRedrawStyle,
     upscaler: argv.upscaler ?? undefined,
     upscales: argv.upscaling ?? undefined
   }; //0.55 //1

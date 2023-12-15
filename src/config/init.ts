@@ -5,16 +5,33 @@ import yargs from 'yargs';
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { getModelCheckpoint } from '../commons/models';
-import { miscQuery } from '../commons/query';
+import { findCheckpoint } from '../commons/models';
+import {
+  getControlnetModelsQuery,
+  getControlnetModulesQuery,
+  getEmbeddingsQuery,
+  getExtensionsQuery,
+  getLORAsQuery,
+  getModelsQuery,
+  getSamplersQuery,
+  getSchedulerQuery,
+  getStylesQuery,
+  getUpscalersQuery,
+  getVAEQuery
+} from '../commons/query';
 import { getMetadata } from '../commons/file';
-import { Extensions, Lora, Model } from '../commons/types';
+import { Extensions, IStyle, ILora, IModel, Version } from '../commons/types';
 
 export const command = 'config-init';
 export const describe = 'initialize config value. Can be used to refresh models';
 
 export const builder = (builder: yargs.Argv<object>) => {
   return builder.options({
+    endpoint: {
+      alias: 'e',
+      describe: 'endpoint to use. Default: http://127.0.0.1:7860',
+      type: 'string'
+    },
     force: {
       alias: 'f',
       describe: 'force reset config',
@@ -28,24 +45,38 @@ export const builder = (builder: yargs.Argv<object>) => {
   });
 };
 
-export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean }) => {
-  const { force } = argv;
+export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean; endpoint?: string }) => {
+  const { force, endpoint } = argv;
   const initialized = Config.get('initialized');
 
   if (!initialized || force || argv['purge-cache']) {
     Config.set('cacheMetadata', {});
   }
 
-  const modelsQuery = await miscQuery<{ model_name: string; title: string; filename: string }[]>('sdapi/v1/sd-models');
-  const vaeQuery = await miscQuery<{ model_name: string }[]>('sdapi/v1/sd-vae');
-  const samplersQuery = await miscQuery<{ aliases: string[]; name: string }[]>('sdapi/v1/samplers');
-  const upscalersQuery = await miscQuery<{ model_path: null | string; name: string }[]>('sdapi/v1/upscalers');
-  const extensionsQuery = await miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
-  const schedulerQuery = await miscQuery<{ tasks: string[] }>('agent-scheduler/v1/history?limit=1');
-  const lorasQuery = await miscQuery<{ name: string; alias: string; path: string }[]>('sdapi/v1/loras');
-  const embeddingsQueryQuery = await miscQuery<{ loaded: Record<string, any>; skipped: Record<string, any> }>('sdapi/v1/embeddings');
+  if (endpoint || !initialized || force) {
+    Config.set('endpoint', endpoint ?? 'http://127.0.0.1:7860');
+  }
 
-  if (!modelsQuery || !vaeQuery || !samplersQuery || !upscalersQuery || !extensionsQuery || !lorasQuery || !embeddingsQueryQuery) {
+  const modelsQuery = await getModelsQuery();
+  const vaeQuery = await getVAEQuery();
+  const samplersQuery = await getSamplersQuery();
+  const upscalersQuery = await getUpscalersQuery();
+  const extensionsQuery = await getExtensionsQuery();
+  const schedulerQuery = await getSchedulerQuery();
+  const lorasQuery = await getLORAsQuery();
+  const embeddingsQuery = await getEmbeddingsQuery();
+  const stylesQuery = await getStylesQuery();
+
+  if (
+    !modelsQuery ||
+    !vaeQuery ||
+    !samplersQuery ||
+    !upscalersQuery ||
+    !extensionsQuery ||
+    !lorasQuery ||
+    !embeddingsQuery ||
+    !stylesQuery
+  ) {
     logger('Error: Cannot initialize config : Error in SD API');
     process.exit(1);
   }
@@ -55,7 +86,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Array.from(
       new Set(
         modelsQuery.map((modelQuery) => {
-          const item: Model = { name: modelQuery.title, version: 'unknown' };
+          const item: IModel = { name: modelQuery.title, version: Version.Unknown };
           const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
           const metadata = getMetadata(modelQuery.filename.replace(/\.safetensors|.ckpt/, '.json'));
 
@@ -67,8 +98,6 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
             item.hash = hash[0];
             item.name = modelQuery.title.replace(`[${hash}]`, '').trim();
           }
-
-          console.log(item);
 
           return item;
         })
@@ -105,9 +134,33 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     )
   );
 
+  Config.set('embeddings', Array.from(new Set([...Object.keys(embeddingsQuery.loaded), ...Object.keys(embeddingsQuery.skipped)])));
+
   Config.set(
-    'embeddings',
-    Array.from(new Set([...Object.keys(embeddingsQueryQuery.loaded), ...Object.keys(embeddingsQueryQuery.skipped)]))
+    'styles',
+    Array.from(
+      new Set(
+        stylesQuery
+          .map((styleQuery) => {
+            const style: IStyle = { name: styleQuery.name, prompt: '', negativePrompt: '' };
+
+            if (styleQuery.prompt) {
+              style.prompt = styleQuery.prompt;
+            }
+
+            if (styleQuery.negative_prompt) {
+              style.negativePrompt = styleQuery.negative_prompt;
+            }
+
+            if (!styleQuery.prompt && !styleQuery.negative_prompt) {
+              return;
+            }
+
+            return style;
+          })
+          .filter((style) => style !== undefined) as IStyle[]
+      )
+    )
   );
 
   Config.set(
@@ -115,7 +168,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Array.from(
       new Set(
         lorasQuery.map((lorasQuery) => {
-          const lora: Lora = { name: lorasQuery.name, version: 'unknown', alias: lorasQuery.alias };
+          const lora: ILora = { name: lorasQuery.name, version: Version.Unknown, alias: lorasQuery.alias };
 
           const metadata = getMetadata(lorasQuery.path.replace(/\.safetensors|.ckpt/, '.json'));
 
@@ -145,6 +198,12 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
       case 'ultimate-sd-upscale':
         extensions.add('ultimate-sd-upscale');
         break;
+      case 'tiled diffusion':
+        extensions.add('tiled diffusion');
+        break;
+      case 'tiled vae':
+        extensions.add('tiled vae');
+        break;
     }
   });
 
@@ -155,8 +214,8 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
   Config.set('extensions', Array.from(extensions));
 
   if (extensions.has('controlnet')) {
-    const controlnetModelsQuery = await miscQuery<{ model_list: string[] }>('controlnet/model_list');
-    const controlnetModulesQuery = await miscQuery<{ module_list: string[] }>('controlnet/module_list');
+    const controlnetModelsQuery = await getControlnetModelsQuery();
+    const controlnetModulesQuery = await getControlnetModulesQuery();
 
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
       logger('Error: Cannot initialize config : Error in ControlNet');
@@ -168,13 +227,13 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
       Array.from(
         new Set(
           controlnetModelsQuery.model_list.map((modelQuery) => {
-            const item: Model = { name: modelQuery, version: 'unknown' };
+            const item: IModel = { name: modelQuery, version: Version.Unknown };
             const hash = /[a-f0-9]{8,10}/.exec(modelQuery);
 
             if (item.name.includes('sd15')) {
-              item.version = 'sd15';
+              item.version = Version.SD15;
             } else if (item.name.includes('_xl')) {
-              item.version = 'sdxl';
+              item.version = Version.SDXL;
             }
 
             if (hash) {
@@ -242,10 +301,10 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Config.set('cutoffWeight', 1);
     Config.set('scheduler', extensions.has('scheduler'));
     Config.set('redrawModels', {
-      anime15: getModelCheckpoint(...ratedCheckpoints.anime15)?.name,
-      animexl: getModelCheckpoint(...ratedCheckpoints.animeXL)?.name,
-      realist15: getModelCheckpoint(...ratedCheckpoints.realist15)?.name,
-      realistxl: getModelCheckpoint(...ratedCheckpoints.realistXL)?.name
+      anime15: findCheckpoint(...ratedCheckpoints.anime15)?.name,
+      animexl: findCheckpoint(...ratedCheckpoints.animeXL)?.name,
+      realist15: findCheckpoint(...ratedCheckpoints.realist15)?.name,
+      realistxl: findCheckpoint(...ratedCheckpoints.realistXL)?.name
     });
     Config.set('commonPositive', '');
     Config.set(
@@ -255,5 +314,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Config.set('commonPositiveXL', '');
     Config.set('commonNegativeXL', '');
     Config.set('lcm', { auto: false });
+    Config.set('autoTiledDiffusion', false);
+    Config.set('autoTiledVAE', true);
   }
 };

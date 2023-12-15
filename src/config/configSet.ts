@@ -2,66 +2,119 @@ import yargs from 'yargs';
 
 import { Config, getParamBoolean } from '../commons/config.js';
 import { logger } from '../commons/logger.js';
-import { getModelCheckpoint, getModelLoras } from '../commons/models.js';
+import { findCheckpoint, findLORA } from '../commons/models.js';
 import {
+  EditableOptions,
   getConfigAddDetailerCustomModels,
   getConfigAutoLCM,
+  getConfigAutoTiledDiffusion,
+  getConfigAutoTiledVAE,
+  getConfigCommonNegative,
+  getConfigCommonNegativeXL,
+  getConfigCommonPositive,
+  getConfigCommonPositiveXL,
   getConfigCutoff,
   getConfigCutoffTokens,
   getConfigCutoffWeight,
+  getConfigEndpoint,
   getConfigLCM,
   getConfigRedrawModels,
   getConfigScheduler
 } from './functions.js';
+import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
 
-interface ISetConfigScheduler {
-  config: 'scheduler';
-  value: boolean;
+interface ISetConfig {
+  config: EditableOptions;
 }
 
-interface ISetConfigCutoff {
-  config: 'cutoff';
-  value: boolean;
-}
-
-interface ISetConfigCutoffTokens {
-  config: 'cutoff-tokens';
-  value: string[];
-}
-
-interface ISetConfigCutoffWeight {
-  config: 'cutoff-weight';
-  value: number;
-}
-
-interface ISetConfigAdetailerCustomModels {
+interface ISetConfigAdetailerCustomModels extends ISetConfig {
   config: 'adetailers-custom-models';
   value: string[];
 }
 
-interface ISetConfigRedrawModels {
-  config: 'redraw-models';
-  value: string[];
-}
-
-interface ISetConfigLCMLoras {
-  config: 'lcm';
-  value: string[];
-}
-
-interface ISetConfigAutoLCM {
+interface ISetConfigAutoLCM extends ISetConfig {
   config: 'auto-lcm';
   value: boolean;
 }
 
-const options = ['scheduler', 'cutoff', 'cutoff-tokens', 'cutoff-weight', 'adetailers-custom-models', 'redraw-models', 'lcm', 'auto-lcm'];
+interface ISetConfigAutoTiledDiffusion extends ISetConfig {
+  config: 'auto-tiled-diffusion';
+  value: TiledDiffusionMethods | false;
+}
+
+interface ISetConfigAutoTiledVAE extends ISetConfig {
+  config: 'auto-tiled-vae';
+  value: boolean;
+}
+
+interface ISetConfigCommonPrompt extends ISetConfig {
+  config: 'common-negative' | 'common-negative-xl' | 'common-positive' | 'common-positive-xl';
+  value: string;
+}
+
+interface ISetConfigCutoff extends ISetConfig {
+  config: 'cutoff';
+  value: boolean;
+}
+
+interface ISetConfigCutoffTokens extends ISetConfig {
+  config: 'cutoff-tokens';
+  value: string[];
+}
+
+interface ISetConfigCutoffWeight extends ISetConfig {
+  config: 'cutoff-weight';
+  value: number;
+}
+
+interface ISetConfigEndpoint extends ISetConfig {
+  config: 'endpoint';
+  value: string;
+}
+
+interface ISetConfigLCMLoras extends ISetConfig {
+  config: 'lcm';
+  value: string[];
+}
+
+interface ISetConfigRedrawModels extends ISetConfig {
+  config: 'redraw-models';
+  value: string[];
+}
+
+interface ISetConfigScheduler extends ISetConfig {
+  config: 'scheduler';
+  value: boolean;
+}
+
+const options: EditableOptions[] = [
+  'adetailers-custom-models',
+  'auto-lcm',
+  'auto-tiled-diffusion',
+  'auto-tiled-vae',
+  'common-negative',
+  'common-negative-xl',
+  'common-positive',
+  'common-positive-xl',
+  'cutoff',
+  'cutoff-tokens',
+  'cutoff-weight',
+  'endpoint',
+  'lcm',
+  'redraw-models',
+  'scheduler'
+];
 
 type ISetConfigOptions =
   | ISetConfigAdetailerCustomModels
   | ISetConfigAutoLCM
+  | ISetConfigAutoTiledDiffusion
+  | ISetConfigAutoTiledVAE
+  | ISetConfigCommonPrompt
   | ISetConfigCutoff
   | ISetConfigCutoffTokens
   | ISetConfigCutoffWeight
+  | ISetConfigEndpoint
   | ISetConfigLCMLoras
   | ISetConfigRedrawModels
   | ISetConfigScheduler;
@@ -103,14 +156,76 @@ export const handler = (argv: ISetConfigArgsOptions) => {
   }
 
   switch (config) {
-    case 'scheduler':
-      if (!Config.get('extensions').includes('scheduler')) {
-        logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+    case 'adetailers-custom-models':
+      {
+        let valueArray = value;
+        if (!Array.isArray(value)) {
+          valueArray = (value as string).split(',');
+        }
+
+        if (!Config.get('extensions').includes('adetailer')) {
+          logger(`Add Details extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+          process.exit(1);
+        }
+
+        Config.set('adetailersCustomModels', Array.from(new Set(valueArray)));
+        getConfigAddDetailerCustomModels();
+      }
+      break;
+    case 'auto-lcm':
+      {
+        const lcm = Config.get('lcm');
+        lcm.auto = getParamBoolean(value);
+        Config.set('lcm', lcm);
+        getConfigAutoLCM();
+      }
+      break;
+    case 'auto-tiled-diffusion':
+      if (!Config.get('extensions').includes('tiled diffusion')) {
+        logger(`Tiled Diffusion extension must be installed. Re-Run "sd-tools config-init" after installing it`);
         process.exit(1);
       }
 
-      Config.set('scheduler', getParamBoolean(value));
-      getConfigScheduler();
+      if (!value || (value as string) === 'false') {
+        Config.set('autoTiledDiffusion', false);
+      } else if (
+        ![TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value as TiledDiffusionMethods)
+      ) {
+        logger(
+          `Value for ${config} must be either "${TiledDiffusionMethods.MixtureOfDiffusers}" or "${TiledDiffusionMethods.MultiDiffusion}"`
+        );
+        process.exit(1);
+      } else {
+        Config.set('autoTiledDiffusion', value);
+      }
+
+      Config.set('autoTiledDiffusion', (value as string) === 'false' ? false : value);
+      getConfigAutoTiledDiffusion();
+      break;
+    case 'auto-tiled-vae':
+      if (!Config.get('extensions').includes('tiled vae')) {
+        logger(`Tiled VAE extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        process.exit(1);
+      }
+
+      Config.set('autoTiledVAE', getParamBoolean(value));
+      getConfigAutoTiledVAE();
+      break;
+    case 'common-negative':
+      Config.set('commonNegative', value);
+      getConfigCommonNegative();
+      break;
+    case 'common-negative-xl':
+      Config.set('commonNegativeXL', value);
+      getConfigCommonNegativeXL();
+      break;
+    case 'common-positive':
+      Config.set('commonPositive', value);
+      getConfigCommonPositive();
+      break;
+    case 'common-positive-xl':
+      Config.set('commonPositiveXL', value);
+      getConfigCommonPositiveXL();
       break;
     case 'cutoff':
       if (!Config.get('extensions').includes('cutoff')) {
@@ -160,21 +275,9 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         getConfigCutoffWeight();
       }
       break;
-    case 'adetailers-custom-models':
-      {
-        let valueArray = value;
-        if (!Array.isArray(value)) {
-          valueArray = (value as string).split(',');
-        }
-
-        if (!Config.get('extensions').includes('adetailer')) {
-          logger(`Add Details extension must be installed. Re-Run "sd-tools config-init" after installing it`);
-          process.exit(1);
-        }
-
-        Config.set('adetailersCustomModels', Array.from(new Set(valueArray)));
-        getConfigAddDetailerCustomModels();
-      }
+    case 'endpoint':
+      Config.set('endpoint', value);
+      getConfigEndpoint();
       break;
 
     case 'lcm':
@@ -197,7 +300,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
               return true;
             }
 
-            const foundLora = getModelLoras(lora);
+            const foundLora = findLORA(lora);
 
             return !foundLora;
           })
@@ -211,7 +314,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         valueArray.forEach((keyValue) => {
           const [category, model] = keyValue.split(':');
 
-          const foundModel = getModelLoras(model);
+          const foundModel = findLORA(model);
           if (category.toLowerCase() === 'sdxl') {
             lcm.sdxl = foundModel?.name;
           } else {
@@ -221,15 +324,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
         Config.set('lcm', lcm);
         getConfigLCM();
-      }
-      break;
-
-    case 'auto-lcm':
-      {
-        const lcm = Config.get('lcm');
-        lcm.auto = getParamBoolean(value);
-        Config.set('lcm', lcm);
-        getConfigAutoLCM();
       }
       break;
 
@@ -252,7 +346,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
               return true;
             }
 
-            const foundModel = getModelCheckpoint(model);
+            const foundModel = findCheckpoint(model);
 
             return !foundModel;
           })
@@ -268,7 +362,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         valueArray.forEach((keyValue) => {
           const [category, model] = keyValue.split(':');
 
-          const foundModel = getModelCheckpoint(model);
+          const foundModel = findCheckpoint(model);
           if (foundModel) {
             redrawModels[category.toLowerCase() as keyof typeof redrawModels] = foundModel.name;
           }
@@ -277,6 +371,16 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         Config.set('redrawModels', redrawModels);
         getConfigRedrawModels();
       }
+      break;
+
+    case 'scheduler':
+      if (!Config.get('extensions').includes('scheduler')) {
+        logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        process.exit(1);
+      }
+
+      Config.set('scheduler', getParamBoolean(value));
+      getConfigScheduler();
       break;
     default:
       break;

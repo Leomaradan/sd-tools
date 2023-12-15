@@ -4,7 +4,7 @@ import { basename } from 'path';
 import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { getModelControlnet, getModelSamplers } from '../commons/models';
+import { findControlnetModel, findSampler } from '../commons/models';
 import { interrogateQuery, renderQuery } from '../commons/query';
 import { ControlNetMode, ControlNetModules, ControlNetResizes, IImg2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 
@@ -12,7 +12,6 @@ export interface IUpscaleOptions {
   checkpoint?: string;
   denoising?: number[];
   recursive?: boolean;
-  scheduler?: boolean;
   upscaling?: number[];
 }
 
@@ -54,7 +53,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery, file: IFile) => {
   }
 
   if (sampler !== undefined) {
-    const foundSampler = getModelSamplers(sampler);
+    const foundSampler = findSampler(sampler);
     if (foundSampler) {
       baseParams.sampler_name = foundSampler.name;
     }
@@ -92,7 +91,7 @@ const prepareQuery = async (file: IFile, scaleFactor: number, denoising_strength
   let baseParams: IImg2ImgQuery = {
     controlNet: {
       control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model: getModelControlnet('tile')?.name as string,
+      controlnet_model: findControlnetModel('tile')?.name as string,
       controlnet_module: ControlNetModules.TileResample,
       resize_mode: ControlNetResizes.Resize
     },
@@ -151,7 +150,7 @@ const getCombination = (filesList: IFile[], denoising: number[], scaleFactors: n
 
 export const upscaleTiles = async (
   source: string,
-  { checkpoint, denoising: denoisingArray, recursive, scheduler, upscaling: upscalingArray }: IUpscaleOptions
+  { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }: IUpscaleOptions
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
@@ -182,6 +181,6 @@ export const upscaleTiles = async (
   }
 
   for await (const queryParams of queries) {
-    await renderQuery(queryParams, 'img2img', scheduler);
+    await renderQuery(queryParams, 'img2img');
   }
 };

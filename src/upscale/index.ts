@@ -3,7 +3,7 @@ import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { getModelCheckpoint } from '../commons/models';
+import { findCheckpoint } from '../commons/models';
 import { IUpscaleOptions, IUpscaleOptionsFull, upscaleTiles } from './upscaleTiles';
 
 export const command = 'upscale <source>';
@@ -23,7 +23,7 @@ export const builder = (builder: yargs.Argv<object>) => {
             return undefined;
           }
 
-          const foundModel = getModelCheckpoint(arg);
+          const foundModel = findCheckpoint(arg);
 
           if (!foundModel) {
             throw new Error(`Checkpoint ${arg} is not supported.`);
@@ -59,11 +59,6 @@ export const builder = (builder: yargs.Argv<object>) => {
       recursive: {
         alias: 'r',
         describe: 'Recursively upscale images from subdirectories',
-        type: 'boolean'
-      },
-      scheduler: {
-        alias: 's',
-        describe: 'If set, the Agent Scheduler endpoint will be used',
         type: 'boolean'
       },
       upscaling: {
@@ -109,7 +104,6 @@ export const handler = (argv: IUpscaleOptionsFull) => {
     checkpoint: argv.checkpoint ?? undefined,
     denoising: argv.denoising ?? undefined,
     recursive: argv.recursive ?? false,
-    scheduler: argv.scheduler ?? Config.get('scheduler'),
     upscaling: argv.upscaling ?? undefined
   };
 

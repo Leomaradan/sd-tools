@@ -6,7 +6,7 @@ import extract from 'png-chunks-extract';
 
 import { Config } from './config';
 import { logger } from './logger';
-import { IMetadata } from './types';
+import { IMetadata, Version } from './types';
 
 const readFile = (path: string): string[] | undefined => {
   try {
@@ -138,14 +138,14 @@ export const getMetadata = (url: string): IMetadata | undefined => {
       const result: IMetadata = {
         // description: metadata.description,
         preferredWeight: metadata['preferred weight'],
-        sdVersion: 'unknown' //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
+        sdVersion: Version.Unknown //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
       };
 
       if (metadata['sd version']) {
         if (metadata['sd version'].toLowerCase().includes('xl')) {
-          result.sdVersion = 'sdxl';
+          result.sdVersion = Version.SDXL;
         } else if (metadata['sd version'].toLowerCase().includes('1.5') || metadata['sd version'].toLowerCase().includes('sd1')) {
-          result.sdVersion = 'sd15';
+          result.sdVersion = Version.SD15;
         }
       }
 
