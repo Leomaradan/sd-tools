@@ -3,7 +3,7 @@ import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { queue } from './queue';
+import { queueFromFile } from './queue';
 
 interface IQueueArgsOptions {
   source: string;
@@ -43,5 +43,5 @@ export const handler = (argv: IQueueArgsOptions) => {
     process.exit(1);
   }
 
-  queue(source, argv.validate ?? false);
+  queueFromFile(source, argv.validate ?? false);
 };

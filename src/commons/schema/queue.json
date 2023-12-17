@@ -1,5 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
     "definitions": {
         "IAdetailerPrompt": {
             "additionalProperties": false,
@@ -38,6 +39,22 @@
         "ICheckpointWithVAE": {
             "additionalProperties": false,
             "properties": {
+                "addAfterNegativePrompt": {
+                    "title": "addAfterNegativePrompt",
+                    "type": "string"
+                },
+                "addAfterPrompt": {
+                    "title": "addAfterPrompt",
+                    "type": "string"
+                },
+                "addBeforeNegativePrompt": {
+                    "title": "addBeforeNegativePrompt",
+                    "type": "string"
+                },
+                "addBeforePrompt": {
+                    "title": "addBeforePrompt",
+                    "type": "string"
+                },
                 "checkpoint": {
                     "title": "checkpoint",
                     "type": "string"
@@ -309,16 +326,66 @@
                 }
             },
             "required": [
-                "clipSkip",
                 "prompt"
             ],
             "title": "IPrompt",
             "type": "object"
+        },
+        "IPromptPermutations": {
+            "additionalProperties": false,
+            "properties": {
+                "afterFilename": {
+                    "title": "afterFilename",
+                    "type": "string"
+                },
+                "afterNegativePrompt": {
+                    "title": "afterNegativePrompt",
+                    "type": "string"
+                },
+                "afterPrompt": {
+                    "title": "afterPrompt",
+                    "type": "string"
+                },
+                "beforeFilename": {
+                    "title": "beforeFilename",
+                    "type": "string"
+                },
+                "beforeNegativePrompt": {
+                    "title": "beforeNegativePrompt",
+                    "type": "string"
+                },
+                "beforePrompt": {
+                    "title": "beforePrompt",
+                    "type": "string"
+                }
+            },
+            "title": "IPromptPermutations",
+            "type": "object"
         }
     },
-    "items": {
-        "$ref": "#/definitions/IPrompt"
+    "properties": {
+        "$schema": {
+            "title": "$schema",
+            "type": "string"
+        },
+        "permutations": {
+            "items": {
+                "$ref": "#/definitions/IPromptPermutations"
+            },
+            "title": "permutations",
+            "type": "array"
+        },
+        "prompts": {
+            "items": {
+                "$ref": "#/definitions/IPrompt"
+            },
+            "title": "prompts",
+            "type": "array"
+        }
     },
-    "type": "array"
+    "required": [
+        "prompts"
+    ],
+    "type": "object"
 }
 

@@ -50,12 +50,12 @@ export const findSampler = (...sampleName: string[]): ISampler | undefined => {
   const AllModels = Config.get('samplers');
 
   return AllModels.find((sampler) => {
-    return sampleName.find((name) => {
-      if (sampler.name.includes(name)) {
+    return sampleName.find((requestName) => {
+      if (sampler.name.includes(requestName)) {
         return sampler.name;
       }
 
-      if (sampler.aliases.find((alias) => alias.includes(name))) {
+      if (sampler.aliases.find((alias) => alias.includes(requestName))) {
         return sampler.name;
       }
     });
@@ -66,9 +66,9 @@ export const findADetailersModel = (...adetaileName: string[]): string | undefin
   const AllModels = Array.from(new Set([...BaseAdetailerModels, ...Config.get('adetailersCustomModels')]));
 
   return AllModels.find((name) => {
-    return adetaileName.find((key) => {
-      if (key.includes(name)) {
-        return key;
+    return adetaileName.find((requestName) => {
+      if (name.includes(requestName)) {
+        return requestName;
       }
     });
   });
@@ -78,12 +78,12 @@ export const findControlnetModel = (...modelsName: string[]): IModel | undefined
   const AllModels = Config.get('controlnetModels');
 
   return AllModels.find((model) => {
-    return modelsName.find((name) => {
-      if (model.name.includes(name)) {
+    return modelsName.find((requestName) => {
+      if (model.name.includes(requestName)) {
         return model.name;
       }
 
-      if (model.hash?.includes(name)) {
+      if (model.hash?.includes(requestName)) {
         return model.name;
       }
     });

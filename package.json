@@ -27,6 +27,19 @@
     "typescript": "^5.2.2",
     "typescript-json-schema": "^0.62.0"
   },
+  "bin": "./sd-tools.js",
+  "main": "./dist/index.js",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "require": {
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js",
     "watch": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js --watch",

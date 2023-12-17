@@ -4,13 +4,19 @@ import yargs from 'yargs';
 import { logger } from '../commons/logger';
 import { IExtractOptions, IExtractOptionsFull, extract } from './extract';
 
-export const command = 'extract <source>';
+export const command = 'extract <source> <format>';
 export const describe = 'extract prompts from directory';
 export const builder = (builder: yargs.Argv<object>) => {
   return builder
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
+      type: 'string'
+    })
+    .positional('format', {
+      choices: ['textbox', 'json'],
+      demandOption: true,
+      describe: 'format of result',
       type: 'string'
     })
     .options({
@@ -41,6 +47,7 @@ export const handler = (argv: IExtractOptionsFull) => {
 
   const options: IExtractOptions = {
     addBefore: argv.addBefore ?? undefined,
+    format: argv.format as 'json' | 'textbox',
     output: argv.output ?? undefined,
     recursive: argv.recursive ?? false
   };

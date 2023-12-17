@@ -1,4 +1,5 @@
 import { Config } from '../commons/config';
+import { BaseAdetailerModels } from '../commons/extensions/adetailer';
 import { logger } from '../commons/logger';
 
 export type ReadonlyOptions =
@@ -53,7 +54,7 @@ export const getConfigUpscalers = () => logger(`Upscalers: ${displayList(Config.
 export const getConfigVAE = () => logger(`VAE: ${displayList(Config.get('vae'))}`);
 
 export const getConfigAddDetailerCustomModels = () =>
-  logger(`Add Detailers Custom models: ${displayList(Config.get('adetailersCustomModels'))}`);
+  logger(`Add Detailers Custom models: \n${displayList(Config.get('adetailersCustomModels'))}\n Base Add Details Models: \n${displayList(BaseAdetailerModels)}`);
 export const getConfigAutoLCM = () => {
   const { auto } = Config.get('lcm');
   logger(`Auto LCM: ${auto ? 'enabled' : 'disabled'}`);
