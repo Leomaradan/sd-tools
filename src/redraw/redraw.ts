@@ -5,19 +5,14 @@ import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findSampler } from '../commons/models';
-import { interrogateQuery, renderQuery } from '../commons/query';
-import {
-  ControlNetMode,
-  ControlNetModules,
-  ControlNetResizes,
-  IImg2ImgQuery,
-  IRedrawMethod,
-  IRedrawOptions,
-  IRedrawStyle,
-  ITxt2ImgQuery
-} from '../commons/types';
+import { interrogateQuery } from '../commons/query';
+import { IPrompt, queue } from '../commons/queue';
+import { ControlNetMode, ControlNetModules, ControlNetResizes, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
 
-const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: IFile) => {
+const IP_ADAPTER = 'ip-adapter';
+const LINEART = 'lineart';
+
+const prepareQueryData = (baseParamsProps: IPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
@@ -40,7 +35,7 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: 
   baseParams.prompt += basePrompt;
 
   if (negativePrompt !== undefined && negativePrompt !== '') {
-    baseParams.negative_prompt += negativePrompt;
+    baseParams.negativePrompt += negativePrompt;
   }
 
   if (steps !== undefined) {
@@ -49,11 +44,11 @@ const prepareQueryData = (baseParamsProps: IImg2ImgQuery | ITxt2ImgQuery, file: 
 
   if (sampler !== undefined) {
     const foundSampler = findSampler(sampler);
-    baseParams.sampler_name = foundSampler?.name;
+    baseParams.sampler = foundSampler?.name;
   }
 
   if (cfg !== undefined) {
-    baseParams.cfg_scale = cfg;
+    baseParams.cfg = cfg;
   }
 
   if (seed !== undefined) {
@@ -91,7 +86,7 @@ const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
 const prepareQueryLineart = async (
   file: IFile,
   style: 'anime' | 'realism',
-  denoising_strength: number,
+  denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
 ) => {
@@ -113,36 +108,31 @@ const prepareQueryLineart = async (
     process.exit(1);
   }
 
-  let baseParams: IImg2ImgQuery = {
-    controlNet: {
-      control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model,
-      controlnet_module: ControlNetModules.LineArt,
-      resize_mode: ControlNetResizes.Resize
-    },
-    denoising_strength,
+  let baseParams: IPrompt & { sdxl: boolean } = {
+    checkpoints: sd_model_checkpoint,
+    controlNet: [
+      {
+        control_mode: ControlNetMode.ControleNetImportant,
+        controlnet_model,
+        controlnet_module: ControlNetModules.LineArt,
+        resize_mode: ControlNetResizes.Resize
+      }
+    ],
+    denoising: denoising_strength,
+    enableHighRes: true,
+    filename: `[datetime]-{denoising_strength}-${basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', '')}`,
     height,
-    init_images: [getBase64Image(file.filename)],
-    negative_prompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
-    override_settings: {
-      samples_filename_pattern: `[datetime]-${denoising_strength}-${basename(file.file)
-        .replace('.png', '')
-        .replace('.jpg', '')
-        .replace('.jpeg', '')}`,
-      sd_model_checkpoint
-    },
+    initImage: file.filename,
+    negativePrompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
-    restore_faces: true,
+    restoreFaces: true,
     sdxl: !!sdxl,
     width
   };
 
   let ready = false;
   if (file.data) {
-    baseParams = prepareQueryData(baseParams, file) as IImg2ImgQuery;
-
-    width = baseParams.width ?? width;
-    height = baseParams.height ?? height;
+    baseParams = prepareQueryData(baseParams, file);
 
     ready = true;
   } else {
@@ -155,14 +145,14 @@ const prepareQueryLineart = async (
   }
 
   if (ready) {
-    return { baseParams, height, width };
+    return baseParams;
   }
 };
 
 const prepareQueryIpAdapter = async (
   file: IFile,
   style: 'anime' | 'realism',
-  denoising_strength: number,
+  denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
 ) => {
@@ -184,27 +174,28 @@ const prepareQueryIpAdapter = async (
     process.exit(1);
   }
 
-  let baseParams: ITxt2ImgQuery = {
-    controlNet: {
-      control_mode: ControlNetMode.ControleNetImportant,
-      controlnet_model,
-      controlnet_module: sdxl ? ControlNetModules.IPAdapterXL : ControlNetModules.IPAdapter,
-      input_image: getBase64Image(file.filename),
-      resize_mode: ControlNetResizes.Resize
-    },
-    denoising_strength,
+  let baseParams: IPrompt & { sdxl: boolean } = {
+    checkpoints: sd_model_checkpoint,
+    controlNet: [
+      {
+        control_mode: ControlNetMode.ControleNetImportant,
+        controlnet_model,
+        controlnet_module: sdxl ? ControlNetModules.IPAdapterXL : ControlNetModules.IPAdapter,
+        input_image: getBase64Image(file.filename),
+        resize_mode: ControlNetResizes.Resize
+      }
+    ],
+    denoising: denoising_strength,
+
+    enableHighRes: true,
     height,
+
     // ,
-    negative_prompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
-    override_settings: {
-      samples_filename_pattern: `[datetime]-${denoising_strength}-${basename(file.file)
-        .replace('.png', '')
-        .replace('.jpg', '')
-        .replace('.jpeg', '')}`,
-      sd_model_checkpoint
-    },
+    negativePrompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
+    pattern: `[datetime]-${denoising_strength}-${basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', '')}`,
+
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
-    restore_faces: true,
+    restoreFaces: true,
     sdxl: !!sdxl,
     width
   };
@@ -212,9 +203,6 @@ const prepareQueryIpAdapter = async (
   let ready = false;
   if (file.data) {
     baseParams = prepareQueryData(baseParams, file);
-
-    width = baseParams.width ?? width;
-    height = baseParams.height ?? height;
 
     ready = true;
   } else {
@@ -227,30 +215,24 @@ const prepareQueryIpAdapter = async (
   }
 
   if (ready) {
-    return { baseParams, height, width };
+    return baseParams;
   }
 };
 
-const getCombination = (filesList: IFile[], denoising: number[], scaleFactors: number[], styles: IRedrawStyle, methods: IRedrawMethod) => {
+const getCombination = (filesList: IFile[], styles: IRedrawStyle, methods: IRedrawMethod) => {
   const combinations: Array<{
-    denoising_strength: number;
     file: IFile;
     method: 'ip-adapter' | 'lineart';
-    scaleFactor: number;
     style: 'anime' | 'realism';
   }> = [];
 
-  const methodArray: Array<'ip-adapter' | 'lineart'> = methods === 'both' ? ['ip-adapter', 'lineart'] : [methods];
+  const methodArray: Array<'ip-adapter' | 'lineart'> = methods === 'both' ? [IP_ADAPTER, LINEART] : [methods];
   const stylesArray: Array<'anime' | 'realism'> = styles === 'both' ? ['anime', 'realism'] : [styles];
 
   for (const file of filesList) {
-    for (const denoising_strength of denoising) {
-      for (const scaleFactor of scaleFactors) {
-        for (const style of stylesArray) {
-          for (const method of methodArray) {
-            combinations.push({ denoising_strength, file, method, scaleFactor, style });
-          }
-        }
+    for (const style of stylesArray) {
+      for (const method of methodArray) {
+        combinations.push({ file, method, style });
       }
     }
   }
@@ -267,56 +249,48 @@ export const redraw = async (
     process.exit(1);
   }
 
-  const queriesImg2Img: IImg2ImgQuery[] = [];
-  const queriesTxt2Img: ITxt2ImgQuery[] = [];
+  const queries: IPrompt[] = [];
 
   const filesList = getFiles(source, recursive);
 
   const denoising = denoisingArray ?? [0.55];
   const upscaling = upscalingArray ?? [1];
 
-  const combinations = getCombination(filesList, denoising, upscaling, style, method);
+  const combinations = getCombination(filesList, style, method);
 
   for await (const combination of combinations) {
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
 
-    const store = combination.method === 'ip-adapter' ? queriesTxt2Img : queriesImg2Img;
-    const prepareQuery = combination.method === 'ip-adapter' ? prepareQueryIpAdapter : prepareQueryLineart;
+    const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryLineart;
 
-    const query = await prepareQuery(combination.file, combination.style, combination.denoising_strength, prefix, sdxl);
+    const query = await prepareQuery(combination.file, combination.style, denoising, prefix, sdxl);
+
+    //query.
 
     if (query) {
-      const { baseParams, height, width } = query;
-      if (combination.scaleFactor !== 1) {
-        baseParams.enable_hr = true;
-        baseParams.hr_scale = combination.scaleFactor;
-        baseParams.width = width * combination.scaleFactor;
-        baseParams.height = height * combination.scaleFactor;
-      }
+      query.scaleFactor = upscaling;
 
-      if (upscaler) {
-        baseParams.hr_upscaler = upscaler;
-      }
+      query.upscaler = upscaler;
 
-      store.push(baseParams);
+      queries.push(query);
     }
   }
 
   //checkpoint: "481d75ae9d",
 
-  queriesTxt2Img.sort((a, b) =>
-    (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
-  );
+  queries.sort((a, b) => (a.checkpoints as string).localeCompare(b.checkpoints as string));
 
-  queriesImg2Img.sort((a, b) =>
+  /*queriesImg2Img.sort((a, b) =>
     (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
-  );
+  );*/
 
-  for await (const queryParams of queriesTxt2Img) {
+  queue({ prompts: queries }, false);
+
+  /*for await (const queryParams of queriesTxt2Img) {
     await renderQuery(queryParams, 'txt2img');
   }
 
   for await (const queryParams of queriesImg2Img) {
     await renderQuery(queryParams, 'img2img');
-  }
+  }*/
 };

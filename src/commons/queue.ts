@@ -3,7 +3,8 @@ import { getCutOffTokens } from '../commons/extensions/cutoff';
 import { logger, writeLog } from '../commons/logger';
 import { findADetailersModel, findCheckpoint, findStyle, findUpscaler, findVAE } from '../commons/models';
 import { renderQuery } from '../commons/query';
-import { ITxt2ImgQuery } from '../commons/types';
+import { IControlNet, IImg2ImgQuery, ITxt2ImgQuery } from '../commons/types';
+import { getBase64Image } from './file';
 
 export interface IAdetailerPrompt {
   height?: number;
@@ -30,16 +31,19 @@ export interface IPrompt {
   cfg?: number | number[];
   checkpoints?: ICheckpointWithVAE[] | string | string[];
   clipSkip?: number | number[];
+  controlNet?: IControlNet | IControlNet[];
   count?: number;
   denoising?: number | number[];
   enableHighRes?: 'both' | boolean;
   filename?: string;
   height?: number | number[];
+  initImage?: string | string[];
   negativePrompt?: string;
   pattern?: string;
   prompt: string;
   restoreFaces?: 'both' | boolean;
   sampler?: string | string[];
+  scaleFactor?: number | number[];
   seed?: number | number[];
   steps?: number | number[];
   styles?: string | string[];
@@ -51,20 +55,23 @@ export interface IPrompt {
 
 export interface IPromptSingle {
   adetailer?: IAdetailerPrompt[];
-  autoCutOff: boolean;
-  autoLCM: boolean;
+  autoCutOff?: boolean;
+  autoLCM?: boolean;
   cfg?: number;
   checkpoints?: string;
   clipSkip?: number;
+  controlNet?: IControlNet[];
   denoising?: number;
   enableHighRes: boolean;
   filename?: string;
   height?: number;
+  initImage?: string;
   negativePrompt?: string;
   pattern?: string;
   prompt: string;
   restoreFaces: boolean;
   sampler?: string;
+  scaleFactor?: number;
   seed?: number;
   steps?: number;
   styles?: string[];
@@ -80,6 +87,7 @@ export interface IPromptPermutations {
   beforeFilename?: string;
   beforeNegativePrompt?: string;
   beforePrompt?: string;
+  overwrite?: Partial<IPromptSingle>;
 }
 
 //
@@ -88,6 +96,210 @@ export interface IPrompts {
   permutations?: IPromptPermutations[];
   prompts: IPrompt[];
 }
+
+interface IPrepareSingleQueryPermutations {
+  autoCutOffArray: boolean[];
+  autoLCMArray: boolean[];
+  cfgArray: (number | undefined)[];
+  checkpointsArray: Array<ICheckpointWithVAE | string | undefined>;
+  clipSkipArray: (number | undefined)[];
+  denoisingArray: (number | undefined)[];
+  enableHighResArray: boolean[];
+  heightArray: (number | undefined)[];
+  initImageArray: (string | undefined)[];
+  permutations?: IPromptPermutations[];
+  restoreFacesArray: boolean[];
+  samplerArray: (string | undefined)[];
+  scaleFactorsArray: (number | undefined)[];
+  seedArray: (number | undefined)[];
+  stepsArray: (number | undefined)[];
+  stylesSetsArray: Array<string | string[] | undefined[]>;
+  upscalerArray: (string | undefined)[];
+  vaeArray: (string | undefined)[];
+  widthArray: (number | undefined)[];
+}
+
+const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSingleQueryPermutations): [string, IPromptSingle][] => {
+  const prompts: [string, IPromptSingle][] = [];
+  const {
+    autoCutOffArray,
+    autoLCMArray,
+    cfgArray,
+    checkpointsArray,
+    clipSkipArray,
+    denoisingArray,
+    enableHighResArray,
+    heightArray,
+    initImageArray,
+    permutations,
+    restoreFacesArray,
+    samplerArray,
+    scaleFactorsArray,
+    seedArray,
+    stepsArray,
+    stylesSetsArray,
+    upscalerArray,
+    vaeArray,
+    widthArray
+  } = options;
+  autoCutOffArray.forEach((autoCutOff) => {
+    autoLCMArray.forEach((autoLCM) => {
+      enableHighResArray.forEach((enableHighRes) => {
+        restoreFacesArray.forEach((restoreFaces) => {
+          cfgArray.forEach((cfg) => {
+            denoisingArray.forEach((denoising) => {
+              heightArray.forEach((height) => {
+                samplerArray.forEach((sampler) => {
+                  seedArray.forEach((seed) => {
+                    stepsArray.forEach((steps) => {
+                      initImageArray.forEach((initImage) => {
+                        upscalerArray.forEach((upscaler) => {
+                          scaleFactorsArray.forEach((scaleFactor) => {
+                            vaeArray.forEach((vaeOption) => {
+                              widthArray.forEach((width) => {
+                                checkpointsArray.forEach((checkpointsOption) => {
+                                  clipSkipArray.forEach((clipSkip) => {
+                                    stylesSetsArray.forEach((stylesSets) => {
+                                      const count = basePrompt.count ?? 1;
+
+                                      for (let i = 0; i < count; i++) {
+                                        const stylesSet = Array.isArray(stylesSets) ? stylesSets : [stylesSets];
+                                        const styles = Array.isArray(basePrompt.styles)
+                                          ? basePrompt.styles
+                                          : [basePrompt.styles ?? undefined];
+
+                                        let vae = vaeOption;
+                                        let checkpoints;
+
+                                        let promptText = basePrompt.prompt;
+                                        let negativePromptText = basePrompt.negativePrompt;
+
+                                        if (checkpointsOption) {
+                                          if (typeof checkpointsOption === 'string') {
+                                            checkpoints = checkpointsOption;
+                                          } else {
+                                            vae = checkpointsOption.vae ?? vae;
+                                            checkpoints = checkpointsOption.checkpoint;
+                                            promptText = checkpointsOption.addAfterPrompt
+                                              ? `${promptText}, ${checkpointsOption.addAfterPrompt}`
+                                              : promptText;
+                                            promptText = checkpointsOption.addBeforePrompt
+                                              ? `${checkpointsOption.addBeforePrompt}, ${promptText}`
+                                              : promptText;
+                                            if (
+                                              !negativePromptText &&
+                                              (checkpointsOption.addBeforeNegativePrompt || checkpointsOption.addAfterNegativePrompt)
+                                            ) {
+                                              negativePromptText = '';
+                                            }
+                                            negativePromptText = checkpointsOption.addAfterNegativePrompt
+                                              ? `${negativePromptText}, ${checkpointsOption.addAfterNegativePrompt}`
+                                              : negativePromptText;
+                                            negativePromptText = checkpointsOption.addBeforeNegativePrompt
+                                              ? `${checkpointsOption.addBeforeNegativePrompt}, ${negativePromptText}`
+                                              : negativePromptText;
+                                          }
+                                        }
+
+                                        const prompt: IPromptSingle = {
+                                          adetailer: basePrompt.adetailer,
+                                          autoCutOff,
+                                          autoLCM,
+                                          cfg,
+                                          checkpoints,
+                                          clipSkip,
+                                          denoising,
+                                          enableHighRes,
+                                          filename: basePrompt.filename,
+                                          height,
+                                          initImage,
+                                          negativePrompt: negativePromptText,
+                                          pattern: basePrompt.pattern,
+                                          prompt: promptText,
+                                          restoreFaces,
+                                          sampler,
+                                          scaleFactor,
+                                          seed: seed !== undefined && seed !== -1 ? seed + i : undefined,
+                                          steps,
+                                          styles: Array.from(new Set([...styles, ...stylesSet])).filter(
+                                            (style) => style !== undefined
+                                          ) as string[],
+                                          upscaler,
+                                          vae,
+                                          width
+                                        };
+
+                                        prompts.push([
+                                          (checkpoints ?? '') + (vae ?? '') + (upscaler ?? '') + JSON.stringify(prompt) + i,
+                                          prompt
+                                        ]);
+
+                                        if (permutations) {
+                                          permutations.forEach((permutation) => {
+                                            const permutedPrompt = { ...prompt };
+
+                                            if (permutation.overwrite) {
+                                              Object.assign(permutedPrompt, permutation.overwrite);
+                                            }
+
+                                            if (permutation.afterFilename) {
+                                              permutedPrompt.filename = permutedPrompt.filename
+                                                ? `${permutedPrompt.filename}${permutation.afterFilename}`
+                                                : permutation.afterFilename;
+                                            }
+
+                                            if (permutation.beforeFilename) {
+                                              permutedPrompt.filename = permutedPrompt.filename
+                                                ? `${permutation.beforeFilename}${permutedPrompt.filename}`
+                                                : permutation.beforeFilename;
+                                            }
+
+                                            if (permutation.afterPrompt) {
+                                              permutedPrompt.prompt = permutedPrompt.prompt
+                                                ? `${permutedPrompt.prompt}, ${permutation.afterPrompt}`
+                                                : permutation.afterPrompt;
+                                            }
+
+                                            if (permutation.beforePrompt) {
+                                              permutedPrompt.prompt = permutedPrompt.prompt
+                                                ? `${permutation.beforePrompt}, ${permutedPrompt.prompt}`
+                                                : permutation.beforePrompt;
+                                            }
+
+                                            prompts.push([
+                                              (permutedPrompt.checkpoints ?? '') +
+                                                (permutedPrompt.vae ?? '') +
+                                                (permutedPrompt.upscaler ?? '') +
+                                                JSON.stringify(permutedPrompt) +
+                                                i,
+                                              permutedPrompt
+                                            ]);
+                                          });
+                                        }
+                                      }
+
+                                      //
+                                    });
+                                  });
+                                });
+                              });
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  return prompts;
+};
 
 const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
   const prompts = new Map<string, IPromptSingle>();
@@ -104,7 +316,9 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
     const samplerArray = Array.isArray(basePrompt.sampler) ? basePrompt.sampler : [basePrompt.sampler ?? undefined];
     const seedArray = Array.isArray(basePrompt.seed) ? basePrompt.seed : [basePrompt.seed ?? undefined];
     const stepsArray = Array.isArray(basePrompt.steps) ? basePrompt.steps : [basePrompt.steps ?? undefined];
+    const scaleFactorsArray = Array.isArray(basePrompt.scaleFactor) ? basePrompt.scaleFactor : [basePrompt.scaleFactor ?? undefined];
     const upscalerArray = Array.isArray(basePrompt.upscaler) ? basePrompt.upscaler : [basePrompt.upscaler ?? undefined];
+    const initImageArray = Array.isArray(basePrompt.initImage) ? basePrompt.initImage : [basePrompt.initImage ?? undefined];
     const vaeArray = Array.isArray(basePrompt.vae) ? basePrompt.vae : [basePrompt.vae ?? undefined];
     const widthArray = Array.isArray(basePrompt.width) ? basePrompt.width : [basePrompt.width ?? undefined];
     const clipSkipArray = Array.isArray(basePrompt.clipSkip) ? basePrompt.clipSkip : [basePrompt.clipSkip ?? undefined];
@@ -112,111 +326,30 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
 
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? undefined];
 
-    autoCutOffArray.forEach((autoCutOff) => {
-      autoLCMArray.forEach((autoLCM) => {
-        enableHighResArray.forEach((enableHighRes) => {
-          restoreFacesArray.forEach((restoreFaces) => {
-            cfgArray.forEach((cfg) => {
-              denoisingArray.forEach((denoising) => {
-                heightArray.forEach((height) => {
-                  samplerArray.forEach((sampler) => {
-                    seedArray.forEach((seed) => {
-                      stepsArray.forEach((steps) => {
-                        upscalerArray.forEach((upscaler) => {
-                          vaeArray.forEach((vaeOption) => {
-                            widthArray.forEach((width) => {
-                              checkpointsArray.forEach((checkpointsOption) => {
-                                clipSkipArray.forEach((clipSkip) => {
-                                  stylesSetsArray.forEach((stylesSets) => {
-                                    const count = basePrompt.count ?? 1;
+    const results = prepareSingleQueryPermutations(basePrompt, {
+      autoCutOffArray,
+      autoLCMArray,
+      cfgArray,
+      checkpointsArray,
+      clipSkipArray,
+      denoisingArray,
+      enableHighResArray,
+      heightArray,
+      initImageArray,
+      permutations: basePrompts.permutations,
+      restoreFacesArray,
+      samplerArray,
+      scaleFactorsArray,
+      seedArray,
+      stepsArray,
+      stylesSetsArray,
+      upscalerArray,
+      vaeArray,
+      widthArray
+    });
 
-                                    for (let i = 0; i < count; i++) {
-                                      const stylesSet = Array.isArray(stylesSets) ? stylesSets : [stylesSets];
-                                      const styles = Array.isArray(basePrompt.styles)
-                                        ? basePrompt.styles
-                                        : [basePrompt.styles ?? undefined];
-
-                                      let vae = vaeOption;
-                                      let checkpoints;
-
-                                      let promptText = basePrompt.prompt;
-                                      let negativePromptText = basePrompt.negativePrompt;
-
-                                      if (checkpointsOption) {
-                                        if (typeof checkpointsOption === 'string') {
-                                          checkpoints = checkpointsOption;
-                                        } else {
-                                          vae = checkpointsOption.vae ?? vae;
-                                          checkpoints = checkpointsOption.checkpoint;
-                                          promptText = checkpointsOption.addAfterPrompt
-                                            ? `${promptText}, ${checkpointsOption.addAfterPrompt}`
-                                            : promptText;
-                                          promptText = checkpointsOption.addBeforePrompt
-                                            ? `${checkpointsOption.addBeforePrompt}, ${promptText}`
-                                            : promptText;
-                                          if (
-                                            !negativePromptText &&
-                                            (checkpointsOption.addBeforeNegativePrompt || checkpointsOption.addAfterNegativePrompt)
-                                          ) {
-                                            negativePromptText = '';
-                                          }
-                                          negativePromptText = checkpointsOption.addAfterNegativePrompt
-                                            ? `${negativePromptText}, ${checkpointsOption.addAfterNegativePrompt}`
-                                            : negativePromptText;
-                                          negativePromptText = checkpointsOption.addBeforeNegativePrompt
-                                            ? `${checkpointsOption.addBeforeNegativePrompt}, ${negativePromptText}`
-                                            : negativePromptText;
-                                        }
-                                      }
-
-                                      const prompt: IPromptSingle = {
-                                        adetailer: basePrompt.adetailer,
-                                        autoCutOff,
-                                        autoLCM,
-                                        cfg,
-                                        checkpoints,
-                                        clipSkip,
-                                        denoising,
-                                        enableHighRes,
-                                        filename: basePrompt.filename,
-                                        height,
-                                        negativePrompt: negativePromptText,
-                                        pattern: basePrompt.pattern,
-                                        prompt: promptText,
-                                        restoreFaces,
-                                        sampler,
-                                        seed: seed !== undefined && seed !== -1 ? seed + i : undefined,
-                                        steps,
-                                        styles: Array.from(new Set([...styles, ...stylesSet])).filter(
-                                          (style) => style !== undefined
-                                        ) as string[],
-                                        upscaler,
-                                        vae,
-                                        width
-                                      };
-
-                                      prompts.set(
-                                        (checkpoints ?? '') + (vae ?? '') + (upscaler ?? '') + JSON.stringify(prompt) + i,
-                                        prompt
-                                      );
-                                    }
-
-                                    //
-                                  });
-                                });
-                              });
-                            });
-                          });
-                        });
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+    results.forEach(([key, prompt]) => {
+      prompts.set(key, prompt);
     });
   });
 
@@ -270,53 +403,81 @@ const validateTemplate = (template: string) => {
   });
 };
 
-export const queue = async (config: IPrompts, validateOnly: boolean) => {
-  const queries: ITxt2ImgQuery[] = [];
+export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
+  const queries: Array<IImg2ImgQuery | ITxt2ImgQuery> = [];
 
   const queriesArray = prepareQueries(config);
 
-  queriesArray.forEach((jsonQuery) => {
-    const query: ITxt2ImgQuery = {
-      cfg_scale: jsonQuery.cfg,
-      denoising_strength: jsonQuery.denoising,
-      enable_hr: jsonQuery.enableHighRes,
-      height: jsonQuery.height,
-      lcm: jsonQuery.autoLCM ?? false,
-      negative_prompt: jsonQuery.negativePrompt,
+  queriesArray.forEach((jsonQuery2) => {
+    const {
+      adetailer,
+      filename,
+      autoCutOff,
+      autoLCM,
+      cfg,
+      checkpoints,
+      clipSkip,
+      denoising,
+      enableHighRes,
+      height,
+      initImage,
+      negativePrompt,
+      pattern,
+      prompt,
+      restoreFaces,
+      sampler,
+      scaleFactor,
+      seed,
+      steps,
+      styles,
+      upscaler,
+      vae,
+      width
+    } = jsonQuery2;
+
+    const query: IImg2ImgQuery | ITxt2ImgQuery = {
+      cfg_scale: cfg,
+      denoising_strength: denoising,
+      enable_hr: enableHighRes,
+      height: height,
+      hr_scale: scaleFactor,
+      init_images: initImage ? [getBase64Image(initImage)] : undefined,
+      lcm: autoLCM ?? false,
+      negative_prompt: negativePrompt,
       override_settings: {},
-      prompt: jsonQuery.prompt,
-      restore_faces: jsonQuery.restoreFaces,
-      sampler_name: jsonQuery.sampler,
+      prompt: prompt,
+      restore_faces: restoreFaces,
+      sampler_name: sampler,
       sdxl: false,
-      seed: jsonQuery.seed,
-      steps: jsonQuery.steps,
-      width: jsonQuery.width
+      seed: seed,
+      steps: steps,
+      width: width
     };
 
-    if (jsonQuery.vae) {
-      const foundVAE = findVAE(jsonQuery.vae);
+    if (vae) {
+      const foundVAE = findVAE(vae);
       if (foundVAE) {
         query.vae = foundVAE;
       } else {
-        logger(`Invalid VAE ${jsonQuery.vae}`);
+        logger(`Invalid VAE ${vae}`);
         process.exit(1);
       }
     }
 
-    if (jsonQuery.autoCutOff) {
-      const tokens = getCutOffTokens(jsonQuery.prompt);
+    if (autoCutOff) {
+      const tokens = getCutOffTokens(prompt);
       query.cutOff = {
         tokens
       };
     }
 
-    if (jsonQuery.upscaler && typeof jsonQuery.upscaler === 'string') {
-      const foundUpscaler = findUpscaler(jsonQuery.upscaler);
+    if (upscaler && typeof upscaler === 'string') {
+      const foundUpscaler = findUpscaler(upscaler);
 
       if (foundUpscaler) {
         query.hr_upscaler = foundUpscaler.name;
       } else {
-        logger(`Invalid Upscaler ${jsonQuery.upscaler}`);
+        logger(`Invalid Upscaler ${upscaler}`);
         process.exit(1);
       }
     }
@@ -332,14 +493,14 @@ export const queue = async (config: IPrompts, validateOnly: boolean) => {
       query.hr_negative_prompt = '';
     }
 
-    if (jsonQuery.clipSkip) {
-      query.override_settings.CLIP_stop_at_last_layers = jsonQuery.clipSkip;
+    if (clipSkip) {
+      query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
 
-    if (jsonQuery.adetailer && jsonQuery.adetailer.length > 0) {
+    if (adetailer && adetailer.length > 0) {
       query.adetailer = [];
 
-      jsonQuery.adetailer.forEach((adetailer) => {
+      adetailer.forEach((adetailer) => {
         const foundModel = findADetailersModel(adetailer.model);
         if (foundModel) {
           const adetailerQuery: IAdetailer = {
@@ -349,8 +510,8 @@ export const queue = async (config: IPrompts, validateOnly: boolean) => {
             ad_prompt: adetailer.prompt
           };
           if (adetailer.height || adetailer.width) {
-            adetailerQuery.ad_inpaint_height = adetailer.height ?? jsonQuery.height ?? 512;
-            adetailerQuery.ad_inpaint_width = adetailer.width ?? jsonQuery.width ?? 512;
+            adetailerQuery.ad_inpaint_height = adetailer.height ?? height ?? 512;
+            adetailerQuery.ad_inpaint_width = adetailer.width ?? width ?? 512;
             adetailerQuery.ad_use_inpaint_width_height = true;
           }
 
@@ -362,39 +523,36 @@ export const queue = async (config: IPrompts, validateOnly: boolean) => {
       });
     }
 
-    if (jsonQuery.checkpoints && typeof jsonQuery.checkpoints === 'string') {
-      const modelCheckpoint = findCheckpoint(jsonQuery.checkpoints);
+    if (checkpoints && typeof checkpoints === 'string') {
+      const modelCheckpoint = findCheckpoint(checkpoints);
       if (modelCheckpoint) {
         query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
-        logger(`Invalid checkpoints ${jsonQuery.checkpoints}`);
+        logger(`Invalid checkpoints ${checkpoints}`);
         process.exit(1);
       }
     }
 
-    if (jsonQuery.pattern) {
-      query.override_settings.samples_filename_pattern = jsonQuery.pattern;
+    if (pattern) {
+      query.override_settings.samples_filename_pattern = pattern;
 
-      if (jsonQuery.filename) {
+      if (filename) {
         if (!query.override_settings.samples_filename_pattern.includes('{filename}')) {
           query.override_settings.samples_filename_pattern = '{filename}-' + query.override_settings.samples_filename_pattern;
         }
 
-        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
-          '{filename}',
-          jsonQuery.filename
-        );
+        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace('{filename}', filename);
       }
-    } else if (jsonQuery.filename) {
-      query.override_settings.samples_filename_pattern = `${jsonQuery.filename}-[datetime]`;
+    } else if (filename) {
+      query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
 
     if (query.override_settings.samples_filename_pattern) {
       validateTemplate(query.override_settings.samples_filename_pattern);
     }
 
-    if (jsonQuery.styles && jsonQuery.styles.length > 0) {
-      jsonQuery.styles.forEach((styleName) => {
+    if (styles && styles.length > 0) {
+      styles.forEach((styleName) => {
         if (!styleName) {
           return;
         }
@@ -430,6 +588,12 @@ export const queue = async (config: IPrompts, validateOnly: boolean) => {
     queries.push(query);
   });
 
+  return queries;
+};
+
+export const queue = async (config: IPrompts, validateOnly: boolean) => {
+  const queries = prepareQueue(config);
+
   logger(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {
     writeLog(queries);
@@ -437,6 +601,10 @@ export const queue = async (config: IPrompts, validateOnly: boolean) => {
   }
 
   for await (const queryParams of queries) {
-    await renderQuery(queryParams, 'txt2img');
+    if ((queryParams as IImg2ImgQuery).init_images) {
+      await renderQuery(queryParams as IImg2ImgQuery, 'img2img');
+    } else {
+      await renderQuery(queryParams as ITxt2ImgQuery, 'txt2img');
+    }
   }
 };

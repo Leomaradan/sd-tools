@@ -42,7 +42,6 @@ const getPromptTextBox = (options: {
   const promptOptions: IFormatTextbox = {};
 
   promptOptions.prompt = addBeforePrompt !== '' ? `${addBeforePrompt}, ${basePrompt}` : basePrompt;
-  //let prompt = addBeforePrompt !== '' ? `--prompt "${addBeforePrompt}, ${basePrompt}" ` : `--prompt "${basePrompt}" `;
 
   if (negativePrompt !== '') {
     promptOptions.negative_prompt = negativePrompt;
@@ -180,7 +179,7 @@ const getPromptJSON = (options: {
 
 const getAdetailerParamFromregex = (param: string, regex: RegExp) => {
   let match;
-  const results: Record<number, string> = {};
+  const results: Record<string, string> = {};
   while ((match = regex.exec(param)) !== null) {
     // This is necessary to avoid infinite loops with zero-width matches
     if (match.index === regex.lastIndex) {
@@ -189,20 +188,20 @@ const getAdetailerParamFromregex = (param: string, regex: RegExp) => {
 
     const index = match[2] ? Number(match[2]) : 1;
 
-    results[index] = match[3];
+    results[String(index)] = match[3];
   }
 
   return results;
 };
 
 const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
-  const adetailModelRegex = /ADetailer model( ([0-9]+)nd)?: ([a-z0-9 +_.]+),/i;
+  const adetailModelRegex = /ADetailer model( (\d+)nd)?: ([a-z0-9 +_.]+),/i;
 
-  const adetailDenoisingRegex = /ADetailer denoising strength( ([0-9]+)nd)?: ([a-z0-9 +_.]+),/i;
-  const adetailPromptRegex = /ADetailer prompt( ([0-9]+)nd)?: (".*"+|[a-z]+),/i;
-  const adetailNegativePromptRegex = /ADetailer negative prompt( ([0-9]+)nd)?: (".*"+|[a-z]+),/i;
-  const adetailWidthRegex = /ADetailer inpaint width( ([0-9]+)nd)?: ([0-9]+),/i;
-  const adetailHeightRegex = /ADetailer inpaint height( ([0-9]+)nd)?: ([0-9]+),/i;
+  const adetailDenoisingRegex = /ADetailer denoising strength( (\d+)nd)?: ([a-z0-9 +_.]+),/i;
+  const adetailPromptRegex = /ADetailer prompt( (\d+)nd)?: (".*"+|[a-z]+),/i;
+  const adetailNegativePromptRegex = /ADetailer negative prompt( (\d+)nd)?: (".*"+|[a-z]+),/i;
+  const adetailWidthRegex = /ADetailer inpaint width( (\d+)nd)?: (\d+),/i;
+  const adetailHeightRegex = /ADetailer inpaint height( (\d+)nd)?: (\d+),/i;
 
   const models = getAdetailerParamFromregex(otherParams, adetailModelRegex);
   const denoise = getAdetailerParamFromregex(otherParams, adetailDenoisingRegex);
@@ -215,12 +214,12 @@ const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
 
   Object.entries(models).forEach(([index, model]) => {
     results[index] = {
-      height: height[index as any] ? Number(height[index as any]) : undefined,
+      height: height[index] ? Number(height[index]) : undefined,
       model,
-      negative: negativePrompt[index as any],
-      prompt: Prompt[index as any],
-      strength: denoise[index as any] ? Number(denoise[index as any]) : undefined,
-      width: width[index as any] ? Number(width[index as any]) : undefined
+      negative: negativePrompt[index],
+      prompt: Prompt[index],
+      strength: denoise[index] ? Number(denoise[index]) : undefined,
+      width: width[index] ? Number(width[index]) : undefined
     };
   });
 
@@ -228,11 +227,11 @@ const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
 };
 
 const getPrompts = (data: string[], format: 'json' | 'textbox', addBeforePrompts: string[]) => {
-  //const [basePrompt, negativePromptRaw, otherParams] = data;
+  const hasNegative = data[data.length - 2].startsWith('Negative prompt: ');
 
   const otherParams = data[data.length - 1];
-  const negativePromptRaw = data[data.length - 2];
-  const basePrompt = data.slice(0, data.length - 2).join(' ');
+  const negativePromptRaw = hasNegative ? data[data.length - 2] : '';
+  const basePrompt = hasNegative ? data.slice(0, data.length - 2).join(' ') : data.slice(0, data.length - 1).join(' ');
 
   const negativePrompt = negativePromptRaw.replace('Negative prompt: ', '');
 
@@ -242,12 +241,6 @@ const getPrompts = (data: string[], format: 'json' | 'textbox', addBeforePrompts
   const seedTest = /Seed: (\d+),/i.exec(otherParams);
   const sizesTest = /Size: (\d+)x(\d+),/i.exec(otherParams);
 
-  const modelTest = /Model: ([a-z0-9 +_.]+),/i.exec(otherParams);
-  const vaeTest = /VAE: ([a-z0-9 +_.]+),/i.exec(otherParams);
-  const denoising = /Denoising strength: ([0-9.]+),/i.exec(otherParams);
-  const clipSkip = /Clip skip: ([0-9]+),/i.exec(otherParams);
-  const hiresUpscaler = /Hires upscaler: ([a-z0-9 +_.]+),/i.exec(otherParams);
-
   const steps = stepsTest ? Number(stepsTest[1]) : NaN;
   const sampler = samplerTest ? samplerTest[1] : '';
   const cfg = cfgTest ? Number(cfgTest[1]) : NaN;
@@ -256,6 +249,12 @@ const getPrompts = (data: string[], format: 'json' | 'textbox', addBeforePrompts
 
   return addBeforePrompts.map((addBeforePrompt) => {
     if (format === 'json') {
+      const modelTest = /Model: ([a-z0-9 +_.]+),/i.exec(otherParams);
+      const vaeTest = /VAE: ([a-z0-9 +_.]+),/i.exec(otherParams);
+      const denoising = /Denoising strength: ([0-9.]+),/i.exec(otherParams);
+      const clipSkip = /Clip skip: (\d+),/i.exec(otherParams);
+      const hiresUpscaler = /Hires upscaler: ([a-z0-9 +_.]+),/i.exec(otherParams);
+
       const model = modelTest ? modelTest[1] : '';
       const vae = vaeTest ? vaeTest[1] : '';
       const denoise = denoising ? Number(denoising[1]) : NaN;

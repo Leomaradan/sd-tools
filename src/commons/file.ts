@@ -8,6 +8,8 @@ import { Config } from './config';
 import { logger } from './logger';
 import { IMetadata, Version } from './types';
 
+const SD_VERSION = 'sd version';
+
 const readFile = (path: string): string[] | undefined => {
   try {
     const buffer = fs.readFileSync(path);
@@ -141,10 +143,10 @@ export const getMetadata = (url: string): IMetadata | undefined => {
         sdVersion: Version.Unknown //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
       };
 
-      if (metadata['sd version']) {
-        if (metadata['sd version'].toLowerCase().includes('xl')) {
+      if (metadata[SD_VERSION]) {
+        if (metadata[SD_VERSION].toLowerCase().includes('xl')) {
           result.sdVersion = Version.SDXL;
-        } else if (metadata['sd version'].toLowerCase().includes('1.5') || metadata['sd version'].toLowerCase().includes('sd1')) {
+        } else if (metadata[SD_VERSION].toLowerCase().includes('1.5') || metadata[SD_VERSION].toLowerCase().includes('sd1')) {
           result.sdVersion = Version.SD15;
         }
       }
@@ -155,8 +157,12 @@ export const getMetadata = (url: string): IMetadata | undefined => {
 
       return result;
     }
-  } catch (error: any) {
-    logger(`Error while reading metadata for ${url} : ${error.message}`);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger(`Error while reading metadata for ${url} : ${error.message}`);
+    } else {
+      logger(`Error while reading metadata for ${url} : ${error}`);
+    }
   }
 
   return undefined;

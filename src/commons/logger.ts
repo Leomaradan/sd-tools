@@ -6,7 +6,7 @@ export const logger = (message: string) => {
   console.log(message);
 };
 
-export const writeLog = (...data: any[]) => {
+export const writeLog = (...data: unknown[]) => {
   const logPath = path.resolve(__dirname, '..', 'logs');
   const logFile = path.resolve(logPath, `log-${new Date().toISOString().substring(0, 10)}.txt`);
   if (!fs.existsSync(logPath)) {

@@ -47,7 +47,7 @@ export interface IBaseQuery {
 export interface ITxt2ImgQuery
   extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
   adetailer?: IAdetailer[];
-  controlNet?: IControlNet;
+  controlNet?: IControlNet[];
   cutOff?: ICutOff;
   lcm?: boolean;
   sdxl: boolean;

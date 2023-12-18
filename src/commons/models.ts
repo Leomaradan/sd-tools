@@ -1,6 +1,6 @@
 import { Config } from './config';
 import { BaseAdetailerModels } from './extensions/adetailer';
-import { IStyle, ILora, IModel, ISampler, IUpscaler } from './types';
+import { ILora, IModel, ISampler, IStyle, IUpscaler } from './types';
 
 export const findUpscaler = (...upscaleName: string[]): IUpscaler | undefined => {
   const AllModels = Config.get('upscalers');

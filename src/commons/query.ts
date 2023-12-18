@@ -47,8 +47,17 @@ export const renderQuery: Query = async (query, type) => {
 
   let script = false;
 
+  if (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt) {
+    baseQuery.enable_hr = true;
+    baseQuery.hr_upscaler =
+      baseQuery.hr_upscaler ?? (findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string);
+    baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
+    baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? '';
+    baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
+  }
+
   if (controlNet) {
-    baseQuery.alwayson_scripts['controlnet'] = { args: [controlNet] };
+    baseQuery.alwayson_scripts['controlnet'] = { args: controlNet };
   }
 
   if (adetailer) {
@@ -71,7 +80,7 @@ export const renderQuery: Query = async (query, type) => {
   }
 
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
-  const addLCM = lcm !== undefined ? lcm : autoLcm;
+  const addLCM = lcm ?? autoLcm;
   if (addLCM) {
     const lcmModel = sdxl ? lcmXL : lcm15;
     if (lcmModel) {
@@ -189,7 +198,8 @@ export const getUpscalersQuery = () => miscQuery<{ model_path: null | string; na
 export const getExtensionsQuery = () => miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
 export const getSchedulerQuery = () => miscQuery<{ tasks: string[] }>('agent-scheduler/v1/history?limit=1');
 export const getLORAsQuery = () => miscQuery<{ alias: string; name: string; path: string }[]>('sdapi/v1/loras');
-export const getEmbeddingsQuery = () => miscQuery<{ loaded: Record<string, any>; skipped: Record<string, any> }>('sdapi/v1/embeddings');
+export const getEmbeddingsQuery = () =>
+  miscQuery<{ loaded: Record<string, unknown>; skipped: Record<string, unknown> }>('sdapi/v1/embeddings');
 export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
 
 export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list');

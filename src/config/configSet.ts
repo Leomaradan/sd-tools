@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 
 import { Config, getParamBoolean } from '../commons/config.js';
+import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
 import { logger } from '../commons/logger.js';
 import { findCheckpoint, findLORA } from '../commons/models.js';
 import {
@@ -21,7 +22,6 @@ import {
   getConfigRedrawModels,
   getConfigScheduler
 } from './functions.js';
-import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
 
 interface ISetConfig {
   config: EditableOptions;
@@ -188,9 +188,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
       if (!value || (value as string) === 'false') {
         Config.set('autoTiledDiffusion', false);
-      } else if (
-        ![TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value as TiledDiffusionMethods)
-      ) {
+      } else if (![TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value)) {
         logger(
           `Value for ${config} must be either "${TiledDiffusionMethods.MixtureOfDiffusers}" or "${TiledDiffusionMethods.MultiDiffusion}"`
         );

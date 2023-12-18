@@ -21,3 +21,4 @@ node_modules
 sonar-project.properties
 temp
 logs
+coverage
