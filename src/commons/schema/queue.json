@@ -2,6 +2,24 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+        "ControlNetMode": {
+            "enum": [
+                0,
+                2,
+                1
+            ],
+            "title": "ControlNetMode",
+            "type": "number"
+        },
+        "ControlNetResizes": {
+            "enum": [
+                2,
+                0,
+                1
+            ],
+            "title": "ControlNetResizes",
+            "type": "number"
+        },
         "IAdetailerPrompt": {
             "additionalProperties": false,
             "properties": {
@@ -69,6 +87,39 @@
                 "vae"
             ],
             "title": "ICheckpointWithVAE",
+            "type": "object"
+        },
+        "IControlNet": {
+            "additionalProperties": false,
+            "properties": {
+                "control_mode": {
+                    "$ref": "#/definitions/ControlNetMode",
+                    "title": "control_mode"
+                },
+                "controlnet_model": {
+                    "title": "controlnet_model",
+                    "type": "string"
+                },
+                "controlnet_module": {
+                    "title": "controlnet_module",
+                    "type": "string"
+                },
+                "input_image": {
+                    "title": "input_image",
+                    "type": "string"
+                },
+                "resize_mode": {
+                    "$ref": "#/definitions/ControlNetResizes",
+                    "title": "resize_mode"
+                }
+            },
+            "required": [
+                "control_mode",
+                "controlnet_model",
+                "controlnet_module",
+                "resize_mode"
+            ],
+            "title": "IControlNet",
             "type": "object"
         },
         "IPrompt": {
@@ -145,6 +196,20 @@
                     ],
                     "title": "clipSkip"
                 },
+                "controlNet": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/IControlNet"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/IControlNet"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "title": "controlNet"
+                },
                 "count": {
                     "title": "count",
                     "type": "number"
@@ -188,6 +253,20 @@
                         }
                     ],
                     "title": "height"
+                },
+                "initImage": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "initImage"
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
@@ -246,6 +325,10 @@
                             "type": "array"
                         },
                         {
+                            "pattern": "^[0-9]*-[0-9]*$",
+                            "type": "string"
+                        },
+                        {
                             "type": "number"
                         }
                     ],
@@ -295,6 +378,14 @@
                     },
                     "title": "stylesSets",
                     "type": "array"
+                },
+                "ultimateSdUpscale": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "ultimateSdUpscale"
                 },
                 "upscaler": {
                     "anyOf": [
@@ -380,6 +471,38 @@
             "title": "IPromptPermutations",
             "type": "object"
         },
+        "IUltimateSDUpscale": {
+            "additionalProperties": false,
+            "properties": {
+                "height": {
+                    "title": "height",
+                    "type": "number"
+                },
+                "scale": {
+                    "title": "scale",
+                    "type": "number"
+                },
+                "tileHeight": {
+                    "title": "tileHeight",
+                    "type": "number"
+                },
+                "tileWidth": {
+                    "title": "tileWidth",
+                    "type": "number"
+                },
+                "width": {
+                    "title": "width",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "height",
+                "scale",
+                "width"
+            ],
+            "title": "IUltimateSDUpscale",
+            "type": "object"
+        },
         "Partial<IPromptSingle>": {
             "additionalProperties": false,
             "properties": {
@@ -410,6 +533,13 @@
                     "title": "clipSkip",
                     "type": "number"
                 },
+                "controlNet": {
+                    "items": {
+                        "$ref": "#/definitions/IControlNet"
+                    },
+                    "title": "controlNet",
+                    "type": "array"
+                },
                 "denoising": {
                     "title": "denoising",
                     "type": "number"
@@ -425,6 +555,10 @@
                 "height": {
                     "title": "height",
                     "type": "number"
+                },
+                "initImage": {
+                    "title": "initImage",
+                    "type": "string"
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
@@ -464,6 +598,10 @@
                     },
                     "title": "styles",
                     "type": "array"
+                },
+                "ultimateSdUpscale": {
+                    "$ref": "#/definitions/IUltimateSDUpscale",
+                    "title": "ultimateSdUpscale"
                 },
                 "upscaler": {
                     "title": "upscaler",

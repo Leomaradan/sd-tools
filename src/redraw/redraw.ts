@@ -4,13 +4,14 @@ import { basename } from 'path';
 import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { findControlnetModel, findSampler } from '../commons/models';
+import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { interrogateQuery } from '../commons/query';
 import { IPrompt, queue } from '../commons/queue';
-import { ControlNetMode, ControlNetModules, ControlNetResizes, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { ControlNetMode, ControlNetResizes, IControlNet, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
+const HED = 'hed';
 
 const prepareQueryData = (baseParamsProps: IPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
@@ -83,7 +84,7 @@ const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
   return sd_model_checkpoint;
 };
 
-const prepareQueryLineart = async (
+const prepareQueryClassical = async (
   file: IFile,
   style: 'anime' | 'realism',
   denoising_strength: number | number[],
@@ -99,12 +100,35 @@ const prepareQueryLineart = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  const controlnetModelName = sdxl ? ['t2i-adapter_diffusers_xl_lineart'] : ['control_v11p_sd15_lineart'];
+  let controlnetModelName1 = sdxl ? ['t2i-adapter_diffusers_xl_lineart'] : ['control_v11p_sd15_lineart'];
+  let controlnetModelName2 = sdxl
+    ? ['t2i-adapter_diffusers_xl_openpose', 't2i-adapter_xl_openpose', 'thibaud_xl_openpose', 'thibaud_xl_openpose_256lora']
+    : ['control_v11p_sd15_openpose'];
 
-  const controlnet_model = findControlnetModel(...controlnetModelName)?.name;
+  if (sdxl && style === 'anime') {
+    controlnetModelName2 = ['kohya_controllllite_xl_openpose_anime', 'kohya_controllllite_xl_openpose_anime_v2', ...controlnetModelName2];
+  }
 
-  if (!controlnet_model) {
-    logger(`Controlnet models "${controlnetModelName.join(', ')}" not found`);
+  if (!sdxl && style === 'anime') {
+    controlnetModelName1 = ['control_v11p_sd15s2_lineart_anime' /*, 'control_v11p_sd15_lineart'*/];
+  }
+
+  console.log({ controlnetModelName1, controlnetModelName2, sdxl, style });
+
+  /*
+kohya_controllllite_xl_openpose_anime.safetensors
+kohya_controllllite_xl_openpose_anime_v2.safetensors
+ t2i-adapter_diffusers_xl_openpose.safetensors
+ t2i-adapter_xl_openpose.safetensors
+  thibaud_xl_openpose.safetensors
+  thibaud_xl_openpose_256lora.safetensors
+  */
+
+  const controlnet_model1 = findControlnetModel(...controlnetModelName1)?.name;
+  //const controlnet_model2 = findControlnetModel(...controlnetModelName2)?.name;
+
+  if (!controlnet_model1) {
+    logger(`Controlnet models "${controlnetModelName1.join(', ')}" not found`);
     process.exit(1);
   }
 
@@ -113,8 +137,11 @@ const prepareQueryLineart = async (
     controlNet: [
       {
         control_mode: ControlNetMode.ControleNetImportant,
-        controlnet_model,
-        controlnet_module: ControlNetModules.LineArt,
+        controlnet_model: controlnet_model1,
+        controlnet_module:
+          style === 'anime'
+            ? (findControlnetModule('lineart_anime' /*'lineart'*/) as string)
+            : (findControlnetModule('lineart_realistic', 'lineart') as string),
         resize_mode: ControlNetResizes.Resize
       }
     ],
@@ -129,6 +156,18 @@ const prepareQueryLineart = async (
     sdxl: !!sdxl,
     width
   };
+
+  console.log({ controlnet_model1, sdxl, style });
+  console.log(baseParams);
+
+  /*if (controlnet_model2) {
+    (baseParams.controlNet as IControlNet[]).push({
+      control_mode: ControlNetMode.ControleNetImportant,
+      controlnet_model: controlnet_model2,
+      controlnet_module: findControlnetModule('dw_openpose_full', 'openpose_full', 'openpose') as string,
+      resize_mode: ControlNetResizes.Resize
+    });
+  }*/
 
   let ready = false;
   if (file.data) {
@@ -180,7 +219,9 @@ const prepareQueryIpAdapter = async (
       {
         control_mode: ControlNetMode.ControleNetImportant,
         controlnet_model,
-        controlnet_module: sdxl ? ControlNetModules.IPAdapterXL : ControlNetModules.IPAdapter,
+        controlnet_module: sdxl
+          ? (findControlnetModule('ip-adapter_clip_sdxl_plus_vith', 'adapter_clip_sdxl') as string)
+          : (findControlnetModule('ip-adapter_clip_sd15') as string),
         input_image: getBase64Image(file.filename),
         resize_mode: ControlNetResizes.Resize
       }
@@ -222,11 +263,11 @@ const prepareQueryIpAdapter = async (
 const getCombination = (filesList: IFile[], styles: IRedrawStyle, methods: IRedrawMethod) => {
   const combinations: Array<{
     file: IFile;
-    method: 'ip-adapter' | 'lineart';
+    method: 'ip-adapter' | 'classical';
     style: 'anime' | 'realism';
   }> = [];
 
-  const methodArray: Array<'ip-adapter' | 'lineart'> = methods === 'both' ? [IP_ADAPTER, LINEART] : [methods];
+  const methodArray: Array<'ip-adapter' | 'classical'> = methods === 'both' ? [IP_ADAPTER, 'classical'] : [methods];
   const stylesArray: Array<'anime' | 'realism'> = styles === 'both' ? ['anime', 'realism'] : [styles];
 
   for (const file of filesList) {
@@ -261,7 +302,7 @@ export const redraw = async (
   for await (const combination of combinations) {
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
 
-    const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryLineart;
+    const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryClassical;
 
     const query = await prepareQuery(combination.file, combination.style, denoising, prefix, sdxl);
 

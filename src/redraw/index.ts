@@ -35,7 +35,8 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .positional('method', {
-      choices: ['lineart', 'ip-adapter', 'both'],
+      choices: ['classical', 'ip-adapter', 'both'],
+      default: 'classical',
       demandOption: true,
       describe: 'method to draw image',
       type: 'string'
