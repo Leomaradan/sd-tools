@@ -1,11 +1,15 @@
 import { logger } from '../commons/logger';
 
 type Key = [string, string] | string;
-type Keys = Key[];
 
+interface IKeysList {
+  key: string;
+  value: Key[];
+}
 export interface IRenameConfig {
+  $schema?: string;
   folderPattern?: string;
-  keys: Record<string, Keys>;
+  keys: IKeysList[];
   pattern: string;
 }
 
@@ -22,16 +26,18 @@ export const executeConfig = (config: IRenameConfig, source: string, promptData:
     return ['', undefined];
   }
 
-  Object.keys(config.keys).forEach((key) => {
+  config.keys.forEach(({key}) => {
     logger(`Searching for ${key} in "${source}"`);
 
-    const found = config.keys[key].find((element) => {
-      const item = Array.isArray(element) ? element[0] : element;
+    const found = config.keys
+      .find((k) => k.key === key)
+      ?.value?.find((element) => {
+        const item = Array.isArray(element) ? element[0] : element;
 
-      logger(`Searching for ${key} value "${item}" in "${source}"`);
+        logger(`Searching for ${key} value "${item}" in "${source}"`);
 
-      return promptData[0].includes(item);
-    });
+        return promptData[0].includes(item);
+      });
 
     if (!found) {
       logger(`${key} not found in ${source}`);

@@ -16,11 +16,8 @@ const headerRequest = {
 const getDefaultQuery = () => ({
   alwayson_scripts: {},
   cfg_scale: 7,
-  denoising_strength: 0.7,
   enable_hr: false,
   height: 512,
-  hr_scale: 2,
-  hr_upscaler: findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
   negative_prompt: '',
   override_settings: {},
   override_settings_restore_afterwards: true,

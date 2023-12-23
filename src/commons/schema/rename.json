@@ -2,20 +2,65 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
-        "Record<string,Keys>": {
+        "IKeysList": {
             "additionalProperties": false,
-            "title": "Record<string,Keys>",
+            "properties": {
+                "key": {
+                    "title": "key",
+                    "type": "string"
+                },
+                "value": {
+                    "items": {
+                        "$ref": "#/definitions/Key"
+                    },
+                    "title": "value",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "key",
+                "value"
+            ],
+            "title": "IKeysList",
             "type": "object"
+        },
+        "Key": {
+            "anyOf": [
+                {
+                    "items": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "type": "array"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "title": "Key"
         }
     },
     "properties": {
+        "$schema": {
+            "title": "$schema",
+            "type": "string"
+        },
         "folderPattern": {
             "title": "folderPattern",
             "type": "string"
         },
         "keys": {
-            "$ref": "#/definitions/Record<string,Keys>",
-            "title": "keys"
+            "items": {
+                "$ref": "#/definitions/IKeysList"
+            },
+            "title": "keys",
+            "type": "array"
         },
         "pattern": {
             "title": "pattern",

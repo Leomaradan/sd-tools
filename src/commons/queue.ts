@@ -44,7 +44,7 @@ export interface IPrompt {
   restoreFaces?: 'both' | boolean;
   sampler?: string | string[];
   scaleFactor?: number | number[];
-  seed?: number | number[];
+  seed?: `${number}-${number}` | number | number[];
   steps?: number | number[];
   styles?: string | string[];
   stylesSets?: Array<string | string[]>;
@@ -80,6 +80,11 @@ export interface IPromptSingle {
   width?: number;
 }
 
+interface IPromptReplace {
+  from: string;
+  to: string;
+}
+
 export interface IPromptPermutations {
   afterFilename?: string;
   afterNegativePrompt?: string;
@@ -88,6 +93,7 @@ export interface IPromptPermutations {
   beforeNegativePrompt?: string;
   beforePrompt?: string;
   overwrite?: Partial<IPromptSingle>;
+  promptReplace?: IPromptReplace[];
 }
 
 //
@@ -242,6 +248,18 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
                                               Object.assign(permutedPrompt, permutation.overwrite);
                                             }
 
+                                            if (permutation.promptReplace) {
+                                              permutation.promptReplace.forEach((promptReplace) => {
+                                                permutedPrompt.prompt = permutedPrompt.prompt.replace(promptReplace.from, promptReplace.to);
+                                                if (permutedPrompt.negativePrompt) {
+                                                  permutedPrompt.negativePrompt = permutedPrompt.negativePrompt.replace(
+                                                    promptReplace.from,
+                                                    promptReplace.to
+                                                  );
+                                                }
+                                              });
+                                            }
+
                                             if (permutation.afterFilename) {
                                               permutedPrompt.filename = permutedPrompt.filename
                                                 ? `${permutedPrompt.filename}${permutation.afterFilename}`
@@ -301,6 +319,34 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   return prompts;
 };
 
+const getSeedArray = (seeds: `${string}-${string}` | number | number[] | undefined): [undefined] | number[] => {
+  if (seeds === undefined) {
+    return [undefined];
+  }
+
+  if (typeof seeds === 'number') {
+    return [seeds];
+  }
+
+  if (typeof seeds === 'string') {
+    const [first, last] = seeds.split('-').map((s) => parseInt(s, 10));
+
+    if (first === undefined || last === undefined) {
+      return [undefined];
+    }
+
+    const result = [];
+
+    for (let i = first; i <= last; i++) {
+      result.push(i);
+    }
+
+    return result;
+  }
+
+  return seeds;
+};
+
 const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
   const prompts = new Map<string, IPromptSingle>();
 
@@ -314,7 +360,7 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
     const denoisingArray = Array.isArray(basePrompt.denoising) ? basePrompt.denoising : [basePrompt.denoising ?? undefined];
     const heightArray = Array.isArray(basePrompt.height) ? basePrompt.height : [basePrompt.height ?? undefined];
     const samplerArray = Array.isArray(basePrompt.sampler) ? basePrompt.sampler : [basePrompt.sampler ?? undefined];
-    const seedArray = Array.isArray(basePrompt.seed) ? basePrompt.seed : [basePrompt.seed ?? undefined];
+    const seedArray = getSeedArray(basePrompt.seed);
     const stepsArray = Array.isArray(basePrompt.steps) ? basePrompt.steps : [basePrompt.steps ?? undefined];
     const scaleFactorsArray = Array.isArray(basePrompt.scaleFactor) ? basePrompt.scaleFactor : [basePrompt.scaleFactor ?? undefined];
     const upscalerArray = Array.isArray(basePrompt.upscaler) ? basePrompt.upscaler : [basePrompt.upscaler ?? undefined];
@@ -411,7 +457,6 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
   queriesArray.forEach((jsonQuery2) => {
     const {
       adetailer,
-      filename,
       autoCutOff,
       autoLCM,
       cfg,
@@ -419,6 +464,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       clipSkip,
       denoising,
       enableHighRes,
+      filename,
       height,
       initImage,
       negativePrompt,

@@ -2,6 +2,84 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+        "ControlNetMode": {
+            "enum": [
+                0,
+                2,
+                1
+            ],
+            "title": "ControlNetMode",
+            "type": "number"
+        },
+        "ControlNetModules": {
+            "enum": [
+                "blur_gaussian",
+                "canny",
+                "clip_vision",
+                "color",
+                "depth",
+                "depth_leres",
+                "depth_leres++",
+                "depth_zoe",
+                "mediapipe_face",
+                "hed",
+                "hed_safe",
+                "ip-adapter_clip_sd15",
+                "ip-adapter_clip_sdxl",
+                "ip-adapter_clip_sdxl_plus_vith",
+                "inpaint",
+                "inpaint_only",
+                "inpaint_only+lama",
+                "invert",
+                "lineart",
+                "lineart_anime",
+                "lineart_anime_denoise",
+                "lineart_coarse",
+                "lineart_standard",
+                "mlsd",
+                "none",
+                "normal_map",
+                "normal_bae",
+                "oneformer_ade20k",
+                "oneformer_coco",
+                "openpose",
+                "openpose_face",
+                "openpose_faceonly",
+                "openpose_full",
+                "dw_openpose_full",
+                "openpose_hand",
+                "pidinet",
+                "pidinet_safe",
+                "pidinet_scribble",
+                "pidinet_sketch",
+                "recolor_intensity",
+                "recolor_luminance",
+                "reference_adain",
+                "reference_adain+attn",
+                "reference_only",
+                "revision_clipvision",
+                "revision_ignore_prompt",
+                "scribble_hed",
+                "scribble_xdog",
+                "segmentation",
+                "shuffle",
+                "threshold",
+                "tile_colorfix",
+                "tile_colorfix+sharp",
+                "tile_resample"
+            ],
+            "title": "ControlNetModules",
+            "type": "string"
+        },
+        "ControlNetResizes": {
+            "enum": [
+                2,
+                0,
+                1
+            ],
+            "title": "ControlNetResizes",
+            "type": "number"
+        },
         "IAdetailerPrompt": {
             "additionalProperties": false,
             "properties": {
@@ -69,6 +147,39 @@
                 "vae"
             ],
             "title": "ICheckpointWithVAE",
+            "type": "object"
+        },
+        "IControlNet": {
+            "additionalProperties": false,
+            "properties": {
+                "control_mode": {
+                    "$ref": "#/definitions/ControlNetMode",
+                    "title": "control_mode"
+                },
+                "controlnet_model": {
+                    "title": "controlnet_model",
+                    "type": "string"
+                },
+                "controlnet_module": {
+                    "$ref": "#/definitions/ControlNetModules",
+                    "title": "controlnet_module"
+                },
+                "input_image": {
+                    "title": "input_image",
+                    "type": "string"
+                },
+                "resize_mode": {
+                    "$ref": "#/definitions/ControlNetResizes",
+                    "title": "resize_mode"
+                }
+            },
+            "required": [
+                "control_mode",
+                "controlnet_model",
+                "controlnet_module",
+                "resize_mode"
+            ],
+            "title": "IControlNet",
             "type": "object"
         },
         "IPrompt": {
@@ -145,6 +256,20 @@
                     ],
                     "title": "clipSkip"
                 },
+                "controlNet": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/IControlNet"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/IControlNet"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "title": "controlNet"
+                },
                 "count": {
                     "title": "count",
                     "type": "number"
@@ -188,6 +313,20 @@
                         }
                     ],
                     "title": "height"
+                },
+                "initImage": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "initImage"
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
@@ -244,6 +383,10 @@
                                 "type": "number"
                             },
                             "type": "array"
+                        },
+                        {
+                            "pattern": "^[0-9]*-[0-9]*$",
+                            "type": "string"
                         },
                         {
                             "type": "number"
@@ -375,9 +518,35 @@
                 "overwrite": {
                     "$ref": "#/definitions/Partial<IPromptSingle>",
                     "title": "overwrite"
+                },
+                "promptReplace": {
+                    "items": {
+                        "$ref": "#/definitions/IPromptReplace"
+                    },
+                    "title": "promptReplace",
+                    "type": "array"
                 }
             },
             "title": "IPromptPermutations",
+            "type": "object"
+        },
+        "IPromptReplace": {
+            "additionalProperties": false,
+            "properties": {
+                "from": {
+                    "title": "from",
+                    "type": "string"
+                },
+                "to": {
+                    "title": "to",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "from",
+                "to"
+            ],
+            "title": "IPromptReplace",
             "type": "object"
         },
         "Partial<IPromptSingle>": {
@@ -410,6 +579,13 @@
                     "title": "clipSkip",
                     "type": "number"
                 },
+                "controlNet": {
+                    "items": {
+                        "$ref": "#/definitions/IControlNet"
+                    },
+                    "title": "controlNet",
+                    "type": "array"
+                },
                 "denoising": {
                     "title": "denoising",
                     "type": "number"
@@ -425,6 +601,10 @@
                 "height": {
                     "title": "height",
                     "type": "number"
+                },
+                "initImage": {
+                    "title": "initImage",
+                    "type": "string"
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",

@@ -35,7 +35,7 @@ export const findCheckpoint = (...modelsName: string[]): IModel | undefined => {
 };
 
 export const findVAE = (...vaeName: string[]): string | undefined => {
-  const AllModels = Config.get('vae');
+  const AllModels = [...Config.get('vae'), "None"];
 
   return AllModels.find((name) => {
     return vaeName.find((key) => {

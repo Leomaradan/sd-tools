@@ -9,7 +9,7 @@ import { IRenameConfig, executeConfig } from './config';
 
 const validator = new Validator();
 
-export const renameConfig = (source: string, target: string, config: IRenameConfig) => {
+export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
@@ -37,19 +37,47 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
 
         logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
 
-        if (scene && !fs.existsSync(path.join(target, scene))) {
+        if (!test && scene && !fs.existsSync(path.join(target, scene))) {
           fs.mkdirSync(path.join(target, scene));
         }
 
-        fs.renameSync(file.filename, path.join(target, targetFile));
+        if (!test) {
+          fs.renameSync(file.filename, path.join(target, targetFile));
+        }
       }
     }
   });
 };
 
-export const renameKeyPattern = (source: string, target: string, keys: string[], pattern: string) => {
+export const renameConfigFromCFile = (source: string, target: string, config: string, test: boolean) => {
+  if (!fs.existsSync(source)) {
+    logger(`Source directory ${source} does not exist`);
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(target)) {
+    fs.mkdirSync(target, { recursive: true });
+  }
+
+  console.log({ config });
+
+  let jsonContent: IRenameConfig = { keys: [], pattern: '' };
+  try {
+    const data = fs.readFileSync(config, 'utf8');
+    console.log({ data });
+    jsonContent = JSON.parse(data);
+  } catch (err) {
+    console.group({ err });
+    logger(`Unable to parse JSON in ${config}`);
+    process.exit(1);
+  }
+
+  renameConfig(source, target, jsonContent, test);
+};
+
+export const renameKeyPattern = (source: string, target: string, keys: string[], pattern: string, test: boolean) => {
   const config: IRenameConfig = {
-    keys: {},
+    keys: [],
     pattern
   };
 
@@ -57,16 +85,23 @@ export const renameKeyPattern = (source: string, target: string, keys: string[],
     const [recordKey, recordValueRaw] = keyString.split(':');
     const recordValues = recordValueRaw.split(';');
 
-    if (!config.keys[recordKey]) {
-      config.keys[recordKey] = [];
+    let configIndex = config.keys.findIndex((k) => k.key === recordKey);
+
+    if (configIndex === -1) {
+      config.keys.push({
+        key: recordKey,
+        value: []
+      });
+
+      configIndex = config.keys.findIndex((k) => k.key === recordKey);
     }
 
     if (recordValues.length === 1) {
-      config.keys[recordKey].push(recordValues[0]);
+      config.keys[configIndex].value.push(recordValues[0]);
     } else {
-      config.keys[recordKey].push([recordValues[0], recordValues[1]]);
+      config.keys[configIndex].value.push([recordValues[0], recordValues[1]]);
     }
   });
 
-  renameConfig(source, target, config);
+  renameConfig(source, target, config, test);
 };
