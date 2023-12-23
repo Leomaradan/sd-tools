@@ -478,6 +478,25 @@
             "title": "IPromptPermutations",
             "type": "object"
         },
+        "IPromptReplace": {
+            "additionalProperties": false,
+            "properties": {
+                "from": {
+                    "title": "from",
+                    "type": "string"
+                },
+                "to": {
+                    "title": "to",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "from",
+                "to"
+            ],
+            "title": "IPromptReplace",
+            "type": "object"
+        },
         "IUltimateSDUpscale": {
             "additionalProperties": false,
             "properties": {
