@@ -70,8 +70,8 @@ export enum Version {
 
 export enum IRedrawMethod {
   Both = 'both',
-  IPAdapter = 'ip-adapter',
-  Lineart = 'lineart'
+  Classical = 'classical',
+  IPAdapter = 'ip-adapter'
 }
 
 export enum IRedrawStyle {

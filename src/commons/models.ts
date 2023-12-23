@@ -77,6 +77,28 @@ export const findADetailersModel = (...adetaileName: string[]): string | undefin
 export const findControlnetModel = (...modelsName: string[]): IModel | undefined => {
   const AllModels = Config.get('controlnetModels');
 
+  console.log({ modelsName });
+
+  const foundExact = AllModels.find((model) => {
+    return modelsName.find((requestName) => {
+      console.log({ model: model.name, requestName });
+      if (model.name === requestName) {
+        console.log('FOUND 1');
+        return model.name;
+      }
+
+      if (model.hash === requestName) {
+        console.log('FOUND 2');
+        return model.name;
+      }
+    });
+  });
+
+  if (foundExact) {
+    console.log('foundExact', foundExact, modelsName);
+    return foundExact;
+  }
+
   return AllModels.find((model) => {
     return modelsName.find((requestName) => {
       if (model.name.includes(requestName)) {
@@ -85,6 +107,30 @@ export const findControlnetModel = (...modelsName: string[]): IModel | undefined
 
       if (model.hash?.includes(requestName)) {
         return model.name;
+      }
+    });
+  });
+};
+
+export const findControlnetModule = (...modelsName: string[]): string | undefined => {
+  const AllModels = Config.get('controlnetModules');
+
+  const foundExact = AllModels.find((model) => {
+    return modelsName.find((requestName) => {
+      if (model === requestName) {
+        return model;
+      }
+    });
+  });
+
+  if (foundExact) {
+    return foundExact;
+  }
+
+  return AllModels.find((model) => {
+    return modelsName.find((requestName) => {
+      if (model.includes(requestName)) {
+        return model;
       }
     });
   });

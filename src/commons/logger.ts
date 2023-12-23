@@ -25,6 +25,10 @@ export const writeLog = (...data: unknown[]) => {
       }
 
       if (['init_images'].includes(key)) {
+        if (!value) {
+          return value;
+        }
+
         if (Array.isArray(value)) {
           return (value as string[]).map((item) => item.substring(0, 100));
         }
