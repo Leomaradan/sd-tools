@@ -57,12 +57,20 @@
         "ICheckpointWithVAE": {
             "additionalProperties": false,
             "properties": {
+                "addAfterFilename": {
+                    "title": "addAfterFilename",
+                    "type": "string"
+                },
                 "addAfterNegativePrompt": {
                     "title": "addAfterNegativePrompt",
                     "type": "string"
                 },
                 "addAfterPrompt": {
                     "title": "addAfterPrompt",
+                    "type": "string"
+                },
+                "addBeforeFilename": {
+                    "title": "addBeforeFilename",
                     "type": "string"
                 },
                 "addBeforeNegativePrompt": {
@@ -96,16 +104,16 @@
                     "$ref": "#/definitions/ControlNetMode",
                     "title": "control_mode"
                 },
-                "controlnet_model": {
-                    "title": "controlnet_model",
-                    "type": "string"
-                },
-                "controlnet_module": {
-                    "title": "controlnet_module",
-                    "type": "string"
-                },
                 "input_image": {
                     "title": "input_image",
+                    "type": "string"
+                },
+                "model": {
+                    "title": "model",
+                    "type": "string"
+                },
+                "module": {
+                    "title": "module",
                     "type": "string"
                 },
                 "resize_mode": {
@@ -115,8 +123,8 @@
             },
             "required": [
                 "control_mode",
-                "controlnet_model",
-                "controlnet_module",
+                "model",
+                "module",
                 "resize_mode"
             ],
             "title": "IControlNet",
@@ -270,6 +278,10 @@
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
+                    "type": "string"
+                },
+                "outDir": {
+                    "title": "outDir",
                     "type": "string"
                 },
                 "pattern": {
@@ -588,6 +600,10 @@
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
+                    "type": "string"
+                },
+                "outDir": {
+                    "title": "outDir",
                     "type": "string"
                 },
                 "pattern": {

@@ -3,7 +3,7 @@ import { basename } from 'path';
 import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
-import { Config } from '../commons/config';
+import { Cache, Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
@@ -20,9 +20,9 @@ import {
   getVAEQuery
 } from '../commons/query';
 import { getMetadata } from '../commons/file';
-import { Extensions, IStyle, ILora, IModel, Version } from '../commons/types';
+import { Extensions, IStyle, ILora, IModel, Version, IModelWithHash } from '../commons/types';
 
-export const command = 'config-init';
+export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';
 
 export const builder = (builder: yargs.Argv<object>) => {
@@ -50,7 +50,9 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
   const initialized = Config.get('initialized');
 
   if (!initialized || force || argv['purge-cache']) {
-    Config.set('cacheMetadata', {});
+    Cache.set('metadata', {});
+    Cache.set('imageData', {});
+    Cache.set('interrogator', {});
   }
 
   if (endpoint || !initialized || force) {
@@ -86,7 +88,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Array.from(
       new Set(
         modelsQuery.map((modelQuery) => {
-          const item: IModel = { name: modelQuery.title, version: Version.Unknown };
+          const item: IModelWithHash = { name: modelQuery.title, version: Version.Unknown };
           const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
           const metadata = getMetadata(modelQuery.filename.replace(/\.safetensors|.ckpt/, '.json'));
 
@@ -228,17 +230,11 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
         new Set(
           controlnetModelsQuery.model_list.map((modelQuery) => {
             const item: IModel = { name: modelQuery, version: Version.Unknown };
-            const hash = /[a-f0-9]{8,10}/.exec(modelQuery);
 
             if (item.name.includes('sd15')) {
               item.version = Version.SD15;
             } else if (item.name.includes('_xl')) {
               item.version = Version.SDXL;
-            }
-
-            if (hash) {
-              item.hash = hash[0];
-              item.name = modelQuery.replace(`[${hash}]`, '').trim();
             }
 
             return item;

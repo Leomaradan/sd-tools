@@ -59,12 +59,9 @@ export const renameConfigFromCFile = (source: string, target: string, config: st
     fs.mkdirSync(target, { recursive: true });
   }
 
-  console.log({ config });
-
   let jsonContent: IRenameConfig = { keys: [], pattern: '' };
   try {
     const data = fs.readFileSync(config, 'utf8');
-    console.log({ data });
     jsonContent = JSON.parse(data);
   } catch (err) {
     console.group({ err });

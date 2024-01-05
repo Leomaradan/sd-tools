@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /// <reference types="jest" />
 
-import { IPrompts, prepareQueue } from '../queue';
+import { IPrompts, prepareQueue } from './queue';
 
 describe('queue test', () => {
   it('should generate the query from single config', () => {

@@ -13,6 +13,9 @@ export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
 export interface IOverrideSettings {
   CLIP_stop_at_last_layers: number;
+  directories_filename_pattern: string;
+  outdir_img2img_samples: string;
+  outdir_txt2img_samples: string;
   samples_filename_pattern: string;
   sd_model_checkpoint: string;
 }
@@ -92,10 +95,14 @@ export interface IRedrawOptions {
 }
 
 export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
+
 export interface IModel {
-  hash?: string;
   name: string;
   version: Version;
+}
+
+export interface IModelWithHash extends IModel {
+  hash?: string;
 }
 
 export interface ILora {
@@ -126,13 +133,19 @@ export interface IMetadata {
   preferredWeight?: string;
   sdVersion: Version;
 }
-export type CacheMetadata = Record<string, IMetadata>;
+
+export interface IInterrogateResponse {
+  prompt: string;
+}
+export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
+export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
+export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
 export interface IConfig {
   adetailersCustomModels: string[];
   autoTiledDiffusion: TiledDiffusionMethods | false;
   autoTiledVAE: boolean;
-  cacheMetadata: CacheMetadata;
+  //cacheMetadata: CacheMetadata;
   commonNegative?: string;
   commonNegativeXL?: string;
   commonPositive?: string;
@@ -153,7 +166,7 @@ export interface IConfig {
     sdxl?: string;
   };
   loras: ILora[];
-  models: IModel[];
+  models: IModelWithHash[];
   redrawModels: {
     anime15?: string;
     animexl?: string;
@@ -165,4 +178,10 @@ export interface IConfig {
   styles: IStyle[];
   upscalers: IUpscaler[];
   vae: string[];
+}
+
+export interface ICache {
+  imageData: CacheImageData;
+  interrogator: CacheInterrogator;
+  metadata: CacheMetadata;
 }
