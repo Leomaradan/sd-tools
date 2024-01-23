@@ -194,6 +194,7 @@ const prepareQueryClassical = async (
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
     restoreFaces: true,
     sdxl: !!sdxl,
+    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     width
   };
 
@@ -257,6 +258,7 @@ const prepareQueryIpAdapter = async (
     pattern: `[datetime]-{denoising}-${style}-ipadapter-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
     restoreFaces: true,
+    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     sdxl: !!sdxl,
     width
   };

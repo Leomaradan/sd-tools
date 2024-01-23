@@ -1,9 +1,17 @@
 import { IAdetailer } from '../commons/extensions/adetailer';
 import { getCutOffTokens } from '../commons/extensions/cutoff';
 import { logger, writeLog } from '../commons/logger';
-import { findADetailersModel, findCheckpoint, findStyle, findUpscaler, findVAE } from '../commons/models';
+import {
+  findADetailersModel,
+  findCheckpoint,
+  findControlnetModel,
+  findControlnetModule,
+  findStyle,
+  findUpscaler,
+  findVAE
+} from '../commons/models';
 import { renderQuery } from '../commons/query';
-import { IControlNet, IImg2ImgQuery, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
+import { ControlNetMode, ControlNetResizes, IControlNet, IImg2ImgQuery, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 import { getBase64Image } from './file';
 
 export interface IAdetailerPrompt {
@@ -16,8 +24,10 @@ export interface IAdetailerPrompt {
 }
 
 interface ICheckpointWithVAE {
+  addAfterFilename?: string;
   addAfterNegativePrompt?: string;
   addAfterPrompt?: string;
+  addBeforeFilename?: string;
   addBeforeNegativePrompt?: string;
   addBeforePrompt?: string;
   checkpoint: string;
@@ -223,6 +233,18 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
                                               negativePromptText = checkpointsOption.addBeforeNegativePrompt
                                                 ? `${checkpointsOption.addBeforeNegativePrompt}, ${negativePromptText}`
                                                 : negativePromptText;
+
+                                              if (checkpointsOption.addAfterFilename) {
+                                                basePrompt.filename = basePrompt.filename
+                                                  ? `${basePrompt.filename}${checkpointsOption.addAfterFilename}`
+                                                  : checkpointsOption.addAfterFilename;
+                                              }
+
+                                              if (checkpointsOption.addBeforeFilename) {
+                                                basePrompt.filename = basePrompt.filename
+                                                  ? `${checkpointsOption.addBeforeFilename}${basePrompt.filename}`
+                                                  : checkpointsOption.addBeforeFilename;
+                                              }
                                             }
                                           }
 
@@ -297,14 +319,14 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
                                               }
 
                                               if (permutation.afterFilename) {
-                                                permutedPrompt.filename = permutedPrompt.filename
-                                                  ? `${permutedPrompt.filename}${permutation.afterFilename}`
+                                                permutedPrompt.filename = basePrompt.filename
+                                                  ? `${basePrompt.filename}${permutation.afterFilename}`
                                                   : permutation.afterFilename;
                                               }
 
                                               if (permutation.beforeFilename) {
-                                                permutedPrompt.filename = permutedPrompt.filename
-                                                  ? `${permutation.beforeFilename}${permutedPrompt.filename}`
+                                                permutedPrompt.filename = basePrompt.filename
+                                                  ? `${permutation.beforeFilename}${basePrompt.filename}`
                                                   : permutation.beforeFilename;
                                               }
 
@@ -526,7 +548,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
 
     const query: IImg2ImgQuery | ITxt2ImgQuery = {
       cfg_scale: cfg,
-      controlNet,
+      controlNet: [],
       denoising_strength: denoising,
       enable_hr: enableHighRes,
       height: height,
@@ -544,6 +566,31 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       ultimateSdUpscale,
       width: width
     };
+
+    if (controlNet) {
+      controlNet.forEach((controlNetPrompt) => {
+        const controlNetModule = findControlnetModule(controlNetPrompt.module);
+        const controlNetModel = findControlnetModel(controlNetPrompt.model);
+
+        if (!controlNetModule) {
+          logger(`Invalid ControlNet module ${controlNetPrompt.module}`);
+          process.exit(1);
+        }
+
+        if (!controlNetModel) {
+          logger(`Invalid ControlNet model ${controlNetPrompt.model}`);
+          process.exit(1);
+        }
+
+        query.controlNet?.push({
+          control_mode: controlNetPrompt.control_mode ?? ControlNetMode.Balanced,
+          input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : undefined,
+          model: controlNetModel.name,
+          module: controlNetModule,
+          resize_mode: controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope
+        });
+      });
+    }
 
     if (vae) {
       const foundVAE = findVAE(vae);
@@ -592,7 +639,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
 
-    if(highRes){
+    if(highRes) {
       const {afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt} = highRes;
 
       if(beforeNegativePrompt || afterNegativePrompt){

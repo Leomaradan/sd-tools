@@ -133,13 +133,19 @@ export interface IMetadata {
   preferredWeight?: string;
   sdVersion: Version;
 }
-export type CacheMetadata = Record<string, IMetadata>;
+
+export interface IInterrogateResponse {
+  prompt: string;
+}
+export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
+export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
+export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
 export interface IConfig {
   adetailersCustomModels: string[];
   autoTiledDiffusion: TiledDiffusionMethods | false;
   autoTiledVAE: boolean;
-  cacheMetadata: CacheMetadata;
+  //cacheMetadata: CacheMetadata;
   commonNegative?: string;
   commonNegativeXL?: string;
   commonPositive?: string;
@@ -172,4 +178,10 @@ export interface IConfig {
   styles: IStyle[];
   upscalers: IUpscaler[];
   vae: string[];
+}
+
+export interface ICache {
+  imageData: CacheImageData;
+  interrogator: CacheInterrogator;
+  metadata: CacheMetadata;
 }

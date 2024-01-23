@@ -3,7 +3,7 @@ import { basename } from 'path';
 import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
-import { Config } from '../commons/config';
+import { Cache, Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
@@ -50,7 +50,9 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
   const initialized = Config.get('initialized');
 
   if (!initialized || force || argv['purge-cache']) {
-    Config.set('cacheMetadata', {});
+    Cache.set('metadata', {});
+    Cache.set('imageData', {});
+    Cache.set('interrogator', {});
   }
 
   if (endpoint || !initialized || force) {

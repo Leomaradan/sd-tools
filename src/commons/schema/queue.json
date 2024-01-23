@@ -57,12 +57,20 @@
         "ICheckpointWithVAE": {
             "additionalProperties": false,
             "properties": {
+                "addAfterFilename": {
+                    "title": "addAfterFilename",
+                    "type": "string"
+                },
                 "addAfterNegativePrompt": {
                     "title": "addAfterNegativePrompt",
                     "type": "string"
                 },
                 "addAfterPrompt": {
                     "title": "addAfterPrompt",
+                    "type": "string"
+                },
+                "addBeforeFilename": {
+                    "title": "addBeforeFilename",
                     "type": "string"
                 },
                 "addBeforeNegativePrompt": {

@@ -1,8 +1,9 @@
 import Configstore from 'configstore';
 
-import { IConfig } from './types';
+import { ICache, IConfig } from './types';
 
 const config = new Configstore('sd-tools');
+const cache = new Configstore('sd-tools-cache');
 
 const LATEST_CONFIG_VERSION = 1;
 
@@ -32,6 +33,17 @@ export const Config = {
   get: <T extends keyof IConfig>(key: T): IConfig[T] => config.get(key),
   migrate: configMigration,
   set: <T extends keyof IConfig>(key: T, value: IConfig[T]): void => config.set(key, value)
+};
+
+export const Cache = {
+  get: <T extends keyof ICache>(key: T): ICache[T] => {
+    const store = cache.get(key);
+    if (store) {
+      return store;
+    }
+    return {} as ICache[T];
+  },
+  set: <T extends keyof ICache>(key: T, value: ICache[T]): void => cache.set(key, value)
 };
 
 export const getParamBoolean = (param: boolean | string): boolean => {

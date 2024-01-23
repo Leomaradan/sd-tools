@@ -4,14 +4,24 @@ import path from 'path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
-import { Config } from './config';
+import { Cache } from './config';
 import { logger } from './logger';
 import { IMetadata, Version } from './types';
 
 const SD_VERSION = 'sd version';
 
 const readFile = (path: string): string[] | undefined => {
+  let data = undefined;
+  const cacheImageData = Cache.get('imageData');
   try {
+    if (cacheImageData[path] !== undefined) {
+      if (cacheImageData[path].timestamp === fs.statSync(path).mtimeMs.toString()) {
+        return cacheImageData[path].data;
+      }
+
+      delete cacheImageData[path];
+    }
+
     const buffer = fs.readFileSync(path);
 
     const chunks = extract(buffer);
@@ -30,12 +40,19 @@ const readFile = (path: string): string[] | undefined => {
     const texData = exif?.text;
 
     if (texData) {
-      return texData.split('\n');
+      data = texData.split('\n');
+
+      cacheImageData[path] = {
+        data,
+        timestamp: fs.statSync(path).mtimeMs.toString()
+      };
     }
   } catch (error) {
     logger(String(error));
-    return undefined;
+  } finally {
+    Cache.set('imageData', cacheImageData);
   }
+  return data;
 };
 
 export interface IFile {
@@ -129,12 +146,17 @@ export const getBase64Image = (url: string) => {
 };
 
 export const getMetadata = (url: string): IMetadata | undefined => {
-  const cacheMetadata = Config.get('cacheMetadata');
-  if (cacheMetadata[url] !== undefined) {
-    return cacheMetadata[url];
-  }
+  const cacheMetadata = Cache.get('metadata');
 
   try {
+    if (cacheMetadata[url] !== undefined) {
+      if (cacheMetadata[url].timestamp === fs.statSync(url).mtimeMs.toString()) {
+        return cacheMetadata[url];
+      }
+
+      delete cacheMetadata[url];
+    }
+
     if (fs.existsSync(url)) {
       const content = fs.readFileSync(url, 'utf8');
       const metadata = JSON.parse(content);
@@ -153,9 +175,9 @@ export const getMetadata = (url: string): IMetadata | undefined => {
         }
       }
 
-      cacheMetadata[url] = result;
+      cacheMetadata[url] = { ...result, timestamp: fs.statSync(url).mtimeMs.toString() };
 
-      Config.set('cacheMetadata', cacheMetadata);
+      Cache.set('metadata', cacheMetadata);
 
       return result;
     }

@@ -20,11 +20,7 @@ export const writeLog = (...data: unknown[]) => {
   fs.appendFileSync(
     logFile,
     `${Date.now()} ${JSON.stringify(data, (key, value) => {
-      if (['input_image'].includes(key)) {
-        return (value as string).substring(0, 100);
-      }
-
-      if (['init_images'].includes(key)) {
+      if (['init_images', 'input_image'].includes(key)) {
         if (!value) {
           return value;
         }

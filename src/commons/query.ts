@@ -1,10 +1,11 @@
 import axios from 'axios';
+import fs from 'fs';
 
-import { Config } from './config';
+import { Cache, Config } from './config';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
 import { findSampler, findUpscaler } from './models';
-import { IBaseQuery, IImg2ImgQuery, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
+import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
 
 const headerRequest = {
   headers: {
@@ -144,15 +145,17 @@ export const renderQuery: Query = async (query, type) => {
   });
 };
 
-interface IInterrogateResponse {
-  prompt: string;
-}
-
-const interrogatorCache: Record<string, IInterrogateResponse> = {};
+//const interrogatorCache: Record<string, IInterrogateResponse> = {};
 
 export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
+  const interrogatorCache = Cache.get('interrogator');
+
   if (interrogatorCache[imagePath]) {
-    return interrogatorCache[imagePath];
+    if (interrogatorCache[imagePath].timestamp === fs.statSync(imagePath).mtimeMs.toString()) {
+      return interrogatorCache[imagePath];
+    }
+
+    delete interrogatorCache[imagePath];
   }
 
   logger(`Executing query to interrogator for ${imagePath}`);
@@ -175,7 +178,10 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
     });
 
   if (response) {
-    interrogatorCache[imagePath] = response;
+    interrogatorCache[imagePath] = {
+      ...response,
+      timestamp: fs.statSync(imagePath).mtimeMs.toString()
+    };
   }
 
   return response;

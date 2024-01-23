@@ -44,7 +44,7 @@ export const findModel = <TType = object | string>(
         return functions.findPartial(item, modelName);
       }
 
-      return (item as string).includes(modelName);
+      return (item as string).toLowerCase().includes(modelName.toLowerCase());
     });
     if (partialMatch !== undefined) {
       return partialMatch;
@@ -71,7 +71,7 @@ export const findPartialStringProperties =
   (item: any, modelName: string): string | undefined => {
     const filterProperties = properties.filter((property) => item[property] !== undefined);
     return filterProperties.find((property) => {
-      return (item[property] as string).includes(modelName);
+      return (item[property] as string).toLowerCase().includes(modelName.toLowerCase());
     });
   };
 
