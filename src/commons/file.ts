@@ -93,6 +93,8 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean)
     }
   });
 
+  logger(`Read ${result.length} files`);
+
   return result;
 };
 

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { basename } from 'path';
+import path, { basename } from 'path';
 
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
@@ -43,8 +43,8 @@ export const upscaleTiles = async (
       query.controlNet = [
         {
           control_mode: ControlNetMode.ControleNetImportant,
-          controlnet_model: findControlnetModel('tile')?.name as string,
-          controlnet_module: findControlnetModule('tile_resample') as string,
+          model: findControlnetModel('tile')?.name as string,
+          module: findControlnetModule('tile_resample') as string,
           resize_mode: ControlNetResizes.Resize
         }
       ];
@@ -56,6 +56,7 @@ export const upscaleTiles = async (
       query.filename = basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', '');
       query.prompt = query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       query.pattern = `[datetime]-x${upscaling}-{filename}`;
+      query.outDir = path.resolve(source, 'upscale');
 
       if (checkpoint) {
         query.checkpoints = checkpoint;

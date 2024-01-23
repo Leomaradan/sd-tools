@@ -44,7 +44,13 @@ export const renderQuery: Query = async (query, type) => {
 
   let script = false;
 
-  if (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt) {
+  if (
+    ((!baseQuery as unknown as IImg2ImgQuery).init_images && baseQuery.hr_upscaler) ||
+    baseQuery.hr_scale ||
+    baseQuery.enable_hr ||
+    baseQuery.hr_negative_prompt ||
+    baseQuery.hr_prompt
+  ) {
     baseQuery.enable_hr = true;
     baseQuery.hr_upscaler =
       baseQuery.hr_upscaler ?? (findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string);
@@ -54,7 +60,21 @@ export const renderQuery: Query = async (query, type) => {
   }
 
   if (controlNet) {
-    baseQuery.alwayson_scripts['controlnet'] = { args: controlNet };
+    const args = controlNet.map((controlNet) => {
+      const params = { ...controlNet };
+
+      if (params.lowvram === undefined) {
+        params.lowvram = true;
+      }
+
+      if (params.pixel_perfect === undefined) {
+        params.pixel_perfect = true;
+      }
+
+      return params;
+    });
+
+    baseQuery.alwayson_scripts['controlnet'] = { args };
   }
 
   if (adetailer) {

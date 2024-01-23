@@ -1,7 +1,5 @@
-import fs from 'fs';
 
-import { IFile, getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { IFile } from '../commons/file';
 import { IAdetailerPrompt, IPromptSingle } from '../commons/queue';
 import { interrogateQuery } from './query';
 
@@ -179,13 +177,13 @@ const getAdetailerParamFromregex = (param: string, regex: RegExp) => {
 };
 
 const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
-  const adetailModelRegex = /ADetailer model( (\d+)nd)?: ([a-z0-9 +_.]+),/i;
+  const adetailModelRegex = /ADetailer model( (\d+)nd)?: ([a-z0-9 +_.]+),/gi;
 
-  const adetailDenoisingRegex = /ADetailer denoising strength( (\d+)nd)?: ([a-z0-9 +_.]+),/i;
-  const adetailPromptRegex = /ADetailer prompt( (\d+)nd)?: (".*"+|[a-z]+),/i;
-  const adetailNegativePromptRegex = /ADetailer negative prompt( (\d+)nd)?: (".*"+|[a-z]+),/i;
-  const adetailWidthRegex = /ADetailer inpaint width( (\d+)nd)?: (\d+),/i;
-  const adetailHeightRegex = /ADetailer inpaint height( (\d+)nd)?: (\d+),/i;
+  const adetailDenoisingRegex = /ADetailer denoising strength( (\d+)nd)?: ([a-z0-9 +_.]+),/gi;
+  const adetailPromptRegex = /ADetailer prompt( (\d+)nd)?: (".*"+|[a-z]+),/gi;
+  const adetailNegativePromptRegex = /ADetailer negative prompt( (\d+)nd)?: (".*"+|[a-z]+),/gi;
+  const adetailWidthRegex = /ADetailer inpaint width( (\d+)nd)?: (\d+),/gi;
+  const adetailHeightRegex = /ADetailer inpaint height( (\d+)nd)?: (\d+),/gi;
 
   const models = getAdetailerParamFromregex(otherParams, adetailModelRegex);
   const denoise = getAdetailerParamFromregex(otherParams, adetailDenoisingRegex);
@@ -279,6 +277,7 @@ export const extractFromFile = async (
 ): Promise<IPromptSingle | string | undefined> => {
   if (file.data) {
     const prompt = getPrompts(file.data, format);
+
     if (prompt) {
       return prompt;
     }

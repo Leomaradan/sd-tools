@@ -1,64 +1,63 @@
 import { Version } from '../types';
 
-enum ControlNetModules {
-  Blur = 'blur_gaussian',
-  Canny = 'canny',
-  Clip = 'clip_vision',
-  Color = 'color',
-  Depth = 'depth',
-  DepthLeres = 'depth_leres',
-  DepthLeresPlus = 'depth_leres++',
-  DepthMidas = 'depth_midas',
-  DepthZoe = 'depth_zoe',
-  Face = 'mediapipe_face',
-  Hed = 'hed',
-  HedSafe = 'hed_safe',
-  IPAdapter = 'ip-adapter_clip_sd15',
-  IPAdapterXL = 'ip-adapter_clip_sdxl',
-  IPAdapterXLPlus = 'ip-adapter_clip_sdxl_plus_vith',
-  Inpaint = 'inpaint',
-  InpaintOnly = 'inpaint_only',
-  InpaintOnlyLama = 'inpaint_only+lama',
-  Invert = 'invert',
-  LineArt = 'lineart',
-  LineArtAnime = 'lineart_anime',
-  LineArtAnimeDenoise = 'lineart_anime_denoise',
-  LineArtCoarse = 'lineart_coarse',
-  LineArtRealistic = 'lineart_realistic',
-  LineArtStandard = 'lineart_standard',
-  MSLD = 'mlsd',
-  None = 'none',
-  Normal = 'normal_map',
-  NormalBae = 'normal_bae',
-  NormalMidas = 'normal_midas',
-  OneFormerAde20k = 'oneformer_ade20k',
-  OneFormerCoco = 'oneformer_coco',
-  OpenPose = 'openpose',
-  OpenPoseFace = 'openpose_face',
-  OpenPoseFaceOnly = 'openpose_faceonly',
-  OpenPoseFull = 'openpose_full',
-  OpenPoseFullXL = 'dw_openpose_full',
-  OpenPoseHand = 'openpose_hand',
-  Pidinet = 'pidinet',
-  PidinetSafe = 'pidinet_safe',
-  PidinetScribble = 'pidinet_scribble',
-  PidinetSketch = 'pidinet_sketch',
-  RecolorIntensity = 'recolor_intensity',
-  RecolorLuminance = 'recolor_luminance',
-  ReferenceAdain = 'reference_adain',
-  ReferenceAdainAttn = 'reference_adain+attn',
-  ReferenceOnly = 'reference_only',
-  RevisionClip = 'revision_clipvision',
-  RevisionIgnorePrompt = 'revision_ignore_prompt',
-  ScribbleHed = 'scribble_hed',
-  ScribbleXdog = 'scribble_xdog',
-  Segmentation = 'segmentation',
-  Shuffle = 'shuffle',
-  Threshold = 'threshold',
-  TileColorFix = 'tile_colorfix',
-  TileColorFixSharp = 'tile_colorfix+sharp',
-  TileResample = 'tile_resample'
-}
+type ControlNetModules =
+  | 'blur_gaussian'
+  | 'canny'
+  | 'clip_vision'
+  | 'color'
+  | 'depth'
+  | 'depth_leres'
+  | 'depth_leres++'
+  | 'depth_midas'
+  | 'depth_zoe'
+  | 'dw_openpose_full'
+  | 'hed'
+  | 'hed_safe'
+  | 'inpaint'
+  | 'inpaint_only'
+  | 'inpaint_only+lama'
+  | 'invert'
+  | 'ip-adapter_clip_sd15'
+  | 'ip-adapter_clip_sdxl'
+  | 'ip-adapter_clip_sdxl_plus_vith'
+  | 'lineart'
+  | 'lineart_anime'
+  | 'lineart_anime_denoise'
+  | 'lineart_coarse'
+  | 'lineart_realistic'
+  | 'lineart_standard'
+  | 'mediapipe_face'
+  | 'mlsd'
+  | 'none'
+  | 'normal_bae'
+  | 'normal_map'
+  | 'normal_midas'
+  | 'oneformer_ade20k'
+  | 'oneformer_coco'
+  | 'openpose'
+  | 'openpose_face'
+  | 'openpose_faceonly'
+  | 'openpose_full'
+  | 'openpose_hand'
+  | 'pidinet'
+  | 'pidinet_safe'
+  | 'pidinet_scribble'
+  | 'pidinet_sketch'
+  | 'recolor_intensity'
+  | 'recolor_luminance'
+  | 'reference_adain'
+  | 'reference_adain+attn'
+  | 'reference_only'
+  | 'revision_clipvision'
+  | 'revision_ignore_prompt'
+  | 'scribble_hed'
+  | 'scribble_xdog'
+  | 'segmentation'
+  | 'shuffle'
+  | 'threshold'
+  | 'tile_colorfix'
+  | 'tile_colorfix+sharp'
+  | 'tile_resample';
 
 interface ControlNetType {
   modelRegex: RegExp;
@@ -70,122 +69,108 @@ interface ControlNetType {
 const controlNetTypes: ControlNetType[] = [
   {
     modelRegex: /^canny$/,
-    module: [ControlNetModules.None, ControlNetModules.Canny, ControlNetModules.Invert],
+    module: ['none', 'canny', 'invert'],
     name: 'Canny'
   },
   {
     modelRegex: /^depth$/,
-    module: [
-      ControlNetModules.None,
-      ControlNetModules.Depth,
-      ControlNetModules.DepthMidas,
-      ControlNetModules.DepthLeres,
-      ControlNetModules.DepthLeresPlus,
-      ControlNetModules.DepthZoe
-    ],
+    module: ['none', 'depth', 'depth_midas', 'depth_leres', 'depth_leres++', 'depth_zoe'],
     name: 'Depth'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
-    name: 'NormalMap'
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
+    name: 'Normal Map'
   },
   {
     modelRegex: /^openpose$/,
-    module: [ControlNetModules.None, ControlNetModules.OpenPoseFullXL],
-    name: 'OpenPoseXL',
+    module: ['none', 'dw_openpose_full'],
+    name: 'OpenPose XL',
     version: Version.SDXL
   },
   {
     modelRegex: /^openpose$/,
-    module: [
-      ControlNetModules.None,
-      ControlNetModules.OpenPose,
-      ControlNetModules.OpenPoseFace,
-      ControlNetModules.OpenPoseFaceOnly,
-      ControlNetModules.OpenPoseFull,
-      ControlNetModules.OpenPoseHand
-    ],
+    module: ['none', 'openpose', 'openpose_face', 'openpose_faceonly', 'openpose_full', 'openpose_hand'],
     name: 'OpenPose',
     version: Version.SD15
   },
   {
     modelRegex: /^mlsd$/,
-    module: [ControlNetModules.None, ControlNetModules.MSLD, ControlNetModules.Invert],
-    name: 'MSLD'
+    module: ['none', 'mlsd', 'invert'],
+    name: 'MLSD'
   },
   {
     modelRegex: /^lineart$/,
     module: [
-      ControlNetModules.None,
-      ControlNetModules.LineArt,
-      ControlNetModules.LineArtRealistic,
-      ControlNetModules.LineArtAnime,
-      ControlNetModules.LineArtAnimeDenoise,
-      ControlNetModules.LineArtCoarse,
-      ControlNetModules.LineArtStandard,
-      ControlNetModules.Invert
+      'none',
+      'lineart',
+      'lineart_realistic',
+      'lineart_anime',
+      'lineart_anime_denoise',
+      'lineart_coarse',
+      'lineart_standard',
+      'invert'
     ],
-    name: 'Lineart'
+    name: 'LineArt'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'SoftEdge'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Scribble/Sketch'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Segmentation'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Shuffle'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Tile/Blur'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Inpaint'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'InstructP2P'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Reference'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Recolor'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'Revision'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'T2I-Adapter'
   },
   {
     modelRegex: /^normal$/,
-    module: [ControlNetModules.None, ControlNetModules.Normal, ControlNetModules.NormalMidas, ControlNetModules.NormalBae],
+    module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'IP-Adapter'
   }
 ];
@@ -204,9 +189,11 @@ export enum ControlNetMode {
 
 export interface IControlNet {
   control_mode: ControlNetMode;
-  controlnet_model: string;
-  controlnet_module: string;
   input_image?: string;
+  lowvram?: boolean;
+  model: string;
+  module: string;
+  pixel_perfect?: boolean;
   resize_mode: ControlNetResizes;
 }
 

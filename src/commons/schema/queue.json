@@ -96,17 +96,25 @@
                     "$ref": "#/definitions/ControlNetMode",
                     "title": "control_mode"
                 },
-                "controlnet_model": {
-                    "title": "controlnet_model",
-                    "type": "string"
-                },
-                "controlnet_module": {
-                    "title": "controlnet_module",
-                    "type": "string"
-                },
                 "input_image": {
                     "title": "input_image",
                     "type": "string"
+                },
+                "lowvram": {
+                    "title": "lowvram",
+                    "type": "boolean"
+                },
+                "model": {
+                    "title": "model",
+                    "type": "string"
+                },
+                "module": {
+                    "title": "module",
+                    "type": "string"
+                },
+                "pixel_perfect": {
+                    "title": "pixel_perfect",
+                    "type": "boolean"
                 },
                 "resize_mode": {
                     "$ref": "#/definitions/ControlNetResizes",
@@ -115,8 +123,8 @@
             },
             "required": [
                 "control_mode",
-                "controlnet_model",
-                "controlnet_module",
+                "model",
+                "module",
                 "resize_mode"
             ],
             "title": "IControlNet",
@@ -254,6 +262,10 @@
                     ],
                     "title": "height"
                 },
+                "highRes": {
+                    "title": "highRes",
+                    "typeof": "function"
+                },
                 "initImage": {
                     "anyOf": [
                         {
@@ -270,6 +282,10 @@
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
+                    "type": "string"
+                },
+                "outDir": {
+                    "title": "outDir",
                     "type": "string"
                 },
                 "pattern": {
@@ -582,12 +598,20 @@
                     "title": "height",
                     "type": "number"
                 },
+                "highRes": {
+                    "title": "highRes",
+                    "typeof": "function"
+                },
                 "initImage": {
                     "title": "initImage",
                     "type": "string"
                 },
                 "negativePrompt": {
                     "title": "negativePrompt",
+                    "type": "string"
+                },
+                "outDir": {
+                    "title": "outDir",
                     "type": "string"
                 },
                 "pattern": {

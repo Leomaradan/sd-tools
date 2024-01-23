@@ -13,8 +13,12 @@ export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
 export interface IOverrideSettings {
   CLIP_stop_at_last_layers: number;
+  directories_filename_pattern: string;
+  outdir_img2img_samples: string;
+  outdir_txt2img_samples: string;
   samples_filename_pattern: string;
   sd_model_checkpoint: string;
+  sd_vae: string;
 }
 
 export interface IBaseQuery {
@@ -40,7 +44,6 @@ export interface IBaseQuery {
   send_images?: boolean;
   steps?: number;
   styles?: string[];
-  vae?: string;
   width?: number;
 }
 
@@ -92,10 +95,14 @@ export interface IRedrawOptions {
 }
 
 export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
+
 export interface IModel {
-  hash?: string;
   name: string;
   version: Version;
+}
+
+export interface IModelWithHash extends IModel {
+  hash?: string;
 }
 
 export interface ILora {
@@ -153,7 +160,7 @@ export interface IConfig {
     sdxl?: string;
   };
   loras: ILora[];
-  models: IModel[];
+  models: IModelWithHash[];
   redrawModels: {
     anime15?: string;
     animexl?: string;

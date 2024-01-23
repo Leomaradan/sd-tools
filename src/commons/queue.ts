@@ -3,7 +3,7 @@ import { getCutOffTokens } from '../commons/extensions/cutoff';
 import { logger, writeLog } from '../commons/logger';
 import { findADetailersModel, findCheckpoint, findStyle, findUpscaler, findVAE } from '../commons/models';
 import { renderQuery } from '../commons/query';
-import { ControlNetMode, IControlNet, IImg2ImgQuery, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
+import { IControlNet, IImg2ImgQuery, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 import { getBase64Image } from './file';
 
 export interface IAdetailerPrompt {
@@ -37,8 +37,15 @@ export interface IPrompt {
   enableHighRes?: 'both' | boolean;
   filename?: string;
   height?: number | number[];
+  highRes?:{
+    afterNegativePrompt?: string,
+    afterPrompt?: string,
+    beforeNegativePrompt?: string,
+    beforePrompt?: string,
+  };
   initImage?: string | string[];
   negativePrompt?: string;
+  outDir?: string;
   pattern?: string;
   prompt: string;
   restoreFaces?: 'both' | boolean;
@@ -66,8 +73,15 @@ export interface IPromptSingle {
   enableHighRes?: boolean;
   filename?: string;
   height?: number;
+  highRes?:{
+    afterNegativePrompt?: string,
+    afterPrompt?: string,
+    beforeNegativePrompt?: string,
+    beforePrompt?: string,
+  };
   initImage?: string;
   negativePrompt?: string;
+  outDir?: string;
   pattern?: string;
   prompt: string;
   restoreFaces?: boolean;
@@ -213,7 +227,7 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
                                           }
 
                                           const prompt: IPromptSingle = {
-                                            adetailer: basePrompt.adetailer,
+                                            ...(basePrompt as IPromptSingle),
                                             autoCutOff,
                                             autoLCM,
                                             cfg,
@@ -221,7 +235,6 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
                                             clipSkip,
                                             denoising,
                                             enableHighRes,
-                                            filename: basePrompt.filename,
                                             height,
                                             initImage,
                                             negativePrompt: negativePromptText,
@@ -270,7 +283,10 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
 
                                               if (permutation.promptReplace) {
                                                 permutation.promptReplace.forEach((promptReplace) => {
-                                                  permutedPrompt.prompt = permutedPrompt.prompt.replace(promptReplace.from, promptReplace.to);
+                                                  permutedPrompt.prompt = permutedPrompt.prompt.replace(
+                                                    promptReplace.from,
+                                                    promptReplace.to
+                                                  );
                                                   if (permutedPrompt.negativePrompt) {
                                                     permutedPrompt.negativePrompt = permutedPrompt.negativePrompt.replace(
                                                       promptReplace.from,
@@ -477,7 +493,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
 
   const queriesArray = prepareQueries(config);
 
-  queriesArray.forEach((jsonQuery2) => {
+  queriesArray.forEach((singleQuery) => {
     const {
       adetailer,
       autoCutOff,
@@ -490,8 +506,10 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       enableHighRes,
       filename,
       height,
+      highRes,
       initImage,
       negativePrompt,
+      outDir,
       pattern,
       prompt,
       restoreFaces,
@@ -504,7 +522,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       upscaler,
       vae,
       width
-    } = jsonQuery2;
+    } = singleQuery;
 
     const query: IImg2ImgQuery | ITxt2ImgQuery = {
       cfg_scale: cfg,
@@ -530,7 +548,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
     if (vae) {
       const foundVAE = findVAE(vae);
       if (foundVAE) {
-        query.vae = foundVAE;
+        query.override_settings.sd_vae = foundVAE === 'None' ? '' : foundVAE;
       } else {
         logger(`Invalid VAE ${vae}`);
         process.exit(1);
@@ -574,6 +592,26 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
 
+    if(highRes){
+      const {afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt} = highRes;
+
+      if(beforeNegativePrompt || afterNegativePrompt){
+        query.hr_negative_prompt = `${beforeNegativePrompt ?? ''},${query.negative_prompt ?? ''},${afterNegativePrompt ?? ''}`;
+      }
+
+      if(beforePrompt || afterPrompt){
+        query.hr_prompt = `${beforePrompt ?? ''},${query.prompt ?? ''},${afterPrompt ?? ''}`;
+      }
+    }
+
+    if (outDir) {
+      if ((query as IImg2ImgQuery).init_images) {
+        query.override_settings.outdir_img2img_samples = outDir;
+      } else {
+        query.override_settings.outdir_txt2img_samples = outDir;
+      }
+    }
+
     if (adetailer && adetailer.length > 0) {
       query.adetailer = [];
 
@@ -610,6 +648,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       }
     }
 
+    //console.log('HERE1', {denoising, config: config.prompts, pattern, samples_filename_pattern: query.override_settings.samples_filename_pattern});
     if (pattern) {
       query.override_settings.samples_filename_pattern = pattern;
 
@@ -619,6 +658,23 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
         }
 
         query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace('{filename}', filename);
+      }
+
+      //console.log('HERE2', {denoising, pattern, samples_filename_pattern: query.override_settings.samples_filename_pattern});
+      if (denoising) {
+        //console.log('HERE3', {denoising, pattern, samples_filename_pattern: query.override_settings.samples_filename_pattern});
+        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
+          '{denoising}',
+          denoising.toFixed(2)
+        );
+      }
+
+      if (clipSkip) {
+        //console.log('HERE3', {denoising, pattern, samples_filename_pattern: query.override_settings.samples_filename_pattern});
+        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
+          '{clipSkip}',
+          clipSkip.toFixed(0)
+        );
       }
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
