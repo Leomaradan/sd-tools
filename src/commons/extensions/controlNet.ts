@@ -10,26 +10,27 @@ type ControlNetModules =
   | 'depth_leres++'
   | 'depth_midas'
   | 'depth_zoe'
-  | 'mediapipe_face'
+  | 'dw_openpose_full'
   | 'hed'
   | 'hed_safe'
-  | 'ip-adapter_clip_sd15'
-  | 'ip-adapter_clip_sdxl'
-  | 'ip-adapter_clip_sdxl_plus_vith'
   | 'inpaint'
   | 'inpaint_only'
   | 'inpaint_only+lama'
   | 'invert'
+  | 'ip-adapter_clip_sd15'
+  | 'ip-adapter_clip_sdxl'
+  | 'ip-adapter_clip_sdxl_plus_vith'
   | 'lineart'
   | 'lineart_anime'
   | 'lineart_anime_denoise'
   | 'lineart_coarse'
   | 'lineart_realistic'
   | 'lineart_standard'
+  | 'mediapipe_face'
   | 'mlsd'
   | 'none'
-  | 'normal_map'
   | 'normal_bae'
+  | 'normal_map'
   | 'normal_midas'
   | 'oneformer_ade20k'
   | 'oneformer_coco'
@@ -37,7 +38,6 @@ type ControlNetModules =
   | 'openpose_face'
   | 'openpose_faceonly'
   | 'openpose_full'
-  | 'dw_openpose_full'
   | 'openpose_hand'
   | 'pidinet'
   | 'pidinet_safe'
@@ -190,8 +190,10 @@ export enum ControlNetMode {
 export interface IControlNet {
   control_mode: ControlNetMode;
   input_image?: string;
+  lowvram?: boolean;
   model: string;
   module: string;
+  pixel_perfect?: boolean;
   resize_mode: ControlNetResizes;
 }
 

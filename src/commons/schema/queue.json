@@ -108,6 +108,10 @@
                     "title": "input_image",
                     "type": "string"
                 },
+                "lowvram": {
+                    "title": "lowvram",
+                    "type": "boolean"
+                },
                 "model": {
                     "title": "model",
                     "type": "string"
@@ -115,6 +119,10 @@
                 "module": {
                     "title": "module",
                     "type": "string"
+                },
+                "pixel_perfect": {
+                    "title": "pixel_perfect",
+                    "type": "boolean"
                 },
                 "resize_mode": {
                     "$ref": "#/definitions/ControlNetResizes",
@@ -261,6 +269,10 @@
                         }
                     ],
                     "title": "height"
+                },
+                "highRes": {
+                    "title": "highRes",
+                    "typeof": "function"
                 },
                 "initImage": {
                     "anyOf": [
@@ -661,6 +673,10 @@
                 "height": {
                     "title": "height",
                     "type": "number"
+                },
+                "highRes": {
+                    "title": "highRes",
+                    "typeof": "function"
                 },
                 "initImage": {
                     "title": "initImage",

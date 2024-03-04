@@ -48,6 +48,12 @@ export interface IPrompt {
   enableHighRes?: 'both' | boolean;
   filename?: string;
   height?: number | number[];
+  highRes?:{
+    afterNegativePrompt?: string,
+    afterPrompt?: string,
+    beforeNegativePrompt?: string,
+    beforePrompt?: string,
+  };
   initImage?: string | string[];
   negativePrompt?: string | string[];
   outDir?: string;
@@ -79,6 +85,12 @@ export interface IPromptSingle {
   enableHighRes?: boolean;
   filename?: string;
   height?: number;
+  highRes?:{
+    afterNegativePrompt?: string,
+    afterPrompt?: string,
+    beforeNegativePrompt?: string,
+    beforePrompt?: string,
+  };
   initImage?: string;
   negativePrompt?: string;
   outDir?: string;
@@ -724,6 +736,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       enableHighRes,
       filename,
       height,
+      highRes,
       initImage,
       negativePrompt,
       outDir,
@@ -792,7 +805,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
     if (vae) {
       const foundVAE = findVAE(vae);
       if (foundVAE) {
-        query.vae = foundVAE;
+        query.override_settings.sd_vae = foundVAE === 'None' ? '' : foundVAE;
       } else {
         logger(`Invalid VAE ${vae}`);
         process.exit(1);
@@ -834,6 +847,18 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
 
     if (clipSkip) {
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
+    }
+
+    if(highRes) {
+      const {afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt} = highRes;
+
+      if(beforeNegativePrompt || afterNegativePrompt){
+        query.hr_negative_prompt = `${beforeNegativePrompt ?? ''},${query.negative_prompt ?? ''},${afterNegativePrompt ?? ''}`;
+      }
+
+      if(beforePrompt || afterPrompt){
+        query.hr_prompt = `${beforePrompt ?? ''},${query.prompt ?? ''},${afterPrompt ?? ''}`;
+      }
     }
 
     if (outDir) {

@@ -18,6 +18,7 @@ export interface IOverrideSettings {
   outdir_txt2img_samples: string;
   samples_filename_pattern: string;
   sd_model_checkpoint: string;
+  sd_vae: string;
 }
 
 export interface IBaseQuery {
@@ -43,7 +44,6 @@ export interface IBaseQuery {
   send_images?: boolean;
   steps?: number;
   styles?: string[];
-  vae?: string;
   width?: number;
 }
 

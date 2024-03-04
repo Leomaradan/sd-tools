@@ -61,10 +61,22 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
   }
 
-  if (controlNet && controlNet.length > 0) {
-    baseQuery.alwayson_scripts['controlnet'] = { args: controlNet };
-  } else {
-    delete baseQuery.alwayson_scripts['controlnet'];
+  if (controlNet) {
+    const args = controlNet.map((controlNet) => {
+      const params = { ...controlNet };
+
+      if (params.lowvram === undefined) {
+        params.lowvram = true;
+      }
+
+      if (params.pixel_perfect === undefined) {
+        params.pixel_perfect = true;
+      }
+
+      return params;
+    });
+
+    baseQuery.alwayson_scripts['controlnet'] = { args };
   }
 
   if (adetailer) {
