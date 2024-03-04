@@ -1,7 +1,7 @@
 import { IAdetailer } from './extensions/adetailer';
 import { IControlNet } from './extensions/controlNet';
 import { ICutOff } from './extensions/cutoff';
-import { TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
+import { ITiledDiffusion, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
 export * from './extensions/controlNet';
@@ -54,6 +54,7 @@ export interface ITxt2ImgQuery
   cutOff?: ICutOff;
   lcm?: boolean;
   sdxl: boolean;
+  tiledDiffusion?: ITiledDiffusion;
   //ultimateSdUpscale?: number;
 
   //init_images: string[];
@@ -65,11 +66,13 @@ export interface IImg2ImgQuery extends ITxt2ImgQuery {
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 
-export enum Version {
-  SD15 = 'sd15',
-  SDXL = 'sdxl',
-  Unknown = 'unknown'
-}
+export type VersionKey = 'sd15' | 'sdxl' | 'unknown';
+
+export const Version: Record<string, VersionKey> = {
+  SD15: 'sd15',
+  SDXL: 'sdxl',
+  Unknown: 'unknown'
+};
 
 export enum IRedrawMethod {
   Both = 'both',
@@ -98,7 +101,7 @@ export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | '
 
 export interface IModel {
   name: string;
-  version: Version;
+  version: VersionKey;
 }
 
 export interface IModelWithHash extends IModel {
@@ -108,7 +111,7 @@ export interface IModelWithHash extends IModel {
 export interface ILora {
   alias: string;
   name: string;
-  version: Version;
+  version: VersionKey;
 }
 
 export interface ISampler {
@@ -118,7 +121,7 @@ export interface ISampler {
 
 export interface IUpscaler {
   filename?: string;
-  index: number;
+  index?: number; // If no index, cannot be used in Ultimate SD Upscale
   name: string;
 }
 
@@ -129,9 +132,8 @@ export interface IStyle {
 }
 
 export interface IMetadata {
-  // description: string;
   preferredWeight?: string;
-  sdVersion: Version;
+  sdVersion: VersionKey;
 }
 
 export interface IInterrogateResponse {
@@ -142,10 +144,9 @@ export type CacheInterrogator = Record<string, IInterrogateResponse & { timestam
 export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
 export interface IConfig {
-  adetailersCustomModels: string[];
+  adetailersModels: string[];
   autoTiledDiffusion: TiledDiffusionMethods | false;
   autoTiledVAE: boolean;
-  //cacheMetadata: CacheMetadata;
   commonNegative?: string;
   commonNegativeXL?: string;
   commonPositive?: string;

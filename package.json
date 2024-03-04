@@ -1,5 +1,6 @@
 {
   "name": "sd-tools",
+  "version": "1.0.0",
   "dependencies": {
     "axios": "^1.6.2",
     "configstore": "^6.0.0",
@@ -37,6 +38,7 @@
   "main": "./dist/index.js",
   "exports": {
     "./package.json": "./package.json",
+    "./schema.json": "./src/commons/schema/queue.json",
     ".": {
       "require": {
         "default": "./dist/index.js"

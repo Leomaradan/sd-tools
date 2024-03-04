@@ -4,8 +4,9 @@ import fs from 'fs';
 import { Cache, Config } from './config';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
-import { findSampler, findUpscaler } from './models';
+import { findSampler, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
+import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 
 const headerRequest = {
   headers: {
@@ -39,7 +40,7 @@ type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
 type Query = Txt2ImgQuery & Img2ImgQuery;
 
 export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, tiledDiffusion, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const baseQuery = { ...getDefaultQuery(), ...baseQueryRaw } as IBaseQuery;
 
@@ -60,8 +61,10 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
   }
 
-  if (controlNet) {
+  if (controlNet && controlNet.length > 0) {
     baseQuery.alwayson_scripts['controlnet'] = { args: controlNet };
+  } else {
+    delete baseQuery.alwayson_scripts['controlnet'];
   }
 
   if (adetailer) {
@@ -74,6 +77,25 @@ export const renderQuery: Query = async (query, type) => {
 
   if (Config.get('autoTiledDiffusion') !== false) {
     baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
+  }
+
+  if (tiledDiffusion) {
+    baseQuery.alwayson_scripts['Tiled Diffusion'] = {
+      args: [
+        true,
+        tiledDiffusion.method,
+        true,
+        false,
+        baseQuery.width ?? 1024,
+        baseQuery.height ?? 1024,
+        tiledDiffusion.tileWidth ?? defaultTiledDiffusionOptions.tileWidth,
+        tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
+        tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
+        tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
+        findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
+        tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
+      ]
+    };
   }
 
   const autoCutOff = Config.get('cutoff');
@@ -107,7 +129,7 @@ export const renderQuery: Query = async (query, type) => {
       64, // seams_fix_width
       0.35, // seams_fix_denoise
       32, // seams_fix_padding
-      findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.index ?? 0, // 10, // upscaler_index
+      findUpscalerUltimateSDUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Nearest')?.index ?? 0, // 10, // upscaler_index
       true, // save_upscaled_image a.k.a Upscaled
       RedrawMode.None, // redraw_mode
       false, // save_seams_fix_image a.k.a Seams fix
@@ -120,8 +142,9 @@ export const renderQuery: Query = async (query, type) => {
     ];
   }
 
-  const endpoint = Config.get('scheduler') ? `agent-scheduler/v1/queue/${type}` : `api/${type}/`;
-  logger(`Executing query to ${Config.get('endpoint')}/${endpoint}`);
+  const useScheduler = Config.get('scheduler');
+  const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
+  logger(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
 
   writeLog(endpoint, baseQuery);
 
@@ -174,6 +197,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
 };
 
 type MiscQueryApi =
+  | 'adetailer/v1/ad_model'
   | 'agent-scheduler/v1/history?limit=1'
   | 'controlnet/model_list'
   | 'controlnet/module_list'
@@ -210,6 +234,7 @@ export const getLORAsQuery = () => miscQuery<{ alias: string; name: string; path
 export const getEmbeddingsQuery = () =>
   miscQuery<{ loaded: Record<string, unknown>; skipped: Record<string, unknown> }>('sdapi/v1/embeddings');
 export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
+export const getAdModelQuery = () => miscQuery<{ ad_model: string[] }>('adetailer/v1/ad_model');
 
 export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list');
 export const getControlnetModulesQuery = () => miscQuery<{ module_list: string[] }>('controlnet/module_list');

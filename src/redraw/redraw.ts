@@ -343,10 +343,14 @@ export const redraw = async (
     const query = await prepareQuery(combination.file, combination.style, denoising, prefix, sdxl);
 
     if (query) {
-      query.prompt = query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
+      query.prompt = Array.isArray(query.prompt)
+        ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
+        : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
 
       if (query.negativePrompt) {
-        query.negativePrompt = query.negativePrompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
+        query.negativePrompt = Array.isArray(query.negativePrompt)
+          ? query.negativePrompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
+          : query.negativePrompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       }
 
       query.scaleFactor = upscaling;

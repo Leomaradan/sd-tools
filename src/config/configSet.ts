@@ -6,7 +6,6 @@ import { logger } from '../commons/logger.js';
 import { findCheckpoint, findLORA } from '../commons/models.js';
 import {
   EditableOptions,
-  getConfigAddDetailerCustomModels,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,
@@ -25,11 +24,6 @@ import {
 
 interface ISetConfig {
   config: EditableOptions;
-}
-
-interface ISetConfigAdetailerCustomModels extends ISetConfig {
-  config: 'adetailers-custom-models';
-  value: string[];
 }
 
 interface ISetConfigAutoLCM extends ISetConfig {
@@ -53,7 +47,7 @@ interface ISetConfigCommonPrompt extends ISetConfig {
 }
 
 interface ISetConfigCutoff extends ISetConfig {
-  config: 'cutoff';
+  config: 'auto-cutoff';
   value: boolean;
 }
 
@@ -88,7 +82,6 @@ interface ISetConfigScheduler extends ISetConfig {
 }
 
 const options: EditableOptions[] = [
-  'adetailers-custom-models',
   'auto-lcm',
   'auto-tiled-diffusion',
   'auto-tiled-vae',
@@ -96,7 +89,7 @@ const options: EditableOptions[] = [
   'common-negative-xl',
   'common-positive',
   'common-positive-xl',
-  'cutoff',
+  'auto-cutoff',
   'cutoff-tokens',
   'cutoff-weight',
   'endpoint',
@@ -106,7 +99,6 @@ const options: EditableOptions[] = [
 ];
 
 type ISetConfigOptions =
-  | ISetConfigAdetailerCustomModels
   | ISetConfigAutoLCM
   | ISetConfigAutoTiledDiffusion
   | ISetConfigAutoTiledVAE
@@ -156,22 +148,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
   }
 
   switch (config) {
-    case 'adetailers-custom-models':
-      {
-        let valueArray = value;
-        if (!Array.isArray(value)) {
-          valueArray = (value as string).split(',');
-        }
-
-        if (!Config.get('extensions').includes('adetailer')) {
-          logger(`Add Details extension must be installed. Re-Run "sd-tools config-init" after installing it`);
-          process.exit(1);
-        }
-
-        Config.set('adetailersCustomModels', Array.from(new Set(valueArray)));
-        getConfigAddDetailerCustomModels();
-      }
-      break;
     case 'auto-lcm':
       {
         const lcm = Config.get('lcm');
@@ -182,7 +158,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
       break;
     case 'auto-tiled-diffusion':
       if (!Config.get('extensions').includes('tiled diffusion')) {
-        logger(`Tiled Diffusion extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
         process.exit(1);
       }
 
@@ -202,7 +178,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
       break;
     case 'auto-tiled-vae':
       if (!Config.get('extensions').includes('tiled vae')) {
-        logger(`Tiled VAE extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
         process.exit(1);
       }
 
@@ -225,9 +201,9 @@ export const handler = (argv: ISetConfigArgsOptions) => {
       Config.set('commonPositiveXL', value);
       getConfigCommonPositiveXL();
       break;
-    case 'cutoff':
+    case 'auto-cutoff':
       if (!Config.get('extensions').includes('cutoff')) {
-        logger(`Cutoff extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
         process.exit(1);
       }
 
@@ -248,7 +224,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         }
 
         if (!Config.get('extensions').includes('cutoff')) {
-          logger(`Cutoff extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+          logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
           process.exit(1);
         }
 
@@ -265,7 +241,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         }
 
         if (!Config.get('extensions').includes('cutoff')) {
-          logger(`Cutoff extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+          logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
           process.exit(1);
         }
 
@@ -373,7 +349,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
     case 'scheduler':
       if (!Config.get('extensions').includes('scheduler')) {
-        logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools config-init" after installing it`);
+        logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
         process.exit(1);
       }
 

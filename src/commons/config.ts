@@ -1,11 +1,12 @@
 import Configstore from 'configstore';
 
 import { ICache, IConfig } from './types';
+import { handler as init } from '../config/init';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
 
-const LATEST_CONFIG_VERSION = 1;
+const LATEST_CONFIG_VERSION = 2;
 
 const migrations: Record<number, () => void> = {
   0: () => {
@@ -14,18 +15,31 @@ const migrations: Record<number, () => void> = {
     Config.set('endpoint', 'http://127.0.0.1:7860');
     Config.set('autoTiledDiffusion', false);
     Config.set('autoTiledVAE', false);
+  },
+  1: () => {
+    config.delete('adetailersCustomModels');
+    Config.set('adetailersModels', []);
   }
 };
 
-const configMigration = () => {
+const configMigration = async () => {
   let configVersion = Config.get('configVersion') as number | undefined;
 
   if (configVersion === undefined) {
     configVersion = 0;
   }
 
+  let migrated = false;
+
   for (let i = configVersion; i < LATEST_CONFIG_VERSION; i++) {
     migrations[i]();
+    migrated = true;
+  }
+
+  if (migrated) {
+    console.log('Config has changed, refreshing models...');
+    await init({ force: true });
+    Config.set('configVersion', LATEST_CONFIG_VERSION);
   }
 };
 

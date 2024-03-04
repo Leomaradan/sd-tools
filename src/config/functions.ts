@@ -1,8 +1,9 @@
 import { Config } from '../commons/config';
-import { BaseAdetailerModels } from '../commons/extensions/adetailer';
 import { logger } from '../commons/logger';
+import { BaseUpscalers } from '../commons/models';
 
 export type ReadonlyOptions =
+  | 'adetailers-models'
   | 'config-version'
   | 'controlnet-models'
   | 'controlnet-modules'
@@ -16,7 +17,7 @@ export type ReadonlyOptions =
   | 'vae';
 
 export type EditableOptions =
-  | 'adetailers-custom-models'
+  | 'auto-cutoff'
   | 'auto-lcm'
   | 'auto-tiled-diffusion'
   | 'auto-tiled-vae'
@@ -24,7 +25,6 @@ export type EditableOptions =
   | 'common-negative-xl'
   | 'common-positive'
   | 'common-positive-xl'
-  | 'cutoff'
   | 'cutoff-tokens'
   | 'cutoff-weight'
   | 'endpoint'
@@ -38,7 +38,8 @@ const displayList = (list: { name: string }[] | Set<{ name: string } | string> |
   if (list instanceof Set) {
     list = Array.from(list) as { name: string }[];
   }
-  return list.map((item) => `  - ${typeof item === 'string' ? item : item.name}`).join('\n');
+
+  return '\n' + list.map((item) => `  - ${typeof item === 'string' ? item : item.name}`).join('\n');
 };
 
 export const getConfigVersion = () => logger(`Config version: ${Config.get('configVersion') ?? 0}`);
@@ -50,11 +51,10 @@ export const getConfigLoras = () => logger(`LoRAs: ${displayList(Config.get('lor
 export const getConfigModels = () => logger(`Stable Diffusion Checkpoints: ${displayList(Config.get('models'))}`);
 export const getConfigSamplers = () => logger(`Samplers: ${displayList(Config.get('samplers'))}`);
 export const getConfigStyles = () => logger(`Styles: ${displayList(Config.get('styles'))}`);
-export const getConfigUpscalers = () => logger(`Upscalers: ${displayList(Config.get('upscalers'))}`);
+export const getConfigUpscalers = () => logger(`Upscalers: ${displayList([...BaseUpscalers, ...Config.get('upscalers')])}`);
 export const getConfigVAE = () => logger(`VAE: ${displayList(Config.get('vae'))}`);
 
-export const getConfigAddDetailerCustomModels = () =>
-  logger(`Add Detailers Custom models: \n${displayList(Config.get('adetailersCustomModels'))}\n Base Add Details Models: \n${displayList(BaseAdetailerModels)}`);
+export const getConfigAddDetailerModels = () => logger(`Add Detailers models: ${displayList(Config.get('adetailersModels'))}`);
 export const getConfigAutoLCM = () => {
   const { auto } = Config.get('lcm');
   logger(`Auto LCM: ${auto ? 'enabled' : 'disabled'}`);

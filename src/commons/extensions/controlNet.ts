@@ -1,4 +1,4 @@
-import { Version } from '../types';
+import { Version, VersionKey } from '../types';
 
 type ControlNetModules =
   | 'blur_gaussian'
@@ -63,10 +63,10 @@ interface ControlNetType {
   modelRegex: RegExp;
   module: ControlNetModules[];
   name: string;
-  version?: Version;
+  version?: VersionKey;
 }
 
-const controlNetTypes: ControlNetType[] = [
+/*const controlNetTypes: ControlNetType[] = [
   {
     modelRegex: /^canny$/,
     module: ['none', 'canny', 'invert'],
@@ -173,7 +173,7 @@ const controlNetTypes: ControlNetType[] = [
     module: ['none', 'normal_map', 'normal_midas', 'normal_bae'],
     name: 'IP-Adapter'
   }
-];
+];*/
 
 export enum ControlNetResizes {
   Envelope = 2,
@@ -195,4 +195,4 @@ export interface IControlNet {
   resize_mode: ControlNetResizes;
 }
 
-export const checkControlNet = (model: string, moduleName: ControlNetModules, version: Version) => {};
+export const checkControlNet = (model: string, moduleName: ControlNetModules, version: VersionKey) => {};

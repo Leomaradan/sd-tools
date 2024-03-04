@@ -3,16 +3,28 @@ import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
-import { findCheckpoint } from '../commons/models';
-import { IUpscaleOptions, IUpscaleOptionsFull, upscaleTiles } from './upscaleTiles';
+import { findCheckpoint, findControlnetModel } from '../commons/models';
+import { IUpscaleOptions, IUpscaleOptionsFull } from './types';
+import { upscaleTiles } from './upscaleTiles';
+import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
 
-export const command = 'upscale <source>';
-export const describe = 'upscale image using controlnet tiles';
+const OPTION_CONTROLNET = 'controlnet';
+const OPTION_TILED_DIFFUSION = 'tiled-diffusion';
+
+export const command = 'upscale <source> [method]';
+export const describe = 'upscale image';
 export const builder = (builder: yargs.Argv<object>) => {
   return builder
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
+      type: 'string'
+    })
+    .positional('method', {
+      choices: [OPTION_CONTROLNET, OPTION_TILED_DIFFUSION],
+      default: OPTION_CONTROLNET,
+      demandOption: false,
+      describe: 'upscaling method',
       type: 'string'
     })
     .options({
@@ -80,7 +92,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 
           return arg;
         },
-        describe: 'upscaling factor. If multiple values are provided, multiple upscales will be generated',
+        describe: 'upscaling factor. If multiple values are provided, multiple upscale will be generated',
         type: 'array'
       }
     })
@@ -92,6 +104,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 
 export const handler = (argv: IUpscaleOptionsFull) => {
   const source = path.resolve(argv.source);
+  const { method } = argv;
 
   const initialized = Config.get('initialized');
 
@@ -107,5 +120,31 @@ export const handler = (argv: IUpscaleOptionsFull) => {
     upscaling: argv.upscaling ?? undefined
   };
 
-  upscaleTiles(source, options);
+  if (method === OPTION_CONTROLNET) {
+    const hasControlnet = Config.get('extensions').includes('controlnet');
+
+    if (!hasControlnet) {
+      logger('ControlNet is required');
+      process.exit(1);
+    }
+
+    const tiles = findControlnetModel('control_v11f1e_sd15_tile');
+    if (!tiles) {
+      logger('ControlNet Tiles model is required');
+      process.exit(1);
+    }
+
+    upscaleTiles(source, options);
+  }
+
+  if (method === OPTION_TILED_DIFFUSION) {
+    const hasTiledDiffusion = Config.get('extensions').includes('tiled diffusion');
+
+    if (!hasTiledDiffusion) {
+      logger('Tiled Diffusion is required');
+      process.exit(1);
+    }
+
+    upscaleTiledDiffusion(source, options);
+  }
 };

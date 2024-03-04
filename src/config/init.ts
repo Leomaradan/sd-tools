@@ -1,12 +1,13 @@
-/* eslint-disable  */
 import { basename } from 'path';
 import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
+import { getMetadata } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
+  getAdModelQuery,
   getControlnetModelsQuery,
   getControlnetModulesQuery,
   getEmbeddingsQuery,
@@ -19,8 +20,7 @@ import {
   getUpscalersQuery,
   getVAEQuery
 } from '../commons/query';
-import { getMetadata } from '../commons/file';
-import { Extensions, IStyle, ILora, IModel, Version, IModelWithHash } from '../commons/types';
+import { Extensions, ILora, IModel, IModelWithHash, IStyle, Version } from '../commons/types';
 
 export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';
@@ -45,8 +45,8 @@ export const builder = (builder: yargs.Argv<object>) => {
   });
 };
 
-export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean; endpoint?: string }) => {
-  const { force, endpoint } = argv;
+export const handler = async (argv: { endpoint?: string; force?: boolean; ['purge-cache']?: boolean }) => {
+  const { endpoint, force } = argv;
   const initialized = Config.get('initialized');
 
   if (!initialized || force || argv['purge-cache']) {
@@ -68,6 +68,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
   const lorasQuery = await getLORAsQuery();
   const embeddingsQuery = await getEmbeddingsQuery();
   const stylesQuery = await getStylesQuery();
+  const adModelsQuery = await getAdModelQuery();
 
   if (
     !modelsQuery ||
@@ -90,7 +91,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
         modelsQuery.map((modelQuery) => {
           const item: IModelWithHash = { name: modelQuery.title, version: Version.Unknown };
           const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
-          const metadata = getMetadata(modelQuery.filename.replace(/\.safetensors|.ckpt/, '.json'));
+          const metadata = getMetadata(modelQuery.filename.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.json'));
 
           if (metadata) {
             item.version = metadata.sdVersion;
@@ -120,7 +121,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
 
   Config.set(
     'samplers',
-    Array.from(new Set(samplersQuery.map((samplerQuery) => ({ name: samplerQuery.name, aliases: samplerQuery.aliases }))))
+    Array.from(new Set(samplersQuery.map((samplerQuery) => ({ aliases: samplerQuery.aliases, name: samplerQuery.name }))))
   );
 
   Config.set(
@@ -129,8 +130,8 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
       new Set(
         upscalersQuery.map((upscalerQuery, index) => ({
           filename: upscalerQuery.model_path ? basename(upscalerQuery.model_path) : undefined,
-          name: upscalerQuery.name,
-          index
+          index,
+          name: upscalerQuery.name
         }))
       )
     )
@@ -144,7 +145,7 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
       new Set(
         stylesQuery
           .map((styleQuery) => {
-            const style: IStyle = { name: styleQuery.name, prompt: '', negativePrompt: '' };
+            const style: IStyle = { name: styleQuery.name, negativePrompt: '', prompt: '' };
 
             if (styleQuery.prompt) {
               style.prompt = styleQuery.prompt;
@@ -170,9 +171,9 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Array.from(
       new Set(
         lorasQuery.map((lorasQuery) => {
-          const lora: ILora = { name: lorasQuery.name, version: Version.Unknown, alias: lorasQuery.alias };
+          const lora: ILora = { alias: lorasQuery.alias, name: lorasQuery.name, version: Version.Unknown };
 
-          const metadata = getMetadata(lorasQuery.path.replace(/\.safetensors|.ckpt/, '.json'));
+          const metadata = getMetadata(lorasQuery.path.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.json'));
 
           if (metadata) {
             lora.version = metadata.sdVersion;
@@ -249,10 +250,15 @@ export const handler = async (argv: { force?: boolean; ['purge-cache']?: boolean
     Config.set('controlnetModules', []);
   }
 
+  if (extensions.has('adetailer') && adModelsQuery) {
+    Config.set('adetailersModels', Array.from(adModelsQuery.ad_model));
+  } else {
+    Config.set('adetailersModels', []);
+  }
+
   if (!initialized || force) {
     logger('Refresh models');
     Config.set('initialized', true);
-    Config.set('adetailersCustomModels', []);
     Config.set('cutoff', extensions.has('cutoff'));
     Config.set('cutoffTokens', [
       'red',

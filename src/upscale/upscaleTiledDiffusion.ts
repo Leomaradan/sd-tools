@@ -1,15 +1,14 @@
 import fs from 'fs';
 import { basename } from 'path';
 
+import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { findControlnetModel, findControlnetModule } from '../commons/models';
 import { IPrompt, queue } from '../commons/queue';
-import { ControlNetMode, ControlNetResizes } from '../commons/types';
 import { IUpscaleOptions } from './types';
 
-export const upscaleTiles = async (
+export const upscaleTiledDiffusion = async (
   source: string,
   { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }: IUpscaleOptions
 ) => {
@@ -22,22 +21,16 @@ export const upscaleTiles = async (
 
   const filesList = getFiles(source, recursive);
 
-  const denoising = denoisingArray ?? [0.3];
+  const denoising = denoisingArray ?? [0.4];
   const upscaling = upscalingArray ?? [2];
 
   for await (const file of filesList) {
     const query = (await extractFromFile(file, 'json', true)) as IPrompt;
 
     if (query) {
-      query.ultimateSdUpscale = true;
-      query.controlNet = [
-        {
-          control_mode: ControlNetMode.ControleNetImportant,
-          model: findControlnetModel('tile')?.name as string,
-          module: findControlnetModule('tile_resample') as string,
-          resize_mode: ControlNetResizes.Resize
-        }
-      ];
+      query.tiledDiffusion = {
+        method: TiledDiffusionMethods.MultiDiffusion
+      };
       query.width = file.width;
       query.height = file.height;
       query.initImage = file.filename;
@@ -47,7 +40,7 @@ export const upscaleTiles = async (
       query.prompt = Array.isArray(query.prompt)
         ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
         : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
-      query.pattern = `[datetime]-x{scaleFactor}-cntiles-{filename}`; // Currently don't work, because Ultimate SD Upscale ignore override
+      query.pattern = `[datetime]-x{scaleFactor}-multidiffusion-{filename}`;
 
       if (checkpoint) {
         query.checkpoints = checkpoint;

@@ -1,6 +1,14 @@
 import { Config } from './config';
-import { BaseAdetailerModels } from './extensions/adetailer';
 import { ILora, IModel, ISampler, IStyle, IUpscaler } from './types';
+
+export const BaseUpscalers: IUpscaler[] = [
+  { name: 'Latent' },
+  { name: 'Latent (antialiased)' },
+  { name: 'Latent (bicubic)' },
+  { name: 'Latent (bicubic antialiased)' },
+  { name: 'Latent (nearest)' },
+  { name: 'Latent (nearest-exact)' }
+];
 
 export const findModel = <TType = object | string>(
   modelNames: string[],
@@ -76,6 +84,15 @@ export const findPartialStringProperties =
   };
 
 export const findUpscaler = (...upscaleName: string[]): IUpscaler | undefined => {
+  const AllModels = [...Config.get('upscalers'), ...BaseUpscalers];
+
+  return findModel<IUpscaler>(upscaleName, AllModels, {
+    findExact: findExactStringProperties(['name', 'filename']),
+    findPartial: findPartialStringProperties(['name', 'filename'])
+  });
+};
+
+export const findUpscalerUltimateSDUpscaler = (...upscaleName: string[]): IUpscaler | undefined => {
   const AllModels = Config.get('upscalers');
 
   return findModel<IUpscaler>(upscaleName, AllModels, {
@@ -125,7 +142,7 @@ export const findSampler = (...sampleName: string[]): ISampler | undefined => {
 };
 
 export const findADetailersModel = (...adetaileName: string[]): string | undefined => {
-  const AllModels = Array.from(new Set([...BaseAdetailerModels, ...Config.get('adetailersCustomModels')]));
+  const AllModels = Config.get('adetailersModels');
 
   return findModel<string>(adetaileName, AllModels);
 };

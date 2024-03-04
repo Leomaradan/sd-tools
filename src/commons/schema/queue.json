@@ -277,8 +277,18 @@
                     "title": "initImage"
                 },
                 "negativePrompt": {
-                    "title": "negativePrompt",
-                    "type": "string"
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "negativePrompt"
                 },
                 "outDir": {
                     "title": "outDir",
@@ -289,8 +299,18 @@
                     "type": "string"
                 },
                 "prompt": {
-                    "title": "prompt",
-                    "type": "string"
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "prompt"
                 },
                 "restoreFaces": {
                     "enum": [
@@ -390,6 +410,20 @@
                     },
                     "title": "stylesSets",
                     "type": "array"
+                },
+                "tiledDiffusion": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ITiledDiffusion"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/ITiledDiffusion"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "title": "tiledDiffusion"
                 },
                 "ultimateSdUpscale": {
                     "enum": [
@@ -507,6 +541,40 @@
                 "to"
             ],
             "title": "IPromptReplace",
+            "type": "object"
+        },
+        "ITiledDiffusion": {
+            "additionalProperties": false,
+            "properties": {
+                "method": {
+                    "$ref": "#/definitions/TiledDiffusionMethods",
+                    "title": "method"
+                },
+                "scaleFactor": {
+                    "title": "scaleFactor",
+                    "type": "number"
+                },
+                "tileBatchSize": {
+                    "title": "tileBatchSize",
+                    "type": "number"
+                },
+                "tileHeight": {
+                    "title": "tileHeight",
+                    "type": "number"
+                },
+                "tileOverlap": {
+                    "title": "tileOverlap",
+                    "type": "number"
+                },
+                "tileWidth": {
+                    "title": "tileWidth",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "method"
+            ],
+            "title": "ITiledDiffusion",
             "type": "object"
         },
         "IUltimateSDUpscale": {
@@ -641,6 +709,10 @@
                     "title": "styles",
                     "type": "array"
                 },
+                "tiledDiffusion": {
+                    "$ref": "#/definitions/ITiledDiffusion",
+                    "title": "tiledDiffusion"
+                },
                 "ultimateSdUpscale": {
                     "$ref": "#/definitions/IUltimateSDUpscale",
                     "title": "ultimateSdUpscale"
@@ -660,11 +732,27 @@
             },
             "title": "Partial<IPromptSingle>",
             "type": "object"
+        },
+        "TiledDiffusionMethods": {
+            "enum": [
+                "Mixture of Diffusers",
+                "MultiDiffusion"
+            ],
+            "title": "TiledDiffusionMethods",
+            "type": "string"
         }
     },
     "properties": {
         "$schema": {
             "title": "$schema",
+            "type": "string"
+        },
+        "multiValueMethod": {
+            "enum": [
+                "permutation",
+                "random-selection"
+            ],
+            "title": "multiValueMethod",
             "type": "string"
         },
         "permutations": {

@@ -148,6 +148,10 @@ export const getBase64Image = (url: string) => {
 export const getMetadata = (url: string): IMetadata | undefined => {
   const cacheMetadata = Cache.get('metadata');
 
+  if (!url.endsWith('.json')) {
+    logger(`Invalid metadata file : ${url}`);
+  }
+
   try {
     if (cacheMetadata[url] !== undefined) {
       if (cacheMetadata[url].timestamp === fs.statSync(url).mtimeMs.toString()) {

@@ -4,7 +4,7 @@ import { Config } from '../commons/config.js';
 import { logger } from '../commons/logger.js';
 import {
   Options,
-  getConfigAddDetailerCustomModels,
+  getConfigAddDetailerModels,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,
@@ -31,44 +31,48 @@ import {
   getConfigVersion
 } from './functions.js';
 
-const options: Options[] = [
-  'adetailers-custom-models',
-  'auto-lcm',
-  'auto-tiled-diffusion',
-  'auto-tiled-vae',
-  'common-negative',
-  'common-negative-xl',
-  'common-positive',
-  'common-positive-xl',
-  'config-version',
-  'controlnet-models',
-  'controlnet-modules',
-  'cutoff',
-  'cutoff-tokens',
-  'cutoff-weight',
-  'embeddings',
-  'endpoint',
-  'extensions',
-  'lcm',
-  'loras',
-  'models',
-  'redraw-models',
-  'samplers',
-  'scheduler',
-  'scheduler',
-  'styles',
-  'upscalers',
-  'vae'
+export const options: { description: string; option: Options }[] = [
+  { description: 'List of Add Details models, if existing', option: 'adetailers-models' },
+  { description: 'If set, the LCM models will be used', option: 'auto-lcm' },
+  { description: 'LCM models to Auto LCM', option: 'lcm' },
+  {
+    description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled Diffusion will be enabled',
+    option: 'auto-tiled-diffusion'
+  },
+  { description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled', option: 'auto-tiled-vae' },
+  { description: 'Negative prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-negative' },
+  { description: 'Negative prompt to add on each queries using SD XL (except queue query)', option: 'common-negative-xl' },
+  { description: 'Prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-positive' },
+  { description: 'Prompt to add on each queries using SD XL (except queue query)', option: 'common-positive-xl' },
+  { description: 'Version of the config. Read-only option', option: 'config-version' },
+  { description: 'Available models for ControlNet. Refreshed with command "init"', option: 'controlnet-models' },
+  { description: 'Available modules for ControlNet. Refreshed with command "init"', option: 'controlnet-modules' },
+  { description: 'If set and the CutOff extension exists, the Tiled VAE will be enabled', option: 'auto-cutoff' },
+  { description: 'List of color token used in Auto Cutoff', option: 'cutoff-tokens' },
+  { description: 'Weight used in Auto Cutoff', option: 'cutoff-weight' },
+  { description: 'Available embeddings. Refreshed with command "init"', option: 'embeddings' },
+  { description: 'Url to API', option: 'endpoint' },
+  { description: 'Available extensions. Refreshed with command "init"', option: 'extensions' },
+  { description: 'Available LoRA. Refreshed with command "init"', option: 'loras' },
+  { description: 'Available Checkpoints. Refreshed with command "init"', option: 'models' },
+  { description: 'Checkpoints for the Redraw command', option: 'redraw-models' },
+  { description: 'Available Samplers. Refreshed with command "init"', option: 'samplers' },
+  {
+    description: 'If set and the Agent Scheduler extension exists, all queries will be sent to the Scheduler instead of resolved directly',
+    option: 'scheduler'
+  },
+  { description: 'Available styles. Refreshed with command "init"', option: 'styles' },
+  { description: 'Available upscalers. Refreshed with command "init"', option: 'upscalers' },
+  { description: 'Available VAEs. Refreshed with command "init"', option: 'vae' }
 ];
 
-export const command = 'config-get <config>';
+export const command = 'config-get [config]';
 export const describe = 'get config value';
 export const builder = (builder: yargs.Argv<object>) => {
   return builder
     .positional('config', {
-      choices: options,
-      demandOption: true,
-      describe: 'config option to set',
+      choices: options.map((o) => o.option).sort((a, b) => a.localeCompare(b)),
+      describe: 'config option to get',
       type: 'string'
     })
     .fail((msg) => {
@@ -77,13 +81,19 @@ export const builder = (builder: yargs.Argv<object>) => {
     });
 };
 
-export const handler = (argv: { config: string }) => {
-  const { config } = argv as { config: Options };
+export const handler = (argv: { config?: string }) => {
+  const { config } = argv as { config?: Options };
 
   const initialized = Config.get('initialized');
 
   if (!initialized) {
     logger('Config must be initialized first');
+    process.exit(1);
+  }
+
+  if (!config) {
+    const listOptions = [...options].sort((a, b) => a.option.localeCompare(b.option)).map((o) => `  - ${o.option} : ${o.description}`);
+    logger(`Available options: \n${listOptions.join('\n')}`);
     process.exit(1);
   }
 
@@ -122,8 +132,8 @@ export const handler = (argv: { config: string }) => {
       getConfigVAE();
       break;
 
-    case 'adetailers-custom-models':
-      getConfigAddDetailerCustomModels();
+    case 'adetailers-models':
+      getConfigAddDetailerModels();
       break;
     case 'auto-lcm':
       getConfigAutoLCM();
@@ -146,7 +156,7 @@ export const handler = (argv: { config: string }) => {
     case 'common-positive-xl':
       getConfigCommonNegativeXL();
       break;
-    case 'cutoff':
+    case 'auto-cutoff':
       getConfigCutoff();
       break;
     case 'cutoff-tokens':
