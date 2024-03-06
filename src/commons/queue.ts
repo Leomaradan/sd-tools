@@ -48,11 +48,11 @@ export interface IPrompt {
   enableHighRes?: 'both' | boolean;
   filename?: string;
   height?: number | number[];
-  highRes?:{
-    afterNegativePrompt?: string,
-    afterPrompt?: string,
-    beforeNegativePrompt?: string,
-    beforePrompt?: string,
+  highRes?: {
+    afterNegativePrompt?: string;
+    afterPrompt?: string;
+    beforeNegativePrompt?: string;
+    beforePrompt?: string;
   };
   initImage?: string | string[];
   negativePrompt?: string | string[];
@@ -85,11 +85,11 @@ export interface IPromptSingle {
   enableHighRes?: boolean;
   filename?: string;
   height?: number;
-  highRes?:{
-    afterNegativePrompt?: string,
-    afterPrompt?: string,
-    beforeNegativePrompt?: string,
-    beforePrompt?: string,
+  highRes?: {
+    afterNegativePrompt?: string;
+    afterPrompt?: string;
+    beforeNegativePrompt?: string;
+    beforePrompt?: string;
   };
   initImage?: string;
   negativePrompt?: string;
@@ -182,6 +182,13 @@ interface IPrepareSingleQueryFromArray {
   vaeArray: (string | undefined)[];
   widthArray: (number | undefined)[];
 }
+
+const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
+  query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern as string).replace(
+    `{${token}}`,
+    value
+  );
+};
 
 const prepareSingleQuery = (
   basePrompt: IPrompt,
@@ -286,10 +293,6 @@ const prepareSingleQuery = (
 
     if (basePrompt.controlNet) {
       prompt.controlNet = Array.isArray(basePrompt.controlNet) ? basePrompt.controlNet : [basePrompt.controlNet];
-    }
-
-    if (scaleFactor && prompt.pattern?.includes('{scaleFactor}')) {
-      prompt.pattern = prompt.pattern.replace('{scaleFactor}', String(scaleFactor));
     }
 
     if (ultimateSdUpscale) {
@@ -849,14 +852,14 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
 
-    if(highRes) {
-      const {afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt} = highRes;
+    if (highRes) {
+      const { afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt } = highRes;
 
-      if(beforeNegativePrompt || afterNegativePrompt){
+      if (beforeNegativePrompt || afterNegativePrompt) {
         query.hr_negative_prompt = `${beforeNegativePrompt ?? ''},${query.negative_prompt ?? ''},${afterNegativePrompt ?? ''}`;
       }
 
-      if(beforePrompt || afterPrompt){
+      if (beforePrompt || afterPrompt) {
         query.hr_prompt = `${beforePrompt ?? ''},${query.prompt ?? ''},${afterPrompt ?? ''}`;
       }
     }
@@ -908,26 +911,77 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
     if (pattern) {
       query.override_settings.samples_filename_pattern = pattern;
 
+      const allowedTokens = [
+        'filename',
+        'cfg',
+        'clipSkip',
+        'denoising',
+        'enableHighRes',
+        'height',
+        'restoreFaces',
+        'scaleFactor',
+        'seed',
+        'steps',
+        'width'
+      ];
+
+      const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
+
+      if (matches) {
+        matches.forEach((match) => {
+          if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
+            logger(`Invalid pattern token ${match}`);
+            process.exit(1);
+          }
+        });
+      }
+
       if (filename) {
         if (!query.override_settings.samples_filename_pattern.includes('{filename}')) {
           query.override_settings.samples_filename_pattern = '{filename}-' + query.override_settings.samples_filename_pattern;
         }
 
-        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace('{filename}', filename);
+        updateFilename(query, 'filename', filename);
       }
 
-      if (denoising) {
-        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
-          '{denoising}',
-          denoising.toFixed(2)
-        );
+      if (cfg) {
+        updateFilename(query, 'cfg', cfg.toFixed(2));
       }
 
       if (clipSkip) {
-        query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
-          '{clipSkip}',
-          clipSkip.toFixed(0)
-        );
+        updateFilename(query, 'clipSkip', clipSkip.toFixed(0));
+      }
+
+      if (denoising) {
+        updateFilename(query, 'denoising', denoising.toFixed(2));
+      }
+
+      if (enableHighRes !== undefined) {
+        updateFilename(query, 'highRes', enableHighRes.toString());
+      }
+
+      if (height) {
+        updateFilename(query, 'height', height.toFixed(0));
+      }
+
+      if (restoreFaces !== undefined) {
+        updateFilename(query, 'restoreFaces', restoreFaces.toString());
+      }
+
+      if (scaleFactor) {
+        updateFilename(query, 'scaleFactor', scaleFactor.toFixed(0));
+      }
+
+      if (seed) {
+        updateFilename(query, 'seed', seed.toFixed(0));
+      }
+
+      if (steps) {
+        updateFilename(query, 'steps', steps.toFixed(0));
+      }
+
+      if (width) {
+        updateFilename(query, 'width', width.toFixed(0));
       }
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
