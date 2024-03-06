@@ -46,7 +46,8 @@
     }
   },
   "files": [
-    "dist/*"
+    "dist/index.js",
+    "sd-tools.js"
   ],
   "packageManager": "yarn@4.1.1",
   "scripts": {
