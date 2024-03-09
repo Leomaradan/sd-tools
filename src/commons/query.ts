@@ -2,11 +2,11 @@ import axios from 'axios';
 import fs from 'fs';
 
 import { Cache, Config } from './config';
+import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
-import { findSampler, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
+import { findSampler, findUpscaler, findUpscalerUltimateSDUpscaler, isModelSDXL } from './models';
 import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
-import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 
 const headerRequest = {
   headers: {
@@ -40,11 +40,19 @@ type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
 type Query = Txt2ImgQuery & Img2ImgQuery;
 
 export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, tiledDiffusion, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, lcm, sdxl, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const baseQuery = { ...getDefaultQuery(), ...baseQueryRaw } as IBaseQuery;
 
   let script = false;
+
+  let isSDXL = sdxl;
+
+  if (sdxl === undefined && baseQuery.override_settings.sd_model_checkpoint) {
+    isSDXL = isModelSDXL(baseQuery.override_settings.sd_model_checkpoint);
+  }
+
+  const defaultUpscaler = findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)');
 
   if (
     ((!baseQuery as unknown as IImg2ImgQuery).init_images && baseQuery.hr_upscaler) ||
@@ -54,8 +62,7 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.hr_prompt
   ) {
     baseQuery.enable_hr = true;
-    baseQuery.hr_upscaler =
-      baseQuery.hr_upscaler ?? (findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string);
+    baseQuery.hr_upscaler = baseQuery.hr_upscaler ?? (defaultUpscaler?.name as string);
     baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
     baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? '';
     baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
@@ -83,11 +90,11 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
   }
 
-  if (Config.get('autoTiledVAE')) {
+  if (Config.get('autoTiledVAE') && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled VAE'] = { args: ['True'] };
   }
 
-  if (Config.get('autoTiledDiffusion') !== false) {
+  if (Config.get('autoTiledDiffusion') !== false && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
   }
 
@@ -104,7 +111,7 @@ export const renderQuery: Query = async (query, type) => {
         tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
         tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
         tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
-        findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
+        defaultUpscaler?.name as string,
         tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
       ]
     };
@@ -120,7 +127,7 @@ export const renderQuery: Query = async (query, type) => {
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
   const addLCM = lcm ?? autoLcm;
   if (addLCM) {
-    const lcmModel = sdxl ? lcmXL : lcm15;
+    const lcmModel = isSDXL ? lcmXL : lcm15;
     if (lcmModel) {
       baseQuery.prompt = `<lora:${lcmModel}:1> ${baseQuery.prompt}`;
       baseQuery.cfg_scale = 1.5;

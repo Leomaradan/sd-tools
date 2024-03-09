@@ -110,6 +110,26 @@ export const findCheckpoint = (...modelsName: string[]): IModel | undefined => {
   });
 };
 
+export const isModelSDXL = (modelName: string): boolean | undefined => {
+  const model = findCheckpoint(modelName);
+
+  if(!model) {
+    return undefined;
+  }
+
+  if(model.version === 'sdxl') {
+    return true;
+  }
+
+  if(model.version === 'sd15') {
+    return false;
+  }
+
+  if(model.name.toLowerCase().includes('xl')) {
+    return true;
+  }
+}
+
 export const findVAE = (...vaeName: string[]): string | undefined => {
   const AllModels = [...Config.get('vae'), 'None'];
 

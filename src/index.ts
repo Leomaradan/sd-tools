@@ -9,6 +9,7 @@ import * as queue from './queue';
 import * as redraw from './redraw';
 import * as rename from './rename';
 import * as upscale from './upscale';
+import * as stats from './stats';
 
 Config.migrate().then(() => {
   yargs(process.argv.slice(2))
@@ -20,6 +21,7 @@ Config.migrate().then(() => {
     .command(extract)
     .command(upscale)
     .command(redraw)
+    .command(stats)
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
     .strict()

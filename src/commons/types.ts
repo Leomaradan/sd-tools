@@ -53,7 +53,7 @@ export interface ITxt2ImgQuery
   controlNet?: IControlNet[];
   cutOff?: ICutOff;
   lcm?: boolean;
-  sdxl: boolean;
+  sdxl?: boolean;
   tiledDiffusion?: ITiledDiffusion;
   //ultimateSdUpscale?: number;
 

@@ -521,6 +521,13 @@
                     "title": "beforePrompt",
                     "type": "string"
                 },
+                "filenameReplace": {
+                    "items": {
+                        "$ref": "#/definitions/IPromptReplace"
+                    },
+                    "title": "filenameReplace",
+                    "type": "array"
+                },
                 "overwrite": {
                     "$ref": "#/definitions/Partial<IPromptSingle>",
                     "title": "overwrite"

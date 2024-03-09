@@ -121,6 +121,7 @@ export interface IPromptPermutations {
   beforeFilename?: string;
   beforeNegativePrompt?: string;
   beforePrompt?: string;
+  filenameReplace?: IPromptReplace[];
   overwrite?: Partial<IPromptSingle>;
   promptReplace?: IPromptReplace[];
 }
@@ -295,6 +296,10 @@ const prepareSingleQuery = (
       prompt.controlNet = Array.isArray(basePrompt.controlNet) ? basePrompt.controlNet : [basePrompt.controlNet];
     }
 
+    if (scaleFactor && prompt.pattern?.includes('{scaleFactor}')) {
+      prompt.pattern = prompt.pattern.replace('{scaleFactor}', String(scaleFactor));
+    }
+
     if (ultimateSdUpscale) {
       const scaleFactor = prompt.scaleFactor ?? 2;
       prompt.ultimateSdUpscale = {
@@ -345,6 +350,16 @@ const prepareSingleQuery = (
           permutedPrompt.filename = basePrompt.filename
             ? `${permutation.beforeFilename}${basePrompt.filename}`
             : permutation.beforeFilename;
+        }
+
+        if (permutation.filenameReplace) {
+          permutation.filenameReplace.forEach((filenameReplace) => {
+            if (!permutedPrompt.filename) {
+              permutedPrompt.filename = filenameReplace.to;
+            } else {
+              permutedPrompt.filename = permutedPrompt.filename.replace(filenameReplace.from, filenameReplace.to);
+            }
+          });
         }
 
         if (permutation.afterPrompt) {

@@ -10,9 +10,9 @@ import { IMetadata, Version } from './types';
 
 const SD_VERSION = 'sd version';
 
-const readFile = (path: string): string[] | undefined => {
+const readFile = (path: string, noCache?: boolean): string[] | undefined => {
   let data = undefined;
-  const cacheImageData = Cache.get('imageData');
+  const cacheImageData = noCache ? {} : Cache.get('imageData');
   try {
     if (cacheImageData[path] !== undefined) {
       if (cacheImageData[path].timestamp === fs.statSync(path).mtimeMs.toString()) {
@@ -50,13 +50,16 @@ const readFile = (path: string): string[] | undefined => {
   } catch (error) {
     logger(String(error));
   } finally {
-    Cache.set('imageData', cacheImageData);
+    if (!noCache) {
+      Cache.set('imageData', cacheImageData);
+    }
   }
   return data;
 };
 
 export interface IFile {
   data: string[] | undefined;
+  date: string;
   file: string;
   filename: string;
   fullpath: string;
@@ -65,7 +68,7 @@ export interface IFile {
   width: number;
 }
 
-export const readFiles = (sourcepath: string, root: string, recursive?: boolean): IFile[] => {
+export const readFiles = (sourcepath: string, root: string, recursive?: boolean, noCache?: boolean): IFile[] => {
   const files = fs.readdirSync(sourcepath);
   const result: IFile[] = [];
 
@@ -79,11 +82,13 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean)
     if (file.endsWith('.png')) {
       logger(`Read ${file}`);
       const filename = path.resolve(sourcepath, file);
-      const data = readFile(filename);
+      const data = readFile(filename, noCache);
       const sizes = sizeOf(filename);
+      const date = fs.statSync(filename).birthtime.toISOString();
 
       result.push({
         data,
+        date,
         file,
         filename,
         fullpath: path.resolve(sourcepath, file),
@@ -97,9 +102,11 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean)
       logger(`Read ${file}`);
       const filename = path.resolve(sourcepath, file);
       const sizes = sizeOf(filename);
+      const date = fs.statSync(filename).birthtime.toISOString();
 
       result.push({
         data: undefined,
+        date,
         file,
         filename,
         fullpath: path.resolve(sourcepath, file),
@@ -115,10 +122,10 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean)
   return result;
 };
 
-export const getFiles = (source: string, recursive?: boolean) => {
+export const getFiles = (source: string, recursive?: boolean, noCache?: boolean) => {
   const filesList: IFile[] = [];
 
-  readFiles(source, source, recursive).forEach((file) => {
+  readFiles(source, source, recursive, noCache).forEach((file) => {
     filesList.push(file);
   });
 
