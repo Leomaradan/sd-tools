@@ -8,8 +8,8 @@ import * as extract from './extract';
 import * as queue from './queue';
 import * as redraw from './redraw';
 import * as rename from './rename';
-import * as upscale from './upscale';
 import * as stats from './stats';
+import * as upscale from './upscale';
 
 Config.migrate().then(() => {
   yargs(process.argv.slice(2))
