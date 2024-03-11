@@ -102,13 +102,17 @@ export interface IImg2ImgQuery
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 
-export type MetadataVersionKey = 'sd14' | 'sd15' | 'sd20' | 'sd21' | 'sdxl' | 'unknown';
+export type MetadataVersionKey = 'sd14' | 'sd15' | 'sd20' | 'sd20-768' | 'sd21' | 'sd21-768' | 'sdxl' | 'unknown';
 export type MetadataAccelerator = 'distilled' | 'lcm' | 'lightning' | 'none' | 'turbo';
 export type VersionKey =
   | 'Pony'
   | 'SD 1.4'
   | 'SD 1.5 LCM'
   | 'SD 1.5'
+  | 'SD 2.0 768'
+  | 'SD 2.0'
+  | 'SD 2.1 768'
+  | 'SD 2.1'
   | 'SDXL 0.9'
   | 'SDXL 1.0 LCM'
   | 'SDXL 1.0'

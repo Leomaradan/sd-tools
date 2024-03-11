@@ -12,8 +12,9 @@ import {
   findUpscaler,
   findVAE
 } from '../commons/models';
-import { getDefaultQuery, isImg2ImgQuery, isTxt2ImgQuery, renderQuery } from '../commons/query';
+import { isTxt2ImgQuery, renderQuery } from '../commons/query';
 import { ControlNetMode, ControlNetResizes, IControlNet, IImg2ImgQuery, IModel, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
+import { getDefaultQuery } from './defaultQuery';
 import { ITiledDiffusion, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 

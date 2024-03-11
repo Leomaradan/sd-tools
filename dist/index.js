@@ -29478,6 +29478,122 @@ var findStyle = (...stylesName) => {
 // src/commons/query.ts
 var import_fs7 = __toESM(require("fs"));
 
+// src/commons/defaultQuery.ts
+var baseParamsAll = {
+  alwayson_scripts: {},
+  //cfg_scale: 7,
+  enable_hr: false,
+  //height: 512,
+  negative_prompt: "",
+  override_settings: {},
+  override_settings_restore_afterwards: true,
+  prompt: "",
+  restore_faces: false,
+  //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+  save_images: true,
+  seed: -1,
+  send_images: false,
+  //steps: 20,
+  styles: []
+  //width: 512
+};
+var getDefaultQuery15 = (accelarator) => {
+  const baseParams = { ...baseParamsAll, height: 512, width: 512 };
+  if (accelarator === "lcm") {
+    return {
+      ...baseParams,
+      cfg_scale: 2,
+      forcedSampler: "LCM",
+      sampler_name: findSampler("LCM")?.name,
+      steps: 5
+    };
+  }
+  return {
+    ...baseParams,
+    cfg_scale: 7,
+    sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+    steps: 20
+  };
+};
+var getDefaultQuery20 = (sizeFull) => {
+  const baseParams = { ...baseParamsAll, sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name };
+  if (sizeFull) {
+    return {
+      ...baseParamsAll,
+      height: 768,
+      width: 768
+    };
+  }
+  return {
+    ...baseParamsAll,
+    height: 512,
+    width: 512
+  };
+};
+var getDefaultQueryXL = (accelarator) => {
+  const baseParams = { ...baseParamsAll, height: 1024, width: 1024 };
+  switch (accelarator) {
+    case "lcm":
+      return {
+        ...baseParams,
+        cfg_scale: 1.5,
+        forcedSampler: "LCM",
+        sampler_name: findSampler("LCM")?.name,
+        steps: 4
+      };
+    case "lightning":
+      return {
+        ...baseParams,
+        cfg_scale: 2,
+        forcedSampler: "DPM++ SDE Karras",
+        sampler_name: findSampler("DPM++ SDE Karras")?.name,
+        steps: 6
+      };
+    case "turbo":
+      return {
+        ...baseParams,
+        cfg_scale: 2,
+        forcedSampler: "DPM++ SDE Karras",
+        sampler_name: findSampler("DPM++ SDE Karras")?.name,
+        steps: 8
+      };
+    case "distilled":
+    case "none":
+    default:
+      return {
+        ...baseParams,
+        cfg_scale: 7,
+        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+        steps: 20
+      };
+  }
+};
+var getDefaultQuery = (version, accelarator) => {
+  switch (version) {
+    case "sd20":
+    case "sd21":
+      return getDefaultQuery20(false);
+    case "sd20-768":
+    case "sd21-768":
+      return getDefaultQuery20(true);
+    case "sd15":
+      return getDefaultQuery15(accelarator);
+    case "sdxl":
+      return getDefaultQueryXL(accelarator);
+    case "sd14":
+    case "unknown":
+    default:
+      return {
+        ...baseParamsAll,
+        cfg_scale: 7,
+        height: 512,
+        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+        steps: 20,
+        width: 512
+      };
+  }
+};
+
 // src/commons/extensions/multidiffusionUpscaler.ts
 var defaultTiledDiffusionOptions = {
   method: "MultiDiffusion" /* MultiDiffusion */,
@@ -29493,93 +29609,6 @@ var headerRequest = {
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json"
-  }
-};
-var getDefaultQuery = (version, accelarator) => {
-  let baseParams = {
-    alwayson_scripts: {},
-    //cfg_scale: 7,
-    enable_hr: false,
-    //height: 512,
-    negative_prompt: "",
-    override_settings: {},
-    override_settings_restore_afterwards: true,
-    prompt: "",
-    restore_faces: false,
-    //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-    save_images: true,
-    seed: -1,
-    send_images: false,
-    //steps: 20,
-    styles: []
-    //width: 512
-  };
-  switch (version) {
-    case "sd14":
-    case "unknown":
-    default:
-      return {
-        ...baseParams,
-        cfg_scale: 7,
-        height: 512,
-        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
-        steps: 20,
-        width: 512
-      };
-    case "sd15":
-      baseParams = { ...baseParams, height: 512, width: 512 };
-      if (accelarator === "lcm") {
-        return {
-          ...baseParams,
-          cfg_scale: 2,
-          forcedSampler: "LCM",
-          sampler_name: findSampler("LCM")?.name,
-          steps: 5
-        };
-      }
-      return {
-        ...baseParams,
-        cfg_scale: 7,
-        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
-        steps: 20
-      };
-    case "sdxl":
-      baseParams = { ...baseParams, height: 1024, width: 1024 };
-      switch (accelarator) {
-        case "lcm":
-          return {
-            ...baseParams,
-            cfg_scale: 1.5,
-            forcedSampler: "LCM",
-            sampler_name: findSampler("LCM")?.name,
-            steps: 4
-          };
-        case "lightning":
-          return {
-            ...baseParams,
-            cfg_scale: 2,
-            forcedSampler: "DPM++ SDE Karras",
-            sampler_name: findSampler("DPM++ SDE Karras")?.name,
-            steps: 6
-          };
-        case "turbo":
-          return {
-            ...baseParams,
-            cfg_scale: 2,
-            forcedSampler: "DPM++ SDE Karras",
-            sampler_name: findSampler("DPM++ SDE Karras")?.name,
-            steps: 8
-          };
-        case "distilled":
-        case "none":
-        default:
-          return {
-            ...baseParams,
-            cfg_scale: 7,
-            sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
-            steps: 20
-          };
-      }
   }
 };
 var isTxt2ImgQuery = (query) => {
@@ -33162,10 +33191,10 @@ var getStats = (source) => {
     }
   });
   const dataTable = [["Model"]];
-  let columnMapping = {};
+  const columnMapping = {};
   Object.keys(stats).forEach((model, index) => {
     if (index === 0) {
-      Object.keys(stats[model]).sort().forEach((date, index2) => {
+      Object.keys(stats[model]).sort((a, b) => a.localeCompare(b)).forEach((date, index2) => {
         columnMapping[date] = index2 + 1;
         dataTable[0].push(date);
       });

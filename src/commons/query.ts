@@ -2,122 +2,17 @@ import axios from 'axios';
 import fs from 'fs';
 
 import { Cache, Config } from './config';
+import { getDefaultQuery } from './defaultQuery';
 import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
-import { findCheckpoint, findSampler, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
-import {
-  IBaseQuery,
-  IImg2ImgQuery,
-  IInterrogateResponse,
-  IModel,
-  ITxt2ImgQuery,
-  MetadataAccelerator,
-  MetadataVersionKey,
-  RedrawMode,
-  TargetSizeType
-} from './types';
+import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
+import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, IModel, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
 
 const headerRequest = {
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json'
-  }
-};
-
-export const getDefaultQuery = (
-  version: MetadataVersionKey,
-  accelarator: MetadataAccelerator
-): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
-  let baseParams: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } = {
-    alwayson_scripts: {},
-    //cfg_scale: 7,
-    enable_hr: false,
-    //height: 512,
-    negative_prompt: '',
-    override_settings: {},
-    override_settings_restore_afterwards: true,
-    prompt: '',
-    restore_faces: false,
-    //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-    save_images: true,
-    seed: -1,
-    send_images: false,
-    //steps: 20,
-    styles: []
-    //width: 512
-  };
-
-  switch (version) {
-    case 'sd14':
-    case 'unknown':
-    default:
-      // No accelarators for these
-      return {
-        ...baseParams,
-        cfg_scale: 7,
-        height: 512,
-        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-        steps: 20,
-        width: 512
-      };
-    case 'sd15':
-      baseParams = { ...baseParams, height: 512, width: 512 };
-
-      if (accelarator === 'lcm') {
-        // Other accelerator than LCM are not supported
-        return {
-          ...baseParams,
-          cfg_scale: 2,
-          forcedSampler: 'LCM',
-          sampler_name: findSampler('LCM')?.name as string,
-          steps: 5
-        };
-      }
-      // Other accelerator than LCM are not supported
-      return {
-        ...baseParams,
-        cfg_scale: 7,
-        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-        steps: 20
-      };
-    case 'sdxl':
-      baseParams = { ...baseParams, height: 1024, width: 1024 };
-      switch (accelarator) {
-        case 'lcm':
-          return {
-            ...baseParams,
-            cfg_scale: 1.5,
-            forcedSampler: 'LCM',
-            sampler_name: findSampler('LCM')?.name as string,
-            steps: 4
-          };
-        case 'lightning':
-          return {
-            ...baseParams,
-            cfg_scale: 2,
-            forcedSampler: 'DPM++ SDE Karras',
-            sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
-            steps: 6
-          };
-        case 'turbo':
-          return {
-            ...baseParams,
-            cfg_scale: 2,
-            forcedSampler: 'DPM++ SDE Karras',
-            sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
-            steps: 8
-          };
-        case 'distilled':
-        case 'none':
-        default:
-          return {
-            ...baseParams,
-            cfg_scale: 7,
-            sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-            steps: 20
-          };
-      }
   }
 };
 

@@ -1,5 +1,6 @@
-import { getFiles } from '../commons/file';
 import { table } from 'table';
+
+import { getFiles } from '../commons/file';
 
 export const getStats = (source: string) => {
   const files = getFiles(source, true, true);
@@ -28,20 +29,20 @@ export const getStats = (source: string) => {
     }
   });
 
-  const dataTable: Array<string | number>[] = [['Model']];
+  const dataTable: Array<number | string>[] = [['Model']];
 
-  let columnMapping: Record<string, number> = {};
+  const columnMapping: Record<string, number> = {};
   Object.keys(stats).forEach((model, index) => {
     if (index === 0) {
       Object.keys(stats[model])
-        .sort()
+        .sort((a, b) => a.localeCompare(b))
         .forEach((date, index) => {
           columnMapping[date] = index + 1;
           dataTable[0].push(date);
         });
     }
 
-    const row: Array<string | number> = [model];
+    const row: Array<number | string> = [model];
     Object.keys(stats[model]).forEach((date) => {
       const mappedIndex = columnMapping[date];
       row[mappedIndex] = stats[model][date];
@@ -50,5 +51,6 @@ export const getStats = (source: string) => {
     dataTable.push(row);
   });
 
+  // eslint-disable-next-line no-console
   console.log(table(dataTable));
 };
