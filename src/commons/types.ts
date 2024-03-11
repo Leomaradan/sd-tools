@@ -124,7 +124,9 @@ export const Version: Record<string, MetadataVersionKey> = {
   SD14: 'sd14',
   SD15: 'sd15',
   SD20: 'sd20',
+  SD20Full: 'sd20-768',
   SD21: 'sd21',
+  SD21Full: 'sd21-768',
   SDXL: 'sdxl',
   Unknown: 'unknown'
 };

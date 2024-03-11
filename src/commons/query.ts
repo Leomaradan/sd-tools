@@ -36,10 +36,35 @@ export const renderQuery: Query = async (query, type) => {
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
     : ({ version: 'unknown' } as IModel);
 
-  const baseQuery = {
+  /*const baseQuery = {
     ...getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none'),
     ...baseQueryRaw
-  } as IBaseQuery & { forcedSampler?: string };
+  } as IBaseQuery & { forcedSampler?: string };*/
+
+  const baseQuery = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
+    forcedSampler?: string;
+  };
+
+  Object.keys(baseQueryRaw).forEach((key) => {
+    const value = baseQueryRaw[key as keyof typeof baseQueryRaw];
+
+    if (value !== undefined) {
+      if (typeof value === 'object') {
+        if (baseQuery[key as keyof typeof baseQuery] === undefined) {
+          (baseQuery as any)[key] = {};
+        }
+
+        Object.keys(value).forEach((subKey) => {
+          const subValue = value[subKey as keyof typeof value];
+          if (subValue !== undefined) {
+            (baseQuery as any)[key][subKey] = subValue;
+          }
+        });
+      } else {
+        (baseQuery as any)[key] = value;
+      }
+    }
+  });
 
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
     logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);

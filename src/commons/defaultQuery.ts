@@ -48,14 +48,14 @@ export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { en
   if (sizeFull) {
     // Other accelerator than LCM are not supported
     return {
-      ...baseParamsAll,
+      ...baseParams,
       height: 768,
       width: 768
     };
   }
   // Other accelerator than LCM are not supported
   return {
-    ...baseParamsAll,
+    ...baseParams,
     height: 512,
     width: 512
   };

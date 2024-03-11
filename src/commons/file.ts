@@ -314,6 +314,18 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
       case 'SD 1.5':
         result.sdVersion = Version.SD15;
         break;
+      case 'SD 2.0':
+        result.sdVersion = Version.SD20;
+        break;
+      case 'SD 2.0 768':
+        result.sdVersion = Version.SD20Full;
+        break;
+      case 'SD 2.1':
+        result.sdVersion = Version.SD21;
+        break;
+      case 'SD 2.1 768':
+        result.sdVersion = Version.SD21Full;
+        break;
       case 'SDXL 0.9':
         result.sdVersion = Version.SDXL;
         break;
