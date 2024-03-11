@@ -31963,7 +31963,9 @@ var Version = {
   SD14: "sd14",
   SD15: "sd15",
   SD20: "sd20",
+  SD20Full: "sd20-768",
   SD21: "sd21",
+  SD21Full: "sd21-768",
   SDXL: "sdxl",
   Unknown: "unknown"
 };
@@ -32117,6 +32119,18 @@ var getMetadataFromCivitAi = (metadata) => {
         break;
       case "SD 1.5":
         result.sdVersion = Version.SD15;
+        break;
+      case "SD 2.0":
+        result.sdVersion = Version.SD20;
+        break;
+      case "SD 2.0 768":
+        result.sdVersion = Version.SD20Full;
+        break;
+      case "SD 2.1":
+        result.sdVersion = Version.SD21;
+        break;
+      case "SD 2.1 768":
+        result.sdVersion = Version.SD21Full;
         break;
       case "SDXL 0.9":
         result.sdVersion = Version.SDXL;
@@ -32424,13 +32438,13 @@ var getDefaultQuery20 = (sizeFull) => {
   const baseParams = { ...baseParamsAll, sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name };
   if (sizeFull) {
     return {
-      ...baseParamsAll,
+      ...baseParams,
       height: 768,
       width: 768
     };
   }
   return {
-    ...baseParamsAll,
+    ...baseParams,
     height: 512,
     width: 512
   };
@@ -32522,10 +32536,25 @@ var isTxt2ImgQuery = (query) => {
 var renderQuery = async (query, type) => {
   const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query;
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint) : { version: "unknown" };
-  const baseQuery = {
-    ...getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none"),
-    ...baseQueryRaw
-  };
+  const baseQuery = getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none");
+  Object.keys(baseQueryRaw).forEach((key) => {
+    const value = baseQueryRaw[key];
+    if (value !== void 0) {
+      if (typeof value === "object") {
+        if (baseQuery[key] === void 0) {
+          baseQuery[key] = {};
+        }
+        Object.keys(value).forEach((subKey) => {
+          const subValue = value[subKey];
+          if (subValue !== void 0) {
+            baseQuery[key][subKey] = subValue;
+          }
+        });
+      } else {
+        baseQuery[key] = value;
+      }
+    }
+  });
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
     logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
     process.exit(1);
