@@ -8,6 +8,7 @@ import * as extract from './extract';
 import * as queue from './queue';
 import * as redraw from './redraw';
 import * as rename from './rename';
+import * as stats from './stats';
 import * as upscale from './upscale';
 
 Config.migrate().then(() => {
@@ -20,6 +21,7 @@ Config.migrate().then(() => {
     .command(extract)
     .command(upscale)
     .command(redraw)
+    .command(stats)
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
     .strict()

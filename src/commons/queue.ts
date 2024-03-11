@@ -127,6 +127,7 @@ export interface IPromptPermutations {
   beforeFilename?: string;
   beforeNegativePrompt?: string;
   beforePrompt?: string;
+  filenameReplace?: IPromptReplace[];
   overwrite?: Partial<IPromptSingle>;
   promptReplace?: IPromptReplace[];
 }
@@ -309,6 +310,10 @@ const prepareSingleQuery = (
       prompt.controlNet = Array.isArray(basePrompt.controlNet) ? basePrompt.controlNet : [basePrompt.controlNet];
     }
 
+    if (scaleFactor && prompt.pattern?.includes('{scaleFactor}')) {
+      prompt.pattern = prompt.pattern.replace('{scaleFactor}', String(scaleFactor));
+    }
+
     if (ultimateSdUpscale) {
       const scaleFactor = prompt.scaleFactor ?? 2;
       prompt.ultimateSdUpscale = {
@@ -359,6 +364,16 @@ const prepareSingleQuery = (
           permutedPrompt.filename = basePrompt.filename
             ? `${permutation.beforeFilename}${basePrompt.filename}`
             : permutation.beforeFilename;
+        }
+
+        if (permutation.filenameReplace) {
+          permutation.filenameReplace.forEach((filenameReplace) => {
+            if (!permutedPrompt.filename) {
+              permutedPrompt.filename = filenameReplace.to;
+            } else {
+              permutedPrompt.filename = permutedPrompt.filename.replace(filenameReplace.from, filenameReplace.to);
+            }
+          });
         }
 
         if (permutation.afterPrompt) {
@@ -810,21 +825,20 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       width
     } = singleQuery;
 
-    const query: IImg2ImgQuery | ITxt2ImgQuery = {
+    const query: IImg2ImgQuery & ITxt2ImgQuery = {
       cfg_scale: cfg,
       controlNet: [],
       denoising_strength: denoising,
       enable_hr: enableHighRes,
       height: height,
       hr_scale: scaleFactor,
-      init_images: initImage ? [getBase64Image(initImage)] : undefined,
+      init_images: (initImage ? [getBase64Image(initImage)] : undefined) as string[],
       lcm: autoLCM ?? false,
       negative_prompt: negativePrompt,
       override_settings: {},
       prompt: prompt,
       restore_faces: restoreFaces,
       sampler_name: sampler,
-      sdxl: false,
       seed: seed,
       steps: steps,
       tiledDiffusion,
@@ -894,9 +908,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       }
     }
 
-    if (isImg2ImgQuery(query)) {
-      (query as ITxt2ImgQuery).enable_hr = false;
-    } else {
+    if (isTxt2ImgQuery(query)) {
       if (query.enable_hr === false) {
         query.enable_hr = query.denoising_strength !== undefined || query.hr_upscaler !== undefined;
       }
@@ -907,6 +919,8 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
         query.hr_prompt = '';
         query.hr_negative_prompt = '';
       }
+    } else {
+      (query as ITxt2ImgQuery).enable_hr = false;
     }
 
     if (clipSkip) {

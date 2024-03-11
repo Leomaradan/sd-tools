@@ -135,7 +135,7 @@ export const isImg2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery
 };
 
 export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, sdxl, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
@@ -153,16 +153,23 @@ export const renderQuery: Query = async (query, type) => {
 
   let script = false;
 
+  const isSDXL = checkpoint?.version === 'sdxl';
+
+  const defaultUpscaler = findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)');
+
   if (
     isTxt2ImgQuery(baseQuery) &&
-    (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt)
+    ((baseQuery as ITxt2ImgQuery).hr_upscaler ||
+      (baseQuery as ITxt2ImgQuery).hr_scale ||
+      (baseQuery as ITxt2ImgQuery).enable_hr ||
+      (baseQuery as ITxt2ImgQuery).hr_negative_prompt ||
+      (baseQuery as ITxt2ImgQuery).hr_prompt)
   ) {
-    baseQuery.enable_hr = true;
-    baseQuery.hr_upscaler =
-      baseQuery.hr_upscaler ?? (findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string);
-    baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
-    baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? '';
-    baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
+    (baseQuery as ITxt2ImgQuery).enable_hr = true;
+    (baseQuery as ITxt2ImgQuery).hr_upscaler = (baseQuery as ITxt2ImgQuery).hr_upscaler ?? (defaultUpscaler?.name as string);
+    (baseQuery as ITxt2ImgQuery).hr_scale = (baseQuery as ITxt2ImgQuery).hr_scale ?? 2;
+    (baseQuery as ITxt2ImgQuery).hr_negative_prompt = (baseQuery as ITxt2ImgQuery).hr_negative_prompt ?? '';
+    (baseQuery as ITxt2ImgQuery).hr_prompt = (baseQuery as ITxt2ImgQuery).hr_prompt ?? '';
   }
 
   if (controlNet) {
@@ -187,11 +194,11 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
   }
 
-  if (Config.get('autoTiledVAE')) {
+  if (Config.get('autoTiledVAE') && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled VAE'] = { args: ['True'] };
   }
 
-  if (Config.get('autoTiledDiffusion') !== false) {
+  if (Config.get('autoTiledDiffusion') !== false && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
   }
 
@@ -208,7 +215,7 @@ export const renderQuery: Query = async (query, type) => {
         tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
         tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
         tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
-        findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)')?.name as string,
+        defaultUpscaler?.name as string,
         tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
       ]
     };
@@ -222,14 +229,17 @@ export const renderQuery: Query = async (query, type) => {
   }
 
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
-  const addLCM = lcm ?? autoLcm;
+  const accelarator = checkpoint?.accelarator ?? 'none';
+  const addLCM = (lcm ?? accelarator === 'lcm') || autoLcm;
   if (addLCM) {
-    const lcmModel = sdxl ? lcmXL : lcm15;
+    const lcmModel = isSDXL ? lcmXL : lcm15;
     if (lcmModel) {
+      const defaultValues = getDefaultQuery(isSDXL ? 'sdxl' : 'sd15', 'lcm');
+
       baseQuery.prompt = `<lora:${lcmModel}:1> ${baseQuery.prompt}`;
-      baseQuery.cfg_scale = 1.5;
-      baseQuery.steps = 3;
-      baseQuery.sampler_name = findSampler('DPM++ SDE', 'Euler a')?.name as string;
+      baseQuery.cfg_scale = defaultValues.cfg_scale;
+      baseQuery.steps = defaultValues.steps;
+      baseQuery.sampler_name = defaultValues.sampler_name;
     }
   }
 

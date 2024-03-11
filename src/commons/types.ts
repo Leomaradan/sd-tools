@@ -73,7 +73,6 @@ export interface ITxt2ImgQuery
   hr_scale?: number;
   hr_upscaler?: string;
   lcm?: boolean;
-  sdxl: boolean;
   tiledDiffusion?: ITiledDiffusion;
   //ultimateSdUpscale?: number;
 
@@ -98,7 +97,6 @@ export interface IImg2ImgQuery
   mask_blur?: number;
   mask_blur_x?: number;
   mask_blur_y?: number;
-  sdxl: boolean;
   tiledDiffusion?: ITiledDiffusion;
 
   ultimateSdUpscale?: IUltimateSDUpscale;
