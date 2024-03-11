@@ -1,6 +1,7 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import fs from 'fs';
+import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
 import path from 'path';
 import text from 'png-chunk-text';
@@ -140,6 +141,71 @@ const getHash = (url: string) => {
 
     stream.pipe(hashBuilder);
   });
+};
+
+/*export const getStats = (source: string) => {
+  const files = getFiles(source, true, true);
+
+  const stats: Record<string, Record<string, number>> = {};
+
+  files.forEach((file) => {
+    if (file.filename.endsWith('.png')) {
+      const date = new Date(file.date);
+      const dateStr = `${date.getFullYear()}-${date.getMonth()}`;
+      const { data } = file;
+      if (data) {
+        data.forEach((line) => {
+          if (line.includes('Model: ')) {
+            const model = line.split('Model: ')[1].split(', ')[0];
+            if (stats[model] === undefined) {
+              stats[model] = {};
+            }
+
+            stats[model].total = (stats[model].total ?? 0) + 1;
+
+            stats[model][dateStr] = (stats[model][dateStr] ?? 0) + 1;
+          }
+        });
+      }
+    }
+  });
+
+  const dataTable: Array<number | string>[] = [['Model']];
+
+  const columnMapping: Record<string, number> = {};
+  Object.keys(stats).forEach((model, index) => {
+    if (index === 0) {
+      Object.keys(stats[model])
+        .sort((a, b) => a.localeCompare(b))
+        .forEach((date, index) => {
+          columnMapping[date] = index + 1;
+          dataTable[0].push(date);
+        });
+    }
+
+    const row: Array<number | string> = [model];
+    Object.keys(stats[model]).forEach((date) => {
+      const mappedIndex = columnMapping[date];
+      row[mappedIndex] = stats[model][date];
+    });
+
+    dataTable.push(row);
+  });
+
+  // eslint-disable-next-line no-console
+  console.log(table(dataTable));
+};*/
+
+const parseDescriptions = (source: string) => {
+  let data = source;
+
+  data = data.replace(/<\/p>/g, '\n');
+  data = data.replace(/<p>/g, '\n'); //<br />
+  data = data.replace(/<br \/>/g, '\n');
+
+  const dom = htmlparser2.parseDocument('<div>' + data + '</div>');
+
+  return '<!--' + htmlparser2.DomUtils.textContent(dom) + '-->';
 };
 
 export const getFiles = (source: string, recursive?: boolean, noCache?: boolean) => {
@@ -353,7 +419,17 @@ export const getMetadataCivitAiRest = async (
 
     const metadata = response.data;
 
-    // TODO : write the metadata to a civitai.info file. Dom parsing is needed
+    if (metadata.description) {
+      metadata.description = parseDescriptions(metadata.description);
+    }
+
+    if (metadata.model?.description) {
+      metadata.model.description = parseDescriptions(metadata.model.description);
+    }
+
+    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.civitai.info');
+
+    fs.writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
 
     const result = getMetadataFromCivitAi(metadata);
 

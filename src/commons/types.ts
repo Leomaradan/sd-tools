@@ -200,6 +200,10 @@ export interface IMetadataLora extends Omit<IMetadata, 'accelerator'> {}
 
 export interface ICivitAIInfoFile {
   baseModel: VersionKey;
+  description?: string;
+  model?: {
+    description?: string;
+  };
   trainedWords: string[];
 }
 
