@@ -125,6 +125,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
 const getHash = (url: string) => {
   return new Promise((resolve, reject) => {
     const hashBuilder = crypto.createHash('sha256');
+    hashBuilder.setEncoding('hex');
     const stream = fs.createReadStream(url);
 
     stream.on('end', function () {

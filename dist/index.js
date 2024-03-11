@@ -29165,6 +29165,7 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
 var getHash = (url2) => {
   return new Promise((resolve5, reject) => {
     const hashBuilder = import_crypto2.default.createHash("sha256");
+    hashBuilder.setEncoding("hex");
     const stream4 = import_fs6.default.createReadStream(url2);
     stream4.on("end", function() {
       hashBuilder.end();
