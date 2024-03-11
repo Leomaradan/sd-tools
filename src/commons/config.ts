@@ -1,7 +1,8 @@
 import Configstore from 'configstore';
 
-import { ICache, IConfig } from './types';
 import { handler as init } from '../config/init';
+import { logger } from './logger';
+import { ICache, IConfig } from './types';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
@@ -37,7 +38,7 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-    console.log('Config has changed, refreshing models...');
+    logger('Config has changed, refreshing models...');
     await init({ force: true });
     Config.set('configVersion', LATEST_CONFIG_VERSION);
   }

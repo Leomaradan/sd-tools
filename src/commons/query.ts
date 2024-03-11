@@ -2,11 +2,21 @@ import axios from 'axios';
 import fs from 'fs';
 
 import { Cache, Config } from './config';
+import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
-import { findSampler, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
-import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
-import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
+import { findCheckpoint, findSampler, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
+import {
+  IBaseQuery,
+  IImg2ImgQuery,
+  IInterrogateResponse,
+  IModel,
+  ITxt2ImgQuery,
+  MetadataAccelerator,
+  MetadataVersionKey,
+  RedrawMode,
+  TargetSizeType
+} from './types';
 
 const headerRequest = {
   headers: {
@@ -15,43 +25,137 @@ const headerRequest = {
   }
 };
 
-const getDefaultQuery = () => ({
-  alwayson_scripts: {},
-  cfg_scale: 7,
-  enable_hr: false,
-  height: 512,
-  negative_prompt: '',
-  override_settings: {},
-  override_settings_restore_afterwards: true,
-  prompt: '',
-  restore_faces: false,
-  sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
-  save_images: true,
-  seed: -1,
-  send_images: false,
-  steps: 20,
-  styles: [],
-  width: 512
-});
+export const getDefaultQuery = (
+  version: MetadataVersionKey,
+  accelarator: MetadataAccelerator
+): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
+  let baseParams: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } = {
+    alwayson_scripts: {},
+    //cfg_scale: 7,
+    enable_hr: false,
+    //height: 512,
+    negative_prompt: '',
+    override_settings: {},
+    override_settings_restore_afterwards: true,
+    prompt: '',
+    restore_faces: false,
+    //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+    save_images: true,
+    seed: -1,
+    send_images: false,
+    //steps: 20,
+    styles: []
+    //width: 512
+  };
+
+  switch (version) {
+    case 'sd14':
+    case 'unknown':
+    default:
+      // No accelarators for these
+      return {
+        ...baseParams,
+        cfg_scale: 7,
+        height: 512,
+        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+        steps: 20,
+        width: 512
+      };
+    case 'sd15':
+      baseParams = { ...baseParams, height: 512, width: 512 };
+
+      if (accelarator === 'lcm') {
+        // Other accelerator than LCM are not supported
+        return {
+          ...baseParams,
+          cfg_scale: 2,
+          forcedSampler: 'LCM',
+          sampler_name: findSampler('LCM')?.name as string,
+          steps: 5
+        };
+      }
+      // Other accelerator than LCM are not supported
+      return {
+        ...baseParams,
+        cfg_scale: 7,
+        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+        steps: 20
+      };
+    case 'sdxl':
+      baseParams = { ...baseParams, height: 1024, width: 1024 };
+      switch (accelarator) {
+        case 'lcm':
+          return {
+            ...baseParams,
+            cfg_scale: 1.5,
+            forcedSampler: 'LCM',
+            sampler_name: findSampler('LCM')?.name as string,
+            steps: 4
+          };
+        case 'lightning':
+          return {
+            ...baseParams,
+            cfg_scale: 2,
+            forcedSampler: 'DPM++ SDE Karras',
+            sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
+            steps: 6
+          };
+        case 'turbo':
+          return {
+            ...baseParams,
+            cfg_scale: 2,
+            forcedSampler: 'DPM++ SDE Karras',
+            sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
+            steps: 8
+          };
+        case 'distilled':
+        case 'none':
+        default:
+          return {
+            ...baseParams,
+            cfg_scale: 7,
+            sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+            steps: 20
+          };
+      }
+  }
+};
 
 type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
 type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
 
 type Query = Txt2ImgQuery & Img2ImgQuery;
 
-export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, tiledDiffusion, ...baseQueryRaw } = query as IImg2ImgQuery;
+export const isTxt2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is ITxt2ImgQuery => {
+  return (query as unknown as IImg2ImgQuery).init_images === undefined;
+};
 
-  const baseQuery = { ...getDefaultQuery(), ...baseQueryRaw } as IBaseQuery;
+export const isImg2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is IImg2ImgQuery => {
+  return (query as unknown as IImg2ImgQuery).init_images !== undefined;
+};
+
+export const renderQuery: Query = async (query, type) => {
+  const { adetailer, controlNet, cutOff, lcm, sdxl, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+
+  const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
+    ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
+    : ({ version: 'unknown' } as IModel);
+
+  const baseQuery = {
+    ...getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none'),
+    ...baseQueryRaw
+  } as IBaseQuery & { forcedSampler?: string };
+
+  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
+    logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+    process.exit(1);
+  }
 
   let script = false;
 
   if (
-    ((!baseQuery as unknown as IImg2ImgQuery).init_images && baseQuery.hr_upscaler) ||
-    baseQuery.hr_scale ||
-    baseQuery.enable_hr ||
-    baseQuery.hr_negative_prompt ||
-    baseQuery.hr_prompt
+    isTxt2ImgQuery(baseQuery) &&
+    (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt)
   ) {
     baseQuery.enable_hr = true;
     baseQuery.hr_upscaler =
@@ -165,8 +269,6 @@ export const renderQuery: Query = async (query, type) => {
     logger(error.message);
   });
 };
-
-//const interrogatorCache: Record<string, IInterrogateResponse> = {};
 
 export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
   const interrogatorCache = Cache.get('interrogator');

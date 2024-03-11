@@ -274,7 +274,7 @@
                     "title": "highRes",
                     "typeof": "function"
                 },
-                "initImage": {
+                "initImageOrFolder": {
                     "anyOf": [
                         {
                             "items": {
@@ -286,7 +286,7 @@
                             "type": "string"
                         }
                     ],
-                    "title": "initImage"
+                    "title": "initImageOrFolder"
                 },
                 "negativePrompt": {
                     "anyOf": [
@@ -436,6 +436,22 @@
                         }
                     ],
                     "title": "tiledDiffusion"
+                },
+                "tiledVAE": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "tiledVAE"
+                },
+                "tiling": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "tiling"
                 },
                 "ultimateSdUpscale": {
                     "enum": [
@@ -728,6 +744,14 @@
                 "tiledDiffusion": {
                     "$ref": "#/definitions/ITiledDiffusion",
                     "title": "tiledDiffusion"
+                },
+                "tiledVAE": {
+                    "title": "tiledVAE",
+                    "type": "boolean"
+                },
+                "tiling": {
+                    "title": "tiling",
+                    "type": "boolean"
                 },
                 "ultimateSdUpscale": {
                     "$ref": "#/definitions/IUltimateSDUpscale",

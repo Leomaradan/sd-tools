@@ -40,7 +40,7 @@ export const upscaleTiles = async (
       ];
       query.width = file.width;
       query.height = file.height;
-      query.initImage = file.filename;
+      query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
       query.filename = basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', '');

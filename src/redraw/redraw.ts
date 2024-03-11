@@ -188,7 +188,7 @@ const prepareQueryClassical = async (
     enableHighRes: true,
     filename: basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', ''),
     height,
-    initImage: file.filename,
+    initImageOrFolder: file.filename,
     negativePrompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
     pattern: `[datetime]-{denoising}-${style}-classical-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : '',

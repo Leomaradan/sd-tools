@@ -1,3 +1,5 @@
+import { readdirSync, statSync } from 'fs';
+
 import { IAdetailer } from '../commons/extensions/adetailer';
 import { getCutOffTokens } from '../commons/extensions/cutoff';
 import { logger, writeLog } from '../commons/logger';
@@ -10,8 +12,8 @@ import {
   findUpscaler,
   findVAE
 } from '../commons/models';
-import { renderQuery } from '../commons/query';
-import { ControlNetMode, ControlNetResizes, IControlNet, IImg2ImgQuery, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
+import { getDefaultQuery, isImg2ImgQuery, isTxt2ImgQuery, renderQuery } from '../commons/query';
+import { ControlNetMode, ControlNetResizes, IControlNet, IImg2ImgQuery, IModel, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 import { ITiledDiffusion, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 
@@ -54,7 +56,7 @@ export interface IPrompt {
     beforeNegativePrompt?: string;
     beforePrompt?: string;
   };
-  initImage?: string | string[];
+  initImageOrFolder?: string | string[];
   negativePrompt?: string | string[];
   outDir?: string;
   pattern?: string;
@@ -67,6 +69,8 @@ export interface IPrompt {
   styles?: string | string[];
   stylesSets?: Array<string | string[]>;
   tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
+  tiledVAE?: 'both' | boolean;
+  tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
   vae?: string | string[];
@@ -103,6 +107,8 @@ export interface IPromptSingle {
   steps?: number;
   styles?: string[];
   tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: boolean;
+  tiling?: boolean;
   ultimateSdUpscale?: IUltimateSDUpscale;
   upscaler?: string;
   vae?: string;
@@ -151,6 +157,8 @@ interface IPrepareSingleQuery {
   steps: number | undefined;
   stylesSets: string | string[] | undefined[];
   tiledDiffusion: ITiledDiffusion | undefined;
+  tiledVAE: boolean;
+  tiling: boolean;
   ultimateSdUpscale: boolean;
   upscaler: string | undefined;
   vaeOption: string | undefined;
@@ -177,6 +185,8 @@ interface IPrepareSingleQueryFromArray {
   stepsArray: (number | undefined)[];
   stylesSetsArray: Array<string | string[] | undefined[]>;
   tiledDiffusionArray: (ITiledDiffusion | undefined)[];
+  tiledVAEArray: boolean[];
+  tilingArray: boolean[];
   ultimateSdUpscaleArray: boolean[];
   upscalerArray: (string | undefined)[];
   vaeArray: (string | undefined)[];
@@ -214,6 +224,8 @@ const prepareSingleQuery = (
     steps,
     stylesSets,
     tiledDiffusion,
+    tiledVAE,
+    tiling,
     ultimateSdUpscale,
     upscaler,
     vaeOption,
@@ -286,6 +298,8 @@ const prepareSingleQuery = (
       seed: seed !== undefined && seed !== -1 ? seed + i : undefined,
       steps,
       styles: Array.from(new Set([...styles, ...stylesSet])).filter((style) => style !== undefined) as string[],
+      tiledVAE,
+      tiling,
       upscaler,
       vae,
       width
@@ -409,6 +423,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
     stepsArray,
     stylesSetsArray,
     tiledDiffusionArray,
+    tiledVAEArray,
+    tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
     vaeArray,
@@ -435,6 +451,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   permutationsArray = getPermutations(permutationsArray, stepsArray, 'steps');
   permutationsArray = getPermutations(permutationsArray, stylesSetsArray, 'stylesSets');
   permutationsArray = getPermutations(permutationsArray, tiledDiffusionArray, 'tiledDiffusion');
+  permutationsArray = getPermutations(permutationsArray, tiledVAEArray, 'tiledVAE');
+  permutationsArray = getPermutations(permutationsArray, tilingArray, 'tiling');
   permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, 'ultimateSdUpscale');
   permutationsArray = getPermutations(permutationsArray, upscalerArray, 'upscaler');
   permutationsArray = getPermutations(permutationsArray, vaeArray, 'vaeOption');
@@ -462,6 +480,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
         steps: permutationItem.steps,
         stylesSets: permutationItem.stylesSets,
         tiledDiffusion: permutationItem.tiledDiffusion,
+        tiledVAE: permutationItem.tiledVAE,
+        tiling: permutationItem.tiling,
         ultimateSdUpscale: permutationItem.ultimateSdUpscale,
         upscaler: permutationItem.upscaler,
         vaeOption: permutationItem.vaeOption,
@@ -496,6 +516,8 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     stepsArray,
     stylesSetsArray,
     tiledDiffusionArray,
+    tiledVAEArray,
+    tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
     vaeArray,
@@ -512,10 +534,12 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
   const height = pickRandomItem(heightArray);
   const initImage = pickRandomItem(initImageArray);
   const restoreFaces = pickRandomItem(restoreFacesArray);
+  const tiling = pickRandomItem(tilingArray);
   const sampler = pickRandomItem(samplerArray);
   const scaleFactor = pickRandomItem(scaleFactorsArray);
   const seed = pickRandomItem(seedArray);
   const steps = pickRandomItem(stepsArray);
+  const tiledVAE = pickRandomItem(tiledVAEArray);
   const stylesSets = pickRandomItem(stylesSetsArray);
   const tiledDiffusion = pickRandomItem(tiledDiffusionArray);
   const ultimateSdUpscale = pickRandomItem(ultimateSdUpscaleArray);
@@ -544,6 +568,8 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     steps,
     stylesSets,
     tiledDiffusion,
+    tiledVAE,
+    tiling,
     ultimateSdUpscale,
     upscaler,
     vaeOption,
@@ -599,6 +625,28 @@ const getArrays = <T>(value: T | T[] | undefined, defaultValue: unknown = undefi
   return [value];
 };
 
+const getArraysInitImage = (value: string | string[] | undefined, defaultValue: unknown = undefined): string[] => {
+  if (value === undefined) {
+    return [defaultValue as string];
+  }
+
+  const initImageOrFolderArray = Array.isArray(value) ? value : [value];
+
+  const initImagesArray: string[] = [];
+
+  initImageOrFolderArray.forEach((initImageOrFolder) => {
+    if (statSync(initImageOrFolder).isDirectory()) {
+      const files = readdirSync(initImageOrFolder);
+      initImagesArray.push(...files);
+      //initImagesArray.push(...readFiles(initImageOrFolder, initImageOrFolder)) :
+    } else {
+      initImagesArray.push(initImageOrFolder);
+    }
+  });
+
+  return initImagesArray;
+};
+
 const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
   const prompts = new Map<string, IPromptSingle>();
 
@@ -609,6 +657,8 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
     const autoLCMArray = getArraysBoolean(basePrompt.autoLCM);
     const enableHighResArray = getArraysBoolean(basePrompt.enableHighRes);
     const restoreFacesArray = getArraysBoolean(basePrompt.restoreFaces);
+    const tilingArray = getArraysBoolean(basePrompt.tiling);
+    const tiledVAEArray = getArraysBoolean(basePrompt.tiledVAE);
     const ultimateSdUpscaleArray = getArraysBoolean(basePrompt.ultimateSdUpscale);
 
     const promptArray = Array.isArray(basePrompt.prompt) ? basePrompt.prompt : [basePrompt.prompt];
@@ -624,7 +674,7 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
     const stepsArray = getArrays(basePrompt.steps);
     const scaleFactorsArray = getArrays(basePrompt.scaleFactor);
     const upscalerArray = getArrays(basePrompt.upscaler);
-    const initImageArray = getArrays(basePrompt.initImage);
+    const initImageArray = getArraysInitImage(basePrompt.initImageOrFolder);
     const vaeArray = getArrays(basePrompt.vae);
     const widthArray = getArrays(basePrompt.width);
     const clipSkipArray = getArrays(basePrompt.clipSkip);
@@ -656,6 +706,8 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
       stepsArray,
       stylesSetsArray,
       tiledDiffusionArray,
+      tiledVAEArray,
+      tilingArray,
       ultimateSdUpscaleArray,
       upscalerArray,
       vaeArray,
@@ -780,6 +832,15 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       width: width
     };
 
+    const checkpoint = checkpoints ? findCheckpoint(checkpoints) : ({ version: 'unknown' } as IModel);
+
+    const defaultValues = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none');
+
+    if (query.sampler_name !== undefined && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
+      logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
+      process.exit(1);
+    }
+
     if (controlNet) {
       controlNet.forEach((controlNetPrompt) => {
         const controlNetModule = findControlnetModule(controlNetPrompt.module);
@@ -822,7 +883,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       };
     }
 
-    if (upscaler && typeof upscaler === 'string') {
+    if (isTxt2ImgQuery(query) && upscaler && typeof upscaler === 'string') {
       const foundUpscaler = findUpscaler(upscaler);
 
       if (foundUpscaler) {
@@ -833,8 +894,8 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       }
     }
 
-    if ((query as IImg2ImgQuery).init_images) {
-      query.enable_hr = false;
+    if (isImg2ImgQuery(query)) {
+      (query as ITxt2ImgQuery).enable_hr = false;
     } else {
       if (query.enable_hr === false) {
         query.enable_hr = query.denoising_strength !== undefined || query.hr_upscaler !== undefined;
@@ -852,7 +913,7 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
 
-    if (highRes) {
+    if (isTxt2ImgQuery(query) && highRes) {
       const { afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt } = highRes;
 
       if (beforeNegativePrompt || afterNegativePrompt) {

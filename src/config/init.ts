@@ -3,7 +3,7 @@ import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
-import { getMetadata } from '../commons/file';
+import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
@@ -84,29 +84,27 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     process.exit(1);
   }
 
-  Config.set(
-    'models',
-    Array.from(
-      new Set(
-        modelsQuery.map((modelQuery) => {
-          const item: IModelWithHash = { name: modelQuery.title, version: Version.Unknown };
-          const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
-          const metadata = getMetadata(modelQuery.filename.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.json'));
+  const modelsQueryResolved = [];
 
-          if (metadata) {
-            item.version = metadata.sdVersion;
-          }
+  for await (const modelQuery of modelsQuery) {
+    const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
+    const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
+    const metadata = await getMetadataCheckpoint(modelQuery.filename);
 
-          if (hash) {
-            item.hash = hash[0];
-            item.name = modelQuery.title.replace(`[${hash}]`, '').trim();
-          }
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.accelarator = metadata.accelerator;
+    }
 
-          return item;
-        })
-      )
-    )
-  );
+    if (hash) {
+      item.hash = hash[0];
+      item.name = modelQuery.title.replace(`[${hash}]`, '').trim();
+    }
+
+    modelsQueryResolved.push(item);
+  }
+
+  Config.set('models', Array.from(new Set(modelsQueryResolved)));
 
   Config.set(
     'vae',
@@ -166,24 +164,22 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     )
   );
 
-  Config.set(
-    'loras',
-    Array.from(
-      new Set(
-        lorasQuery.map((lorasQuery) => {
-          const lora: ILora = { alias: lorasQuery.alias, name: lorasQuery.name, version: Version.Unknown };
+  const lorasQueryResolved = [];
 
-          const metadata = getMetadata(lorasQuery.path.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.json'));
+  for await (const loraQuery of lorasQuery) {
+    const item: ILora = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
 
-          if (metadata) {
-            lora.version = metadata.sdVersion;
-          }
+    const metadata = await getMetadataLora(loraQuery.path);
 
-          return lora;
-        })
-      )
-    )
-  );
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.keywords = metadata.keywords;
+    }
+
+    lorasQueryResolved.push(item);
+  }
+
+  Config.set('loras', Array.from(new Set(lorasQueryResolved)));
 
   const extensions = new Set<Extensions>();
 

@@ -1519,1570 +1519,6 @@ var require_dot_prop = __commonJS({
   }
 });
 
-// node_modules/inherits/inherits_browser.js
-var require_inherits_browser = __commonJS({
-  "node_modules/inherits/inherits_browser.js"(exports2, module2) {
-    if (typeof Object.create === "function") {
-      module2.exports = function inherits2(ctor, superCtor) {
-        if (superCtor) {
-          ctor.super_ = superCtor;
-          ctor.prototype = Object.create(superCtor.prototype, {
-            constructor: {
-              value: ctor,
-              enumerable: false,
-              writable: true,
-              configurable: true
-            }
-          });
-        }
-      };
-    } else {
-      module2.exports = function inherits2(ctor, superCtor) {
-        if (superCtor) {
-          ctor.super_ = superCtor;
-          var TempCtor = function() {
-          };
-          TempCtor.prototype = superCtor.prototype;
-          ctor.prototype = new TempCtor();
-          ctor.prototype.constructor = ctor;
-        }
-      };
-    }
-  }
-});
-
-// node_modules/inherits/inherits.js
-var require_inherits = __commonJS({
-  "node_modules/inherits/inherits.js"(exports2, module2) {
-    try {
-      util2 = require("util");
-      if (typeof util2.inherits !== "function")
-        throw "";
-      module2.exports = util2.inherits;
-    } catch (e) {
-      module2.exports = require_inherits_browser();
-    }
-    var util2;
-  }
-});
-
-// node_modules/queue/index.js
-var require_queue = __commonJS({
-  "node_modules/queue/index.js"(exports2, module2) {
-    var inherits2 = require_inherits();
-    var EventEmitter2 = require("events").EventEmitter;
-    module2.exports = Queue;
-    module2.exports.default = Queue;
-    function Queue(options3) {
-      if (!(this instanceof Queue)) {
-        return new Queue(options3);
-      }
-      EventEmitter2.call(this);
-      options3 = options3 || {};
-      this.concurrency = options3.concurrency || Infinity;
-      this.timeout = options3.timeout || 0;
-      this.autostart = options3.autostart || false;
-      this.results = options3.results || null;
-      this.pending = 0;
-      this.session = 0;
-      this.running = false;
-      this.jobs = [];
-      this.timers = {};
-    }
-    inherits2(Queue, EventEmitter2);
-    var arrayMethods = [
-      "pop",
-      "shift",
-      "indexOf",
-      "lastIndexOf"
-    ];
-    arrayMethods.forEach(function(method) {
-      Queue.prototype[method] = function() {
-        return Array.prototype[method].apply(this.jobs, arguments);
-      };
-    });
-    Queue.prototype.slice = function(begin, end) {
-      this.jobs = this.jobs.slice(begin, end);
-      return this;
-    };
-    Queue.prototype.reverse = function() {
-      this.jobs.reverse();
-      return this;
-    };
-    var arrayAddMethods = [
-      "push",
-      "unshift",
-      "splice"
-    ];
-    arrayAddMethods.forEach(function(method) {
-      Queue.prototype[method] = function() {
-        var methodResult = Array.prototype[method].apply(this.jobs, arguments);
-        if (this.autostart) {
-          this.start();
-        }
-        return methodResult;
-      };
-    });
-    Object.defineProperty(Queue.prototype, "length", {
-      get: function() {
-        return this.pending + this.jobs.length;
-      }
-    });
-    Queue.prototype.start = function(cb) {
-      if (cb) {
-        callOnErrorOrEnd.call(this, cb);
-      }
-      this.running = true;
-      if (this.pending >= this.concurrency) {
-        return;
-      }
-      if (this.jobs.length === 0) {
-        if (this.pending === 0) {
-          done.call(this);
-        }
-        return;
-      }
-      var self2 = this;
-      var job = this.jobs.shift();
-      var once = true;
-      var session = this.session;
-      var timeoutId = null;
-      var didTimeout = false;
-      var resultIndex = null;
-      var timeout = job.hasOwnProperty("timeout") ? job.timeout : this.timeout;
-      function next(err, result) {
-        if (once && self2.session === session) {
-          once = false;
-          self2.pending--;
-          if (timeoutId !== null) {
-            delete self2.timers[timeoutId];
-            clearTimeout(timeoutId);
-          }
-          if (err) {
-            self2.emit("error", err, job);
-          } else if (didTimeout === false) {
-            if (resultIndex !== null) {
-              self2.results[resultIndex] = Array.prototype.slice.call(arguments, 1);
-            }
-            self2.emit("success", result, job);
-          }
-          if (self2.session === session) {
-            if (self2.pending === 0 && self2.jobs.length === 0) {
-              done.call(self2);
-            } else if (self2.running) {
-              self2.start();
-            }
-          }
-        }
-      }
-      if (timeout) {
-        timeoutId = setTimeout(function() {
-          didTimeout = true;
-          if (self2.listeners("timeout").length > 0) {
-            self2.emit("timeout", next, job);
-          } else {
-            next();
-          }
-        }, timeout);
-        this.timers[timeoutId] = timeoutId;
-      }
-      if (this.results) {
-        resultIndex = this.results.length;
-        this.results[resultIndex] = null;
-      }
-      this.pending++;
-      self2.emit("start", job);
-      var promise = job(next);
-      if (promise && promise.then && typeof promise.then === "function") {
-        promise.then(function(result) {
-          return next(null, result);
-        }).catch(function(err) {
-          return next(err || true);
-        });
-      }
-      if (this.running && this.jobs.length > 0) {
-        this.start();
-      }
-    };
-    Queue.prototype.stop = function() {
-      this.running = false;
-    };
-    Queue.prototype.end = function(err) {
-      clearTimers.call(this);
-      this.jobs.length = 0;
-      this.pending = 0;
-      done.call(this, err);
-    };
-    function clearTimers() {
-      for (var key in this.timers) {
-        var timeoutId = this.timers[key];
-        delete this.timers[key];
-        clearTimeout(timeoutId);
-      }
-    }
-    function callOnErrorOrEnd(cb) {
-      var self2 = this;
-      this.on("error", onerror);
-      this.on("end", onend);
-      function onerror(err) {
-        self2.end(err);
-      }
-      function onend(err) {
-        self2.removeListener("error", onerror);
-        self2.removeListener("end", onend);
-        cb(err, this.results);
-      }
-    }
-    function done(err) {
-      this.session++;
-      this.running = false;
-      this.emit("end", err);
-    }
-  }
-});
-
-// node_modules/image-size/dist/types/utils.js
-var require_utils = __commonJS({
-  "node_modules/image-size/dist/types/utils.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.findBox = exports2.readUInt = exports2.readUInt32LE = exports2.readUInt32BE = exports2.readInt32LE = exports2.readUInt24LE = exports2.readUInt16LE = exports2.readUInt16BE = exports2.readInt16LE = exports2.toHexString = exports2.toUTF8String = void 0;
-    var decoder = new TextDecoder();
-    var toUTF8String = (input, start = 0, end = input.length) => decoder.decode(input.slice(start, end));
-    exports2.toUTF8String = toUTF8String;
-    var toHexString = (input, start = 0, end = input.length) => input.slice(start, end).reduce((memo, i) => memo + ("0" + i.toString(16)).slice(-2), "");
-    exports2.toHexString = toHexString;
-    var readInt16LE = (input, offset = 0) => {
-      const val = input[offset] + input[offset + 1] * 2 ** 8;
-      return val | (val & 2 ** 15) * 131070;
-    };
-    exports2.readInt16LE = readInt16LE;
-    var readUInt16BE = (input, offset = 0) => input[offset] * 2 ** 8 + input[offset + 1];
-    exports2.readUInt16BE = readUInt16BE;
-    var readUInt16LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8;
-    exports2.readUInt16LE = readUInt16LE;
-    var readUInt24LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16;
-    exports2.readUInt24LE = readUInt24LE;
-    var readInt32LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16 + (input[offset + 3] << 24);
-    exports2.readInt32LE = readInt32LE;
-    var readUInt32BE = (input, offset = 0) => input[offset] * 2 ** 24 + input[offset + 1] * 2 ** 16 + input[offset + 2] * 2 ** 8 + input[offset + 3];
-    exports2.readUInt32BE = readUInt32BE;
-    var readUInt32LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16 + input[offset + 3] * 2 ** 24;
-    exports2.readUInt32LE = readUInt32LE;
-    var methods = {
-      readUInt16BE: exports2.readUInt16BE,
-      readUInt16LE: exports2.readUInt16LE,
-      readUInt32BE: exports2.readUInt32BE,
-      readUInt32LE: exports2.readUInt32LE
-    };
-    function readUInt(input, bits, offset, isBigEndian) {
-      offset = offset || 0;
-      const endian = isBigEndian ? "BE" : "LE";
-      const methodName = "readUInt" + bits + endian;
-      return methods[methodName](input, offset);
-    }
-    exports2.readUInt = readUInt;
-    function readBox(buffer, offset) {
-      if (buffer.length - offset < 4)
-        return;
-      const boxSize = (0, exports2.readUInt32BE)(buffer, offset);
-      if (buffer.length - offset < boxSize)
-        return;
-      return {
-        name: (0, exports2.toUTF8String)(buffer, 4 + offset, 8 + offset),
-        offset,
-        size: boxSize
-      };
-    }
-    function findBox(buffer, boxName, offset) {
-      while (offset < buffer.length) {
-        const box = readBox(buffer, offset);
-        if (!box)
-          break;
-        if (box.name === boxName)
-          return box;
-        offset += box.size;
-      }
-    }
-    exports2.findBox = findBox;
-  }
-});
-
-// node_modules/image-size/dist/types/bmp.js
-var require_bmp = __commonJS({
-  "node_modules/image-size/dist/types/bmp.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.BMP = void 0;
-    var utils_1 = require_utils();
-    exports2.BMP = {
-      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 2) === "BM",
-      calculate: (input) => ({
-        height: Math.abs((0, utils_1.readInt32LE)(input, 22)),
-        width: (0, utils_1.readUInt32LE)(input, 18)
-      })
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/ico.js
-var require_ico = __commonJS({
-  "node_modules/image-size/dist/types/ico.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.ICO = void 0;
-    var utils_1 = require_utils();
-    var TYPE_ICON = 1;
-    var SIZE_HEADER = 2 + 2 + 2;
-    var SIZE_IMAGE_ENTRY = 1 + 1 + 1 + 1 + 2 + 2 + 4 + 4;
-    function getSizeFromOffset(input, offset) {
-      const value = input[offset];
-      return value === 0 ? 256 : value;
-    }
-    function getImageSize(input, imageIndex) {
-      const offset = SIZE_HEADER + imageIndex * SIZE_IMAGE_ENTRY;
-      return {
-        height: getSizeFromOffset(input, offset + 1),
-        width: getSizeFromOffset(input, offset)
-      };
-    }
-    exports2.ICO = {
-      validate(input) {
-        const reserved = (0, utils_1.readUInt16LE)(input, 0);
-        const imageCount = (0, utils_1.readUInt16LE)(input, 4);
-        if (reserved !== 0 || imageCount === 0)
-          return false;
-        const imageType = (0, utils_1.readUInt16LE)(input, 2);
-        return imageType === TYPE_ICON;
-      },
-      calculate(input) {
-        const nbImages = (0, utils_1.readUInt16LE)(input, 4);
-        const imageSize = getImageSize(input, 0);
-        if (nbImages === 1)
-          return imageSize;
-        const imgs = [imageSize];
-        for (let imageIndex = 1; imageIndex < nbImages; imageIndex += 1) {
-          imgs.push(getImageSize(input, imageIndex));
-        }
-        return {
-          height: imageSize.height,
-          images: imgs,
-          width: imageSize.width
-        };
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/cur.js
-var require_cur = __commonJS({
-  "node_modules/image-size/dist/types/cur.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.CUR = void 0;
-    var ico_1 = require_ico();
-    var utils_1 = require_utils();
-    var TYPE_CURSOR = 2;
-    exports2.CUR = {
-      validate(input) {
-        const reserved = (0, utils_1.readUInt16LE)(input, 0);
-        const imageCount = (0, utils_1.readUInt16LE)(input, 4);
-        if (reserved !== 0 || imageCount === 0)
-          return false;
-        const imageType = (0, utils_1.readUInt16LE)(input, 2);
-        return imageType === TYPE_CURSOR;
-      },
-      calculate: (input) => ico_1.ICO.calculate(input)
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/dds.js
-var require_dds = __commonJS({
-  "node_modules/image-size/dist/types/dds.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.DDS = void 0;
-    var utils_1 = require_utils();
-    exports2.DDS = {
-      validate: (input) => (0, utils_1.readUInt32LE)(input, 0) === 542327876,
-      calculate: (input) => ({
-        height: (0, utils_1.readUInt32LE)(input, 12),
-        width: (0, utils_1.readUInt32LE)(input, 16)
-      })
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/gif.js
-var require_gif = __commonJS({
-  "node_modules/image-size/dist/types/gif.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.GIF = void 0;
-    var utils_1 = require_utils();
-    var gifRegexp = /^GIF8[79]a/;
-    exports2.GIF = {
-      validate: (input) => gifRegexp.test((0, utils_1.toUTF8String)(input, 0, 6)),
-      calculate: (input) => ({
-        height: (0, utils_1.readUInt16LE)(input, 8),
-        width: (0, utils_1.readUInt16LE)(input, 6)
-      })
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/heif.js
-var require_heif = __commonJS({
-  "node_modules/image-size/dist/types/heif.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.HEIF = void 0;
-    var utils_1 = require_utils();
-    var brandMap = {
-      avif: "avif",
-      mif1: "heif",
-      msf1: "heif",
-      // hief-sequence
-      heic: "heic",
-      heix: "heic",
-      hevc: "heic",
-      // heic-sequence
-      hevx: "heic"
-      // heic-sequence
-    };
-    exports2.HEIF = {
-      validate(buffer) {
-        const ftype = (0, utils_1.toUTF8String)(buffer, 4, 8);
-        const brand = (0, utils_1.toUTF8String)(buffer, 8, 12);
-        return "ftyp" === ftype && brand in brandMap;
-      },
-      calculate(buffer) {
-        const metaBox = (0, utils_1.findBox)(buffer, "meta", 0);
-        const iprpBox = metaBox && (0, utils_1.findBox)(buffer, "iprp", metaBox.offset + 12);
-        const ipcoBox = iprpBox && (0, utils_1.findBox)(buffer, "ipco", iprpBox.offset + 8);
-        const ispeBox = ipcoBox && (0, utils_1.findBox)(buffer, "ispe", ipcoBox.offset + 8);
-        if (ispeBox) {
-          return {
-            height: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 16),
-            width: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 12),
-            type: (0, utils_1.toUTF8String)(buffer, 8, 12)
-          };
-        }
-        throw new TypeError("Invalid HEIF, no size found");
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/icns.js
-var require_icns = __commonJS({
-  "node_modules/image-size/dist/types/icns.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.ICNS = void 0;
-    var utils_1 = require_utils();
-    var SIZE_HEADER = 4 + 4;
-    var FILE_LENGTH_OFFSET = 4;
-    var ENTRY_LENGTH_OFFSET = 4;
-    var ICON_TYPE_SIZE = {
-      ICON: 32,
-      "ICN#": 32,
-      // m => 16 x 16
-      "icm#": 16,
-      icm4: 16,
-      icm8: 16,
-      // s => 16 x 16
-      "ics#": 16,
-      ics4: 16,
-      ics8: 16,
-      is32: 16,
-      s8mk: 16,
-      icp4: 16,
-      // l => 32 x 32
-      icl4: 32,
-      icl8: 32,
-      il32: 32,
-      l8mk: 32,
-      icp5: 32,
-      ic11: 32,
-      // h => 48 x 48
-      ich4: 48,
-      ich8: 48,
-      ih32: 48,
-      h8mk: 48,
-      // . => 64 x 64
-      icp6: 64,
-      ic12: 32,
-      // t => 128 x 128
-      it32: 128,
-      t8mk: 128,
-      ic07: 128,
-      // . => 256 x 256
-      ic08: 256,
-      ic13: 256,
-      // . => 512 x 512
-      ic09: 512,
-      ic14: 512,
-      // . => 1024 x 1024
-      ic10: 1024
-    };
-    function readImageHeader(input, imageOffset) {
-      const imageLengthOffset = imageOffset + ENTRY_LENGTH_OFFSET;
-      return [
-        (0, utils_1.toUTF8String)(input, imageOffset, imageLengthOffset),
-        (0, utils_1.readUInt32BE)(input, imageLengthOffset)
-      ];
-    }
-    function getImageSize(type) {
-      const size = ICON_TYPE_SIZE[type];
-      return { width: size, height: size, type };
-    }
-    exports2.ICNS = {
-      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 4) === "icns",
-      calculate(input) {
-        const inputLength = input.length;
-        const fileLength = (0, utils_1.readUInt32BE)(input, FILE_LENGTH_OFFSET);
-        let imageOffset = SIZE_HEADER;
-        let imageHeader = readImageHeader(input, imageOffset);
-        let imageSize = getImageSize(imageHeader[0]);
-        imageOffset += imageHeader[1];
-        if (imageOffset === fileLength)
-          return imageSize;
-        const result = {
-          height: imageSize.height,
-          images: [imageSize],
-          width: imageSize.width
-        };
-        while (imageOffset < fileLength && imageOffset < inputLength) {
-          imageHeader = readImageHeader(input, imageOffset);
-          imageSize = getImageSize(imageHeader[0]);
-          imageOffset += imageHeader[1];
-          result.images.push(imageSize);
-        }
-        return result;
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/j2c.js
-var require_j2c = __commonJS({
-  "node_modules/image-size/dist/types/j2c.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.J2C = void 0;
-    var utils_1 = require_utils();
-    exports2.J2C = {
-      // TODO: this doesn't seem right. SIZ marker doesn't have to be right after the SOC
-      validate: (input) => (0, utils_1.toHexString)(input, 0, 4) === "ff4fff51",
-      calculate: (input) => ({
-        height: (0, utils_1.readUInt32BE)(input, 12),
-        width: (0, utils_1.readUInt32BE)(input, 8)
-      })
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/jp2.js
-var require_jp2 = __commonJS({
-  "node_modules/image-size/dist/types/jp2.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.JP2 = void 0;
-    var utils_1 = require_utils();
-    exports2.JP2 = {
-      validate(input) {
-        if ((0, utils_1.readUInt32BE)(input, 4) !== 1783636e3 || (0, utils_1.readUInt32BE)(input, 0) < 1)
-          return false;
-        const ftypBox = (0, utils_1.findBox)(input, "ftyp", 0);
-        if (!ftypBox)
-          return false;
-        return (0, utils_1.readUInt32BE)(input, ftypBox.offset + 4) === 1718909296;
-      },
-      calculate(input) {
-        const jp2hBox = (0, utils_1.findBox)(input, "jp2h", 0);
-        const ihdrBox = jp2hBox && (0, utils_1.findBox)(input, "ihdr", jp2hBox.offset + 8);
-        if (ihdrBox) {
-          return {
-            height: (0, utils_1.readUInt32BE)(input, ihdrBox.offset + 8),
-            width: (0, utils_1.readUInt32BE)(input, ihdrBox.offset + 12)
-          };
-        }
-        throw new TypeError("Unsupported JPEG 2000 format");
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/jpg.js
-var require_jpg = __commonJS({
-  "node_modules/image-size/dist/types/jpg.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.JPG = void 0;
-    var utils_1 = require_utils();
-    var EXIF_MARKER = "45786966";
-    var APP1_DATA_SIZE_BYTES = 2;
-    var EXIF_HEADER_BYTES = 6;
-    var TIFF_BYTE_ALIGN_BYTES = 2;
-    var BIG_ENDIAN_BYTE_ALIGN = "4d4d";
-    var LITTLE_ENDIAN_BYTE_ALIGN = "4949";
-    var IDF_ENTRY_BYTES = 12;
-    var NUM_DIRECTORY_ENTRIES_BYTES = 2;
-    function isEXIF(input) {
-      return (0, utils_1.toHexString)(input, 2, 6) === EXIF_MARKER;
-    }
-    function extractSize(input, index) {
-      return {
-        height: (0, utils_1.readUInt16BE)(input, index),
-        width: (0, utils_1.readUInt16BE)(input, index + 2)
-      };
-    }
-    function extractOrientation(exifBlock, isBigEndian) {
-      const idfOffset = 8;
-      const offset = EXIF_HEADER_BYTES + idfOffset;
-      const idfDirectoryEntries = (0, utils_1.readUInt)(exifBlock, 16, offset, isBigEndian);
-      for (let directoryEntryNumber = 0; directoryEntryNumber < idfDirectoryEntries; directoryEntryNumber++) {
-        const start = offset + NUM_DIRECTORY_ENTRIES_BYTES + directoryEntryNumber * IDF_ENTRY_BYTES;
-        const end = start + IDF_ENTRY_BYTES;
-        if (start > exifBlock.length) {
-          return;
-        }
-        const block = exifBlock.slice(start, end);
-        const tagNumber = (0, utils_1.readUInt)(block, 16, 0, isBigEndian);
-        if (tagNumber === 274) {
-          const dataFormat = (0, utils_1.readUInt)(block, 16, 2, isBigEndian);
-          if (dataFormat !== 3) {
-            return;
-          }
-          const numberOfComponents = (0, utils_1.readUInt)(block, 32, 4, isBigEndian);
-          if (numberOfComponents !== 1) {
-            return;
-          }
-          return (0, utils_1.readUInt)(block, 16, 8, isBigEndian);
-        }
-      }
-    }
-    function validateExifBlock(input, index) {
-      const exifBlock = input.slice(APP1_DATA_SIZE_BYTES, index);
-      const byteAlign = (0, utils_1.toHexString)(exifBlock, EXIF_HEADER_BYTES, EXIF_HEADER_BYTES + TIFF_BYTE_ALIGN_BYTES);
-      const isBigEndian = byteAlign === BIG_ENDIAN_BYTE_ALIGN;
-      const isLittleEndian = byteAlign === LITTLE_ENDIAN_BYTE_ALIGN;
-      if (isBigEndian || isLittleEndian) {
-        return extractOrientation(exifBlock, isBigEndian);
-      }
-    }
-    function validateInput(input, index) {
-      if (index > input.length) {
-        throw new TypeError("Corrupt JPG, exceeded buffer limits");
-      }
-    }
-    exports2.JPG = {
-      validate: (input) => (0, utils_1.toHexString)(input, 0, 2) === "ffd8",
-      calculate(input) {
-        input = input.slice(4);
-        let orientation;
-        let next;
-        while (input.length) {
-          const i = (0, utils_1.readUInt16BE)(input, 0);
-          if (input[i] !== 255) {
-            input = input.slice(1);
-            continue;
-          }
-          if (isEXIF(input)) {
-            orientation = validateExifBlock(input, i);
-          }
-          validateInput(input, i);
-          next = input[i + 1];
-          if (next === 192 || next === 193 || next === 194) {
-            const size = extractSize(input, i + 5);
-            if (!orientation) {
-              return size;
-            }
-            return {
-              height: size.height,
-              orientation,
-              width: size.width
-            };
-          }
-          input = input.slice(i + 2);
-        }
-        throw new TypeError("Invalid JPG, no size found");
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/ktx.js
-var require_ktx = __commonJS({
-  "node_modules/image-size/dist/types/ktx.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.KTX = void 0;
-    var utils_1 = require_utils();
-    exports2.KTX = {
-      validate: (input) => {
-        const signature = (0, utils_1.toUTF8String)(input, 1, 7);
-        return ["KTX 11", "KTX 20"].includes(signature);
-      },
-      calculate: (input) => {
-        const type = input[5] === 49 ? "ktx" : "ktx2";
-        const offset = type === "ktx" ? 36 : 20;
-        return {
-          height: (0, utils_1.readUInt32LE)(input, offset + 4),
-          width: (0, utils_1.readUInt32LE)(input, offset),
-          type
-        };
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/png.js
-var require_png = __commonJS({
-  "node_modules/image-size/dist/types/png.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.PNG = void 0;
-    var utils_1 = require_utils();
-    var pngSignature = "PNG\r\n\n";
-    var pngImageHeaderChunkName = "IHDR";
-    var pngFriedChunkName = "CgBI";
-    exports2.PNG = {
-      validate(input) {
-        if (pngSignature === (0, utils_1.toUTF8String)(input, 1, 8)) {
-          let chunkName = (0, utils_1.toUTF8String)(input, 12, 16);
-          if (chunkName === pngFriedChunkName) {
-            chunkName = (0, utils_1.toUTF8String)(input, 28, 32);
-          }
-          if (chunkName !== pngImageHeaderChunkName) {
-            throw new TypeError("Invalid PNG");
-          }
-          return true;
-        }
-        return false;
-      },
-      calculate(input) {
-        if ((0, utils_1.toUTF8String)(input, 12, 16) === pngFriedChunkName) {
-          return {
-            height: (0, utils_1.readUInt32BE)(input, 36),
-            width: (0, utils_1.readUInt32BE)(input, 32)
-          };
-        }
-        return {
-          height: (0, utils_1.readUInt32BE)(input, 20),
-          width: (0, utils_1.readUInt32BE)(input, 16)
-        };
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/pnm.js
-var require_pnm = __commonJS({
-  "node_modules/image-size/dist/types/pnm.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.PNM = void 0;
-    var utils_1 = require_utils();
-    var PNMTypes = {
-      P1: "pbm/ascii",
-      P2: "pgm/ascii",
-      P3: "ppm/ascii",
-      P4: "pbm",
-      P5: "pgm",
-      P6: "ppm",
-      P7: "pam",
-      PF: "pfm"
-    };
-    var handlers = {
-      default: (lines) => {
-        let dimensions = [];
-        while (lines.length > 0) {
-          const line = lines.shift();
-          if (line[0] === "#") {
-            continue;
-          }
-          dimensions = line.split(" ");
-          break;
-        }
-        if (dimensions.length === 2) {
-          return {
-            height: parseInt(dimensions[1], 10),
-            width: parseInt(dimensions[0], 10)
-          };
-        } else {
-          throw new TypeError("Invalid PNM");
-        }
-      },
-      pam: (lines) => {
-        const size = {};
-        while (lines.length > 0) {
-          const line = lines.shift();
-          if (line.length > 16 || line.charCodeAt(0) > 128) {
-            continue;
-          }
-          const [key, value] = line.split(" ");
-          if (key && value) {
-            size[key.toLowerCase()] = parseInt(value, 10);
-          }
-          if (size.height && size.width) {
-            break;
-          }
-        }
-        if (size.height && size.width) {
-          return {
-            height: size.height,
-            width: size.width
-          };
-        } else {
-          throw new TypeError("Invalid PAM");
-        }
-      }
-    };
-    exports2.PNM = {
-      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 2) in PNMTypes,
-      calculate(input) {
-        const signature = (0, utils_1.toUTF8String)(input, 0, 2);
-        const type = PNMTypes[signature];
-        const lines = (0, utils_1.toUTF8String)(input, 3).split(/[\r\n]+/);
-        const handler9 = handlers[type] || handlers.default;
-        return handler9(lines);
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/psd.js
-var require_psd = __commonJS({
-  "node_modules/image-size/dist/types/psd.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.PSD = void 0;
-    var utils_1 = require_utils();
-    exports2.PSD = {
-      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 4) === "8BPS",
-      calculate: (input) => ({
-        height: (0, utils_1.readUInt32BE)(input, 14),
-        width: (0, utils_1.readUInt32BE)(input, 18)
-      })
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/svg.js
-var require_svg = __commonJS({
-  "node_modules/image-size/dist/types/svg.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.SVG = void 0;
-    var utils_1 = require_utils();
-    var svgReg = /<svg\s([^>"']|"[^"]*"|'[^']*')*>/;
-    var extractorRegExps = {
-      height: /\sheight=(['"])([^%]+?)\1/,
-      root: svgReg,
-      viewbox: /\sviewBox=(['"])(.+?)\1/i,
-      width: /\swidth=(['"])([^%]+?)\1/
-    };
-    var INCH_CM = 2.54;
-    var units = {
-      in: 96,
-      cm: 96 / INCH_CM,
-      em: 16,
-      ex: 8,
-      m: 96 / INCH_CM * 100,
-      mm: 96 / INCH_CM / 10,
-      pc: 96 / 72 / 12,
-      pt: 96 / 72,
-      px: 1
-    };
-    var unitsReg = new RegExp(`^([0-9.]+(?:e\\d+)?)(${Object.keys(units).join("|")})?$`);
-    function parseLength(len) {
-      const m = unitsReg.exec(len);
-      if (!m) {
-        return void 0;
-      }
-      return Math.round(Number(m[1]) * (units[m[2]] || 1));
-    }
-    function parseViewbox(viewbox) {
-      const bounds = viewbox.split(" ");
-      return {
-        height: parseLength(bounds[3]),
-        width: parseLength(bounds[2])
-      };
-    }
-    function parseAttributes(root) {
-      const width = root.match(extractorRegExps.width);
-      const height = root.match(extractorRegExps.height);
-      const viewbox = root.match(extractorRegExps.viewbox);
-      return {
-        height: height && parseLength(height[2]),
-        viewbox: viewbox && parseViewbox(viewbox[2]),
-        width: width && parseLength(width[2])
-      };
-    }
-    function calculateByDimensions(attrs) {
-      return {
-        height: attrs.height,
-        width: attrs.width
-      };
-    }
-    function calculateByViewbox(attrs, viewbox) {
-      const ratio = viewbox.width / viewbox.height;
-      if (attrs.width) {
-        return {
-          height: Math.floor(attrs.width / ratio),
-          width: attrs.width
-        };
-      }
-      if (attrs.height) {
-        return {
-          height: attrs.height,
-          width: Math.floor(attrs.height * ratio)
-        };
-      }
-      return {
-        height: viewbox.height,
-        width: viewbox.width
-      };
-    }
-    exports2.SVG = {
-      // Scan only the first kilo-byte to speed up the check on larger files
-      validate: (input) => svgReg.test((0, utils_1.toUTF8String)(input, 0, 1e3)),
-      calculate(input) {
-        const root = (0, utils_1.toUTF8String)(input).match(extractorRegExps.root);
-        if (root) {
-          const attrs = parseAttributes(root[0]);
-          if (attrs.width && attrs.height) {
-            return calculateByDimensions(attrs);
-          }
-          if (attrs.viewbox) {
-            return calculateByViewbox(attrs, attrs.viewbox);
-          }
-        }
-        throw new TypeError("Invalid SVG");
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/tga.js
-var require_tga = __commonJS({
-  "node_modules/image-size/dist/types/tga.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.TGA = void 0;
-    var utils_1 = require_utils();
-    exports2.TGA = {
-      validate(input) {
-        return (0, utils_1.readUInt16LE)(input, 0) === 0 && (0, utils_1.readUInt16LE)(input, 4) === 0;
-      },
-      calculate(input) {
-        return {
-          height: (0, utils_1.readUInt16LE)(input, 14),
-          width: (0, utils_1.readUInt16LE)(input, 12)
-        };
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/tiff.js
-var require_tiff = __commonJS({
-  "node_modules/image-size/dist/types/tiff.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.TIFF = void 0;
-    var fs11 = require("fs");
-    var utils_1 = require_utils();
-    function readIFD(input, filepath, isBigEndian) {
-      const ifdOffset = (0, utils_1.readUInt)(input, 32, 4, isBigEndian);
-      let bufferSize = 1024;
-      const fileSize = fs11.statSync(filepath).size;
-      if (ifdOffset + bufferSize > fileSize) {
-        bufferSize = fileSize - ifdOffset - 10;
-      }
-      const endBuffer = new Uint8Array(bufferSize);
-      const descriptor = fs11.openSync(filepath, "r");
-      fs11.readSync(descriptor, endBuffer, 0, bufferSize, ifdOffset);
-      fs11.closeSync(descriptor);
-      return endBuffer.slice(2);
-    }
-    function readValue(input, isBigEndian) {
-      const low = (0, utils_1.readUInt)(input, 16, 8, isBigEndian);
-      const high = (0, utils_1.readUInt)(input, 16, 10, isBigEndian);
-      return (high << 16) + low;
-    }
-    function nextTag(input) {
-      if (input.length > 24) {
-        return input.slice(12);
-      }
-    }
-    function extractTags(input, isBigEndian) {
-      const tags = {};
-      let temp = input;
-      while (temp && temp.length) {
-        const code = (0, utils_1.readUInt)(temp, 16, 0, isBigEndian);
-        const type = (0, utils_1.readUInt)(temp, 16, 2, isBigEndian);
-        const length = (0, utils_1.readUInt)(temp, 32, 4, isBigEndian);
-        if (code === 0) {
-          break;
-        } else {
-          if (length === 1 && (type === 3 || type === 4)) {
-            tags[code] = readValue(temp, isBigEndian);
-          }
-          temp = nextTag(temp);
-        }
-      }
-      return tags;
-    }
-    function determineEndianness(input) {
-      const signature = (0, utils_1.toUTF8String)(input, 0, 2);
-      if ("II" === signature) {
-        return "LE";
-      } else if ("MM" === signature) {
-        return "BE";
-      }
-    }
-    var signatures = [
-      // '492049', // currently not supported
-      "49492a00",
-      // Little endian
-      "4d4d002a"
-      // Big Endian
-      // '4d4d002a', // BigTIFF > 4GB. currently not supported
-    ];
-    exports2.TIFF = {
-      validate: (input) => signatures.includes((0, utils_1.toHexString)(input, 0, 4)),
-      calculate(input, filepath) {
-        if (!filepath) {
-          throw new TypeError("Tiff doesn't support buffer");
-        }
-        const isBigEndian = determineEndianness(input) === "BE";
-        const ifdBuffer = readIFD(input, filepath, isBigEndian);
-        const tags = extractTags(ifdBuffer, isBigEndian);
-        const width = tags[256];
-        const height = tags[257];
-        if (!width || !height) {
-          throw new TypeError("Invalid Tiff. Missing tags");
-        }
-        return { height, width };
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/webp.js
-var require_webp = __commonJS({
-  "node_modules/image-size/dist/types/webp.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.WEBP = void 0;
-    var utils_1 = require_utils();
-    function calculateExtended(input) {
-      return {
-        height: 1 + (0, utils_1.readUInt24LE)(input, 7),
-        width: 1 + (0, utils_1.readUInt24LE)(input, 4)
-      };
-    }
-    function calculateLossless(input) {
-      return {
-        height: 1 + ((input[4] & 15) << 10 | input[3] << 2 | (input[2] & 192) >> 6),
-        width: 1 + ((input[2] & 63) << 8 | input[1])
-      };
-    }
-    function calculateLossy(input) {
-      return {
-        height: (0, utils_1.readInt16LE)(input, 8) & 16383,
-        width: (0, utils_1.readInt16LE)(input, 6) & 16383
-      };
-    }
-    exports2.WEBP = {
-      validate(input) {
-        const riffHeader = "RIFF" === (0, utils_1.toUTF8String)(input, 0, 4);
-        const webpHeader = "WEBP" === (0, utils_1.toUTF8String)(input, 8, 12);
-        const vp8Header = "VP8" === (0, utils_1.toUTF8String)(input, 12, 15);
-        return riffHeader && webpHeader && vp8Header;
-      },
-      calculate(input) {
-        const chunkHeader = (0, utils_1.toUTF8String)(input, 12, 16);
-        input = input.slice(20, 30);
-        if (chunkHeader === "VP8X") {
-          const extendedHeader = input[0];
-          const validStart = (extendedHeader & 192) === 0;
-          const validEnd = (extendedHeader & 1) === 0;
-          if (validStart && validEnd) {
-            return calculateExtended(input);
-          } else {
-            throw new TypeError("Invalid WebP");
-          }
-        }
-        if (chunkHeader === "VP8 " && input[0] !== 47) {
-          return calculateLossy(input);
-        }
-        const signature = (0, utils_1.toHexString)(input, 3, 6);
-        if (chunkHeader === "VP8L" && signature !== "9d012a") {
-          return calculateLossless(input);
-        }
-        throw new TypeError("Invalid WebP");
-      }
-    };
-  }
-});
-
-// node_modules/image-size/dist/types/index.js
-var require_types = __commonJS({
-  "node_modules/image-size/dist/types/index.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.typeHandlers = void 0;
-    var bmp_1 = require_bmp();
-    var cur_1 = require_cur();
-    var dds_1 = require_dds();
-    var gif_1 = require_gif();
-    var heif_1 = require_heif();
-    var icns_1 = require_icns();
-    var ico_1 = require_ico();
-    var j2c_1 = require_j2c();
-    var jp2_1 = require_jp2();
-    var jpg_1 = require_jpg();
-    var ktx_1 = require_ktx();
-    var png_1 = require_png();
-    var pnm_1 = require_pnm();
-    var psd_1 = require_psd();
-    var svg_1 = require_svg();
-    var tga_1 = require_tga();
-    var tiff_1 = require_tiff();
-    var webp_1 = require_webp();
-    exports2.typeHandlers = {
-      bmp: bmp_1.BMP,
-      cur: cur_1.CUR,
-      dds: dds_1.DDS,
-      gif: gif_1.GIF,
-      heif: heif_1.HEIF,
-      icns: icns_1.ICNS,
-      ico: ico_1.ICO,
-      j2c: j2c_1.J2C,
-      jp2: jp2_1.JP2,
-      jpg: jpg_1.JPG,
-      ktx: ktx_1.KTX,
-      png: png_1.PNG,
-      pnm: pnm_1.PNM,
-      psd: psd_1.PSD,
-      svg: svg_1.SVG,
-      tga: tga_1.TGA,
-      tiff: tiff_1.TIFF,
-      webp: webp_1.WEBP
-    };
-  }
-});
-
-// node_modules/image-size/dist/detector.js
-var require_detector = __commonJS({
-  "node_modules/image-size/dist/detector.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.detector = void 0;
-    var index_1 = require_types();
-    var keys = Object.keys(index_1.typeHandlers);
-    var firstBytes = {
-      56: "psd",
-      66: "bmp",
-      68: "dds",
-      71: "gif",
-      73: "tiff",
-      77: "tiff",
-      82: "webp",
-      105: "icns",
-      137: "png",
-      255: "jpg"
-    };
-    function detector(input) {
-      const byte = input[0];
-      if (byte in firstBytes) {
-        const type = firstBytes[byte];
-        if (type && index_1.typeHandlers[type].validate(input)) {
-          return type;
-        }
-      }
-      const finder = (key) => index_1.typeHandlers[key].validate(input);
-      return keys.find(finder);
-    }
-    exports2.detector = detector;
-  }
-});
-
-// node_modules/image-size/dist/index.js
-var require_dist = __commonJS({
-  "node_modules/image-size/dist/index.js"(exports2, module2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.types = exports2.setConcurrency = exports2.disableTypes = exports2.disableFS = exports2.imageSize = void 0;
-    var fs11 = require("fs");
-    var path12 = require("path");
-    var queue_1 = require_queue();
-    var index_1 = require_types();
-    var detector_1 = require_detector();
-    var MaxInputSize = 512 * 1024;
-    var queue2 = new queue_1.default({ concurrency: 100, autostart: true });
-    var globalOptions = {
-      disabledFS: false,
-      disabledTypes: []
-    };
-    function lookup(input, filepath) {
-      const type = (0, detector_1.detector)(input);
-      if (typeof type !== "undefined") {
-        if (globalOptions.disabledTypes.indexOf(type) > -1) {
-          throw new TypeError("disabled file type: " + type);
-        }
-        if (type in index_1.typeHandlers) {
-          const size = index_1.typeHandlers[type].calculate(input, filepath);
-          if (size !== void 0) {
-            size.type = size.type ?? type;
-            return size;
-          }
-        }
-      }
-      throw new TypeError("unsupported file type: " + type + " (file: " + filepath + ")");
-    }
-    async function readFileAsync(filepath) {
-      const handle = await fs11.promises.open(filepath, "r");
-      try {
-        const { size } = await handle.stat();
-        if (size <= 0) {
-          throw new Error("Empty file");
-        }
-        const inputSize = Math.min(size, MaxInputSize);
-        const input = new Uint8Array(inputSize);
-        await handle.read(input, 0, inputSize, 0);
-        return input;
-      } finally {
-        await handle.close();
-      }
-    }
-    function readFileSync4(filepath) {
-      const descriptor = fs11.openSync(filepath, "r");
-      try {
-        const { size } = fs11.fstatSync(descriptor);
-        if (size <= 0) {
-          throw new Error("Empty file");
-        }
-        const inputSize = Math.min(size, MaxInputSize);
-        const input = new Uint8Array(inputSize);
-        fs11.readSync(descriptor, input, 0, inputSize, 0);
-        return input;
-      } finally {
-        fs11.closeSync(descriptor);
-      }
-    }
-    module2.exports = exports2 = imageSize;
-    exports2.default = imageSize;
-    function imageSize(input, callback) {
-      if (input instanceof Uint8Array) {
-        return lookup(input);
-      }
-      if (typeof input !== "string" || globalOptions.disabledFS) {
-        throw new TypeError("invalid invocation. input should be a Uint8Array");
-      }
-      const filepath = path12.resolve(input);
-      if (typeof callback === "function") {
-        queue2.push(() => readFileAsync(filepath).then((input2) => process.nextTick(callback, null, lookup(input2, filepath))).catch(callback));
-      } else {
-        const input2 = readFileSync4(filepath);
-        return lookup(input2, filepath);
-      }
-    }
-    exports2.imageSize = imageSize;
-    var disableFS = (v) => {
-      globalOptions.disabledFS = v;
-    };
-    exports2.disableFS = disableFS;
-    var disableTypes = (types) => {
-      globalOptions.disabledTypes = types;
-    };
-    exports2.disableTypes = disableTypes;
-    var setConcurrency = (c) => {
-      queue2.concurrency = c;
-    };
-    exports2.setConcurrency = setConcurrency;
-    exports2.types = Object.keys(index_1.typeHandlers);
-  }
-});
-
-// node_modules/png-chunk-text/encode.js
-var require_encode = __commonJS({
-  "node_modules/png-chunk-text/encode.js"(exports2, module2) {
-    module2.exports = encode3;
-    function encode3(keyword, content) {
-      keyword = String(keyword);
-      content = String(content);
-      if (!/^[\x00-\xFF]+$/.test(keyword) || !/^[\x00-\xFF]+$/.test(content)) {
-        throw new Error("Only Latin-1 characters are permitted in PNG tEXt chunks. You might want to consider base64 encoding and/or zEXt compression");
-      }
-      if (keyword.length >= 80) {
-        throw new Error('Keyword "' + keyword + '" is longer than the 79-character limit imposed by the PNG specification');
-      }
-      var totalSize = keyword.length + content.length + 1;
-      var output = new Uint8Array(totalSize);
-      var idx = 0;
-      var code;
-      for (var i = 0; i < keyword.length; i++) {
-        if (!(code = keyword.charCodeAt(i))) {
-          throw new Error("0x00 character is not permitted in tEXt keywords");
-        }
-        output[idx++] = code;
-      }
-      output[idx++] = 0;
-      for (var j = 0; j < content.length; j++) {
-        if (!(code = content.charCodeAt(j))) {
-          throw new Error("0x00 character is not permitted in tEXt content");
-        }
-        output[idx++] = code;
-      }
-      return {
-        name: "tEXt",
-        data: output
-      };
-    }
-  }
-});
-
-// node_modules/png-chunk-text/decode.js
-var require_decode = __commonJS({
-  "node_modules/png-chunk-text/decode.js"(exports2, module2) {
-    module2.exports = decode;
-    function decode(data) {
-      if (data.data && data.name) {
-        data = data.data;
-      }
-      var naming = true;
-      var text2 = "";
-      var name = "";
-      for (var i = 0; i < data.length; i++) {
-        var code = data[i];
-        if (naming) {
-          if (code) {
-            name += String.fromCharCode(code);
-          } else {
-            naming = false;
-          }
-        } else {
-          if (code) {
-            text2 += String.fromCharCode(code);
-          } else {
-            throw new Error("Invalid NULL character found. 0x00 character is not permitted in tEXt content");
-          }
-        }
-      }
-      return {
-        keyword: name,
-        text: text2
-      };
-    }
-  }
-});
-
-// node_modules/png-chunk-text/index.js
-var require_png_chunk_text = __commonJS({
-  "node_modules/png-chunk-text/index.js"(exports2) {
-    exports2.encode = require_encode();
-    exports2.decode = require_decode();
-  }
-});
-
-// node_modules/crc-32/crc32.js
-var require_crc32 = __commonJS({
-  "node_modules/crc-32/crc32.js"(exports2) {
-    var CRC32;
-    (function(factory) {
-      if (typeof DO_NOT_EXPORT_CRC === "undefined") {
-        if ("object" === typeof exports2) {
-          factory(exports2);
-        } else if ("function" === typeof define && define.amd) {
-          define(function() {
-            var module3 = {};
-            factory(module3);
-            return module3;
-          });
-        } else {
-          factory(CRC32 = {});
-        }
-      } else {
-        factory(CRC32 = {});
-      }
-    })(function(CRC322) {
-      CRC322.version = "0.3.0";
-      function signed_crc_table() {
-        var c = 0, table2 = new Array(256);
-        for (var n = 0; n != 256; ++n) {
-          c = n;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
-          table2[n] = c;
-        }
-        return typeof Int32Array !== "undefined" ? new Int32Array(table2) : table2;
-      }
-      var table = signed_crc_table();
-      var use_buffer = typeof Buffer !== "undefined";
-      function crc32_bstr(bstr) {
-        if (bstr.length > 32768) {
-          if (use_buffer)
-            return crc32_buf_8(new Buffer(bstr));
-        }
-        var crc = -1, L = bstr.length - 1;
-        for (var i = 0; i < L; ) {
-          crc = table[(crc ^ bstr.charCodeAt(i++)) & 255] ^ crc >>> 8;
-          crc = table[(crc ^ bstr.charCodeAt(i++)) & 255] ^ crc >>> 8;
-        }
-        if (i === L)
-          crc = crc >>> 8 ^ table[(crc ^ bstr.charCodeAt(i)) & 255];
-        return crc ^ -1;
-      }
-      function crc32_buf(buf) {
-        if (buf.length > 1e4)
-          return crc32_buf_8(buf);
-        for (var crc = -1, i = 0, L = buf.length - 3; i < L; ) {
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-        }
-        while (i < L + 3)
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-        return crc ^ -1;
-      }
-      function crc32_buf_8(buf) {
-        for (var crc = -1, i = 0, L = buf.length - 7; i < L; ) {
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-        }
-        while (i < L + 7)
-          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
-        return crc ^ -1;
-      }
-      function crc32_str(str) {
-        for (var crc = -1, i = 0, L = str.length, c, d; i < L; ) {
-          c = str.charCodeAt(i++);
-          if (c < 128) {
-            crc = crc >>> 8 ^ table[(crc ^ c) & 255];
-          } else if (c < 2048) {
-            crc = crc >>> 8 ^ table[(crc ^ (192 | c >> 6 & 31)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | c & 63)) & 255];
-          } else if (c >= 55296 && c < 57344) {
-            c = (c & 1023) + 64;
-            d = str.charCodeAt(i++) & 1023;
-            crc = crc >>> 8 ^ table[(crc ^ (240 | c >> 8 & 7)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | c >> 2 & 63)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | d >> 6 & 15 | c & 3)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | d & 63)) & 255];
-          } else {
-            crc = crc >>> 8 ^ table[(crc ^ (224 | c >> 12 & 15)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | c >> 6 & 63)) & 255];
-            crc = crc >>> 8 ^ table[(crc ^ (128 | c & 63)) & 255];
-          }
-        }
-        return crc ^ -1;
-      }
-      CRC322.table = table;
-      CRC322.bstr = crc32_bstr;
-      CRC322.buf = crc32_buf;
-      CRC322.str = crc32_str;
-    });
-  }
-});
-
-// node_modules/png-chunks-extract/index.js
-var require_png_chunks_extract = __commonJS({
-  "node_modules/png-chunks-extract/index.js"(exports2, module2) {
-    var crc32 = require_crc32();
-    module2.exports = extractChunks;
-    var uint8 = new Uint8Array(4);
-    var int32 = new Int32Array(uint8.buffer);
-    var uint32 = new Uint32Array(uint8.buffer);
-    function extractChunks(data) {
-      if (data[0] !== 137)
-        throw new Error("Invalid .png file header");
-      if (data[1] !== 80)
-        throw new Error("Invalid .png file header");
-      if (data[2] !== 78)
-        throw new Error("Invalid .png file header");
-      if (data[3] !== 71)
-        throw new Error("Invalid .png file header");
-      if (data[4] !== 13)
-        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
-      if (data[5] !== 10)
-        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
-      if (data[6] !== 26)
-        throw new Error("Invalid .png file header");
-      if (data[7] !== 10)
-        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
-      var ended = false;
-      var chunks = [];
-      var idx = 8;
-      while (idx < data.length) {
-        uint8[3] = data[idx++];
-        uint8[2] = data[idx++];
-        uint8[1] = data[idx++];
-        uint8[0] = data[idx++];
-        var length = uint32[0] + 4;
-        var chunk = new Uint8Array(length);
-        chunk[0] = data[idx++];
-        chunk[1] = data[idx++];
-        chunk[2] = data[idx++];
-        chunk[3] = data[idx++];
-        var name = String.fromCharCode(chunk[0]) + String.fromCharCode(chunk[1]) + String.fromCharCode(chunk[2]) + String.fromCharCode(chunk[3]);
-        if (!chunks.length && name !== "IHDR") {
-          throw new Error("IHDR header missing");
-        }
-        if (name === "IEND") {
-          ended = true;
-          chunks.push({
-            name,
-            data: new Uint8Array(0)
-          });
-          break;
-        }
-        for (var i = 4; i < length; i++) {
-          chunk[i] = data[idx++];
-        }
-        uint8[3] = data[idx++];
-        uint8[2] = data[idx++];
-        uint8[1] = data[idx++];
-        uint8[0] = data[idx++];
-        var crcActual = int32[0];
-        var crcExpect = crc32.buf(chunk);
-        if (crcExpect !== crcActual) {
-          throw new Error(
-            "CRC values for " + name + " header do not match, PNG file is likely corrupted"
-          );
-        }
-        var chunkData = new Uint8Array(chunk.buffer.slice(4));
-        chunks.push({
-          name,
-          data: chunkData
-        });
-      }
-      if (!ended) {
-        throw new Error(".png file ended prematurely: no IEND header was found");
-      }
-      return chunks;
-    }
-  }
-});
-
 // node_modules/delayed-stream/lib/delayed_stream.js
 var require_delayed_stream = __commonJS({
   "node_modules/delayed-stream/lib/delayed_stream.js"(exports2, module2) {
@@ -13828,6 +12264,1570 @@ var require_follow_redirects = __commonJS({
   }
 });
 
+// node_modules/inherits/inherits_browser.js
+var require_inherits_browser = __commonJS({
+  "node_modules/inherits/inherits_browser.js"(exports2, module2) {
+    if (typeof Object.create === "function") {
+      module2.exports = function inherits2(ctor, superCtor) {
+        if (superCtor) {
+          ctor.super_ = superCtor;
+          ctor.prototype = Object.create(superCtor.prototype, {
+            constructor: {
+              value: ctor,
+              enumerable: false,
+              writable: true,
+              configurable: true
+            }
+          });
+        }
+      };
+    } else {
+      module2.exports = function inherits2(ctor, superCtor) {
+        if (superCtor) {
+          ctor.super_ = superCtor;
+          var TempCtor = function() {
+          };
+          TempCtor.prototype = superCtor.prototype;
+          ctor.prototype = new TempCtor();
+          ctor.prototype.constructor = ctor;
+        }
+      };
+    }
+  }
+});
+
+// node_modules/inherits/inherits.js
+var require_inherits = __commonJS({
+  "node_modules/inherits/inherits.js"(exports2, module2) {
+    try {
+      util2 = require("util");
+      if (typeof util2.inherits !== "function")
+        throw "";
+      module2.exports = util2.inherits;
+    } catch (e) {
+      module2.exports = require_inherits_browser();
+    }
+    var util2;
+  }
+});
+
+// node_modules/queue/index.js
+var require_queue = __commonJS({
+  "node_modules/queue/index.js"(exports2, module2) {
+    var inherits2 = require_inherits();
+    var EventEmitter2 = require("events").EventEmitter;
+    module2.exports = Queue;
+    module2.exports.default = Queue;
+    function Queue(options3) {
+      if (!(this instanceof Queue)) {
+        return new Queue(options3);
+      }
+      EventEmitter2.call(this);
+      options3 = options3 || {};
+      this.concurrency = options3.concurrency || Infinity;
+      this.timeout = options3.timeout || 0;
+      this.autostart = options3.autostart || false;
+      this.results = options3.results || null;
+      this.pending = 0;
+      this.session = 0;
+      this.running = false;
+      this.jobs = [];
+      this.timers = {};
+    }
+    inherits2(Queue, EventEmitter2);
+    var arrayMethods = [
+      "pop",
+      "shift",
+      "indexOf",
+      "lastIndexOf"
+    ];
+    arrayMethods.forEach(function(method) {
+      Queue.prototype[method] = function() {
+        return Array.prototype[method].apply(this.jobs, arguments);
+      };
+    });
+    Queue.prototype.slice = function(begin, end) {
+      this.jobs = this.jobs.slice(begin, end);
+      return this;
+    };
+    Queue.prototype.reverse = function() {
+      this.jobs.reverse();
+      return this;
+    };
+    var arrayAddMethods = [
+      "push",
+      "unshift",
+      "splice"
+    ];
+    arrayAddMethods.forEach(function(method) {
+      Queue.prototype[method] = function() {
+        var methodResult = Array.prototype[method].apply(this.jobs, arguments);
+        if (this.autostart) {
+          this.start();
+        }
+        return methodResult;
+      };
+    });
+    Object.defineProperty(Queue.prototype, "length", {
+      get: function() {
+        return this.pending + this.jobs.length;
+      }
+    });
+    Queue.prototype.start = function(cb) {
+      if (cb) {
+        callOnErrorOrEnd.call(this, cb);
+      }
+      this.running = true;
+      if (this.pending >= this.concurrency) {
+        return;
+      }
+      if (this.jobs.length === 0) {
+        if (this.pending === 0) {
+          done.call(this);
+        }
+        return;
+      }
+      var self2 = this;
+      var job = this.jobs.shift();
+      var once = true;
+      var session = this.session;
+      var timeoutId = null;
+      var didTimeout = false;
+      var resultIndex = null;
+      var timeout = job.hasOwnProperty("timeout") ? job.timeout : this.timeout;
+      function next(err, result) {
+        if (once && self2.session === session) {
+          once = false;
+          self2.pending--;
+          if (timeoutId !== null) {
+            delete self2.timers[timeoutId];
+            clearTimeout(timeoutId);
+          }
+          if (err) {
+            self2.emit("error", err, job);
+          } else if (didTimeout === false) {
+            if (resultIndex !== null) {
+              self2.results[resultIndex] = Array.prototype.slice.call(arguments, 1);
+            }
+            self2.emit("success", result, job);
+          }
+          if (self2.session === session) {
+            if (self2.pending === 0 && self2.jobs.length === 0) {
+              done.call(self2);
+            } else if (self2.running) {
+              self2.start();
+            }
+          }
+        }
+      }
+      if (timeout) {
+        timeoutId = setTimeout(function() {
+          didTimeout = true;
+          if (self2.listeners("timeout").length > 0) {
+            self2.emit("timeout", next, job);
+          } else {
+            next();
+          }
+        }, timeout);
+        this.timers[timeoutId] = timeoutId;
+      }
+      if (this.results) {
+        resultIndex = this.results.length;
+        this.results[resultIndex] = null;
+      }
+      this.pending++;
+      self2.emit("start", job);
+      var promise = job(next);
+      if (promise && promise.then && typeof promise.then === "function") {
+        promise.then(function(result) {
+          return next(null, result);
+        }).catch(function(err) {
+          return next(err || true);
+        });
+      }
+      if (this.running && this.jobs.length > 0) {
+        this.start();
+      }
+    };
+    Queue.prototype.stop = function() {
+      this.running = false;
+    };
+    Queue.prototype.end = function(err) {
+      clearTimers.call(this);
+      this.jobs.length = 0;
+      this.pending = 0;
+      done.call(this, err);
+    };
+    function clearTimers() {
+      for (var key in this.timers) {
+        var timeoutId = this.timers[key];
+        delete this.timers[key];
+        clearTimeout(timeoutId);
+      }
+    }
+    function callOnErrorOrEnd(cb) {
+      var self2 = this;
+      this.on("error", onerror);
+      this.on("end", onend);
+      function onerror(err) {
+        self2.end(err);
+      }
+      function onend(err) {
+        self2.removeListener("error", onerror);
+        self2.removeListener("end", onend);
+        cb(err, this.results);
+      }
+    }
+    function done(err) {
+      this.session++;
+      this.running = false;
+      this.emit("end", err);
+    }
+  }
+});
+
+// node_modules/image-size/dist/types/utils.js
+var require_utils = __commonJS({
+  "node_modules/image-size/dist/types/utils.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.findBox = exports2.readUInt = exports2.readUInt32LE = exports2.readUInt32BE = exports2.readInt32LE = exports2.readUInt24LE = exports2.readUInt16LE = exports2.readUInt16BE = exports2.readInt16LE = exports2.toHexString = exports2.toUTF8String = void 0;
+    var decoder = new TextDecoder();
+    var toUTF8String = (input, start = 0, end = input.length) => decoder.decode(input.slice(start, end));
+    exports2.toUTF8String = toUTF8String;
+    var toHexString = (input, start = 0, end = input.length) => input.slice(start, end).reduce((memo, i) => memo + ("0" + i.toString(16)).slice(-2), "");
+    exports2.toHexString = toHexString;
+    var readInt16LE = (input, offset = 0) => {
+      const val = input[offset] + input[offset + 1] * 2 ** 8;
+      return val | (val & 2 ** 15) * 131070;
+    };
+    exports2.readInt16LE = readInt16LE;
+    var readUInt16BE = (input, offset = 0) => input[offset] * 2 ** 8 + input[offset + 1];
+    exports2.readUInt16BE = readUInt16BE;
+    var readUInt16LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8;
+    exports2.readUInt16LE = readUInt16LE;
+    var readUInt24LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16;
+    exports2.readUInt24LE = readUInt24LE;
+    var readInt32LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16 + (input[offset + 3] << 24);
+    exports2.readInt32LE = readInt32LE;
+    var readUInt32BE = (input, offset = 0) => input[offset] * 2 ** 24 + input[offset + 1] * 2 ** 16 + input[offset + 2] * 2 ** 8 + input[offset + 3];
+    exports2.readUInt32BE = readUInt32BE;
+    var readUInt32LE = (input, offset = 0) => input[offset] + input[offset + 1] * 2 ** 8 + input[offset + 2] * 2 ** 16 + input[offset + 3] * 2 ** 24;
+    exports2.readUInt32LE = readUInt32LE;
+    var methods = {
+      readUInt16BE: exports2.readUInt16BE,
+      readUInt16LE: exports2.readUInt16LE,
+      readUInt32BE: exports2.readUInt32BE,
+      readUInt32LE: exports2.readUInt32LE
+    };
+    function readUInt(input, bits, offset, isBigEndian) {
+      offset = offset || 0;
+      const endian = isBigEndian ? "BE" : "LE";
+      const methodName = "readUInt" + bits + endian;
+      return methods[methodName](input, offset);
+    }
+    exports2.readUInt = readUInt;
+    function readBox(buffer, offset) {
+      if (buffer.length - offset < 4)
+        return;
+      const boxSize = (0, exports2.readUInt32BE)(buffer, offset);
+      if (buffer.length - offset < boxSize)
+        return;
+      return {
+        name: (0, exports2.toUTF8String)(buffer, 4 + offset, 8 + offset),
+        offset,
+        size: boxSize
+      };
+    }
+    function findBox(buffer, boxName, offset) {
+      while (offset < buffer.length) {
+        const box = readBox(buffer, offset);
+        if (!box)
+          break;
+        if (box.name === boxName)
+          return box;
+        offset += box.size;
+      }
+    }
+    exports2.findBox = findBox;
+  }
+});
+
+// node_modules/image-size/dist/types/bmp.js
+var require_bmp = __commonJS({
+  "node_modules/image-size/dist/types/bmp.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.BMP = void 0;
+    var utils_1 = require_utils();
+    exports2.BMP = {
+      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 2) === "BM",
+      calculate: (input) => ({
+        height: Math.abs((0, utils_1.readInt32LE)(input, 22)),
+        width: (0, utils_1.readUInt32LE)(input, 18)
+      })
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/ico.js
+var require_ico = __commonJS({
+  "node_modules/image-size/dist/types/ico.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ICO = void 0;
+    var utils_1 = require_utils();
+    var TYPE_ICON = 1;
+    var SIZE_HEADER = 2 + 2 + 2;
+    var SIZE_IMAGE_ENTRY = 1 + 1 + 1 + 1 + 2 + 2 + 4 + 4;
+    function getSizeFromOffset(input, offset) {
+      const value = input[offset];
+      return value === 0 ? 256 : value;
+    }
+    function getImageSize(input, imageIndex) {
+      const offset = SIZE_HEADER + imageIndex * SIZE_IMAGE_ENTRY;
+      return {
+        height: getSizeFromOffset(input, offset + 1),
+        width: getSizeFromOffset(input, offset)
+      };
+    }
+    exports2.ICO = {
+      validate(input) {
+        const reserved = (0, utils_1.readUInt16LE)(input, 0);
+        const imageCount = (0, utils_1.readUInt16LE)(input, 4);
+        if (reserved !== 0 || imageCount === 0)
+          return false;
+        const imageType = (0, utils_1.readUInt16LE)(input, 2);
+        return imageType === TYPE_ICON;
+      },
+      calculate(input) {
+        const nbImages = (0, utils_1.readUInt16LE)(input, 4);
+        const imageSize = getImageSize(input, 0);
+        if (nbImages === 1)
+          return imageSize;
+        const imgs = [imageSize];
+        for (let imageIndex = 1; imageIndex < nbImages; imageIndex += 1) {
+          imgs.push(getImageSize(input, imageIndex));
+        }
+        return {
+          height: imageSize.height,
+          images: imgs,
+          width: imageSize.width
+        };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/cur.js
+var require_cur = __commonJS({
+  "node_modules/image-size/dist/types/cur.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.CUR = void 0;
+    var ico_1 = require_ico();
+    var utils_1 = require_utils();
+    var TYPE_CURSOR = 2;
+    exports2.CUR = {
+      validate(input) {
+        const reserved = (0, utils_1.readUInt16LE)(input, 0);
+        const imageCount = (0, utils_1.readUInt16LE)(input, 4);
+        if (reserved !== 0 || imageCount === 0)
+          return false;
+        const imageType = (0, utils_1.readUInt16LE)(input, 2);
+        return imageType === TYPE_CURSOR;
+      },
+      calculate: (input) => ico_1.ICO.calculate(input)
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/dds.js
+var require_dds = __commonJS({
+  "node_modules/image-size/dist/types/dds.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.DDS = void 0;
+    var utils_1 = require_utils();
+    exports2.DDS = {
+      validate: (input) => (0, utils_1.readUInt32LE)(input, 0) === 542327876,
+      calculate: (input) => ({
+        height: (0, utils_1.readUInt32LE)(input, 12),
+        width: (0, utils_1.readUInt32LE)(input, 16)
+      })
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/gif.js
+var require_gif = __commonJS({
+  "node_modules/image-size/dist/types/gif.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.GIF = void 0;
+    var utils_1 = require_utils();
+    var gifRegexp = /^GIF8[79]a/;
+    exports2.GIF = {
+      validate: (input) => gifRegexp.test((0, utils_1.toUTF8String)(input, 0, 6)),
+      calculate: (input) => ({
+        height: (0, utils_1.readUInt16LE)(input, 8),
+        width: (0, utils_1.readUInt16LE)(input, 6)
+      })
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/heif.js
+var require_heif = __commonJS({
+  "node_modules/image-size/dist/types/heif.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.HEIF = void 0;
+    var utils_1 = require_utils();
+    var brandMap = {
+      avif: "avif",
+      mif1: "heif",
+      msf1: "heif",
+      // hief-sequence
+      heic: "heic",
+      heix: "heic",
+      hevc: "heic",
+      // heic-sequence
+      hevx: "heic"
+      // heic-sequence
+    };
+    exports2.HEIF = {
+      validate(buffer) {
+        const ftype = (0, utils_1.toUTF8String)(buffer, 4, 8);
+        const brand = (0, utils_1.toUTF8String)(buffer, 8, 12);
+        return "ftyp" === ftype && brand in brandMap;
+      },
+      calculate(buffer) {
+        const metaBox = (0, utils_1.findBox)(buffer, "meta", 0);
+        const iprpBox = metaBox && (0, utils_1.findBox)(buffer, "iprp", metaBox.offset + 12);
+        const ipcoBox = iprpBox && (0, utils_1.findBox)(buffer, "ipco", iprpBox.offset + 8);
+        const ispeBox = ipcoBox && (0, utils_1.findBox)(buffer, "ispe", ipcoBox.offset + 8);
+        if (ispeBox) {
+          return {
+            height: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 16),
+            width: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 12),
+            type: (0, utils_1.toUTF8String)(buffer, 8, 12)
+          };
+        }
+        throw new TypeError("Invalid HEIF, no size found");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/icns.js
+var require_icns = __commonJS({
+  "node_modules/image-size/dist/types/icns.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.ICNS = void 0;
+    var utils_1 = require_utils();
+    var SIZE_HEADER = 4 + 4;
+    var FILE_LENGTH_OFFSET = 4;
+    var ENTRY_LENGTH_OFFSET = 4;
+    var ICON_TYPE_SIZE = {
+      ICON: 32,
+      "ICN#": 32,
+      // m => 16 x 16
+      "icm#": 16,
+      icm4: 16,
+      icm8: 16,
+      // s => 16 x 16
+      "ics#": 16,
+      ics4: 16,
+      ics8: 16,
+      is32: 16,
+      s8mk: 16,
+      icp4: 16,
+      // l => 32 x 32
+      icl4: 32,
+      icl8: 32,
+      il32: 32,
+      l8mk: 32,
+      icp5: 32,
+      ic11: 32,
+      // h => 48 x 48
+      ich4: 48,
+      ich8: 48,
+      ih32: 48,
+      h8mk: 48,
+      // . => 64 x 64
+      icp6: 64,
+      ic12: 32,
+      // t => 128 x 128
+      it32: 128,
+      t8mk: 128,
+      ic07: 128,
+      // . => 256 x 256
+      ic08: 256,
+      ic13: 256,
+      // . => 512 x 512
+      ic09: 512,
+      ic14: 512,
+      // . => 1024 x 1024
+      ic10: 1024
+    };
+    function readImageHeader(input, imageOffset) {
+      const imageLengthOffset = imageOffset + ENTRY_LENGTH_OFFSET;
+      return [
+        (0, utils_1.toUTF8String)(input, imageOffset, imageLengthOffset),
+        (0, utils_1.readUInt32BE)(input, imageLengthOffset)
+      ];
+    }
+    function getImageSize(type) {
+      const size = ICON_TYPE_SIZE[type];
+      return { width: size, height: size, type };
+    }
+    exports2.ICNS = {
+      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 4) === "icns",
+      calculate(input) {
+        const inputLength = input.length;
+        const fileLength = (0, utils_1.readUInt32BE)(input, FILE_LENGTH_OFFSET);
+        let imageOffset = SIZE_HEADER;
+        let imageHeader = readImageHeader(input, imageOffset);
+        let imageSize = getImageSize(imageHeader[0]);
+        imageOffset += imageHeader[1];
+        if (imageOffset === fileLength)
+          return imageSize;
+        const result = {
+          height: imageSize.height,
+          images: [imageSize],
+          width: imageSize.width
+        };
+        while (imageOffset < fileLength && imageOffset < inputLength) {
+          imageHeader = readImageHeader(input, imageOffset);
+          imageSize = getImageSize(imageHeader[0]);
+          imageOffset += imageHeader[1];
+          result.images.push(imageSize);
+        }
+        return result;
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/j2c.js
+var require_j2c = __commonJS({
+  "node_modules/image-size/dist/types/j2c.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.J2C = void 0;
+    var utils_1 = require_utils();
+    exports2.J2C = {
+      // TODO: this doesn't seem right. SIZ marker doesn't have to be right after the SOC
+      validate: (input) => (0, utils_1.toHexString)(input, 0, 4) === "ff4fff51",
+      calculate: (input) => ({
+        height: (0, utils_1.readUInt32BE)(input, 12),
+        width: (0, utils_1.readUInt32BE)(input, 8)
+      })
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/jp2.js
+var require_jp2 = __commonJS({
+  "node_modules/image-size/dist/types/jp2.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.JP2 = void 0;
+    var utils_1 = require_utils();
+    exports2.JP2 = {
+      validate(input) {
+        if ((0, utils_1.readUInt32BE)(input, 4) !== 1783636e3 || (0, utils_1.readUInt32BE)(input, 0) < 1)
+          return false;
+        const ftypBox = (0, utils_1.findBox)(input, "ftyp", 0);
+        if (!ftypBox)
+          return false;
+        return (0, utils_1.readUInt32BE)(input, ftypBox.offset + 4) === 1718909296;
+      },
+      calculate(input) {
+        const jp2hBox = (0, utils_1.findBox)(input, "jp2h", 0);
+        const ihdrBox = jp2hBox && (0, utils_1.findBox)(input, "ihdr", jp2hBox.offset + 8);
+        if (ihdrBox) {
+          return {
+            height: (0, utils_1.readUInt32BE)(input, ihdrBox.offset + 8),
+            width: (0, utils_1.readUInt32BE)(input, ihdrBox.offset + 12)
+          };
+        }
+        throw new TypeError("Unsupported JPEG 2000 format");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/jpg.js
+var require_jpg = __commonJS({
+  "node_modules/image-size/dist/types/jpg.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.JPG = void 0;
+    var utils_1 = require_utils();
+    var EXIF_MARKER = "45786966";
+    var APP1_DATA_SIZE_BYTES = 2;
+    var EXIF_HEADER_BYTES = 6;
+    var TIFF_BYTE_ALIGN_BYTES = 2;
+    var BIG_ENDIAN_BYTE_ALIGN = "4d4d";
+    var LITTLE_ENDIAN_BYTE_ALIGN = "4949";
+    var IDF_ENTRY_BYTES = 12;
+    var NUM_DIRECTORY_ENTRIES_BYTES = 2;
+    function isEXIF(input) {
+      return (0, utils_1.toHexString)(input, 2, 6) === EXIF_MARKER;
+    }
+    function extractSize(input, index) {
+      return {
+        height: (0, utils_1.readUInt16BE)(input, index),
+        width: (0, utils_1.readUInt16BE)(input, index + 2)
+      };
+    }
+    function extractOrientation(exifBlock, isBigEndian) {
+      const idfOffset = 8;
+      const offset = EXIF_HEADER_BYTES + idfOffset;
+      const idfDirectoryEntries = (0, utils_1.readUInt)(exifBlock, 16, offset, isBigEndian);
+      for (let directoryEntryNumber = 0; directoryEntryNumber < idfDirectoryEntries; directoryEntryNumber++) {
+        const start = offset + NUM_DIRECTORY_ENTRIES_BYTES + directoryEntryNumber * IDF_ENTRY_BYTES;
+        const end = start + IDF_ENTRY_BYTES;
+        if (start > exifBlock.length) {
+          return;
+        }
+        const block = exifBlock.slice(start, end);
+        const tagNumber = (0, utils_1.readUInt)(block, 16, 0, isBigEndian);
+        if (tagNumber === 274) {
+          const dataFormat = (0, utils_1.readUInt)(block, 16, 2, isBigEndian);
+          if (dataFormat !== 3) {
+            return;
+          }
+          const numberOfComponents = (0, utils_1.readUInt)(block, 32, 4, isBigEndian);
+          if (numberOfComponents !== 1) {
+            return;
+          }
+          return (0, utils_1.readUInt)(block, 16, 8, isBigEndian);
+        }
+      }
+    }
+    function validateExifBlock(input, index) {
+      const exifBlock = input.slice(APP1_DATA_SIZE_BYTES, index);
+      const byteAlign = (0, utils_1.toHexString)(exifBlock, EXIF_HEADER_BYTES, EXIF_HEADER_BYTES + TIFF_BYTE_ALIGN_BYTES);
+      const isBigEndian = byteAlign === BIG_ENDIAN_BYTE_ALIGN;
+      const isLittleEndian = byteAlign === LITTLE_ENDIAN_BYTE_ALIGN;
+      if (isBigEndian || isLittleEndian) {
+        return extractOrientation(exifBlock, isBigEndian);
+      }
+    }
+    function validateInput(input, index) {
+      if (index > input.length) {
+        throw new TypeError("Corrupt JPG, exceeded buffer limits");
+      }
+    }
+    exports2.JPG = {
+      validate: (input) => (0, utils_1.toHexString)(input, 0, 2) === "ffd8",
+      calculate(input) {
+        input = input.slice(4);
+        let orientation;
+        let next;
+        while (input.length) {
+          const i = (0, utils_1.readUInt16BE)(input, 0);
+          if (input[i] !== 255) {
+            input = input.slice(1);
+            continue;
+          }
+          if (isEXIF(input)) {
+            orientation = validateExifBlock(input, i);
+          }
+          validateInput(input, i);
+          next = input[i + 1];
+          if (next === 192 || next === 193 || next === 194) {
+            const size = extractSize(input, i + 5);
+            if (!orientation) {
+              return size;
+            }
+            return {
+              height: size.height,
+              orientation,
+              width: size.width
+            };
+          }
+          input = input.slice(i + 2);
+        }
+        throw new TypeError("Invalid JPG, no size found");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/ktx.js
+var require_ktx = __commonJS({
+  "node_modules/image-size/dist/types/ktx.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.KTX = void 0;
+    var utils_1 = require_utils();
+    exports2.KTX = {
+      validate: (input) => {
+        const signature = (0, utils_1.toUTF8String)(input, 1, 7);
+        return ["KTX 11", "KTX 20"].includes(signature);
+      },
+      calculate: (input) => {
+        const type = input[5] === 49 ? "ktx" : "ktx2";
+        const offset = type === "ktx" ? 36 : 20;
+        return {
+          height: (0, utils_1.readUInt32LE)(input, offset + 4),
+          width: (0, utils_1.readUInt32LE)(input, offset),
+          type
+        };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/png.js
+var require_png = __commonJS({
+  "node_modules/image-size/dist/types/png.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.PNG = void 0;
+    var utils_1 = require_utils();
+    var pngSignature = "PNG\r\n\n";
+    var pngImageHeaderChunkName = "IHDR";
+    var pngFriedChunkName = "CgBI";
+    exports2.PNG = {
+      validate(input) {
+        if (pngSignature === (0, utils_1.toUTF8String)(input, 1, 8)) {
+          let chunkName = (0, utils_1.toUTF8String)(input, 12, 16);
+          if (chunkName === pngFriedChunkName) {
+            chunkName = (0, utils_1.toUTF8String)(input, 28, 32);
+          }
+          if (chunkName !== pngImageHeaderChunkName) {
+            throw new TypeError("Invalid PNG");
+          }
+          return true;
+        }
+        return false;
+      },
+      calculate(input) {
+        if ((0, utils_1.toUTF8String)(input, 12, 16) === pngFriedChunkName) {
+          return {
+            height: (0, utils_1.readUInt32BE)(input, 36),
+            width: (0, utils_1.readUInt32BE)(input, 32)
+          };
+        }
+        return {
+          height: (0, utils_1.readUInt32BE)(input, 20),
+          width: (0, utils_1.readUInt32BE)(input, 16)
+        };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/pnm.js
+var require_pnm = __commonJS({
+  "node_modules/image-size/dist/types/pnm.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.PNM = void 0;
+    var utils_1 = require_utils();
+    var PNMTypes = {
+      P1: "pbm/ascii",
+      P2: "pgm/ascii",
+      P3: "ppm/ascii",
+      P4: "pbm",
+      P5: "pgm",
+      P6: "ppm",
+      P7: "pam",
+      PF: "pfm"
+    };
+    var handlers = {
+      default: (lines) => {
+        let dimensions = [];
+        while (lines.length > 0) {
+          const line = lines.shift();
+          if (line[0] === "#") {
+            continue;
+          }
+          dimensions = line.split(" ");
+          break;
+        }
+        if (dimensions.length === 2) {
+          return {
+            height: parseInt(dimensions[1], 10),
+            width: parseInt(dimensions[0], 10)
+          };
+        } else {
+          throw new TypeError("Invalid PNM");
+        }
+      },
+      pam: (lines) => {
+        const size = {};
+        while (lines.length > 0) {
+          const line = lines.shift();
+          if (line.length > 16 || line.charCodeAt(0) > 128) {
+            continue;
+          }
+          const [key, value] = line.split(" ");
+          if (key && value) {
+            size[key.toLowerCase()] = parseInt(value, 10);
+          }
+          if (size.height && size.width) {
+            break;
+          }
+        }
+        if (size.height && size.width) {
+          return {
+            height: size.height,
+            width: size.width
+          };
+        } else {
+          throw new TypeError("Invalid PAM");
+        }
+      }
+    };
+    exports2.PNM = {
+      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 2) in PNMTypes,
+      calculate(input) {
+        const signature = (0, utils_1.toUTF8String)(input, 0, 2);
+        const type = PNMTypes[signature];
+        const lines = (0, utils_1.toUTF8String)(input, 3).split(/[\r\n]+/);
+        const handler9 = handlers[type] || handlers.default;
+        return handler9(lines);
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/psd.js
+var require_psd = __commonJS({
+  "node_modules/image-size/dist/types/psd.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.PSD = void 0;
+    var utils_1 = require_utils();
+    exports2.PSD = {
+      validate: (input) => (0, utils_1.toUTF8String)(input, 0, 4) === "8BPS",
+      calculate: (input) => ({
+        height: (0, utils_1.readUInt32BE)(input, 14),
+        width: (0, utils_1.readUInt32BE)(input, 18)
+      })
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/svg.js
+var require_svg = __commonJS({
+  "node_modules/image-size/dist/types/svg.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.SVG = void 0;
+    var utils_1 = require_utils();
+    var svgReg = /<svg\s([^>"']|"[^"]*"|'[^']*')*>/;
+    var extractorRegExps = {
+      height: /\sheight=(['"])([^%]+?)\1/,
+      root: svgReg,
+      viewbox: /\sviewBox=(['"])(.+?)\1/i,
+      width: /\swidth=(['"])([^%]+?)\1/
+    };
+    var INCH_CM = 2.54;
+    var units = {
+      in: 96,
+      cm: 96 / INCH_CM,
+      em: 16,
+      ex: 8,
+      m: 96 / INCH_CM * 100,
+      mm: 96 / INCH_CM / 10,
+      pc: 96 / 72 / 12,
+      pt: 96 / 72,
+      px: 1
+    };
+    var unitsReg = new RegExp(`^([0-9.]+(?:e\\d+)?)(${Object.keys(units).join("|")})?$`);
+    function parseLength(len) {
+      const m = unitsReg.exec(len);
+      if (!m) {
+        return void 0;
+      }
+      return Math.round(Number(m[1]) * (units[m[2]] || 1));
+    }
+    function parseViewbox(viewbox) {
+      const bounds = viewbox.split(" ");
+      return {
+        height: parseLength(bounds[3]),
+        width: parseLength(bounds[2])
+      };
+    }
+    function parseAttributes(root) {
+      const width = root.match(extractorRegExps.width);
+      const height = root.match(extractorRegExps.height);
+      const viewbox = root.match(extractorRegExps.viewbox);
+      return {
+        height: height && parseLength(height[2]),
+        viewbox: viewbox && parseViewbox(viewbox[2]),
+        width: width && parseLength(width[2])
+      };
+    }
+    function calculateByDimensions(attrs) {
+      return {
+        height: attrs.height,
+        width: attrs.width
+      };
+    }
+    function calculateByViewbox(attrs, viewbox) {
+      const ratio = viewbox.width / viewbox.height;
+      if (attrs.width) {
+        return {
+          height: Math.floor(attrs.width / ratio),
+          width: attrs.width
+        };
+      }
+      if (attrs.height) {
+        return {
+          height: attrs.height,
+          width: Math.floor(attrs.height * ratio)
+        };
+      }
+      return {
+        height: viewbox.height,
+        width: viewbox.width
+      };
+    }
+    exports2.SVG = {
+      // Scan only the first kilo-byte to speed up the check on larger files
+      validate: (input) => svgReg.test((0, utils_1.toUTF8String)(input, 0, 1e3)),
+      calculate(input) {
+        const root = (0, utils_1.toUTF8String)(input).match(extractorRegExps.root);
+        if (root) {
+          const attrs = parseAttributes(root[0]);
+          if (attrs.width && attrs.height) {
+            return calculateByDimensions(attrs);
+          }
+          if (attrs.viewbox) {
+            return calculateByViewbox(attrs, attrs.viewbox);
+          }
+        }
+        throw new TypeError("Invalid SVG");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/tga.js
+var require_tga = __commonJS({
+  "node_modules/image-size/dist/types/tga.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.TGA = void 0;
+    var utils_1 = require_utils();
+    exports2.TGA = {
+      validate(input) {
+        return (0, utils_1.readUInt16LE)(input, 0) === 0 && (0, utils_1.readUInt16LE)(input, 4) === 0;
+      },
+      calculate(input) {
+        return {
+          height: (0, utils_1.readUInt16LE)(input, 14),
+          width: (0, utils_1.readUInt16LE)(input, 12)
+        };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/tiff.js
+var require_tiff = __commonJS({
+  "node_modules/image-size/dist/types/tiff.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.TIFF = void 0;
+    var fs11 = require("fs");
+    var utils_1 = require_utils();
+    function readIFD(input, filepath, isBigEndian) {
+      const ifdOffset = (0, utils_1.readUInt)(input, 32, 4, isBigEndian);
+      let bufferSize = 1024;
+      const fileSize = fs11.statSync(filepath).size;
+      if (ifdOffset + bufferSize > fileSize) {
+        bufferSize = fileSize - ifdOffset - 10;
+      }
+      const endBuffer = new Uint8Array(bufferSize);
+      const descriptor = fs11.openSync(filepath, "r");
+      fs11.readSync(descriptor, endBuffer, 0, bufferSize, ifdOffset);
+      fs11.closeSync(descriptor);
+      return endBuffer.slice(2);
+    }
+    function readValue(input, isBigEndian) {
+      const low = (0, utils_1.readUInt)(input, 16, 8, isBigEndian);
+      const high = (0, utils_1.readUInt)(input, 16, 10, isBigEndian);
+      return (high << 16) + low;
+    }
+    function nextTag(input) {
+      if (input.length > 24) {
+        return input.slice(12);
+      }
+    }
+    function extractTags(input, isBigEndian) {
+      const tags = {};
+      let temp = input;
+      while (temp && temp.length) {
+        const code = (0, utils_1.readUInt)(temp, 16, 0, isBigEndian);
+        const type = (0, utils_1.readUInt)(temp, 16, 2, isBigEndian);
+        const length = (0, utils_1.readUInt)(temp, 32, 4, isBigEndian);
+        if (code === 0) {
+          break;
+        } else {
+          if (length === 1 && (type === 3 || type === 4)) {
+            tags[code] = readValue(temp, isBigEndian);
+          }
+          temp = nextTag(temp);
+        }
+      }
+      return tags;
+    }
+    function determineEndianness(input) {
+      const signature = (0, utils_1.toUTF8String)(input, 0, 2);
+      if ("II" === signature) {
+        return "LE";
+      } else if ("MM" === signature) {
+        return "BE";
+      }
+    }
+    var signatures = [
+      // '492049', // currently not supported
+      "49492a00",
+      // Little endian
+      "4d4d002a"
+      // Big Endian
+      // '4d4d002a', // BigTIFF > 4GB. currently not supported
+    ];
+    exports2.TIFF = {
+      validate: (input) => signatures.includes((0, utils_1.toHexString)(input, 0, 4)),
+      calculate(input, filepath) {
+        if (!filepath) {
+          throw new TypeError("Tiff doesn't support buffer");
+        }
+        const isBigEndian = determineEndianness(input) === "BE";
+        const ifdBuffer = readIFD(input, filepath, isBigEndian);
+        const tags = extractTags(ifdBuffer, isBigEndian);
+        const width = tags[256];
+        const height = tags[257];
+        if (!width || !height) {
+          throw new TypeError("Invalid Tiff. Missing tags");
+        }
+        return { height, width };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/webp.js
+var require_webp = __commonJS({
+  "node_modules/image-size/dist/types/webp.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.WEBP = void 0;
+    var utils_1 = require_utils();
+    function calculateExtended(input) {
+      return {
+        height: 1 + (0, utils_1.readUInt24LE)(input, 7),
+        width: 1 + (0, utils_1.readUInt24LE)(input, 4)
+      };
+    }
+    function calculateLossless(input) {
+      return {
+        height: 1 + ((input[4] & 15) << 10 | input[3] << 2 | (input[2] & 192) >> 6),
+        width: 1 + ((input[2] & 63) << 8 | input[1])
+      };
+    }
+    function calculateLossy(input) {
+      return {
+        height: (0, utils_1.readInt16LE)(input, 8) & 16383,
+        width: (0, utils_1.readInt16LE)(input, 6) & 16383
+      };
+    }
+    exports2.WEBP = {
+      validate(input) {
+        const riffHeader = "RIFF" === (0, utils_1.toUTF8String)(input, 0, 4);
+        const webpHeader = "WEBP" === (0, utils_1.toUTF8String)(input, 8, 12);
+        const vp8Header = "VP8" === (0, utils_1.toUTF8String)(input, 12, 15);
+        return riffHeader && webpHeader && vp8Header;
+      },
+      calculate(input) {
+        const chunkHeader = (0, utils_1.toUTF8String)(input, 12, 16);
+        input = input.slice(20, 30);
+        if (chunkHeader === "VP8X") {
+          const extendedHeader = input[0];
+          const validStart = (extendedHeader & 192) === 0;
+          const validEnd = (extendedHeader & 1) === 0;
+          if (validStart && validEnd) {
+            return calculateExtended(input);
+          } else {
+            throw new TypeError("Invalid WebP");
+          }
+        }
+        if (chunkHeader === "VP8 " && input[0] !== 47) {
+          return calculateLossy(input);
+        }
+        const signature = (0, utils_1.toHexString)(input, 3, 6);
+        if (chunkHeader === "VP8L" && signature !== "9d012a") {
+          return calculateLossless(input);
+        }
+        throw new TypeError("Invalid WebP");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/index.js
+var require_types = __commonJS({
+  "node_modules/image-size/dist/types/index.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.typeHandlers = void 0;
+    var bmp_1 = require_bmp();
+    var cur_1 = require_cur();
+    var dds_1 = require_dds();
+    var gif_1 = require_gif();
+    var heif_1 = require_heif();
+    var icns_1 = require_icns();
+    var ico_1 = require_ico();
+    var j2c_1 = require_j2c();
+    var jp2_1 = require_jp2();
+    var jpg_1 = require_jpg();
+    var ktx_1 = require_ktx();
+    var png_1 = require_png();
+    var pnm_1 = require_pnm();
+    var psd_1 = require_psd();
+    var svg_1 = require_svg();
+    var tga_1 = require_tga();
+    var tiff_1 = require_tiff();
+    var webp_1 = require_webp();
+    exports2.typeHandlers = {
+      bmp: bmp_1.BMP,
+      cur: cur_1.CUR,
+      dds: dds_1.DDS,
+      gif: gif_1.GIF,
+      heif: heif_1.HEIF,
+      icns: icns_1.ICNS,
+      ico: ico_1.ICO,
+      j2c: j2c_1.J2C,
+      jp2: jp2_1.JP2,
+      jpg: jpg_1.JPG,
+      ktx: ktx_1.KTX,
+      png: png_1.PNG,
+      pnm: pnm_1.PNM,
+      psd: psd_1.PSD,
+      svg: svg_1.SVG,
+      tga: tga_1.TGA,
+      tiff: tiff_1.TIFF,
+      webp: webp_1.WEBP
+    };
+  }
+});
+
+// node_modules/image-size/dist/detector.js
+var require_detector = __commonJS({
+  "node_modules/image-size/dist/detector.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.detector = void 0;
+    var index_1 = require_types();
+    var keys = Object.keys(index_1.typeHandlers);
+    var firstBytes = {
+      56: "psd",
+      66: "bmp",
+      68: "dds",
+      71: "gif",
+      73: "tiff",
+      77: "tiff",
+      82: "webp",
+      105: "icns",
+      137: "png",
+      255: "jpg"
+    };
+    function detector(input) {
+      const byte = input[0];
+      if (byte in firstBytes) {
+        const type = firstBytes[byte];
+        if (type && index_1.typeHandlers[type].validate(input)) {
+          return type;
+        }
+      }
+      const finder = (key) => index_1.typeHandlers[key].validate(input);
+      return keys.find(finder);
+    }
+    exports2.detector = detector;
+  }
+});
+
+// node_modules/image-size/dist/index.js
+var require_dist = __commonJS({
+  "node_modules/image-size/dist/index.js"(exports2, module2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.types = exports2.setConcurrency = exports2.disableTypes = exports2.disableFS = exports2.imageSize = void 0;
+    var fs11 = require("fs");
+    var path12 = require("path");
+    var queue_1 = require_queue();
+    var index_1 = require_types();
+    var detector_1 = require_detector();
+    var MaxInputSize = 512 * 1024;
+    var queue2 = new queue_1.default({ concurrency: 100, autostart: true });
+    var globalOptions = {
+      disabledFS: false,
+      disabledTypes: []
+    };
+    function lookup(input, filepath) {
+      const type = (0, detector_1.detector)(input);
+      if (typeof type !== "undefined") {
+        if (globalOptions.disabledTypes.indexOf(type) > -1) {
+          throw new TypeError("disabled file type: " + type);
+        }
+        if (type in index_1.typeHandlers) {
+          const size = index_1.typeHandlers[type].calculate(input, filepath);
+          if (size !== void 0) {
+            size.type = size.type ?? type;
+            return size;
+          }
+        }
+      }
+      throw new TypeError("unsupported file type: " + type + " (file: " + filepath + ")");
+    }
+    async function readFileAsync(filepath) {
+      const handle = await fs11.promises.open(filepath, "r");
+      try {
+        const { size } = await handle.stat();
+        if (size <= 0) {
+          throw new Error("Empty file");
+        }
+        const inputSize = Math.min(size, MaxInputSize);
+        const input = new Uint8Array(inputSize);
+        await handle.read(input, 0, inputSize, 0);
+        return input;
+      } finally {
+        await handle.close();
+      }
+    }
+    function readFileSync4(filepath) {
+      const descriptor = fs11.openSync(filepath, "r");
+      try {
+        const { size } = fs11.fstatSync(descriptor);
+        if (size <= 0) {
+          throw new Error("Empty file");
+        }
+        const inputSize = Math.min(size, MaxInputSize);
+        const input = new Uint8Array(inputSize);
+        fs11.readSync(descriptor, input, 0, inputSize, 0);
+        return input;
+      } finally {
+        fs11.closeSync(descriptor);
+      }
+    }
+    module2.exports = exports2 = imageSize;
+    exports2.default = imageSize;
+    function imageSize(input, callback) {
+      if (input instanceof Uint8Array) {
+        return lookup(input);
+      }
+      if (typeof input !== "string" || globalOptions.disabledFS) {
+        throw new TypeError("invalid invocation. input should be a Uint8Array");
+      }
+      const filepath = path12.resolve(input);
+      if (typeof callback === "function") {
+        queue2.push(() => readFileAsync(filepath).then((input2) => process.nextTick(callback, null, lookup(input2, filepath))).catch(callback));
+      } else {
+        const input2 = readFileSync4(filepath);
+        return lookup(input2, filepath);
+      }
+    }
+    exports2.imageSize = imageSize;
+    var disableFS = (v) => {
+      globalOptions.disabledFS = v;
+    };
+    exports2.disableFS = disableFS;
+    var disableTypes = (types) => {
+      globalOptions.disabledTypes = types;
+    };
+    exports2.disableTypes = disableTypes;
+    var setConcurrency = (c) => {
+      queue2.concurrency = c;
+    };
+    exports2.setConcurrency = setConcurrency;
+    exports2.types = Object.keys(index_1.typeHandlers);
+  }
+});
+
+// node_modules/png-chunk-text/encode.js
+var require_encode = __commonJS({
+  "node_modules/png-chunk-text/encode.js"(exports2, module2) {
+    module2.exports = encode3;
+    function encode3(keyword, content) {
+      keyword = String(keyword);
+      content = String(content);
+      if (!/^[\x00-\xFF]+$/.test(keyword) || !/^[\x00-\xFF]+$/.test(content)) {
+        throw new Error("Only Latin-1 characters are permitted in PNG tEXt chunks. You might want to consider base64 encoding and/or zEXt compression");
+      }
+      if (keyword.length >= 80) {
+        throw new Error('Keyword "' + keyword + '" is longer than the 79-character limit imposed by the PNG specification');
+      }
+      var totalSize = keyword.length + content.length + 1;
+      var output = new Uint8Array(totalSize);
+      var idx = 0;
+      var code;
+      for (var i = 0; i < keyword.length; i++) {
+        if (!(code = keyword.charCodeAt(i))) {
+          throw new Error("0x00 character is not permitted in tEXt keywords");
+        }
+        output[idx++] = code;
+      }
+      output[idx++] = 0;
+      for (var j = 0; j < content.length; j++) {
+        if (!(code = content.charCodeAt(j))) {
+          throw new Error("0x00 character is not permitted in tEXt content");
+        }
+        output[idx++] = code;
+      }
+      return {
+        name: "tEXt",
+        data: output
+      };
+    }
+  }
+});
+
+// node_modules/png-chunk-text/decode.js
+var require_decode = __commonJS({
+  "node_modules/png-chunk-text/decode.js"(exports2, module2) {
+    module2.exports = decode;
+    function decode(data) {
+      if (data.data && data.name) {
+        data = data.data;
+      }
+      var naming = true;
+      var text2 = "";
+      var name = "";
+      for (var i = 0; i < data.length; i++) {
+        var code = data[i];
+        if (naming) {
+          if (code) {
+            name += String.fromCharCode(code);
+          } else {
+            naming = false;
+          }
+        } else {
+          if (code) {
+            text2 += String.fromCharCode(code);
+          } else {
+            throw new Error("Invalid NULL character found. 0x00 character is not permitted in tEXt content");
+          }
+        }
+      }
+      return {
+        keyword: name,
+        text: text2
+      };
+    }
+  }
+});
+
+// node_modules/png-chunk-text/index.js
+var require_png_chunk_text = __commonJS({
+  "node_modules/png-chunk-text/index.js"(exports2) {
+    exports2.encode = require_encode();
+    exports2.decode = require_decode();
+  }
+});
+
+// node_modules/crc-32/crc32.js
+var require_crc32 = __commonJS({
+  "node_modules/crc-32/crc32.js"(exports2) {
+    var CRC32;
+    (function(factory) {
+      if (typeof DO_NOT_EXPORT_CRC === "undefined") {
+        if ("object" === typeof exports2) {
+          factory(exports2);
+        } else if ("function" === typeof define && define.amd) {
+          define(function() {
+            var module3 = {};
+            factory(module3);
+            return module3;
+          });
+        } else {
+          factory(CRC32 = {});
+        }
+      } else {
+        factory(CRC32 = {});
+      }
+    })(function(CRC322) {
+      CRC322.version = "0.3.0";
+      function signed_crc_table() {
+        var c = 0, table2 = new Array(256);
+        for (var n = 0; n != 256; ++n) {
+          c = n;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          c = c & 1 ? -306674912 ^ c >>> 1 : c >>> 1;
+          table2[n] = c;
+        }
+        return typeof Int32Array !== "undefined" ? new Int32Array(table2) : table2;
+      }
+      var table = signed_crc_table();
+      var use_buffer = typeof Buffer !== "undefined";
+      function crc32_bstr(bstr) {
+        if (bstr.length > 32768) {
+          if (use_buffer)
+            return crc32_buf_8(new Buffer(bstr));
+        }
+        var crc = -1, L = bstr.length - 1;
+        for (var i = 0; i < L; ) {
+          crc = table[(crc ^ bstr.charCodeAt(i++)) & 255] ^ crc >>> 8;
+          crc = table[(crc ^ bstr.charCodeAt(i++)) & 255] ^ crc >>> 8;
+        }
+        if (i === L)
+          crc = crc >>> 8 ^ table[(crc ^ bstr.charCodeAt(i)) & 255];
+        return crc ^ -1;
+      }
+      function crc32_buf(buf) {
+        if (buf.length > 1e4)
+          return crc32_buf_8(buf);
+        for (var crc = -1, i = 0, L = buf.length - 3; i < L; ) {
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+        }
+        while (i < L + 3)
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+        return crc ^ -1;
+      }
+      function crc32_buf_8(buf) {
+        for (var crc = -1, i = 0, L = buf.length - 7; i < L; ) {
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+        }
+        while (i < L + 7)
+          crc = crc >>> 8 ^ table[(crc ^ buf[i++]) & 255];
+        return crc ^ -1;
+      }
+      function crc32_str(str) {
+        for (var crc = -1, i = 0, L = str.length, c, d; i < L; ) {
+          c = str.charCodeAt(i++);
+          if (c < 128) {
+            crc = crc >>> 8 ^ table[(crc ^ c) & 255];
+          } else if (c < 2048) {
+            crc = crc >>> 8 ^ table[(crc ^ (192 | c >> 6 & 31)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | c & 63)) & 255];
+          } else if (c >= 55296 && c < 57344) {
+            c = (c & 1023) + 64;
+            d = str.charCodeAt(i++) & 1023;
+            crc = crc >>> 8 ^ table[(crc ^ (240 | c >> 8 & 7)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | c >> 2 & 63)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | d >> 6 & 15 | c & 3)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | d & 63)) & 255];
+          } else {
+            crc = crc >>> 8 ^ table[(crc ^ (224 | c >> 12 & 15)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | c >> 6 & 63)) & 255];
+            crc = crc >>> 8 ^ table[(crc ^ (128 | c & 63)) & 255];
+          }
+        }
+        return crc ^ -1;
+      }
+      CRC322.table = table;
+      CRC322.bstr = crc32_bstr;
+      CRC322.buf = crc32_buf;
+      CRC322.str = crc32_str;
+    });
+  }
+});
+
+// node_modules/png-chunks-extract/index.js
+var require_png_chunks_extract = __commonJS({
+  "node_modules/png-chunks-extract/index.js"(exports2, module2) {
+    var crc32 = require_crc32();
+    module2.exports = extractChunks;
+    var uint8 = new Uint8Array(4);
+    var int32 = new Int32Array(uint8.buffer);
+    var uint32 = new Uint32Array(uint8.buffer);
+    function extractChunks(data) {
+      if (data[0] !== 137)
+        throw new Error("Invalid .png file header");
+      if (data[1] !== 80)
+        throw new Error("Invalid .png file header");
+      if (data[2] !== 78)
+        throw new Error("Invalid .png file header");
+      if (data[3] !== 71)
+        throw new Error("Invalid .png file header");
+      if (data[4] !== 13)
+        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
+      if (data[5] !== 10)
+        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
+      if (data[6] !== 26)
+        throw new Error("Invalid .png file header");
+      if (data[7] !== 10)
+        throw new Error("Invalid .png file header: possibly caused by DOS-Unix line ending conversion?");
+      var ended = false;
+      var chunks = [];
+      var idx = 8;
+      while (idx < data.length) {
+        uint8[3] = data[idx++];
+        uint8[2] = data[idx++];
+        uint8[1] = data[idx++];
+        uint8[0] = data[idx++];
+        var length = uint32[0] + 4;
+        var chunk = new Uint8Array(length);
+        chunk[0] = data[idx++];
+        chunk[1] = data[idx++];
+        chunk[2] = data[idx++];
+        chunk[3] = data[idx++];
+        var name = String.fromCharCode(chunk[0]) + String.fromCharCode(chunk[1]) + String.fromCharCode(chunk[2]) + String.fromCharCode(chunk[3]);
+        if (!chunks.length && name !== "IHDR") {
+          throw new Error("IHDR header missing");
+        }
+        if (name === "IEND") {
+          ended = true;
+          chunks.push({
+            name,
+            data: new Uint8Array(0)
+          });
+          break;
+        }
+        for (var i = 4; i < length; i++) {
+          chunk[i] = data[idx++];
+        }
+        uint8[3] = data[idx++];
+        uint8[2] = data[idx++];
+        uint8[1] = data[idx++];
+        uint8[0] = data[idx++];
+        var crcActual = int32[0];
+        var crcExpect = crc32.buf(chunk);
+        if (crcExpect !== crcActual) {
+          throw new Error(
+            "CRC values for " + name + " header do not match, PNG file is likely corrupted"
+          );
+        }
+        var chunkData = new Uint8Array(chunk.buffer.slice(4));
+        chunks.push({
+          name,
+          data: chunkData
+        });
+      }
+      if (!ended) {
+        throw new Error(".png file ended prematurely: no IEND header was found");
+      }
+      return chunks;
+    }
+  }
+});
+
 // node_modules/jsonschema/lib/helpers.js
 var require_helpers = __commonJS({
   "node_modules/jsonschema/lib/helpers.js"(exports2, module2) {
@@ -20343,320 +20343,6 @@ var ratedCheckpoints = {
   ]
 };
 
-// src/commons/file.ts
-var import_fs6 = __toESM(require("fs"));
-var import_image_size = __toESM(require_dist());
-var import_path8 = __toESM(require("path"));
-var import_png_chunk_text = __toESM(require_png_chunk_text());
-var import_png_chunks_extract = __toESM(require_png_chunks_extract());
-
-// src/commons/logger.ts
-var import_fs5 = __toESM(require("fs"));
-var import_path7 = __toESM(require("path"));
-var logger = (message) => {
-  console.log(message);
-};
-var writeLog = (...data) => {
-  const logPath = import_path7.default.resolve(__dirname, "..", "logs");
-  const logFile = import_path7.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.txt`);
-  if (!import_fs5.default.existsSync(logPath)) {
-    import_fs5.default.mkdirSync(logPath);
-  }
-  if (!import_fs5.default.existsSync(logFile)) {
-    import_fs5.default.writeFileSync(logFile, "");
-  }
-  import_fs5.default.appendFileSync(
-    logFile,
-    `${Date.now()} ${JSON.stringify(data, (key, value) => {
-      if (["init_images", "input_image"].includes(key)) {
-        if (!value) {
-          return value;
-        }
-        if (Array.isArray(value)) {
-          return value.map((item) => item.substring(0, 100));
-        }
-        return value?.substring(0, 100) ?? value;
-      }
-      return value;
-    })}
-`
-  );
-};
-
-// src/commons/types.ts
-var Version = {
-  SD15: "sd15",
-  SDXL: "sdxl",
-  Unknown: "unknown"
-};
-
-// src/commons/file.ts
-var SD_VERSION = "sd version";
-var readFile = (path12) => {
-  let data = void 0;
-  const cacheImageData = Cache.get("imageData");
-  try {
-    if (cacheImageData[path12] !== void 0) {
-      if (cacheImageData[path12].timestamp === import_fs6.default.statSync(path12).mtimeMs.toString()) {
-        return cacheImageData[path12].data;
-      }
-      delete cacheImageData[path12];
-    }
-    const buffer = import_fs6.default.readFileSync(path12);
-    const chunks = (0, import_png_chunks_extract.default)(buffer);
-    const exif = chunks.filter((chunk) => {
-      return chunk.name === "tEXt";
-    }).map((chunk) => {
-      return import_png_chunk_text.default.decode(chunk.data);
-    }).find((chunk) => {
-      return chunk.keyword === "parameters";
-    });
-    const texData = exif?.text;
-    if (texData) {
-      data = texData.split("\n");
-      cacheImageData[path12] = {
-        data,
-        timestamp: import_fs6.default.statSync(path12).mtimeMs.toString()
-      };
-    }
-  } catch (error) {
-    logger(String(error));
-  } finally {
-    Cache.set("imageData", cacheImageData);
-  }
-  return data;
-};
-var readFiles = (sourcepath, root, recursive) => {
-  const files = import_fs6.default.readdirSync(sourcepath);
-  const result = [];
-  files.forEach((file) => {
-    if (recursive && import_fs6.default.lstatSync(import_path8.default.resolve(sourcepath, file)).isDirectory()) {
-      result.push(...readFiles(import_path8.default.resolve(sourcepath, file), root, recursive));
-    }
-    const prefix = recursive ? import_path8.default.relative(root, sourcepath).split(import_path8.default.sep).join(", ") : void 0;
-    if (file.endsWith(".png")) {
-      logger(`Read ${file}`);
-      const filename = import_path8.default.resolve(sourcepath, file);
-      const data = readFile(filename);
-      const sizes = (0, import_image_size.default)(filename);
-      result.push({
-        data,
-        file,
-        filename,
-        fullpath: import_path8.default.resolve(sourcepath, file),
-        height: sizes.height ?? -1,
-        prefix,
-        width: sizes.width ?? -1
-      });
-    }
-    if (file.endsWith(".jpg") || file.endsWith(".jpeg")) {
-      logger(`Read ${file}`);
-      const filename = import_path8.default.resolve(sourcepath, file);
-      const sizes = (0, import_image_size.default)(filename);
-      result.push({
-        data: void 0,
-        file,
-        filename,
-        fullpath: import_path8.default.resolve(sourcepath, file),
-        height: sizes.height ?? -1,
-        prefix,
-        width: sizes.width ?? -1
-      });
-    }
-  });
-  logger(`Read ${result.length} files`);
-  return result;
-};
-var getFiles = (source, recursive) => {
-  const filesList = [];
-  readFiles(source, source, recursive).forEach((file) => {
-    filesList.push(file);
-  });
-  return filesList;
-};
-var imageCache = {};
-var getBase64Image = (url2) => {
-  if (imageCache[url2] !== void 0) {
-    return imageCache[url2].data;
-  }
-  const buffer = import_fs6.default.readFileSync(url2);
-  const data = buffer.toString("base64");
-  const sizes = (0, import_image_size.default)(url2);
-  imageCache[url2] = {
-    data,
-    height: sizes.height ?? -1,
-    width: sizes.width ?? -1
-  };
-  return data;
-};
-var getMetadata = (url2) => {
-  const cacheMetadata = Cache.get("metadata");
-  if (!url2.endsWith(".json")) {
-    logger(`Invalid metadata file : ${url2}`);
-  }
-  try {
-    if (cacheMetadata[url2] !== void 0) {
-      if (cacheMetadata[url2].timestamp === import_fs6.default.statSync(url2).mtimeMs.toString()) {
-        return cacheMetadata[url2];
-      }
-      delete cacheMetadata[url2];
-    }
-    if (import_fs6.default.existsSync(url2)) {
-      const content = import_fs6.default.readFileSync(url2, "utf8");
-      const metadata = JSON.parse(content);
-      const result = {
-        // description: metadata.description,
-        preferredWeight: metadata["preferred weight"],
-        sdVersion: Version.Unknown
-        //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
-      };
-      if (metadata[SD_VERSION]) {
-        if (metadata[SD_VERSION].toLowerCase().includes("xl")) {
-          result.sdVersion = Version.SDXL;
-        } else if (metadata[SD_VERSION].toLowerCase().includes("1.5") || metadata[SD_VERSION].toLowerCase().includes("sd1")) {
-          result.sdVersion = Version.SD15;
-        }
-      }
-      cacheMetadata[url2] = { ...result, timestamp: import_fs6.default.statSync(url2).mtimeMs.toString() };
-      Cache.set("metadata", cacheMetadata);
-      return result;
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url2} : ${error.message}`);
-    } else {
-      logger(`Error while reading metadata for ${url2} : ${error}`);
-    }
-  }
-  return void 0;
-};
-
-// src/commons/models.ts
-var BaseUpscalers = [
-  { name: "Latent" },
-  { name: "Latent (antialiased)" },
-  { name: "Latent (bicubic)" },
-  { name: "Latent (bicubic antialiased)" },
-  { name: "Latent (nearest)" },
-  { name: "Latent (nearest-exact)" }
-];
-var findModel = (modelNames, data, functions) => {
-  for (const modelName of modelNames) {
-    const exactMatch = data.find((item) => {
-      if (functions?.findExact) {
-        return functions.findExact(item, modelName);
-      }
-      return item === modelName;
-    });
-    if (exactMatch !== void 0) {
-      return exactMatch;
-    }
-    const partialMatch = data.find((item) => {
-      if (functions?.findPartial) {
-        return functions.findPartial(item, modelName);
-      }
-      return item.toLowerCase().includes(modelName.toLowerCase());
-    });
-    if (partialMatch !== void 0) {
-      return partialMatch;
-    }
-  }
-  return void 0;
-};
-var findExactStringProperties = (properties) => (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (item, modelName) => {
-    const filterProperties = properties.filter((property) => item[property] !== void 0);
-    return filterProperties.find((property) => {
-      return item[property] === modelName;
-    });
-  }
-);
-var findPartialStringProperties = (properties) => (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (item, modelName) => {
-    const filterProperties = properties.filter((property) => item[property] !== void 0);
-    return filterProperties.find((property) => {
-      return item[property].toLowerCase().includes(modelName.toLowerCase());
-    });
-  }
-);
-var findUpscaler = (...upscaleName) => {
-  const AllModels = [...Config.get("upscalers"), ...BaseUpscalers];
-  return findModel(upscaleName, AllModels, {
-    findExact: findExactStringProperties(["name", "filename"]),
-    findPartial: findPartialStringProperties(["name", "filename"])
-  });
-};
-var findUpscalerUltimateSDUpscaler = (...upscaleName) => {
-  const AllModels = Config.get("upscalers");
-  return findModel(upscaleName, AllModels, {
-    findExact: findExactStringProperties(["name", "filename"]),
-    findPartial: findPartialStringProperties(["name", "filename"])
-  });
-};
-var findCheckpoint = (...modelsName) => {
-  const AllModels = Config.get("models");
-  return findModel(modelsName, AllModels, {
-    findExact: findExactStringProperties(["name", "hash"]),
-    findPartial: findPartialStringProperties(["name", "hash"])
-  });
-};
-var findVAE = (...vaeName) => {
-  const AllModels = [...Config.get("vae"), "None"];
-  return findModel(vaeName, AllModels);
-};
-var findSampler = (...sampleName) => {
-  const AllModels = Config.get("samplers");
-  return findModel(sampleName, AllModels, {
-    findExact: (item, modelName) => {
-      if (item.name === modelName) {
-        return item.name;
-      }
-      if (item.aliases.find((alias) => alias === modelName)) {
-        return item.name;
-      }
-    },
-    findPartial: (item, modelName) => {
-      if (item.name.includes(modelName)) {
-        return item.name;
-      }
-      if (item.aliases.find((alias) => alias.includes(modelName))) {
-        return item.name;
-      }
-    }
-  });
-};
-var findADetailersModel = (...adetaileName) => {
-  const AllModels = Config.get("adetailersModels");
-  return findModel(adetaileName, AllModels);
-};
-var findControlnetModel = (...modelsName) => {
-  const AllModels = Config.get("controlnetModels");
-  return findModel(modelsName, AllModels, {
-    findExact: findExactStringProperties(["name"]),
-    findPartial: findPartialStringProperties(["name"])
-  });
-};
-var findControlnetModule = (...modelsName) => {
-  const AllModels = Config.get("controlnetModules");
-  return findModel(modelsName, AllModels);
-};
-var findLORA = (...loraName) => {
-  const AllModels = Config.get("loras");
-  return findModel(loraName, AllModels, {
-    findExact: findExactStringProperties(["name", "alias"]),
-    findPartial: findPartialStringProperties(["name", "alias"])
-  });
-};
-var findStyle = (...stylesName) => {
-  const AllModels = Config.get("styles");
-  return findModel(stylesName, AllModels, {
-    findExact: findExactStringProperties(["name"]),
-    findPartial: findPartialStringProperties(["name"])
-  });
-};
-
 // node_modules/axios/lib/helpers/bind.js
 function bind(fn, thisArg) {
   return function wrap2() {
@@ -23646,6 +23332,446 @@ var {
   mergeConfig: mergeConfig2
 } = axios_default;
 
+// src/commons/file.ts
+var import_crypto2 = __toESM(require("crypto"));
+var import_fs6 = __toESM(require("fs"));
+var import_image_size = __toESM(require_dist());
+var import_path8 = __toESM(require("path"));
+var import_png_chunk_text = __toESM(require_png_chunk_text());
+var import_png_chunks_extract = __toESM(require_png_chunks_extract());
+
+// src/commons/logger.ts
+var import_fs5 = __toESM(require("fs"));
+var import_path7 = __toESM(require("path"));
+var logger = (message) => {
+  console.log(message);
+};
+var writeLog = (...data) => {
+  const logPath = import_path7.default.resolve(__dirname, "..", "logs");
+  const logFile = import_path7.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.txt`);
+  if (!import_fs5.default.existsSync(logPath)) {
+    import_fs5.default.mkdirSync(logPath);
+  }
+  if (!import_fs5.default.existsSync(logFile)) {
+    import_fs5.default.writeFileSync(logFile, "");
+  }
+  import_fs5.default.appendFileSync(
+    logFile,
+    `${Date.now()} ${JSON.stringify(data, (key, value) => {
+      if (["init_images", "input_image"].includes(key)) {
+        if (!value) {
+          return value;
+        }
+        if (Array.isArray(value)) {
+          return value.map((item) => item.substring(0, 100));
+        }
+        return value?.substring(0, 100) ?? value;
+      }
+      return value;
+    })}
+`
+  );
+};
+
+// src/commons/types.ts
+var Version = {
+  SD14: "sd14",
+  SD15: "sd15",
+  SD20: "sd20",
+  SD21: "sd21",
+  SDXL: "sdxl",
+  Unknown: "unknown"
+};
+
+// src/commons/file.ts
+var readFile = (path12) => {
+  let data = void 0;
+  const cacheImageData = Cache.get("imageData");
+  try {
+    if (cacheImageData[path12] !== void 0) {
+      if (cacheImageData[path12].timestamp === import_fs6.default.statSync(path12).mtimeMs.toString()) {
+        return cacheImageData[path12].data;
+      }
+      delete cacheImageData[path12];
+    }
+    const buffer = import_fs6.default.readFileSync(path12);
+    const chunks = (0, import_png_chunks_extract.default)(buffer);
+    const exif = chunks.filter((chunk) => {
+      return chunk.name === "tEXt";
+    }).map((chunk) => {
+      return import_png_chunk_text.default.decode(chunk.data);
+    }).find((chunk) => {
+      return chunk.keyword === "parameters";
+    });
+    const texData = exif?.text;
+    if (texData) {
+      data = texData.split("\n");
+      cacheImageData[path12] = {
+        data,
+        timestamp: import_fs6.default.statSync(path12).mtimeMs.toString()
+      };
+    }
+  } catch (error) {
+    logger(String(error));
+  } finally {
+    Cache.set("imageData", cacheImageData);
+  }
+  return data;
+};
+var readFiles = (sourcepath, root, recursive) => {
+  const files = import_fs6.default.readdirSync(sourcepath);
+  const result = [];
+  files.forEach((file) => {
+    if (recursive && import_fs6.default.lstatSync(import_path8.default.resolve(sourcepath, file)).isDirectory()) {
+      result.push(...readFiles(import_path8.default.resolve(sourcepath, file), root, recursive));
+    }
+    const prefix = recursive ? import_path8.default.relative(root, sourcepath).split(import_path8.default.sep).join(", ") : void 0;
+    if (file.endsWith(".png")) {
+      logger(`Read ${file}`);
+      const filename = import_path8.default.resolve(sourcepath, file);
+      const data = readFile(filename);
+      const sizes = (0, import_image_size.default)(filename);
+      result.push({
+        data,
+        file,
+        filename,
+        fullpath: import_path8.default.resolve(sourcepath, file),
+        height: sizes.height ?? -1,
+        prefix,
+        width: sizes.width ?? -1
+      });
+    }
+    if (file.endsWith(".jpg") || file.endsWith(".jpeg")) {
+      logger(`Read ${file}`);
+      const filename = import_path8.default.resolve(sourcepath, file);
+      const sizes = (0, import_image_size.default)(filename);
+      result.push({
+        data: void 0,
+        file,
+        filename,
+        fullpath: import_path8.default.resolve(sourcepath, file),
+        height: sizes.height ?? -1,
+        prefix,
+        width: sizes.width ?? -1
+      });
+    }
+  });
+  logger(`Read ${result.length} files`);
+  return result;
+};
+var getHash = (url2) => {
+  return new Promise((resolve5, reject) => {
+    const hashBuilder = import_crypto2.default.createHash("sha256");
+    const stream4 = import_fs6.default.createReadStream(url2);
+    stream4.on("end", function() {
+      hashBuilder.end();
+      resolve5(hashBuilder.read());
+    });
+    stream4.on("error", (error) => {
+      hashBuilder.end();
+      reject(error);
+    });
+    stream4.pipe(hashBuilder);
+  });
+};
+var getFiles = (source, recursive) => {
+  const filesList = [];
+  readFiles(source, source, recursive).forEach((file) => {
+    filesList.push(file);
+  });
+  return filesList;
+};
+var imageCache = {};
+var getBase64Image = (url2) => {
+  if (imageCache[url2] !== void 0) {
+    return imageCache[url2].data;
+  }
+  const buffer = import_fs6.default.readFileSync(url2);
+  const data = buffer.toString("base64");
+  const sizes = (0, import_image_size.default)(url2);
+  imageCache[url2] = {
+    data,
+    height: sizes.height ?? -1,
+    width: sizes.width ?? -1
+  };
+  return data;
+};
+var getMetadataFromCivitAi = (metadata) => {
+  try {
+    const result = {
+      accelerator: "none",
+      keywords: metadata.trainedWords,
+      sdVersion: Version.Unknown
+      //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
+    };
+    switch (metadata.baseModel) {
+      case "Pony":
+        result.sdVersion = Version.SDXL;
+        break;
+      case "SD 1.4":
+        result.sdVersion = Version.SD14;
+        break;
+      case "SD 1.5 LCM":
+        result.sdVersion = Version.SD15;
+        result.accelerator = "lcm";
+        break;
+      case "SD 1.5":
+        result.sdVersion = Version.SD15;
+        break;
+      case "SDXL 0.9":
+        result.sdVersion = Version.SDXL;
+        break;
+      case "SDXL 1.0 LCM":
+        result.sdVersion = Version.SDXL;
+        result.accelerator = "lcm";
+        break;
+      case "SDXL 1.0":
+        result.sdVersion = Version.SDXL;
+        break;
+      case "SDXL Distilled":
+        result.sdVersion = Version.SDXL;
+        result.accelerator = "distilled";
+        break;
+      case "SDXL Lightning":
+        result.sdVersion = Version.SDXL;
+        result.accelerator = "lightning";
+        break;
+      case "SDXL Turbo":
+        result.sdVersion = Version.SDXL;
+        result.accelerator = "turbo";
+        break;
+      default:
+        result.sdVersion = Version.Unknown;
+        break;
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof Error) {
+      logger(`Error while parsing metadata : ${error.message}`);
+    } else {
+      logger(`Error while parsing metadata : ${error}`);
+    }
+  }
+  return void 0;
+};
+var getMetadataCivitAiInfo = (actualCacheMetadata, url2) => {
+  if (!url2.endsWith(".civitai.info")) {
+    logger(`Invalid metadata file : ${url2}`);
+  }
+  if (!import_fs6.default.existsSync(url2)) {
+    logger(`File does not exists : ${url2}`);
+    return;
+  }
+  const cacheMetadata = { ...actualCacheMetadata };
+  try {
+    if (cacheMetadata[url2] !== void 0) {
+      if (cacheMetadata[url2].timestamp === import_fs6.default.statSync(url2).mtimeMs.toString()) {
+        return [cacheMetadata, cacheMetadata[url2]];
+      }
+      delete actualCacheMetadata[url2];
+    }
+    const content = import_fs6.default.readFileSync(url2, "utf8");
+    const metadata = JSON.parse(content);
+    const result = getMetadataFromCivitAi(metadata);
+    if (!result) {
+      return;
+    }
+    cacheMetadata[url2] = { ...result, timestamp: import_fs6.default.statSync(url2).mtimeMs.toString() };
+    return [cacheMetadata, result];
+  } catch (error) {
+    if (error instanceof Error) {
+      logger(`Error while reading metadata for ${url2} from CivitAI Info File : ${error.message}`);
+    } else {
+      logger(`Error while reading metadata for ${url2} from CivitAI Info File : ${error}`);
+    }
+  }
+  return void 0;
+};
+var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
+  if (!import_fs6.default.existsSync(url2)) {
+    logger(`File does not exists : ${url2}`);
+    return;
+  }
+  const cacheMetadata = { ...actualCacheMetadata };
+  try {
+    logger(`Calculating hash for file ${url2}`);
+    const hash = await getHash(url2);
+    logger(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
+    const response = await axios_default.get(`https://civitai.com/api/v1/model-versions/by-hash/${hash}`);
+    const metadata = response.data;
+    const result = getMetadataFromCivitAi(metadata);
+    if (!result) {
+      return;
+    }
+    cacheMetadata[url2] = { ...result, timestamp: Date.now().toString() };
+    return [cacheMetadata, result];
+  } catch (error) {
+    if (error instanceof Error) {
+      logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
+    } else {
+      logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
+    }
+  }
+  return void 0;
+};
+var getMetadata = async (url2) => {
+  const cacheMetadata = Cache.get("metadata");
+  try {
+    const civitAiFile = url2.replace(/(\.safetensors|\.ckpt|\.pt)$/, ".civitai.info");
+    const metadataCivitAiInfo = getMetadataCivitAiInfo(cacheMetadata, civitAiFile);
+    if (metadataCivitAiInfo) {
+      const [cacheMetadataNew, metadata] = metadataCivitAiInfo;
+      Cache.set("metadata", cacheMetadataNew);
+      return metadata;
+    }
+    const metadataCivitAiRest = await getMetadataCivitAiRest(cacheMetadata, url2);
+    if (metadataCivitAiRest) {
+      const [cacheMetadataNew, metadata] = metadataCivitAiRest;
+      Cache.set("metadata", cacheMetadataNew);
+      return metadata;
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      logger(`Error while reading metadata for ${url2} : ${error.message}`);
+    } else {
+      logger(`Error while reading metadata for ${url2} : ${error}`);
+    }
+  }
+  return void 0;
+};
+var getMetadataLora = async (url2) => {
+  return getMetadata(url2);
+};
+var getMetadataCheckpoint = async (url2) => {
+  return getMetadata(url2);
+};
+
+// src/commons/models.ts
+var BaseUpscalers = [
+  { name: "Latent" },
+  { name: "Latent (antialiased)" },
+  { name: "Latent (bicubic)" },
+  { name: "Latent (bicubic antialiased)" },
+  { name: "Latent (nearest)" },
+  { name: "Latent (nearest-exact)" }
+];
+var findModel = (modelNames, data, functions) => {
+  for (const modelName of modelNames) {
+    const exactMatch = data.find((item) => {
+      if (functions?.findExact) {
+        return functions.findExact(item, modelName);
+      }
+      return item === modelName;
+    });
+    if (exactMatch !== void 0) {
+      return exactMatch;
+    }
+    const partialMatch = data.find((item) => {
+      if (functions?.findPartial) {
+        return functions.findPartial(item, modelName);
+      }
+      return item.toLowerCase().includes(modelName.toLowerCase());
+    });
+    if (partialMatch !== void 0) {
+      return partialMatch;
+    }
+  }
+  return void 0;
+};
+var findExactStringProperties = (properties) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (item, modelName) => {
+    const filterProperties = properties.filter((property) => item[property] !== void 0);
+    return filterProperties.find((property) => {
+      return item[property] === modelName;
+    });
+  }
+);
+var findPartialStringProperties = (properties) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (item, modelName) => {
+    const filterProperties = properties.filter((property) => item[property] !== void 0);
+    return filterProperties.find((property) => {
+      return item[property].toLowerCase().includes(modelName.toLowerCase());
+    });
+  }
+);
+var findUpscaler = (...upscaleName) => {
+  const AllModels = [...Config.get("upscalers"), ...BaseUpscalers];
+  return findModel(upscaleName, AllModels, {
+    findExact: findExactStringProperties(["name", "filename"]),
+    findPartial: findPartialStringProperties(["name", "filename"])
+  });
+};
+var findUpscalerUltimateSDUpscaler = (...upscaleName) => {
+  const AllModels = Config.get("upscalers");
+  return findModel(upscaleName, AllModels, {
+    findExact: findExactStringProperties(["name", "filename"]),
+    findPartial: findPartialStringProperties(["name", "filename"])
+  });
+};
+var findCheckpoint = (...modelsName) => {
+  const AllModels = Config.get("models");
+  return findModel(modelsName, AllModels, {
+    findExact: findExactStringProperties(["name", "hash"]),
+    findPartial: findPartialStringProperties(["name", "hash"])
+  });
+};
+var findVAE = (...vaeName) => {
+  const AllModels = [...Config.get("vae"), "None"];
+  return findModel(vaeName, AllModels);
+};
+var findSampler = (...sampleName) => {
+  const AllModels = Config.get("samplers");
+  return findModel(sampleName, AllModels, {
+    findExact: (item, modelName) => {
+      if (item.name === modelName) {
+        return item.name;
+      }
+      if (item.aliases.find((alias) => alias === modelName)) {
+        return item.name;
+      }
+    },
+    findPartial: (item, modelName) => {
+      if (item.name.includes(modelName)) {
+        return item.name;
+      }
+      if (item.aliases.find((alias) => alias.includes(modelName))) {
+        return item.name;
+      }
+    }
+  });
+};
+var findADetailersModel = (...adetaileName) => {
+  const AllModels = Config.get("adetailersModels");
+  return findModel(adetaileName, AllModels);
+};
+var findControlnetModel = (...modelsName) => {
+  const AllModels = Config.get("controlnetModels");
+  return findModel(modelsName, AllModels, {
+    findExact: findExactStringProperties(["name"]),
+    findPartial: findPartialStringProperties(["name"])
+  });
+};
+var findControlnetModule = (...modelsName) => {
+  const AllModels = Config.get("controlnetModules");
+  return findModel(modelsName, AllModels);
+};
+var findLORA = (...loraName) => {
+  const AllModels = Config.get("loras");
+  return findModel(loraName, AllModels, {
+    findExact: findExactStringProperties(["name", "alias"]),
+    findPartial: findPartialStringProperties(["name", "alias"])
+  });
+};
+var findStyle = (...stylesName) => {
+  const AllModels = Config.get("styles");
+  return findModel(stylesName, AllModels, {
+    findExact: findExactStringProperties(["name"]),
+    findPartial: findPartialStringProperties(["name"])
+  });
+};
+
 // src/commons/query.ts
 var import_fs7 = __toESM(require("fs"));
 
@@ -23666,29 +23792,112 @@ var headerRequest = {
     "Content-Type": "application/json"
   }
 };
-var getDefaultQuery = () => ({
-  alwayson_scripts: {},
-  cfg_scale: 7,
-  enable_hr: false,
-  height: 512,
-  negative_prompt: "",
-  override_settings: {},
-  override_settings_restore_afterwards: true,
-  prompt: "",
-  restore_faces: false,
-  sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
-  save_images: true,
-  seed: -1,
-  send_images: false,
-  steps: 20,
-  styles: [],
-  width: 512
-});
+var getDefaultQuery = (version, accelarator) => {
+  let baseParams = {
+    alwayson_scripts: {},
+    //cfg_scale: 7,
+    enable_hr: false,
+    //height: 512,
+    negative_prompt: "",
+    override_settings: {},
+    override_settings_restore_afterwards: true,
+    prompt: "",
+    restore_faces: false,
+    //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+    save_images: true,
+    seed: -1,
+    send_images: false,
+    //steps: 20,
+    styles: []
+    //width: 512
+  };
+  switch (version) {
+    case "sd14":
+    case "unknown":
+    default:
+      return {
+        ...baseParams,
+        cfg_scale: 7,
+        height: 512,
+        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+        steps: 20,
+        width: 512
+      };
+    case "sd15":
+      baseParams = { ...baseParams, height: 512, width: 512 };
+      if (accelarator === "lcm") {
+        return {
+          ...baseParams,
+          cfg_scale: 2,
+          forcedSampler: "LCM",
+          sampler_name: findSampler("LCM")?.name,
+          steps: 5
+        };
+      }
+      return {
+        ...baseParams,
+        cfg_scale: 7,
+        sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+        steps: 20
+      };
+    case "sdxl":
+      baseParams = { ...baseParams, height: 1024, width: 1024 };
+      switch (accelarator) {
+        case "lcm":
+          return {
+            ...baseParams,
+            cfg_scale: 1.5,
+            forcedSampler: "LCM",
+            sampler_name: findSampler("LCM")?.name,
+            steps: 4
+          };
+        case "lightning":
+          return {
+            ...baseParams,
+            cfg_scale: 2,
+            forcedSampler: "DPM++ SDE Karras",
+            sampler_name: findSampler("DPM++ SDE Karras")?.name,
+            steps: 6
+          };
+        case "turbo":
+          return {
+            ...baseParams,
+            cfg_scale: 2,
+            forcedSampler: "DPM++ SDE Karras",
+            sampler_name: findSampler("DPM++ SDE Karras")?.name,
+            steps: 8
+          };
+        case "distilled":
+        case "none":
+        default:
+          return {
+            ...baseParams,
+            cfg_scale: 7,
+            sampler_name: findSampler("DPM++ 2M Karras", "Euler a")?.name,
+            steps: 20
+          };
+      }
+  }
+};
+var isTxt2ImgQuery = (query) => {
+  return query.init_images === void 0;
+};
+var isImg2ImgQuery = (query) => {
+  return query.init_images !== void 0;
+};
 var renderQuery = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, sdxl, ultimateSdUpscale, tiledDiffusion, ...baseQueryRaw } = query;
-  const baseQuery = { ...getDefaultQuery(), ...baseQueryRaw };
+  const { adetailer, controlNet, cutOff, lcm, sdxl, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query;
+  const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint) : { version: "unknown" };
+  const baseQuery = {
+    ...getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none"),
+    ...baseQueryRaw
+  };
+  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
+    logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+    process.exit(1);
+  }
   let script = false;
-  if ((!baseQuery).init_images && baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt) {
+  if (isTxt2ImgQuery(baseQuery) && (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt)) {
     baseQuery.enable_hr = true;
     baseQuery.hr_upscaler = baseQuery.hr_upscaler ?? findUpscaler("4x-UltraSharp", "R-ESRGAN 4x+", "Latent (nearest-exact)")?.name;
     baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
@@ -23901,26 +24110,22 @@ var handler = async (argv) => {
     logger("Error: Cannot initialize config : Error in SD API");
     process.exit(1);
   }
-  Config.set(
-    "models",
-    Array.from(
-      new Set(
-        modelsQuery.map((modelQuery) => {
-          const item = { name: modelQuery.title, version: Version.Unknown };
-          const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
-          const metadata = getMetadata(modelQuery.filename.replace(/(\.safetensors|\.ckpt|\.pt)$/, ".json"));
-          if (metadata) {
-            item.version = metadata.sdVersion;
-          }
-          if (hash) {
-            item.hash = hash[0];
-            item.name = modelQuery.title.replace(`[${hash}]`, "").trim();
-          }
-          return item;
-        })
-      )
-    )
-  );
+  const modelsQueryResolved = [];
+  for await (const modelQuery of modelsQuery) {
+    const item = { accelarator: "none", name: modelQuery.title, version: Version.Unknown };
+    const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
+    const metadata = await getMetadataCheckpoint(modelQuery.filename);
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.accelarator = metadata.accelerator;
+    }
+    if (hash) {
+      item.hash = hash[0];
+      item.name = modelQuery.title.replace(`[${hash}]`, "").trim();
+    }
+    modelsQueryResolved.push(item);
+  }
+  Config.set("models", Array.from(new Set(modelsQueryResolved)));
   Config.set(
     "vae",
     Array.from(
@@ -23968,21 +24173,17 @@ var handler = async (argv) => {
       )
     )
   );
-  Config.set(
-    "loras",
-    Array.from(
-      new Set(
-        lorasQuery.map((lorasQuery2) => {
-          const lora = { alias: lorasQuery2.alias, name: lorasQuery2.name, version: Version.Unknown };
-          const metadata = getMetadata(lorasQuery2.path.replace(/(\.safetensors|\.ckpt|\.pt)$/, ".json"));
-          if (metadata) {
-            lora.version = metadata.sdVersion;
-          }
-          return lora;
-        })
-      )
-    )
-  );
+  const lorasQueryResolved = [];
+  for await (const loraQuery of lorasQuery) {
+    const item = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
+    const metadata = await getMetadataLora(loraQuery.path);
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.keywords = metadata.keywords;
+    }
+    lorasQueryResolved.push(item);
+  }
+  Config.set("loras", Array.from(new Set(lorasQueryResolved)));
   const extensions = /* @__PURE__ */ new Set();
   extensionsQuery.img2img.forEach((extensionQuery) => {
     switch (extensionQuery) {
@@ -24891,8 +25092,11 @@ __export(queue_exports, {
 var import_path12 = __toESM(require("path"));
 
 // src/queue/queue.ts
-var import_fs9 = __toESM(require("fs"));
+var import_fs10 = __toESM(require("fs"));
 var import_jsonschema = __toESM(require_lib());
+
+// src/commons/queue.ts
+var import_fs9 = require("fs");
 
 // src/commons/extensions/cutoff.ts
 var getCutOffTokens = (prompt) => {
@@ -24935,6 +25139,8 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     steps,
     stylesSets,
     tiledDiffusion,
+    tiledVAE,
+    tiling,
     ultimateSdUpscale,
     upscaler,
     vaeOption,
@@ -24981,6 +25187,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       enableHighRes,
       height,
       initImage,
+      tiledVAE,
       negativePrompt: negativePromptText,
       pattern: basePrompt.pattern,
       prompt: promptText,
@@ -24990,6 +25197,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       seed: seed !== void 0 && seed !== -1 ? seed + i : void 0,
       steps,
       styles: Array.from(/* @__PURE__ */ new Set([...styles, ...stylesSet])).filter((style) => style !== void 0),
+      tiling,
       upscaler,
       vae,
       width
@@ -25072,6 +25280,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
     enableHighResArray,
     heightArray,
     initImageArray,
+    tiledVAEArray,
     negativePromptArray,
     permutations,
     promptArray,
@@ -25082,6 +25291,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
     stepsArray,
     stylesSetsArray,
     tiledDiffusionArray,
+    tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
     vaeArray,
@@ -25105,6 +25315,8 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
   permutationsArray = getPermutations(permutationsArray, stepsArray, "steps");
   permutationsArray = getPermutations(permutationsArray, stylesSetsArray, "stylesSets");
   permutationsArray = getPermutations(permutationsArray, tiledDiffusionArray, "tiledDiffusion");
+  permutationsArray = getPermutations(permutationsArray, tiledVAEArray, "tiledVAE");
+  permutationsArray = getPermutations(permutationsArray, tilingArray, "tiling");
   permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, "ultimateSdUpscale");
   permutationsArray = getPermutations(permutationsArray, upscalerArray, "upscaler");
   permutationsArray = getPermutations(permutationsArray, vaeArray, "vaeOption");
@@ -25122,6 +25334,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
         enableHighRes: permutationItem.enableHighRes,
         height: permutationItem.height,
         initImage: permutationItem.initImage,
+        tiledVAE: permutationItem.tiledVAE,
         negativePrompt: permutationItem.negativePrompt,
         prompt: permutationItem.prompt,
         restoreFaces: permutationItem.restoreFaces,
@@ -25131,6 +25344,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
         steps: permutationItem.steps,
         stylesSets: permutationItem.stylesSets,
         tiledDiffusion: permutationItem.tiledDiffusion,
+        tiling: permutationItem.tiling,
         ultimateSdUpscale: permutationItem.ultimateSdUpscale,
         upscaler: permutationItem.upscaler,
         vaeOption: permutationItem.vaeOption,
@@ -25155,6 +25369,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     negativePromptArray,
     permutations,
     promptArray,
+    tiledVAEArray,
     restoreFacesArray,
     samplerArray,
     scaleFactorsArray,
@@ -25162,6 +25377,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     stepsArray,
     stylesSetsArray,
     tiledDiffusionArray,
+    tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
     vaeArray,
@@ -25177,10 +25393,12 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
   const height = pickRandomItem(heightArray);
   const initImage = pickRandomItem(initImageArray);
   const restoreFaces = pickRandomItem(restoreFacesArray);
+  const tiling = pickRandomItem(tilingArray);
   const sampler = pickRandomItem(samplerArray);
   const scaleFactor = pickRandomItem(scaleFactorsArray);
   const seed = pickRandomItem(seedArray);
   const steps = pickRandomItem(stepsArray);
+  const tiledVAE = pickRandomItem(tiledVAEArray);
   const stylesSets = pickRandomItem(stylesSetsArray);
   const tiledDiffusion = pickRandomItem(tiledDiffusionArray);
   const ultimateSdUpscale = pickRandomItem(ultimateSdUpscaleArray);
@@ -25199,6 +25417,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     enableHighRes,
     height,
     initImage,
+    tiledVAE,
     negativePrompt,
     prompt,
     restoreFaces,
@@ -25208,6 +25427,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     steps,
     stylesSets,
     tiledDiffusion,
+    tiling,
     ultimateSdUpscale,
     upscaler,
     vaeOption,
@@ -25249,6 +25469,22 @@ var getArrays = (value, defaultValue = void 0) => {
   }
   return [value];
 };
+var getArraysInitImage = (value, defaultValue = void 0) => {
+  if (value === void 0) {
+    return [defaultValue];
+  }
+  const initImageOrFolderArray = Array.isArray(value) ? value : [value];
+  const initImagesArray = [];
+  initImageOrFolderArray.forEach((initImageOrFolder) => {
+    if ((0, import_fs9.statSync)(initImageOrFolder).isDirectory()) {
+      const files = (0, import_fs9.readdirSync)(initImageOrFolder);
+      initImagesArray.push(...files);
+    } else {
+      initImagesArray.push(initImageOrFolder);
+    }
+  });
+  return initImagesArray;
+};
 var prepareQueries = (basePrompts) => {
   const prompts = /* @__PURE__ */ new Map();
   const isPermutation = (basePrompts.multiValueMethod ?? "permutation") === "permutation";
@@ -25257,6 +25493,8 @@ var prepareQueries = (basePrompts) => {
     const autoLCMArray = getArraysBoolean(basePrompt.autoLCM);
     const enableHighResArray = getArraysBoolean(basePrompt.enableHighRes);
     const restoreFacesArray = getArraysBoolean(basePrompt.restoreFaces);
+    const tilingArray = getArraysBoolean(basePrompt.tiling);
+    const tiledVAEArray = getArraysBoolean(basePrompt.tiledVAE);
     const ultimateSdUpscaleArray = getArraysBoolean(basePrompt.ultimateSdUpscale);
     const promptArray = Array.isArray(basePrompt.prompt) ? basePrompt.prompt : [basePrompt.prompt];
     const negativePromptArray = Array.isArray(basePrompt.negativePrompt) ? basePrompt.negativePrompt : [basePrompt.negativePrompt ?? void 0];
@@ -25268,7 +25506,7 @@ var prepareQueries = (basePrompts) => {
     const stepsArray = getArrays(basePrompt.steps);
     const scaleFactorsArray = getArrays(basePrompt.scaleFactor);
     const upscalerArray = getArrays(basePrompt.upscaler);
-    const initImageArray = getArrays(basePrompt.initImage);
+    const initImageArray = getArraysInitImage(basePrompt.initImageOrFolder);
     const vaeArray = getArrays(basePrompt.vae);
     const widthArray = getArrays(basePrompt.width);
     const clipSkipArray = getArrays(basePrompt.clipSkip);
@@ -25285,6 +25523,7 @@ var prepareQueries = (basePrompts) => {
       enableHighResArray,
       heightArray,
       initImageArray,
+      tiledVAEArray,
       negativePromptArray,
       permutations: basePrompts.permutations,
       promptArray,
@@ -25295,6 +25534,7 @@ var prepareQueries = (basePrompts) => {
       stepsArray,
       stylesSetsArray,
       tiledDiffusionArray,
+      tilingArray,
       ultimateSdUpscaleArray,
       upscalerArray,
       vaeArray,
@@ -25404,6 +25644,12 @@ var prepareQueue = (config2) => {
       ultimateSdUpscale,
       width
     };
+    const checkpoint = checkpoints ? findCheckpoint(checkpoints) : { version: "unknown" };
+    const defaultValues = getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none");
+    if (query.sampler_name !== void 0 && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
+      logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
+      process.exit(1);
+    }
     if (controlNet) {
       controlNet.forEach((controlNetPrompt) => {
         const controlNetModule = findControlnetModule(controlNetPrompt.module);
@@ -25440,7 +25686,7 @@ var prepareQueue = (config2) => {
         tokens
       };
     }
-    if (upscaler && typeof upscaler === "string") {
+    if (isTxt2ImgQuery(query) && upscaler && typeof upscaler === "string") {
       const foundUpscaler = findUpscaler(upscaler);
       if (foundUpscaler) {
         query.hr_upscaler = foundUpscaler.name;
@@ -25449,7 +25695,7 @@ var prepareQueue = (config2) => {
         process.exit(1);
       }
     }
-    if (query.init_images) {
+    if (isImg2ImgQuery(query)) {
       query.enable_hr = false;
     } else {
       if (query.enable_hr === false) {
@@ -25465,7 +25711,7 @@ var prepareQueue = (config2) => {
     if (clipSkip) {
       query.override_settings.CLIP_stop_at_last_layers = clipSkip;
     }
-    if (highRes) {
+    if (isTxt2ImgQuery(query) && highRes) {
       const { afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt } = highRes;
       if (beforeNegativePrompt || afterNegativePrompt) {
         query.hr_negative_prompt = `${beforeNegativePrompt ?? ""},${query.negative_prompt ?? ""},${afterNegativePrompt ?? ""}`;
@@ -25905,7 +26151,7 @@ var queue_default = {
           title: "highRes",
           typeof: "function"
         },
-        initImage: {
+        initImageOrFolder: {
           anyOf: [
             {
               items: {
@@ -25917,7 +26163,7 @@ var queue_default = {
               type: "string"
             }
           ],
-          title: "initImage"
+          title: "initImageOrFolder"
         },
         negativePrompt: {
           anyOf: [
@@ -26067,6 +26313,22 @@ var queue_default = {
             }
           ],
           title: "tiledDiffusion"
+        },
+        tiledVAE: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "tiledVAE"
+        },
+        tiling: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "tiling"
         },
         ultimateSdUpscale: {
           enum: [
@@ -26360,6 +26622,14 @@ var queue_default = {
           $ref: "#/definitions/ITiledDiffusion",
           title: "tiledDiffusion"
         },
+        tiledVAE: {
+          title: "tiledVAE",
+          type: "boolean"
+        },
+        tiling: {
+          title: "tiling",
+          type: "boolean"
+        },
         ultimateSdUpscale: {
           $ref: "#/definitions/IUltimateSDUpscale",
           title: "ultimateSdUpscale"
@@ -26426,13 +26696,13 @@ var queue_default = {
 // src/queue/queue.ts
 var validator = new import_jsonschema.Validator();
 var queueFromFile = async (source, validateOnly) => {
-  if (!import_fs9.default.existsSync(source)) {
+  if (!import_fs10.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
     process.exit(1);
   }
   let jsonContent = { prompts: [] };
   try {
-    const data = import_fs9.default.readFileSync(source, "utf8");
+    const data = import_fs10.default.readFileSync(source, "utf8");
     jsonContent = JSON.parse(data);
   } catch (err) {
     logger(`Unable to parse JSON in ${source}`);
@@ -26487,7 +26757,7 @@ __export(redraw_exports, {
 var import_path14 = __toESM(require("path"));
 
 // src/redraw/redraw.ts
-var import_fs10 = __toESM(require("fs"));
+var import_fs11 = __toESM(require("fs"));
 var import_path13 = require("path");
 var IP_ADAPTER = "ip-adapter";
 var prepareQueryData = (baseParamsProps, file) => {
@@ -26624,7 +26894,7 @@ var prepareQueryClassical = async (file, style, denoising_strength, addToPrompt,
     enableHighRes: true,
     filename: (0, import_path13.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
     height,
-    initImage: file.filename,
+    initImageOrFolder: file.filename,
     negativePrompt: sdxl ? Config.get("commonNegative") : Config.get("commonNegativeXL"),
     pattern: `[datetime]-{denoising}-${style}-classical-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : "",
@@ -26721,7 +26991,7 @@ var getCombination = (filesList, styles, methods) => {
   return combinations;
 };
 var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }) => {
-  if (!import_fs10.default.existsSync(source)) {
+  if (!import_fs11.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -26873,7 +27143,7 @@ __export(rename_exports, {
 var import_path16 = __toESM(require("path"));
 
 // src/rename/rename.ts
-var import_fs11 = __toESM(require("fs"));
+var import_fs12 = __toESM(require("fs"));
 var import_jsonschema2 = __toESM(require_lib());
 var import_path15 = __toESM(require("path"));
 
@@ -26992,12 +27262,12 @@ var executeConfig = (config2, source, promptData) => {
 // src/rename/rename.ts
 var validator2 = new import_jsonschema2.Validator();
 var renameConfig = (source, target, config2, test) => {
-  if (!import_fs11.default.existsSync(source)) {
+  if (!import_fs12.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs11.default.existsSync(target)) {
-    import_fs11.default.mkdirSync(target, { recursive: true });
+  if (!import_fs12.default.existsSync(target)) {
+    import_fs12.default.mkdirSync(target, { recursive: true });
   }
   const validation2 = validator2.validate(config2, rename_default);
   if (!validation2.valid) {
@@ -27011,27 +27281,27 @@ var renameConfig = (source, target, config2, test) => {
       if (param && param[0] !== "") {
         const [targetFile, scene] = param;
         logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
-        if (!test && scene && !import_fs11.default.existsSync(import_path15.default.join(target, scene))) {
-          import_fs11.default.mkdirSync(import_path15.default.join(target, scene));
+        if (!test && scene && !import_fs12.default.existsSync(import_path15.default.join(target, scene))) {
+          import_fs12.default.mkdirSync(import_path15.default.join(target, scene));
         }
         if (!test) {
-          import_fs11.default.renameSync(file.filename, import_path15.default.join(target, targetFile));
+          import_fs12.default.renameSync(file.filename, import_path15.default.join(target, targetFile));
         }
       }
     }
   });
 };
 var renameConfigFromCFile = (source, target, config2, test) => {
-  if (!import_fs11.default.existsSync(source)) {
+  if (!import_fs12.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs11.default.existsSync(target)) {
-    import_fs11.default.mkdirSync(target, { recursive: true });
+  if (!import_fs12.default.existsSync(target)) {
+    import_fs12.default.mkdirSync(target, { recursive: true });
   }
   let jsonContent = { keys: [], pattern: "" };
   try {
-    const data = import_fs11.default.readFileSync(config2, "utf8");
+    const data = import_fs12.default.readFileSync(config2, "utf8");
     jsonContent = JSON.parse(data);
   } catch (err) {
     console.group({ err });
@@ -27146,10 +27416,10 @@ __export(upscale_exports, {
 var import_path19 = __toESM(require("path"));
 
 // src/upscale/upscaleTiles.ts
-var import_fs12 = __toESM(require("fs"));
+var import_fs13 = __toESM(require("fs"));
 var import_path17 = require("path");
 var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs12.default.existsSync(source)) {
+  if (!import_fs13.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -27171,7 +27441,7 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
       ];
       query.width = file.width;
       query.height = file.height;
-      query.initImage = file.filename;
+      query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
       query.filename = (0, import_path17.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
@@ -27188,10 +27458,10 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
 };
 
 // src/upscale/upscaleTiledDiffusion.ts
-var import_fs13 = __toESM(require("fs"));
+var import_fs14 = __toESM(require("fs"));
 var import_path18 = require("path");
 var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs13.default.existsSync(source)) {
+  if (!import_fs14.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -27207,7 +27477,7 @@ var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArr
       };
       query.width = file.width;
       query.height = file.height;
-      query.initImage = file.filename;
+      query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
       query.filename = (0, import_path18.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");

@@ -1,4 +1,4 @@
-import { Version, VersionKey } from '../types';
+import { Version, MetadataVersionKey } from '../types';
 
 type ControlNetModules =
   | 'blur_gaussian'
@@ -63,7 +63,7 @@ interface ControlNetType {
   modelRegex: RegExp;
   module: ControlNetModules[];
   name: string;
-  version?: VersionKey;
+  version?: MetadataVersionKey;
 }
 
 /*const controlNetTypes: ControlNetType[] = [
@@ -197,4 +197,4 @@ export interface IControlNet {
   resize_mode: ControlNetResizes;
 }
 
-export const checkControlNet = (model: string, moduleName: ControlNetModules, version: VersionKey) => {};
+export const checkControlNet = (model: string, moduleName: ControlNetModules, version: MetadataVersionKey) => {};
