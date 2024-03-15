@@ -32522,6 +32522,14 @@ var defaultTiledDiffusionOptions = {
   tileOverlap: 48,
   tileWidth: 96
 };
+var defaultTiledVAEnOptions = {
+  colorFix: false,
+  decoderTileSize: 64,
+  encoderTileSize: 960,
+  fastDecoder: true,
+  fastEncoder: true,
+  vaeToGPU: true
+};
 
 // src/commons/query.ts
 var headerRequest = {
@@ -32534,7 +32542,7 @@ var isTxt2ImgQuery = (query) => {
   return query.init_images === void 0;
 };
 var renderQuery = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query;
+  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query;
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint) : { version: "unknown" };
   const baseQuery = getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none");
   Object.keys(baseQueryRaw).forEach((key) => {
@@ -32585,13 +32593,27 @@ var renderQuery = async (query, type) => {
   if (adetailer) {
     baseQuery.alwayson_scripts["ADetailer"] = { args: adetailer };
   }
-  if (Config.get("autoTiledVAE") && isSDXL === false) {
-    baseQuery.alwayson_scripts["Tiled VAE"] = { args: ["True"] };
+  if (Config.get("autoTiledVAE") || tiledVAE) {
+    const tiledVAEConfig = { ...defaultTiledVAEnOptions, ...Config.get("autoTiledVAE") ? {} : tiledVAE };
+    if (isSDXL) {
+      tiledVAEConfig.fastDecoder = false;
+    }
+    baseQuery.alwayson_scripts["Tiled VAE"] = {
+      args: [
+        "True",
+        tiledVAEConfig.encoderTileSize,
+        tiledVAEConfig.decoderTileSize,
+        tiledVAEConfig.vaeToGPU,
+        tiledVAEConfig.fastDecoder,
+        tiledVAEConfig.fastEncoder,
+        tiledVAEConfig.colorFix
+      ]
+    };
   }
   if (Config.get("autoTiledDiffusion") !== false && isSDXL === false) {
     baseQuery.alwayson_scripts["Tiled Diffusion"] = { args: ["True", Config.get("autoTiledDiffusion")] };
   }
-  if (tiledDiffusion) {
+  if (tiledDiffusion && isSDXL === false) {
     baseQuery.alwayson_scripts["Tiled Diffusion"] = {
       args: [
         true,
@@ -34071,21 +34093,21 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
   const enableHighRes = pickRandomItem(enableHighResArray);
   const height = pickRandomItem(heightArray);
   const initImage = pickRandomItem(initImageArray);
+  const negativePrompt = pickRandomItem(negativePromptArray);
+  const prompt = pickRandomItem(promptArray);
   const restoreFaces = pickRandomItem(restoreFacesArray);
-  const tiling = pickRandomItem(tilingArray);
   const sampler = pickRandomItem(samplerArray);
   const scaleFactor = pickRandomItem(scaleFactorsArray);
   const seed = pickRandomItem(seedArray);
   const steps = pickRandomItem(stepsArray);
-  const tiledVAE = pickRandomItem(tiledVAEArray);
   const stylesSets = pickRandomItem(stylesSetsArray);
   const tiledDiffusion = pickRandomItem(tiledDiffusionArray);
+  const tiledVAE = pickRandomItem(tiledVAEArray);
+  const tiling = pickRandomItem(tilingArray);
   const ultimateSdUpscale = pickRandomItem(ultimateSdUpscaleArray);
   const upscaler = pickRandomItem(upscalerArray);
   const vaeOption = pickRandomItem(vaeArray);
   const width = pickRandomItem(widthArray);
-  const negativePrompt = pickRandomItem(negativePromptArray);
-  const prompt = pickRandomItem(promptArray);
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
     autoLCM,
@@ -34164,6 +34186,18 @@ var getArraysInitImage = (value, defaultValue = void 0) => {
   });
   return initImagesArray;
 };
+var getArraysTiledVAE = (value) => {
+  if (typeof value === "object") {
+    return [value];
+  }
+  if (typeof value === "boolean") {
+    return [{}];
+  }
+  if (value === "both") {
+    return [{}, void 0];
+  }
+  return [value ?? {}];
+};
 var prepareQueries = (basePrompts) => {
   const prompts = /* @__PURE__ */ new Map();
   const isPermutation = (basePrompts.multiValueMethod ?? "permutation") === "permutation";
@@ -34173,7 +34207,7 @@ var prepareQueries = (basePrompts) => {
     const enableHighResArray = getArraysBoolean(basePrompt.enableHighRes);
     const restoreFacesArray = getArraysBoolean(basePrompt.restoreFaces);
     const tilingArray = getArraysBoolean(basePrompt.tiling);
-    const tiledVAEArray = getArraysBoolean(basePrompt.tiledVAE);
+    const tiledVAEArray = getArraysTiledVAE(basePrompt.tiledVAE);
     const ultimateSdUpscaleArray = getArraysBoolean(basePrompt.ultimateSdUpscale);
     const promptArray = Array.isArray(basePrompt.prompt) ? basePrompt.prompt : [basePrompt.prompt];
     const negativePromptArray = Array.isArray(basePrompt.negativePrompt) ? basePrompt.negativePrompt : [basePrompt.negativePrompt ?? void 0];
@@ -34297,6 +34331,8 @@ var prepareQueue = (config2) => {
       steps,
       styles,
       tiledDiffusion,
+      tiledVAE,
+      tiling,
       ultimateSdUpscale,
       upscaler,
       vae,
@@ -34319,6 +34355,8 @@ var prepareQueue = (config2) => {
       seed,
       steps,
       tiledDiffusion,
+      tiledVAE,
+      tiling,
       ultimateSdUpscale,
       width
     };
@@ -34993,10 +35031,17 @@ var queue_default = {
           title: "tiledDiffusion"
         },
         tiledVAE: {
-          enum: [
-            "both",
-            false,
-            true
+          anyOf: [
+            {
+              $ref: "#/definitions/ITiledVAE"
+            },
+            {
+              enum: [
+                "both",
+                false,
+                true
+              ]
+            }
           ],
           title: "tiledVAE"
         },
@@ -35167,6 +35212,37 @@ var queue_default = {
       title: "ITiledDiffusion",
       type: "object"
     },
+    ITiledVAE: {
+      additionalProperties: false,
+      properties: {
+        colorFix: {
+          title: "colorFix",
+          type: "boolean"
+        },
+        decoderTileSize: {
+          title: "decoderTileSize",
+          type: "number"
+        },
+        encoderTileSize: {
+          title: "encoderTileSize",
+          type: "number"
+        },
+        fastDecoder: {
+          title: "fastDecoder",
+          type: "boolean"
+        },
+        fastEncoder: {
+          title: "fastEncoder",
+          type: "boolean"
+        },
+        vaeToGPU: {
+          title: "vaeToGPU",
+          type: "boolean"
+        }
+      },
+      title: "ITiledVAE",
+      type: "object"
+    },
     IUltimateSDUpscale: {
       additionalProperties: false,
       properties: {
@@ -35308,8 +35384,8 @@ var queue_default = {
           title: "tiledDiffusion"
         },
         tiledVAE: {
-          title: "tiledVAE",
-          type: "boolean"
+          $ref: "#/definitions/ITiledVAE",
+          title: "tiledVAE"
         },
         tiling: {
           title: "tiling",

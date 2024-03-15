@@ -3,7 +3,7 @@ import fs from 'fs';
 
 import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
-import { defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
+import { ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
@@ -30,7 +30,7 @@ export const isImg2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery
 };
 
 export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
@@ -114,15 +114,34 @@ export const renderQuery: Query = async (query, type) => {
     baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
   }
 
-  if (Config.get('autoTiledVAE') && isSDXL === false) {
-    baseQuery.alwayson_scripts['Tiled VAE'] = { args: ['True'] };
+  if (Config.get('autoTiledVAE') || tiledVAE) {
+    const tiledVAEConfig = { ...defaultTiledVAEnOptions, ...(Config.get('autoTiledVAE') ? {} : tiledVAE) } as Required<ITiledVAE>;
+
+    if (isSDXL) {
+      // Fast decoder is not supported in SDXL
+      tiledVAEConfig.fastDecoder = false;
+    }
+
+    baseQuery.alwayson_scripts['Tiled VAE'] = {
+      args: [
+        'True',
+        tiledVAEConfig.encoderTileSize,
+        tiledVAEConfig.decoderTileSize,
+        tiledVAEConfig.vaeToGPU,
+        tiledVAEConfig.fastDecoder,
+        tiledVAEConfig.fastEncoder,
+        tiledVAEConfig.colorFix
+      ]
+    };
   }
 
+  // TiledDiffusion cannot be use with SDXL
   if (Config.get('autoTiledDiffusion') !== false && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
   }
 
-  if (tiledDiffusion) {
+  // TiledDiffusion cannot be use with SDXL
+  if (tiledDiffusion && isSDXL === false) {
     baseQuery.alwayson_scripts['Tiled Diffusion'] = {
       args: [
         true,

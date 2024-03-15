@@ -1,7 +1,7 @@
 import { IAdetailer } from './extensions/adetailer';
 import { IControlNet } from './extensions/controlNet';
 import { ICutOff } from './extensions/cutoff';
-import { ITiledDiffusion, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
+import { ITiledDiffusion, ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
 export * from './extensions/controlNet';
@@ -74,6 +74,7 @@ export interface ITxt2ImgQuery
   hr_upscaler?: string;
   lcm?: boolean;
   tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
   //ultimateSdUpscale?: number;
 
   //init_images: string[];
@@ -98,7 +99,7 @@ export interface IImg2ImgQuery
   mask_blur_x?: number;
   mask_blur_y?: number;
   tiledDiffusion?: ITiledDiffusion;
-
+  tiledVAE?: ITiledVAE;
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 

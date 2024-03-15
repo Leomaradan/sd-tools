@@ -25,6 +25,15 @@ export interface ITiledDiffusion {
   tileWidth?: number;
 }
 
+export interface ITiledVAE {
+  colorFix?: boolean;
+  decoderTileSize?: number;
+  encoderTileSize?: number;
+  fastDecoder?: boolean;
+  fastEncoder?: boolean;
+  vaeToGPU?: boolean;
+}
+
 export const defaultTiledDiffusionOptions: Required<ITiledDiffusion> = {
   method: TiledDiffusionMethods.MultiDiffusion,
   scaleFactor: 2,
@@ -43,6 +52,15 @@ export const defaultTiledDiffusionRegionOptions: ITiledDiffusionRegion = {
   w: 0.2,
   x: 0.4,
   y: 0.4
+};
+
+export const defaultTiledVAEnOptions: Required<ITiledVAE> = {
+  colorFix: false,
+  decoderTileSize: 64,
+  encoderTileSize: 960,
+  fastDecoder: true,
+  fastEncoder: true,
+  vaeToGPU: true
 };
 
 /*

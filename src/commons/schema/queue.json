@@ -438,10 +438,17 @@
                     "title": "tiledDiffusion"
                 },
                 "tiledVAE": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ITiledVAE"
+                        },
+                        {
+                            "enum": [
+                                "both",
+                                false,
+                                true
+                            ]
+                        }
                     ],
                     "title": "tiledVAE"
                 },
@@ -612,6 +619,37 @@
             "title": "ITiledDiffusion",
             "type": "object"
         },
+        "ITiledVAE": {
+            "additionalProperties": false,
+            "properties": {
+                "colorFix": {
+                    "title": "colorFix",
+                    "type": "boolean"
+                },
+                "decoderTileSize": {
+                    "title": "decoderTileSize",
+                    "type": "number"
+                },
+                "encoderTileSize": {
+                    "title": "encoderTileSize",
+                    "type": "number"
+                },
+                "fastDecoder": {
+                    "title": "fastDecoder",
+                    "type": "boolean"
+                },
+                "fastEncoder": {
+                    "title": "fastEncoder",
+                    "type": "boolean"
+                },
+                "vaeToGPU": {
+                    "title": "vaeToGPU",
+                    "type": "boolean"
+                }
+            },
+            "title": "ITiledVAE",
+            "type": "object"
+        },
         "IUltimateSDUpscale": {
             "additionalProperties": false,
             "properties": {
@@ -753,8 +791,8 @@
                     "title": "tiledDiffusion"
                 },
                 "tiledVAE": {
-                    "title": "tiledVAE",
-                    "type": "boolean"
+                    "$ref": "#/definitions/ITiledVAE",
+                    "title": "tiledVAE"
                 },
                 "tiling": {
                     "title": "tiling",
