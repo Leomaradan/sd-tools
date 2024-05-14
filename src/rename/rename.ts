@@ -1,11 +1,11 @@
-import fs from 'fs';
 import { Validator } from 'jsonschema';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import renameSchema from '../commons/schema/rename.json';
-import { IRenameConfig, executeConfig } from './config';
+import { type  IRenameConfig, executeConfig } from './config';
 
 const validator = new Validator();
 

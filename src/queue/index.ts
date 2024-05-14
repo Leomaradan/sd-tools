@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';

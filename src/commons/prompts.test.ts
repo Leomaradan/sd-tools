@@ -2,7 +2,7 @@
 /// <reference types="jest" />
 
 import { preparePrompts } from './prompts';
-import { IPrompts } from './types';
+import { type IPrompts } from './types';
 
 describe('queue test', () => {
   it('should generate the query from single config', () => {

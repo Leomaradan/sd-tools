@@ -1,5 +1,5 @@
 import { Config } from './config';
-import { ILora, IModel, ISampler, IStyle, IUpscaler } from './types';
+import { type ILora, type IModel, type ISampler, type IStyle, type IUpscaler } from './types';
 
 export const BaseUpscalers: IUpscaler[] = [
   { name: 'Latent' },

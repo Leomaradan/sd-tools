@@ -1,10 +1,10 @@
-import fs from 'fs';
 import { Validator } from 'jsonschema';
-import { resolve } from 'path';
+import fs from 'node:fs';
+import { resolve } from 'node:path';
 
 import { logger } from '../commons/logger';
 import queueSchema from '../commons/schema/queue.json';
-import { IPrompts, IPromptsResolved } from '../commons/types';
+import { type IPrompts, type IPromptsResolved } from '../commons/types';
 
 const validator = new Validator();
 

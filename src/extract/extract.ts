@@ -1,10 +1,10 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { IExtractOptions, extractFromFile } from '../commons/extract';
+import { type IExtractOptions, extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { IPromptSingle } from '../commons/types';
+import { type IPromptSingle } from '../commons/types';
 
 export const extract = async (source: string, { addBefore, format, output, recursive }: IExtractOptions) => {
   if (!fs.existsSync(source)) {

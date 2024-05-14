@@ -3,7 +3,7 @@ import yargs from 'yargs';
 import { Config } from '../commons/config.js';
 import { logger } from '../commons/logger.js';
 import {
-  Options,
+  type Options,
   getConfigAddDetailerModels,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,

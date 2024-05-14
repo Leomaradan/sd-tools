@@ -1,5 +1,5 @@
 import { findSampler } from './models';
-import { IBaseQuery, MetadataAccelerator, MetadataVersionKey } from './types';
+import {type  IBaseQuery, type MetadataAccelerator, type  MetadataVersionKey } from './types';
 
 const DEFAULT_SAMPLERS = ['DPM++ 2M', 'Euler a']
 

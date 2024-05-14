@@ -5,7 +5,7 @@ import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpsca
 import { logger } from '../commons/logger.js';
 import { findCheckpoint, findLORA } from '../commons/models.js';
 import {
-  EditableOptions,
+  type EditableOptions,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,

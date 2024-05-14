@@ -2,7 +2,7 @@
 
 jest.mock('../commons/prompts');
 
-import path from 'path';
+import path from 'node:path';
 
 import { prompts } from '../commons/prompts';
 import { queueFromFile } from './queue';

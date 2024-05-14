@@ -3,7 +3,7 @@ const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
 import { logger } from './logger';
-import { ICache, IConfig } from './types';
+import { type ICache, type IConfig } from './types';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');

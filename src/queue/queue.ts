@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 
 import { logger } from '../commons/logger';
 import { prompts } from '../commons/prompts';

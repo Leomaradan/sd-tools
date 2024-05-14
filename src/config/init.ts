@@ -1,4 +1,4 @@
-import { basename } from 'path';
+import { basename } from 'node:path';
 import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
@@ -20,7 +20,7 @@ import {
   getUpscalersQuery,
   getVAEQuery
 } from '../commons/query';
-import { Extensions, ILora, IModel, IModelWithHash, IStyle, Version } from '../commons/types';
+import { type Extensions, type ILora, type IModel, type IModelWithHash, type IStyle, Version } from '../commons/types';
 
 export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';

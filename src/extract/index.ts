@@ -1,7 +1,7 @@
-import path from 'path';
+import path from 'node:path';
 import yargs from 'yargs';
 
-import { IExtractOptions, IExtractOptionsFull } from '../commons/extract';
+import { type IExtractOptions, type IExtractOptionsFull } from '../commons/extract';
 import { logger } from '../commons/logger';
 import { extract } from './extract';
 

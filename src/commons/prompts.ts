@@ -1,10 +1,10 @@
-import { readdirSync, statSync } from 'fs';
-import { resolve } from 'path';
+import { readdirSync, statSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { getDefaultQuery } from './defaultQuery';
-import { IAdetailer } from './extensions/adetailer';
+import { type IAdetailer } from './extensions/adetailer';
 import { getCutOffTokens } from './extensions/cutoff';
-import { ITiledDiffusion, ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
+import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
 import { logger, writeLog } from './logger';
 import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
@@ -12,15 +12,16 @@ import { isTxt2ImgQuery, renderQuery } from './query';
 import {
   ControlNetMode,
   ControlNetResizes,
-  ICheckpointWithVAE,
-  IControlNet,
-  IImg2ImgQuery,
-  IModel,
-  IPrompt,
-  IPromptPermutations,
-  IPromptSingle,
-  IPromptsResolved,
-  ITxt2ImgQuery} from './types';
+  type ICheckpointWithVAE,
+  type IControlNet,
+  type IImg2ImgQuery,
+  type IModel,
+  type IPrompt,
+  type IPromptPermutations,
+  type IPromptSingle,
+  type IPromptsResolved,
+  type ITxt2ImgQuery
+} from './types';
 
 interface IPrepareSingleQuery {
   autoCutOff: boolean;

@@ -1,15 +1,15 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import fs from 'fs';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
 import { Cache } from './config';
 import { logger } from './logger';
-import { CacheMetadata, ICivitAIInfoFile, IMetadata, IMetadataCheckpoint, IMetadataLora, Version } from './types';
+import { type CacheMetadata, type ICivitAIInfoFile, type IMetadata, type IMetadataCheckpoint, type IMetadataLora, Version } from './types';
 
 const CIVITAI_FILE = '.civitai.info'
 

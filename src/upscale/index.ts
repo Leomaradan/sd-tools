@@ -1,10 +1,10 @@
-import path from 'path';
+import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { findCheckpoint, findControlnetModel } from '../commons/models';
-import { IUpscaleOptions, IUpscaleOptionsFull } from './types';
+import { type IUpscaleOptions, type IUpscaleOptionsFull } from './types';
 import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
 import { upscaleTiles } from './upscaleTiles';
 

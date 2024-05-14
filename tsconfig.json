@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ESNext",
     "useDefineForClassFields": true,
     "strictNullChecks": true,
     "lib": ["ES7"],
@@ -10,9 +10,11 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "NodeNext",
+
     // "verbatimModuleSyntax": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Node",
+    "module": "ESNext",
+    "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true

@@ -1,10 +1,10 @@
-import path from 'path';
+import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { findUpscaler } from '../commons/models';
-import { IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 import { redraw } from './redraw';
 
 interface IRedrawArgsOptions {

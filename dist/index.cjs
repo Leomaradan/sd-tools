@@ -13151,17 +13151,17 @@ var require_graceful_fs = __commonJS({
 });
 
 // node_modules/xdg-basedir/index.js
-var import_os, import_path8, homeDirectory, env2, xdgData, xdgConfig, xdgState, xdgCache, xdgRuntime, xdgDataDirectories, xdgConfigDirectories;
+var import_os, import_path5, homeDirectory, env2, xdgData, xdgConfig, xdgState, xdgCache, xdgRuntime, xdgDataDirectories, xdgConfigDirectories;
 var init_xdg_basedir = __esm({
   "node_modules/xdg-basedir/index.js"() {
     import_os = __toESM(require("os"), 1);
-    import_path8 = __toESM(require("path"), 1);
+    import_path5 = __toESM(require("path"), 1);
     homeDirectory = import_os.default.homedir();
     ({ env: env2 } = process);
-    xdgData = env2.XDG_DATA_HOME || (homeDirectory ? import_path8.default.join(homeDirectory, ".local", "share") : void 0);
-    xdgConfig = env2.XDG_CONFIG_HOME || (homeDirectory ? import_path8.default.join(homeDirectory, ".config") : void 0);
-    xdgState = env2.XDG_STATE_HOME || (homeDirectory ? import_path8.default.join(homeDirectory, ".local", "state") : void 0);
-    xdgCache = env2.XDG_CACHE_HOME || (homeDirectory ? import_path8.default.join(homeDirectory, ".cache") : void 0);
+    xdgData = env2.XDG_DATA_HOME || (homeDirectory ? import_path5.default.join(homeDirectory, ".local", "share") : void 0);
+    xdgConfig = env2.XDG_CONFIG_HOME || (homeDirectory ? import_path5.default.join(homeDirectory, ".config") : void 0);
+    xdgState = env2.XDG_STATE_HOME || (homeDirectory ? import_path5.default.join(homeDirectory, ".local", "state") : void 0);
+    xdgCache = env2.XDG_CACHE_HOME || (homeDirectory ? import_path5.default.join(homeDirectory, ".cache") : void 0);
     xdgRuntime = env2.XDG_RUNTIME_DIR || void 0;
     xdgDataDirectories = (env2.XDG_DATA_DIRS || "/usr/local/share/:/usr/share/").split(":");
     if (xdgData) {
@@ -13991,24 +13991,24 @@ var configstore_exports = {};
 __export(configstore_exports, {
   default: () => Configstore
 });
-var import_path9, import_os2, import_graceful_fs, import_write_file_atomic, import_dot_prop, configDirectory, permissionError, mkdirOptions, writeFileOptions, Configstore;
+var import_path6, import_os2, import_graceful_fs, import_write_file_atomic, import_dot_prop, configDirectory, permissionError, mkdirOptions, writeFileOptions, Configstore;
 var init_configstore = __esm({
   "node_modules/configstore/index.js"() {
-    import_path9 = __toESM(require("path"), 1);
+    import_path6 = __toESM(require("path"), 1);
     import_os2 = __toESM(require("os"), 1);
     import_graceful_fs = __toESM(require_graceful_fs(), 1);
     init_xdg_basedir();
     import_write_file_atomic = __toESM(require_write_file_atomic(), 1);
     import_dot_prop = __toESM(require_dot_prop(), 1);
     init_unique_string();
-    configDirectory = xdgConfig || import_path9.default.join(import_os2.default.tmpdir(), uniqueString());
+    configDirectory = xdgConfig || import_path6.default.join(import_os2.default.tmpdir(), uniqueString());
     permissionError = "You don't have access to this file.";
     mkdirOptions = { mode: 448, recursive: true };
     writeFileOptions = { mode: 384 };
     Configstore = class {
       constructor(id, defaults2, options3 = {}) {
-        const pathPrefix = options3.globalConfigPath ? import_path9.default.join(id, "config.json") : import_path9.default.join("configstore", `${id}.json`);
-        this._path = options3.configPath || import_path9.default.join(configDirectory, pathPrefix);
+        const pathPrefix = options3.globalConfigPath ? import_path6.default.join(id, "config.json") : import_path6.default.join("configstore", `${id}.json`);
+        this._path = options3.configPath || import_path6.default.join(configDirectory, pathPrefix);
         if (defaults2) {
           this.all = {
             ...defaults2,
@@ -14037,7 +14037,7 @@ ${permissionError}
       }
       set all(value) {
         try {
-          import_graceful_fs.default.mkdirSync(import_path9.default.dirname(this._path), mkdirOptions);
+          import_graceful_fs.default.mkdirSync(import_path6.default.dirname(this._path), mkdirOptions);
           import_write_file_atomic.default.sync(this._path, JSON.stringify(value, void 0, "	"), writeFileOptions);
         } catch (error) {
           if (error.code === "EACCES") {
@@ -22823,10 +22823,10 @@ function argumentTypeError(observedType, allowedTypes2, position) {
 
 // node_modules/yargs/build/lib/middleware.js
 var GlobalMiddleware = class {
-  constructor(yargs) {
+  constructor(yargs10) {
     this.globalMiddleware = [];
     this.frozens = [];
-    this.yargs = yargs;
+    this.yargs = yargs10;
   }
   addMiddleware(callback, applyBeforeValidation, global2 = true, mutates = false) {
     argsert("<array|function> [boolean] [boolean] [boolean]", [callback, applyBeforeValidation, global2], arguments.length);
@@ -22884,7 +22884,7 @@ function commandMiddlewareFactory(commandMiddleware) {
     return middleware;
   });
 }
-function applyMiddleware(argv, yargs, middlewares, beforeValidation) {
+function applyMiddleware(argv, yargs10, middlewares, beforeValidation) {
   return middlewares.reduce((acc, middleware) => {
     if (middleware.applyBeforeValidation !== beforeValidation) {
       return acc;
@@ -22895,9 +22895,9 @@ function applyMiddleware(argv, yargs, middlewares, beforeValidation) {
       middleware.applied = true;
     }
     if (isPromise(acc)) {
-      return acc.then((initialObj) => Promise.all([initialObj, middleware(initialObj, yargs)])).then(([initialObj, middlewareObj]) => Object.assign(initialObj, middlewareObj));
+      return acc.then((initialObj) => Promise.all([initialObj, middleware(initialObj, yargs10)])).then(([initialObj, middlewareObj]) => Object.assign(initialObj, middlewareObj));
     } else {
-      const result = middleware(acc, yargs);
+      const result = middleware(acc, yargs10);
       return isPromise(result) ? result.then((middlewareObj) => Object.assign(acc, middlewareObj)) : Object.assign(acc, result);
     }
   }, argv);
@@ -23033,33 +23033,33 @@ var CommandInstance = class {
   hasDefaultCommand() {
     return !!this.defaultCommand;
   }
-  runCommand(command11, yargs, parsed, commandIndex, helpOnly, helpOrVersionSet) {
+  runCommand(command11, yargs10, parsed, commandIndex, helpOnly, helpOrVersionSet) {
     const commandHandler = this.handlers[command11] || this.handlers[this.aliasMap[command11]] || this.defaultCommand;
-    const currentContext = yargs.getInternalMethods().getContext();
+    const currentContext = yargs10.getInternalMethods().getContext();
     const parentCommands = currentContext.commands.slice();
     const isDefaultCommand = !command11;
     if (command11) {
       currentContext.commands.push(command11);
       currentContext.fullCommands.push(commandHandler.original);
     }
-    const builderResult = this.applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, parsed.aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet);
-    return isPromise(builderResult) ? builderResult.then((result) => this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, result.innerArgv, currentContext, helpOnly, result.aliases, yargs)) : this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, builderResult.innerArgv, currentContext, helpOnly, builderResult.aliases, yargs);
+    const builderResult = this.applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs10, parsed.aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet);
+    return isPromise(builderResult) ? builderResult.then((result) => this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, result.innerArgv, currentContext, helpOnly, result.aliases, yargs10)) : this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, builderResult.innerArgv, currentContext, helpOnly, builderResult.aliases, yargs10);
   }
-  applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet) {
+  applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs10, aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet) {
     const builder10 = commandHandler.builder;
-    let innerYargs = yargs;
+    let innerYargs = yargs10;
     if (isCommandBuilderCallback(builder10)) {
-      yargs.getInternalMethods().getUsageInstance().freeze();
-      const builderOutput = builder10(yargs.getInternalMethods().reset(aliases), helpOrVersionSet);
+      yargs10.getInternalMethods().getUsageInstance().freeze();
+      const builderOutput = builder10(yargs10.getInternalMethods().reset(aliases), helpOrVersionSet);
       if (isPromise(builderOutput)) {
         return builderOutput.then((output) => {
-          innerYargs = isYargsInstance(output) ? output : yargs;
+          innerYargs = isYargsInstance(output) ? output : yargs10;
           return this.parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly);
         });
       }
     } else if (isCommandBuilderOptionDefinitions(builder10)) {
-      yargs.getInternalMethods().getUsageInstance().freeze();
-      innerYargs = yargs.getInternalMethods().reset(aliases);
+      yargs10.getInternalMethods().getUsageInstance().freeze();
+      innerYargs = yargs10.getInternalMethods().reset(aliases);
       Object.keys(commandHandler.builder).forEach((key) => {
         innerYargs.option(key, builder10[key]);
       });
@@ -23081,8 +23081,8 @@ var CommandInstance = class {
       innerArgv
     };
   }
-  shouldUpdateUsage(yargs) {
-    return !yargs.getInternalMethods().getUsageInstance().getUsageDisabled() && yargs.getInternalMethods().getUsageInstance().getUsage().length === 0;
+  shouldUpdateUsage(yargs10) {
+    return !yargs10.getInternalMethods().getUsageInstance().getUsageDisabled() && yargs10.getInternalMethods().getUsageInstance().getUsage().length === 0;
   }
   usageFromParentCommandsCommandHandler(parentCommands, commandHandler) {
     const c = DEFAULT_MARKER.test(commandHandler.original) ? commandHandler.original.replace(DEFAULT_MARKER, "").trim() : commandHandler.original;
@@ -23092,30 +23092,30 @@ var CommandInstance = class {
     pc.push(c);
     return `$0 ${pc.join(" ")}`;
   }
-  handleValidationAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, aliases, yargs, middlewares, positionalMap) {
-    if (!yargs.getInternalMethods().getHasOutput()) {
-      const validation2 = yargs.getInternalMethods().runValidation(aliases, positionalMap, yargs.parsed.error, isDefaultCommand);
+  handleValidationAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, aliases, yargs10, middlewares, positionalMap) {
+    if (!yargs10.getInternalMethods().getHasOutput()) {
+      const validation2 = yargs10.getInternalMethods().runValidation(aliases, positionalMap, yargs10.parsed.error, isDefaultCommand);
       innerArgv = maybeAsyncResult(innerArgv, (result) => {
         validation2(result);
         return result;
       });
     }
-    if (commandHandler.handler && !yargs.getInternalMethods().getHasOutput()) {
-      yargs.getInternalMethods().setHasOutput();
-      const populateDoubleDash = !!yargs.getOptions().configuration["populate--"];
-      yargs.getInternalMethods().postProcess(innerArgv, populateDoubleDash, false, false);
-      innerArgv = applyMiddleware(innerArgv, yargs, middlewares, false);
+    if (commandHandler.handler && !yargs10.getInternalMethods().getHasOutput()) {
+      yargs10.getInternalMethods().setHasOutput();
+      const populateDoubleDash = !!yargs10.getOptions().configuration["populate--"];
+      yargs10.getInternalMethods().postProcess(innerArgv, populateDoubleDash, false, false);
+      innerArgv = applyMiddleware(innerArgv, yargs10, middlewares, false);
       innerArgv = maybeAsyncResult(innerArgv, (result) => {
         const handlerResult = commandHandler.handler(result);
         return isPromise(handlerResult) ? handlerResult.then(() => result) : result;
       });
       if (!isDefaultCommand) {
-        yargs.getInternalMethods().getUsageInstance().cacheHelpMessage();
+        yargs10.getInternalMethods().getUsageInstance().cacheHelpMessage();
       }
-      if (isPromise(innerArgv) && !yargs.getInternalMethods().hasParseCallback()) {
+      if (isPromise(innerArgv) && !yargs10.getInternalMethods().hasParseCallback()) {
         innerArgv.catch((error) => {
           try {
-            yargs.getInternalMethods().getUsageInstance().fail(null, error);
+            yargs10.getInternalMethods().getUsageInstance().fail(null, error);
           } catch (_err) {
           }
         });
@@ -23127,18 +23127,18 @@ var CommandInstance = class {
     }
     return innerArgv;
   }
-  applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs) {
+  applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs10) {
     let positionalMap = {};
     if (helpOnly)
       return innerArgv;
-    if (!yargs.getInternalMethods().getHasOutput()) {
-      positionalMap = this.populatePositionals(commandHandler, innerArgv, currentContext, yargs);
+    if (!yargs10.getInternalMethods().getHasOutput()) {
+      positionalMap = this.populatePositionals(commandHandler, innerArgv, currentContext, yargs10);
     }
     const middlewares = this.globalMiddleware.getMiddleware().slice(0).concat(commandHandler.middlewares);
-    const maybePromiseArgv = applyMiddleware(innerArgv, yargs, middlewares, true);
-    return isPromise(maybePromiseArgv) ? maybePromiseArgv.then((resolvedInnerArgv) => this.handleValidationAndGetResult(isDefaultCommand, commandHandler, resolvedInnerArgv, currentContext, aliases, yargs, middlewares, positionalMap)) : this.handleValidationAndGetResult(isDefaultCommand, commandHandler, maybePromiseArgv, currentContext, aliases, yargs, middlewares, positionalMap);
+    const maybePromiseArgv = applyMiddleware(innerArgv, yargs10, middlewares, true);
+    return isPromise(maybePromiseArgv) ? maybePromiseArgv.then((resolvedInnerArgv) => this.handleValidationAndGetResult(isDefaultCommand, commandHandler, resolvedInnerArgv, currentContext, aliases, yargs10, middlewares, positionalMap)) : this.handleValidationAndGetResult(isDefaultCommand, commandHandler, maybePromiseArgv, currentContext, aliases, yargs10, middlewares, positionalMap);
   }
-  populatePositionals(commandHandler, argv, context, yargs) {
+  populatePositionals(commandHandler, argv, context, yargs10) {
     argv._ = argv._.slice(context.commands.length);
     const demanded = commandHandler.demanded.slice(0);
     const optional = commandHandler.optional.slice(0);
@@ -23153,7 +23153,7 @@ var CommandInstance = class {
       this.populatePositional(maybe, argv, positionalMap);
     }
     argv._ = context.commands.concat(argv._.map((a) => "" + a));
-    this.postProcessPositionals(argv, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs);
+    this.postProcessPositionals(argv, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs10);
     return positionalMap;
   }
   populatePositional(positional, argv, positionalMap) {
@@ -23192,8 +23192,8 @@ var CommandInstance = class {
     });
     return parseOptions;
   }
-  postProcessPositionals(argv, positionalMap, parseOptions, yargs) {
-    const options3 = Object.assign({}, yargs.getOptions());
+  postProcessPositionals(argv, positionalMap, parseOptions, yargs10) {
+    const options3 = Object.assign({}, yargs10.getOptions());
     options3.default = Object.assign(parseOptions.default, options3.default);
     for (const key of Object.keys(parseOptions.alias)) {
       options3.alias[key] = (options3.alias[key] || []).concat(parseOptions.alias[key]);
@@ -23218,7 +23218,7 @@ var CommandInstance = class {
       configuration: config2
     }));
     if (parsed.error) {
-      yargs.getInternalMethods().getUsageInstance().fail(parsed.error.message, parsed.error);
+      yargs10.getInternalMethods().getUsageInstance().fail(parsed.error.message, parsed.error);
     } else {
       const positionalKeys = Object.keys(positionalMap);
       Object.keys(positionalMap).forEach((key) => {
@@ -23228,7 +23228,7 @@ var CommandInstance = class {
         if (positionalKeys.includes(key)) {
           if (!positionalMap[key])
             positionalMap[key] = parsed.argv[key];
-          if (!this.isInConfigs(yargs, key) && !this.isDefaulted(yargs, key) && Object.prototype.hasOwnProperty.call(argv, key) && Object.prototype.hasOwnProperty.call(parsed.argv, key) && (Array.isArray(argv[key]) || Array.isArray(parsed.argv[key]))) {
+          if (!this.isInConfigs(yargs10, key) && !this.isDefaulted(yargs10, key) && Object.prototype.hasOwnProperty.call(argv, key) && Object.prototype.hasOwnProperty.call(parsed.argv, key) && (Array.isArray(argv[key]) || Array.isArray(parsed.argv[key]))) {
             argv[key] = [].concat(argv[key], parsed.argv[key]);
           } else {
             argv[key] = parsed.argv[key];
@@ -23237,27 +23237,27 @@ var CommandInstance = class {
       });
     }
   }
-  isDefaulted(yargs, key) {
-    const { default: defaults2 } = yargs.getOptions();
+  isDefaulted(yargs10, key) {
+    const { default: defaults2 } = yargs10.getOptions();
     return Object.prototype.hasOwnProperty.call(defaults2, key) || Object.prototype.hasOwnProperty.call(defaults2, this.shim.Parser.camelCase(key));
   }
-  isInConfigs(yargs, key) {
-    const { configObjects } = yargs.getOptions();
+  isInConfigs(yargs10, key) {
+    const { configObjects } = yargs10.getOptions();
     return configObjects.some((c) => Object.prototype.hasOwnProperty.call(c, key)) || configObjects.some((c) => Object.prototype.hasOwnProperty.call(c, this.shim.Parser.camelCase(key)));
   }
-  runDefaultBuilderOn(yargs) {
+  runDefaultBuilderOn(yargs10) {
     if (!this.defaultCommand)
       return;
-    if (this.shouldUpdateUsage(yargs)) {
+    if (this.shouldUpdateUsage(yargs10)) {
       const commandString = DEFAULT_MARKER.test(this.defaultCommand.original) ? this.defaultCommand.original : this.defaultCommand.original.replace(/^[^[\]<>]*/, "$0 ");
-      yargs.getInternalMethods().getUsageInstance().usage(commandString, this.defaultCommand.description);
+      yargs10.getInternalMethods().getUsageInstance().usage(commandString, this.defaultCommand.description);
     }
     const builder10 = this.defaultCommand.builder;
     if (isCommandBuilderCallback(builder10)) {
-      return builder10(yargs, true);
+      return builder10(yargs10, true);
     } else if (!isCommandBuilderDefinition(builder10)) {
       Object.keys(builder10).forEach((key) => {
-        yargs.option(key, builder10[key]);
+        yargs10.option(key, builder10[key]);
       });
     }
     return void 0;
@@ -23349,7 +23349,7 @@ function setBlocking(blocking) {
 function isBoolean(fail) {
   return typeof fail === "boolean";
 }
-function usage(yargs, shim3) {
+function usage(yargs10, shim3) {
   const __ = shim3.y18n.__;
   const self2 = {};
   const fails = [];
@@ -23361,7 +23361,7 @@ function usage(yargs, shim3) {
   let showHelpOnFail = true;
   self2.showHelpOnFail = function showHelpOnFailFn(arg1 = true, arg2) {
     const [enabled, message] = typeof arg1 === "string" ? [true, arg1] : [arg1, arg2];
-    if (yargs.getInternalMethods().isGlobalContext()) {
+    if (yargs10.getInternalMethods().isGlobalContext()) {
       globalFailMessage = message;
     }
     failMessage = message;
@@ -23370,7 +23370,7 @@ function usage(yargs, shim3) {
   };
   let failureOutput = false;
   self2.fail = function fail(msg, err) {
-    const logger2 = yargs.getInternalMethods().getLoggerInstance();
+    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
     if (fails.length) {
       for (let i = fails.length - 1; i >= 0; --i) {
         const fail2 = fails[i];
@@ -23384,12 +23384,12 @@ function usage(yargs, shim3) {
         }
       }
     } else {
-      if (yargs.getExitProcess())
+      if (yargs10.getExitProcess())
         setBlocking(true);
       if (!failureOutput) {
         failureOutput = true;
         if (showHelpOnFail) {
-          yargs.showHelp("error");
+          yargs10.showHelp("error");
           logger2.error();
         }
         if (msg || err)
@@ -23402,10 +23402,10 @@ function usage(yargs, shim3) {
         }
       }
       err = err || new YError(msg);
-      if (yargs.getExitProcess()) {
-        return yargs.exit(1);
-      } else if (yargs.getInternalMethods().hasParseCallback()) {
-        return yargs.exit(1, err);
+      if (yargs10.getExitProcess()) {
+        return yargs10.exit(1);
+      } else if (yargs10.getInternalMethods().hasParseCallback()) {
+        return yargs10.exit(1, err);
       } else {
         throw err;
       }
@@ -23488,12 +23488,12 @@ function usage(yargs, shim3) {
     if (cachedHelpMessage)
       return cachedHelpMessage;
     normalizeAliases();
-    const base$0 = yargs.customScriptName ? yargs.$0 : shim3.path.basename(yargs.$0);
-    const demandedOptions = yargs.getDemandedOptions();
-    const demandedCommands = yargs.getDemandedCommands();
-    const deprecatedOptions = yargs.getDeprecatedOptions();
-    const groups = yargs.getGroups();
-    const options3 = yargs.getOptions();
+    const base$0 = yargs10.customScriptName ? yargs10.$0 : shim3.path.basename(yargs10.$0);
+    const demandedOptions = yargs10.getDemandedOptions();
+    const demandedCommands = yargs10.getDemandedCommands();
+    const deprecatedOptions = yargs10.getDeprecatedOptions();
+    const groups = yargs10.getGroups();
+    const options3 = yargs10.getOptions();
     let keys = [];
     keys = keys.concat(Object.keys(descriptions));
     keys = keys.concat(Object.keys(demandedOptions));
@@ -23533,9 +23533,9 @@ function usage(yargs, shim3) {
     }
     if (commands.length > 1 || commands.length === 1 && !commands[0][2]) {
       ui2.div(__("Commands:"));
-      const context = yargs.getInternalMethods().getContext();
+      const context = yargs10.getInternalMethods().getContext();
       const parentCommands = context.commands.length ? `${context.commands.join(" ")} ` : "";
-      if (yargs.getInternalMethods().getParserConfiguration()["sort-commands"] === true) {
+      if (yargs10.getInternalMethods().getParserConfiguration()["sort-commands"] === true) {
         commands = commands.sort((a, b) => a[0].localeCompare(b[0]));
       }
       const prefix = base$0 ? `${base$0} ` : "";
@@ -23571,8 +23571,8 @@ function usage(yargs, shim3) {
       });
       ui2.div();
     }
-    const aliasKeys = (Object.keys(options3.alias) || []).concat(Object.keys(yargs.parsed.newAliases) || []);
-    keys = keys.filter((key) => !yargs.parsed.newAliases[key] && aliasKeys.every((alias) => (options3.alias[alias] || []).indexOf(key) === -1));
+    const aliasKeys = (Object.keys(options3.alias) || []).concat(Object.keys(yargs10.parsed.newAliases) || []);
+    keys = keys.filter((key) => !yargs10.parsed.newAliases[key] && aliasKeys.every((alias) => (options3.alias[alias] || []).indexOf(key) === -1));
     const defaultGroup = __("Options:");
     if (!groups[defaultGroup])
       groups[defaultGroup] = [];
@@ -23645,7 +23645,7 @@ function usage(yargs, shim3) {
           padding: [0, 2, 0, 2 + getIndentation(kswitch)],
           width: maxWidth(switches, theWrap) + 4
         }, desc);
-        const shouldHideOptionExtras = yargs.getInternalMethods().getUsageConfiguration()["hide-types"] === true;
+        const shouldHideOptionExtras = yargs10.getInternalMethods().getUsageConfiguration()["hide-types"] === true;
         if (extra && !shouldHideOptionExtras)
           ui2.div({ text: extra, padding: [0, 0, 0, 2], align: "right" });
         else
@@ -23696,26 +23696,26 @@ function usage(yargs, shim3) {
     return width;
   }
   function normalizeAliases() {
-    const demandedOptions = yargs.getDemandedOptions();
-    const options3 = yargs.getOptions();
+    const demandedOptions = yargs10.getDemandedOptions();
+    const options3 = yargs10.getOptions();
     (Object.keys(options3.alias) || []).forEach((key) => {
       options3.alias[key].forEach((alias) => {
         if (descriptions[alias])
           self2.describe(key, descriptions[alias]);
         if (alias in demandedOptions)
-          yargs.demandOption(key, demandedOptions[alias]);
+          yargs10.demandOption(key, demandedOptions[alias]);
         if (options3.boolean.includes(alias))
-          yargs.boolean(key);
+          yargs10.boolean(key);
         if (options3.count.includes(alias))
-          yargs.count(key);
+          yargs10.count(key);
         if (options3.string.includes(alias))
-          yargs.string(key);
+          yargs10.string(key);
         if (options3.normalize.includes(alias))
-          yargs.normalize(key);
+          yargs10.normalize(key);
         if (options3.array.includes(alias))
-          yargs.array(key);
+          yargs10.array(key);
         if (options3.number.includes(alias))
-          yargs.number(key);
+          yargs10.number(key);
       });
     });
   }
@@ -23744,10 +23744,10 @@ function usage(yargs, shim3) {
     return groupedKeys;
   }
   function filterHiddenOptions(key) {
-    return yargs.getOptions().hiddenOptions.indexOf(key) < 0 || yargs.parsed.argv[yargs.getOptions().showHiddenOpt];
+    return yargs10.getOptions().hiddenOptions.indexOf(key) < 0 || yargs10.parsed.argv[yargs10.getOptions().showHiddenOpt];
   }
   self2.showHelp = (level) => {
-    const logger2 = yargs.getInternalMethods().getLoggerInstance();
+    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
     if (!level)
       level = "error";
     const emit = typeof level === "function" ? level : logger2[level];
@@ -23803,7 +23803,7 @@ function usage(yargs, shim3) {
     version = ver;
   };
   self2.showVersion = (level) => {
-    const logger2 = yargs.getInternalMethods().getLoggerInstance();
+    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
     if (!level)
       level = "error";
     const emit = typeof level === "function" ? level : logger2[level];
@@ -23924,9 +23924,9 @@ compdef _{{app_name}}_yargs_completions {{app_name}}
 
 // node_modules/yargs/build/lib/completion.js
 var Completion = class {
-  constructor(yargs, usage2, command11, shim3) {
+  constructor(yargs10, usage2, command11, shim3) {
     var _a3, _b2, _c2;
-    this.yargs = yargs;
+    this.yargs = yargs10;
     this.usage = usage2;
     this.command = command11;
     this.shim = shim3;
@@ -24125,8 +24125,8 @@ var Completion = class {
     this.aliases = parsed.aliases;
   }
 };
-function completion(yargs, usage2, command11, shim3) {
-  return new Completion(yargs, usage2, command11, shim3);
+function completion(yargs10, usage2, command11, shim3) {
+  return new Completion(yargs10, usage2, command11, shim3);
 }
 function isSyncCompletionFunction(completionFunction) {
   return completionFunction.length < 3;
@@ -24168,14 +24168,14 @@ function levenshtein(a, b) {
 
 // node_modules/yargs/build/lib/validation.js
 var specialKeys = ["$0", "--", "_"];
-function validation(yargs, usage2, shim3) {
+function validation(yargs10, usage2, shim3) {
   const __ = shim3.y18n.__;
   const __n = shim3.y18n.__n;
   const self2 = {};
   self2.nonOptionCount = function nonOptionCount(argv) {
-    const demandedCommands = yargs.getDemandedCommands();
+    const demandedCommands = yargs10.getDemandedCommands();
     const positionalCount = argv._.length + (argv["--"] ? argv["--"].length : 0);
-    const _s = positionalCount - yargs.getInternalMethods().getContext().commands.length;
+    const _s = positionalCount - yargs10.getInternalMethods().getContext().commands.length;
     if (demandedCommands._ && (_s < demandedCommands._.min || _s > demandedCommands._.max)) {
       if (_s < demandedCommands._.min) {
         if (demandedCommands._.minMsg !== void 0) {
@@ -24220,11 +24220,11 @@ ${customMsgs.join("\n")}` : "";
   };
   self2.unknownArguments = function unknownArguments(argv, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
     var _a3;
-    const commandKeys = yargs.getInternalMethods().getCommandInstance().getCommands();
+    const commandKeys = yargs10.getInternalMethods().getCommandInstance().getCommands();
     const unknown = [];
-    const currentContext = yargs.getInternalMethods().getContext();
+    const currentContext = yargs10.getInternalMethods().getContext();
     Object.keys(argv).forEach((key) => {
-      if (!specialKeys.includes(key) && !Object.prototype.hasOwnProperty.call(positionalMap, key) && !Object.prototype.hasOwnProperty.call(yargs.getInternalMethods().getParseContext(), key) && !self2.isValidAndSomeAliasIsNotNew(key, aliases)) {
+      if (!specialKeys.includes(key) && !Object.prototype.hasOwnProperty.call(positionalMap, key) && !Object.prototype.hasOwnProperty.call(yargs10.getInternalMethods().getParseContext(), key) && !self2.isValidAndSomeAliasIsNotNew(key, aliases)) {
         unknown.push(key);
       }
     });
@@ -24236,7 +24236,7 @@ ${customMsgs.join("\n")}` : "";
       });
     }
     if (checkPositionals) {
-      const demandedCommands = yargs.getDemandedCommands();
+      const demandedCommands = yargs10.getDemandedCommands();
       const maxNonOptDemanded = ((_a3 = demandedCommands._) === null || _a3 === void 0 ? void 0 : _a3.max) || 0;
       const expected = currentContext.commands.length + maxNonOptDemanded;
       if (expected < argv._.length) {
@@ -24253,9 +24253,9 @@ ${customMsgs.join("\n")}` : "";
     }
   };
   self2.unknownCommands = function unknownCommands(argv) {
-    const commandKeys = yargs.getInternalMethods().getCommandInstance().getCommands();
+    const commandKeys = yargs10.getInternalMethods().getCommandInstance().getCommands();
     const unknown = [];
-    const currentContext = yargs.getInternalMethods().getContext();
+    const currentContext = yargs10.getInternalMethods().getContext();
     if (currentContext.commands.length > 0 || commandKeys.length > 0) {
       argv._.slice(currentContext.commands.length).forEach((key) => {
         if (!commandKeys.includes("" + key)) {
@@ -24274,11 +24274,11 @@ ${customMsgs.join("\n")}` : "";
     if (!Object.prototype.hasOwnProperty.call(aliases, key)) {
       return false;
     }
-    const newAliases = yargs.parsed.newAliases;
+    const newAliases = yargs10.parsed.newAliases;
     return [key, ...aliases[key]].some((a) => !Object.prototype.hasOwnProperty.call(newAliases, a) || !newAliases[key]);
   };
   self2.limitedChoices = function limitedChoices(argv) {
-    const options3 = yargs.getOptions();
+    const options3 = yargs10.getOptions();
     const invalid = {};
     if (!Object.keys(options3.choices).length)
       return;
@@ -24309,7 +24309,7 @@ ${customMsgs.join("\n")}` : "";
         self2.implies(k, key[k]);
       });
     } else {
-      yargs.global(key);
+      yargs10.global(key);
       if (!implied[key]) {
         implied[key] = [];
       }
@@ -24368,7 +24368,7 @@ ${customMsgs.join("\n")}` : "";
         self2.conflicts(k, key[k]);
       });
     } else {
-      yargs.global(key);
+      yargs10.global(key);
       if (!conflicting[key]) {
         conflicting[key] = [];
       }
@@ -24390,7 +24390,7 @@ ${customMsgs.join("\n")}` : "";
         });
       }
     });
-    if (yargs.getInternalMethods().getParserConfiguration()["strip-dashed"]) {
+    if (yargs10.getInternalMethods().getParserConfiguration()["strip-dashed"]) {
       Object.keys(conflicting).forEach((key) => {
         conflicting[key].forEach((value) => {
           if (value && argv[shim3.Parser.camelCase(key)] !== void 0 && argv[shim3.Parser.camelCase(value)] !== void 0) {
@@ -24542,16 +24542,16 @@ var _YargsInstance_versionOpt;
 var _YargsInstance_validation;
 function YargsFactory(_shim) {
   return (processArgs = [], cwd = _shim.process.cwd(), parentRequire) => {
-    const yargs = new YargsInstance(processArgs, cwd, parentRequire, _shim);
-    Object.defineProperty(yargs, "argv", {
+    const yargs10 = new YargsInstance(processArgs, cwd, parentRequire, _shim);
+    Object.defineProperty(yargs10, "argv", {
       get: () => {
-        return yargs.parse();
+        return yargs10.parse();
       },
       enumerable: true
     });
-    yargs.help();
-    yargs.version();
-    return yargs;
+    yargs10.help();
+    yargs10.version();
+    return yargs10;
   };
 }
 var kCopyDoubleDash = Symbol("copyDoubleDash");
@@ -24734,18 +24734,18 @@ var YargsInstance = class {
       throw new YError("coerce callback must be provided");
     }
     __classPrivateFieldGet(this, _YargsInstance_options, "f").key[keys] = true;
-    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv, yargs) => {
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv, yargs10) => {
       let aliases;
       const shouldCoerce = Object.prototype.hasOwnProperty.call(argv, keys);
       if (!shouldCoerce) {
         return argv;
       }
       return maybeAsyncResult(() => {
-        aliases = yargs.getAliases();
+        aliases = yargs10.getAliases();
         return value(argv[keys]);
       }, (result) => {
         argv[keys] = result;
-        const stripAliased = yargs.getInternalMethods().getParserConfiguration()["strip-aliased"];
+        const stripAliased = yargs10.getInternalMethods().getParserConfiguration()["strip-aliased"];
         if (aliases[keys] && stripAliased !== true) {
           for (const alias of aliases[keys]) {
             argv[alias] = result;
@@ -25999,7 +25999,7 @@ __export(init_exports, {
   describe: () => describe,
   handler: () => handler
 });
-var import_path7 = require("path");
+var import_node_path3 = require("node:path");
 
 // src/commons/checkpoints.ts
 var ratedCheckpoints = {
@@ -29056,8 +29056,7 @@ var {
 } = axios_default;
 
 // src/commons/file.ts
-var import_crypto = __toESM(require("crypto"));
-var import_fs6 = __toESM(require("fs"));
+var import_crypto = __toESM(require("crypto"), 1);
 
 // node_modules/entities/lib/esm/generated/decode-data-html.js
 var decode_data_html_default = new Uint16Array(
@@ -31946,27 +31945,28 @@ function parseDocument(data, options3) {
 }
 
 // src/commons/file.ts
-var import_image_size = __toESM(require_dist());
-var import_path6 = __toESM(require("path"));
-var import_png_chunk_text = __toESM(require_png_chunk_text());
-var import_png_chunks_extract = __toESM(require_png_chunks_extract());
+var import_image_size = __toESM(require_dist(), 1);
+var import_node_fs2 = __toESM(require("node:fs"), 1);
+var import_node_path2 = __toESM(require("node:path"), 1);
+var import_png_chunk_text = __toESM(require_png_chunk_text(), 1);
+var import_png_chunks_extract = __toESM(require_png_chunks_extract(), 1);
 
 // src/commons/logger.ts
-var import_fs5 = __toESM(require("fs"));
-var import_path5 = __toESM(require("path"));
+var import_node_fs = __toESM(require("node:fs"), 1);
+var import_node_path = __toESM(require("node:path"), 1);
 var logger = (message) => {
   console.log(message);
 };
 var writeLog = (...data) => {
-  const logPath = import_path5.default.resolve(__dirname, "..", "logs");
-  const logFile = import_path5.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.txt`);
-  if (!import_fs5.default.existsSync(logPath)) {
-    import_fs5.default.mkdirSync(logPath);
+  const logPath = import_node_path.default.resolve(__dirname, "..", "logs");
+  const logFile = import_node_path.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.txt`);
+  if (!import_node_fs.default.existsSync(logPath)) {
+    import_node_fs.default.mkdirSync(logPath);
   }
-  if (!import_fs5.default.existsSync(logFile)) {
-    import_fs5.default.writeFileSync(logFile, "");
+  if (!import_node_fs.default.existsSync(logFile)) {
+    import_node_fs.default.writeFileSync(logFile, "");
   }
-  import_fs5.default.appendFileSync(
+  import_node_fs.default.appendFileSync(
     logFile,
     `${Date.now()} ${JSON.stringify(data, (key, value) => {
       if (["init_images", "input_image"].includes(key)) {
@@ -31984,8 +31984,40 @@ var writeLog = (...data) => {
   );
 };
 
+// src/commons/extensions/cutoff.ts
+var getCutOffTokens = (prompt) => {
+  let tokens = prompt.split(/,|BREAK|SEP|SKIP/i);
+  tokens = tokens.map((token) => token.trim());
+  const autoTokens = Array.from(Config.get("cutoffTokens"));
+  return tokens.filter((token) => {
+    return autoTokens.some((autoToken) => {
+      const tokenLower = token.toLowerCase();
+      const autoTokenLower = autoToken.toLowerCase();
+      return tokenLower.startsWith(autoTokenLower) || tokenLower.endsWith(autoTokenLower) || tokenLower.includes(` ${autoTokenLower} `);
+    });
+  });
+};
+
+// src/commons/extensions/multidiffusionUpscaler.ts
+var defaultTiledDiffusionOptions = {
+  method: "MultiDiffusion" /* MultiDiffusion */,
+  scaleFactor: 2,
+  tileBatchSize: 4,
+  tileHeight: 96,
+  tileOverlap: 48,
+  tileWidth: 96
+};
+var defaultTiledVAEnOptions = {
+  colorFix: false,
+  decoderTileSize: 64,
+  encoderTileSize: 960,
+  fastDecoder: true,
+  fastEncoder: true,
+  vaeToGPU: true
+};
+
 // src/commons/types.ts
-var Version = {
+var Version2 = {
   SD14: "sd14",
   SD15: "sd15",
   SD20: "sd20",
@@ -31997,17 +32029,18 @@ var Version = {
 };
 
 // src/commons/file.ts
+var CIVITAI_FILE = ".civitai.info";
 var readFile = (path13, noCache) => {
   let data = void 0;
   const cacheImageData = noCache ? {} : Cache.get("imageData");
   try {
     if (cacheImageData[path13] !== void 0) {
-      if (cacheImageData[path13].timestamp === import_fs6.default.statSync(path13).mtimeMs.toString()) {
+      if (cacheImageData[path13].timestamp === import_node_fs2.default.statSync(path13).mtimeMs.toString()) {
         return cacheImageData[path13].data;
       }
       delete cacheImageData[path13];
     }
-    const buffer = import_fs6.default.readFileSync(path13);
+    const buffer = import_node_fs2.default.readFileSync(path13);
     const chunks = (0, import_png_chunks_extract.default)(buffer);
     const exif = chunks.filter((chunk) => {
       return chunk.name === "tEXt";
@@ -32021,7 +32054,7 @@ var readFile = (path13, noCache) => {
       data = texData.split("\n");
       cacheImageData[path13] = {
         data,
-        timestamp: import_fs6.default.statSync(path13).mtimeMs.toString()
+        timestamp: import_node_fs2.default.statSync(path13).mtimeMs.toString()
       };
     }
   } catch (error) {
@@ -32034,25 +32067,25 @@ var readFile = (path13, noCache) => {
   return data;
 };
 var readFiles = (sourcepath, root, recursive, noCache) => {
-  const files = import_fs6.default.readdirSync(sourcepath);
+  const files = import_node_fs2.default.readdirSync(sourcepath);
   const result = [];
   files.forEach((file) => {
-    if (recursive && import_fs6.default.lstatSync(import_path6.default.resolve(sourcepath, file)).isDirectory()) {
-      result.push(...readFiles(import_path6.default.resolve(sourcepath, file), root, recursive));
+    if (recursive && import_node_fs2.default.lstatSync(import_node_path2.default.resolve(sourcepath, file)).isDirectory()) {
+      result.push(...readFiles(import_node_path2.default.resolve(sourcepath, file), root, recursive));
     }
-    const prefix = recursive ? import_path6.default.relative(root, sourcepath).split(import_path6.default.sep).join(", ") : void 0;
+    const prefix = recursive ? import_node_path2.default.relative(root, sourcepath).split(import_node_path2.default.sep).join(", ") : void 0;
     if (file.endsWith(".png")) {
       logger(`Read ${file}`);
-      const filename = import_path6.default.resolve(sourcepath, file);
+      const filename = import_node_path2.default.resolve(sourcepath, file);
       const data = readFile(filename, noCache);
       const sizes = (0, import_image_size.default)(filename);
-      const date = import_fs6.default.statSync(filename).birthtime.toISOString();
+      const date = import_node_fs2.default.statSync(filename).birthtime.toISOString();
       result.push({
         data,
         date,
         file,
         filename,
-        fullpath: import_path6.default.resolve(sourcepath, file),
+        fullpath: import_node_path2.default.resolve(sourcepath, file),
         height: sizes.height ?? -1,
         prefix,
         width: sizes.width ?? -1
@@ -32060,15 +32093,15 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
     }
     if (file.endsWith(".jpg") || file.endsWith(".jpeg")) {
       logger(`Read ${file}`);
-      const filename = import_path6.default.resolve(sourcepath, file);
+      const filename = import_node_path2.default.resolve(sourcepath, file);
       const sizes = (0, import_image_size.default)(filename);
-      const date = import_fs6.default.statSync(filename).birthtime.toISOString();
+      const date = import_node_fs2.default.statSync(filename).birthtime.toISOString();
       result.push({
         data: void 0,
         date,
         file,
         filename,
-        fullpath: import_path6.default.resolve(sourcepath, file),
+        fullpath: import_node_path2.default.resolve(sourcepath, file),
         height: sizes.height ?? -1,
         prefix,
         width: sizes.width ?? -1
@@ -32082,7 +32115,7 @@ var getHash = (url2) => {
   return new Promise((resolve7, reject) => {
     const hashBuilder = import_crypto.default.createHash("sha256");
     hashBuilder.setEncoding("hex");
-    const stream4 = import_fs6.default.createReadStream(url2);
+    const stream4 = import_node_fs2.default.createReadStream(url2);
     stream4.on("end", function() {
       hashBuilder.end();
       resolve7(hashBuilder.read());
@@ -32114,10 +32147,10 @@ var getBase64Image = (url2) => {
   if (imageCache[url2] !== void 0) {
     return imageCache[url2].data;
   }
-  if (import_fs6.default.statSync(url2).isDirectory()) {
+  if (import_node_fs2.default.statSync(url2).isDirectory()) {
     return;
   }
-  const buffer = import_fs6.default.readFileSync(url2);
+  const buffer = import_node_fs2.default.readFileSync(url2);
   const data = buffer.toString("base64");
   const sizes = (0, import_image_size.default)(url2);
   imageCache[url2] = {
@@ -32131,10 +32164,10 @@ var getImageSize = (url2) => {
   if (imageCache[url2] !== void 0) {
     return { height: imageCache[url2].height, width: imageCache[url2].width };
   }
-  if (import_fs6.default.statSync(url2).isDirectory()) {
+  if (import_node_fs2.default.statSync(url2).isDirectory()) {
     return { height: -1, width: -1 };
   }
-  const buffer = import_fs6.default.readFileSync(url2);
+  const buffer = import_node_fs2.default.readFileSync(url2);
   const data = buffer.toString("base64");
   const sizes = (0, import_image_size.default)(url2);
   imageCache[url2] = {
@@ -32149,59 +32182,59 @@ var getMetadataFromCivitAi = (metadata) => {
     const result = {
       accelerator: "none",
       keywords: metadata.trainedWords,
-      sdVersion: Version.Unknown
+      sdVersion: Version2.Unknown
       //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
     };
     switch (metadata.baseModel) {
       case "Pony":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         break;
       case "SD 1.4":
-        result.sdVersion = Version.SD14;
+        result.sdVersion = Version2.SD14;
         break;
       case "SD 1.5 LCM":
-        result.sdVersion = Version.SD15;
+        result.sdVersion = Version2.SD15;
         result.accelerator = "lcm";
         break;
       case "SD 1.5":
-        result.sdVersion = Version.SD15;
+        result.sdVersion = Version2.SD15;
         break;
       case "SD 2.0":
-        result.sdVersion = Version.SD20;
+        result.sdVersion = Version2.SD20;
         break;
       case "SD 2.0 768":
-        result.sdVersion = Version.SD20Full;
+        result.sdVersion = Version2.SD20Full;
         break;
       case "SD 2.1":
-        result.sdVersion = Version.SD21;
+        result.sdVersion = Version2.SD21;
         break;
       case "SD 2.1 768":
-        result.sdVersion = Version.SD21Full;
+        result.sdVersion = Version2.SD21Full;
         break;
       case "SDXL 0.9":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         break;
       case "SDXL 1.0 LCM":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         result.accelerator = "lcm";
         break;
       case "SDXL 1.0":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         break;
       case "SDXL Distilled":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         result.accelerator = "distilled";
         break;
       case "SDXL Lightning":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         result.accelerator = "lightning";
         break;
       case "SDXL Turbo":
-        result.sdVersion = Version.SDXL;
+        result.sdVersion = Version2.SDXL;
         result.accelerator = "turbo";
         break;
       default:
-        result.sdVersion = Version.Unknown;
+        result.sdVersion = Version2.Unknown;
         break;
     }
     return result;
@@ -32215,28 +32248,28 @@ var getMetadataFromCivitAi = (metadata) => {
   return void 0;
 };
 var getMetadataCivitAiInfo = (actualCacheMetadata, url2) => {
-  if (!url2.endsWith(".civitai.info")) {
+  if (!url2.endsWith(CIVITAI_FILE)) {
     logger(`Invalid metadata file : ${url2}`);
   }
-  if (!import_fs6.default.existsSync(url2)) {
+  if (!import_node_fs2.default.existsSync(url2)) {
     logger(`File does not exists : ${url2}`);
     return;
   }
   const cacheMetadata = { ...actualCacheMetadata };
   try {
     if (cacheMetadata[url2] !== void 0) {
-      if (cacheMetadata[url2].timestamp === import_fs6.default.statSync(url2).mtimeMs.toString()) {
+      if (cacheMetadata[url2].timestamp === import_node_fs2.default.statSync(url2).mtimeMs.toString()) {
         return [cacheMetadata, cacheMetadata[url2]];
       }
       delete actualCacheMetadata[url2];
     }
-    const content = import_fs6.default.readFileSync(url2, "utf8");
+    const content = import_node_fs2.default.readFileSync(url2, "utf8");
     const metadata = JSON.parse(content);
     const result = getMetadataFromCivitAi(metadata);
     if (!result) {
       return;
     }
-    cacheMetadata[url2] = { ...result, timestamp: import_fs6.default.statSync(url2).mtimeMs.toString() };
+    cacheMetadata[url2] = { ...result, timestamp: import_node_fs2.default.statSync(url2).mtimeMs.toString() };
     return [cacheMetadata, result];
   } catch (error) {
     if (error instanceof Error) {
@@ -32248,7 +32281,7 @@ var getMetadataCivitAiInfo = (actualCacheMetadata, url2) => {
   return void 0;
 };
 var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
-  if (!import_fs6.default.existsSync(url2)) {
+  if (!import_node_fs2.default.existsSync(url2)) {
     logger(`File does not exists : ${url2}`);
     return;
   }
@@ -32265,8 +32298,8 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
     if (metadata.model?.description) {
       metadata.model.description = parseDescriptions(metadata.model.description);
     }
-    const civitAiFile = url2.replace(/(\.safetensors|\.ckpt|\.pt)$/, ".civitai.info");
-    import_fs6.default.writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
+    const civitAiFile = url2.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
+    import_node_fs2.default.writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
     const result = getMetadataFromCivitAi(metadata);
     if (!result) {
       return;
@@ -32285,7 +32318,7 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
 var getMetadata = async (url2) => {
   const cacheMetadata = Cache.get("metadata");
   try {
-    const civitAiFile = url2.replace(/(\.safetensors|\.ckpt|\.pt)$/, ".civitai.info");
+    const civitAiFile = url2.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
     const metadataCivitAiInfo = getMetadataCivitAiInfo(cacheMetadata, civitAiFile);
     if (metadataCivitAiInfo) {
       const [cacheMetadataNew, metadata] = metadataCivitAiInfo;
@@ -32441,9 +32474,10 @@ var findStyle = (...stylesName) => {
 };
 
 // src/commons/query.ts
-var import_fs7 = __toESM(require("fs"));
+var import_node_fs3 = __toESM(require("node:fs"), 1);
 
 // src/commons/defaultQuery.ts
+var DEFAULT_SAMPLERS = ["DPM++ 2M", "Euler a"];
 var baseParamsAll = {
   alwayson_scripts: {},
   //cfg_scale: 7,
@@ -32476,12 +32510,12 @@ var getDefaultQuery15 = (accelarator) => {
   return {
     ...baseParams,
     cfg_scale: 7,
-    sampler_name: findSampler("DPM++ 2M", "Euler a")?.name,
+    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name,
     steps: 20
   };
 };
 var getDefaultQuery20 = (sizeFull) => {
-  const baseParams = { ...baseParamsAll, sampler_name: findSampler("DPM++ 2M", "Euler a")?.name };
+  const baseParams = { ...baseParamsAll, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name };
   if (sizeFull) {
     return {
       ...baseParams,
@@ -32528,7 +32562,7 @@ var getDefaultQueryXL = (accelarator) => {
       return {
         ...baseParams,
         cfg_scale: 7,
-        sampler_name: findSampler("DPM++ 2M", "Euler a")?.name,
+        sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name,
         steps: 20
       };
   }
@@ -32557,24 +32591,6 @@ var getDefaultQuery = (version, accelarator) => {
         width: 512
       };
   }
-};
-
-// src/commons/extensions/multidiffusionUpscaler.ts
-var defaultTiledDiffusionOptions = {
-  method: "MultiDiffusion" /* MultiDiffusion */,
-  scaleFactor: 2,
-  tileBatchSize: 4,
-  tileHeight: 96,
-  tileOverlap: 48,
-  tileWidth: 96
-};
-var defaultTiledVAEnOptions = {
-  colorFix: false,
-  decoderTileSize: 64,
-  encoderTileSize: 960,
-  fastDecoder: true,
-  fastEncoder: true,
-  vaeToGPU: true
 };
 
 // src/commons/query.ts
@@ -32750,7 +32766,7 @@ var renderQuery = async (query, type) => {
 var interrogateQuery = async (imagePath) => {
   const interrogatorCache = Cache.get("interrogator");
   if (interrogatorCache[imagePath]) {
-    if (interrogatorCache[imagePath].timestamp === import_fs7.default.statSync(imagePath).mtimeMs.toString()) {
+    if (interrogatorCache[imagePath].timestamp === import_node_fs3.default.statSync(imagePath).mtimeMs.toString()) {
       return interrogatorCache[imagePath];
     }
     delete interrogatorCache[imagePath];
@@ -32771,7 +32787,7 @@ var interrogateQuery = async (imagePath) => {
   if (response) {
     interrogatorCache[imagePath] = {
       ...response,
-      timestamp: import_fs7.default.statSync(imagePath).mtimeMs.toString()
+      timestamp: import_node_fs3.default.statSync(imagePath).mtimeMs.toString()
     };
   }
   return response;
@@ -32847,7 +32863,7 @@ var handler = async (argv) => {
   }
   const modelsQueryResolved = [];
   for await (const modelQuery of modelsQuery) {
-    const item = { accelarator: "none", name: modelQuery.title, version: Version.Unknown };
+    const item = { accelarator: "none", name: modelQuery.title, version: Version2.Unknown };
     const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
     const metadata = await getMetadataCheckpoint(modelQuery.filename);
     if (metadata) {
@@ -32880,7 +32896,7 @@ var handler = async (argv) => {
     Array.from(
       new Set(
         upscalersQuery.map((upscalerQuery, index) => ({
-          filename: upscalerQuery.model_path ? (0, import_path7.basename)(upscalerQuery.model_path) : void 0,
+          filename: upscalerQuery.model_path ? (0, import_node_path3.basename)(upscalerQuery.model_path) : void 0,
           index,
           name: upscalerQuery.name
         }))
@@ -32910,7 +32926,7 @@ var handler = async (argv) => {
   );
   const lorasQueryResolved = [];
   for await (const loraQuery of lorasQuery) {
-    const item = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
+    const item = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version2.Unknown };
     const metadata = await getMetadataLora(loraQuery.path);
     if (metadata) {
       item.version = metadata.sdVersion;
@@ -32958,11 +32974,11 @@ var handler = async (argv) => {
       Array.from(
         new Set(
           controlnetModelsQuery.model_list.map((modelQuery) => {
-            const item = { name: modelQuery, version: Version.Unknown };
+            const item = { name: modelQuery, version: Version2.Unknown };
             if (item.name.includes("sd15")) {
-              item.version = Version.SD15;
+              item.version = Version2.SD15;
             } else if (item.name.includes("_xl")) {
-              item.version = Version.SDXL;
+              item.version = Version2.SDXL;
             }
             return item;
           })
@@ -33046,7 +33062,6 @@ var handler = async (argv) => {
 
 // src/commons/config.ts
 var { default: Configstore2 } = (init_configstore(), __toCommonJS(configstore_exports));
-console.log(Configstore2);
 var config = new Configstore2("sd-tools");
 var cache = new Configstore2("sd-tools-cache");
 var LATEST_CONFIG_VERSION = 2;
@@ -33545,11 +33560,7 @@ __export(extract_exports, {
   describe: () => describe4,
   handler: () => handler4
 });
-var import_path11 = __toESM(require("path"));
-
-// src/extract/extract.ts
-var import_fs8 = __toESM(require("fs"));
-var import_path10 = __toESM(require("path"));
+var import_node_path5 = __toESM(require("node:path"), 1);
 
 // src/commons/extract.ts
 var getPromptTextBox = (options3) => {
@@ -33741,8 +33752,10 @@ var extractFromFile = async (file, format3, interrogate) => {
 };
 
 // src/extract/extract.ts
+var import_node_fs4 = __toESM(require("node:fs"), 1);
+var import_node_path4 = __toESM(require("node:path"), 1);
 var extract2 = async (source, { addBefore, format: format3, output, recursive }) => {
-  if (!import_fs8.default.existsSync(source)) {
+  if (!import_node_fs4.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -33768,9 +33781,9 @@ var extract2 = async (source, { addBefore, format: format3, output, recursive })
     }
   }
   const result = format3 === "json" ? JSON.stringify({ prompts: prompts2 }) : prompts2.join("\n");
-  const outputFile = output ?? import_path10.default.resolve(source, `prompts.${format3 === "json" ? "json" : "txt"}`);
+  const outputFile = output ?? import_node_path4.default.resolve(source, `prompts.${format3 === "json" ? "json" : "txt"}`);
   logger(`Extracted prompts to ${outputFile}`);
-  import_fs8.default.writeFileSync(outputFile, result);
+  import_node_fs4.default.writeFileSync(outputFile, result);
 };
 
 // src/extract/index.ts
@@ -33808,7 +33821,7 @@ var builder4 = (builder10) => {
   });
 };
 var handler4 = (argv) => {
-  const source = import_path11.default.resolve(argv.source);
+  const source = import_node_path5.default.resolve(argv.source);
   const options3 = {
     addBefore: argv.addBefore ?? void 0,
     format: argv.format,
@@ -33826,30 +33839,14 @@ __export(queue_exports, {
   describe: () => describe5,
   handler: () => handler5
 });
-var import_path14 = __toESM(require("path"));
+var import_node_path8 = __toESM(require("node:path"), 1);
 
 // src/queue/queue.ts
-var import_fs11 = __toESM(require("fs"));
+var import_node_fs7 = __toESM(require("node:fs"), 1);
 
 // src/commons/prompts.ts
-var import_fs9 = require("fs");
-var import_path12 = require("path");
-
-// src/commons/extensions/cutoff.ts
-var getCutOffTokens = (prompt) => {
-  let tokens = prompt.split(/,|BREAK|SEP|SKIP/i);
-  tokens = tokens.map((token) => token.trim());
-  const autoTokens = Array.from(Config.get("cutoffTokens"));
-  return tokens.filter((token) => {
-    return autoTokens.some((autoToken) => {
-      const tokenLower = token.toLowerCase();
-      const autoTokenLower = autoToken.toLowerCase();
-      return tokenLower.startsWith(autoTokenLower) || tokenLower.endsWith(autoTokenLower) || tokenLower.includes(` ${autoTokenLower} `);
-    });
-  });
-};
-
-// src/commons/prompts.ts
+var import_node_fs5 = require("node:fs");
+var import_node_path6 = require("node:path");
 var updateFilename = (query, token, value) => {
   query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
     `{${token}}`,
@@ -34244,8 +34241,8 @@ var getArraysInitImage = (value, defaultValue = void 0) => {
   const initImageOrFolderArray = Array.isArray(value) ? value : [value];
   const initImagesArray = [];
   initImageOrFolderArray.forEach((initImageOrFolder) => {
-    if ((0, import_fs9.statSync)(initImageOrFolder).isDirectory()) {
-      const files = (0, import_fs9.readdirSync)(initImageOrFolder);
+    if ((0, import_node_fs5.statSync)(initImageOrFolder).isDirectory()) {
+      const files = (0, import_node_fs5.readdirSync)(initImageOrFolder);
       initImagesArray.push(...files);
     } else {
       initImagesArray.push(initImageOrFolder);
@@ -34263,9 +34260,9 @@ var getArraysControlNet = (value) => {
     return [controlNetArray];
   }
   const initImagesArray = [];
-  if ((0, import_fs9.statSync)(controlNetImage).isDirectory()) {
-    const files = (0, import_fs9.readdirSync)(controlNetImage);
-    initImagesArray.push(...files.map((file) => (0, import_path12.resolve)(controlNetImage, file)));
+  if ((0, import_node_fs5.statSync)(controlNetImage).isDirectory()) {
+    const files = (0, import_node_fs5.readdirSync)(controlNetImage);
+    initImagesArray.push(...files.map((file) => (0, import_node_path6.resolve)(controlNetImage, file)));
   } else {
     initImagesArray.push(controlNetImage);
   }
@@ -34681,8 +34678,9 @@ var prompts = async (config2, validateOnly) => {
 };
 
 // src/queue/functions.ts
-var import_fs10 = __toESM(require("fs"));
-var import_jsonschema = __toESM(require_lib());
+var import_jsonschema = __toESM(require_lib(), 1);
+var import_node_fs6 = __toESM(require("node:fs"), 1);
+var import_node_path7 = require("node:path");
 
 // src/commons/schema/queue.json
 var queue_default = {
@@ -36034,17 +36032,16 @@ var queue_default = {
 };
 
 // src/queue/functions.ts
-var import_path13 = require("path");
 var validator = new import_jsonschema.Validator();
 var getConfigs = (source) => {
-  if (!import_fs10.default.existsSync(source)) {
+  if (!import_node_fs6.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
     process.exit(1);
   }
   if (source.endsWith(".json")) {
     let jsonContent = { prompts: [] };
     try {
-      const data = import_fs10.default.readFileSync(source, "utf8");
+      const data = import_node_fs6.default.readFileSync(source, "utf8");
       jsonContent = JSON.parse(data);
     } catch (err) {
       logger(`Unable to parse JSON in ${source}`);
@@ -36074,7 +36071,7 @@ var mergeConfigs = (source) => {
     process.exit(1);
   }
   if (jsonContent.extends) {
-    const extendsPath = jsonContent.extends.startsWith(".") ? (0, import_path13.resolve)(source, "..", jsonContent.extends) : jsonContent.extends;
+    const extendsPath = jsonContent.extends.startsWith(".") ? (0, import_node_path7.resolve)(source, "..", jsonContent.extends) : jsonContent.extends;
     const extendsContent = mergeConfigs(extendsPath);
     if (extendsContent) {
       return {
@@ -36103,7 +36100,7 @@ var applyBaseConfig = (config2) => {
 
 // src/queue/queue.ts
 var queueFromFile = async (source, validateOnly) => {
-  if (!import_fs11.default.existsSync(source)) {
+  if (!import_node_fs7.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
     process.exit(1);
   }
@@ -36139,7 +36136,7 @@ var builder5 = (builder10) => {
   });
 };
 var handler5 = (argv) => {
-  const source = import_path14.default.resolve(argv.source);
+  const source = import_node_path8.default.resolve(argv.source);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -36156,11 +36153,11 @@ __export(redraw_exports, {
   describe: () => describe6,
   handler: () => handler6
 });
-var import_path16 = __toESM(require("path"));
+var import_node_path10 = __toESM(require("node:path"), 1);
 
 // src/redraw/redraw.ts
-var import_fs12 = __toESM(require("fs"));
-var import_path15 = require("path");
+var import_node_fs8 = __toESM(require("node:fs"), 1);
+var import_node_path9 = require("node:path");
 var IP_ADAPTER = "ip-adapter";
 var prepareQueryData = (baseParamsProps, file) => {
   const baseParams = { ...baseParamsProps };
@@ -36294,7 +36291,7 @@ var prepareQueryClassical = async (file, style, denoising_strength, addToPrompt,
     controlNet: [],
     denoising: denoising_strength,
     enableHighRes: true,
-    filename: (0, import_path15.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
+    filename: (0, import_node_path9.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
     height,
     initImageOrFolder: file.filename,
     negativePrompt: sdxl ? Config.get("commonNegative") : Config.get("commonNegativeXL"),
@@ -36343,14 +36340,14 @@ var prepareQueryIpAdapter = async (file, style, denoising_strength, addToPrompt,
     controlNet: [],
     denoising: denoising_strength,
     enableHighRes: true,
-    filename: (0, import_path15.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
+    filename: (0, import_node_path9.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
     height,
     negativePrompt: sdxl ? Config.get("commonNegative") : Config.get("commonNegativeXL"),
     pattern: `[datetime]-{denoising}-${style}-ipadapter-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : "",
     restoreFaces: true,
-    styles: style === "anime" ? ["Anime (SDXL)"] : [],
     sdxl: !!sdxl,
+    styles: style === "anime" ? ["Anime (SDXL)"] : [],
     width
   };
   const controlNet1 = getControlNetIPAdapter(sdxl ?? false, file);
@@ -36393,7 +36390,7 @@ var getCombination = (filesList, styles, methods) => {
   return combinations;
 };
 var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }) => {
-  if (!import_fs12.default.existsSync(source)) {
+  if (!import_node_fs8.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -36515,7 +36512,7 @@ var builder6 = (builder10) => {
   });
 };
 var handler6 = (argv) => {
-  const source = import_path16.default.resolve(argv.source);
+  const source = import_node_path10.default.resolve(argv.source);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -36542,12 +36539,12 @@ __export(rename_exports, {
   describe: () => describe7,
   handler: () => handler7
 });
-var import_path18 = __toESM(require("path"));
+var import_node_path12 = __toESM(require("node:path"), 1);
 
 // src/rename/rename.ts
-var import_fs13 = __toESM(require("fs"));
-var import_jsonschema2 = __toESM(require_lib());
-var import_path17 = __toESM(require("path"));
+var import_jsonschema2 = __toESM(require_lib(), 1);
+var import_node_fs9 = __toESM(require("node:fs"), 1);
+var import_node_path11 = __toESM(require("node:path"), 1);
 
 // src/commons/schema/rename.json
 var rename_default = {
@@ -36664,12 +36661,12 @@ var executeConfig = (config2, source, promptData) => {
 // src/rename/rename.ts
 var validator2 = new import_jsonschema2.Validator();
 var renameConfig = (source, target, config2, test) => {
-  if (!import_fs13.default.existsSync(source)) {
+  if (!import_node_fs9.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs13.default.existsSync(target)) {
-    import_fs13.default.mkdirSync(target, { recursive: true });
+  if (!import_node_fs9.default.existsSync(target)) {
+    import_node_fs9.default.mkdirSync(target, { recursive: true });
   }
   const validation2 = validator2.validate(config2, rename_default);
   if (!validation2.valid) {
@@ -36683,31 +36680,30 @@ var renameConfig = (source, target, config2, test) => {
       if (param && param[0] !== "") {
         const [targetFile, scene] = param;
         logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
-        if (!test && scene && !import_fs13.default.existsSync(import_path17.default.join(target, scene))) {
-          import_fs13.default.mkdirSync(import_path17.default.join(target, scene));
+        if (!test && scene && !import_node_fs9.default.existsSync(import_node_path11.default.join(target, scene))) {
+          import_node_fs9.default.mkdirSync(import_node_path11.default.join(target, scene));
         }
         if (!test) {
-          import_fs13.default.renameSync(file.filename, import_path17.default.join(target, targetFile));
+          import_node_fs9.default.renameSync(file.filename, import_node_path11.default.join(target, targetFile));
         }
       }
     }
   });
 };
 var renameConfigFromCFile = (source, target, config2, test) => {
-  if (!import_fs13.default.existsSync(source)) {
+  if (!import_node_fs9.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs13.default.existsSync(target)) {
-    import_fs13.default.mkdirSync(target, { recursive: true });
+  if (!import_node_fs9.default.existsSync(target)) {
+    import_node_fs9.default.mkdirSync(target, { recursive: true });
   }
   let jsonContent = { keys: [], pattern: "" };
   try {
-    const data = import_fs13.default.readFileSync(config2, "utf8");
+    const data = import_node_fs9.default.readFileSync(config2, "utf8");
     jsonContent = JSON.parse(data);
   } catch (err) {
-    console.group({ err });
-    logger(`Unable to parse JSON in ${config2}`);
+    logger(`Unable to parse JSON in ${config2} (${err})`);
     process.exit(1);
   }
   renameConfig(source, target, jsonContent, test);
@@ -36790,8 +36786,8 @@ var builder7 = (builder10) => {
   });
 };
 var handler7 = (argv) => {
-  const source = import_path18.default.resolve(argv.source);
-  const target = import_path18.default.resolve(argv.target);
+  const source = import_node_path12.default.resolve(argv.source);
+  const target = import_node_path12.default.resolve(argv.target);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -36815,10 +36811,10 @@ __export(stats_exports, {
   describe: () => describe8,
   handler: () => handler8
 });
-var import_path19 = __toESM(require("path"));
+var import_node_path13 = __toESM(require("node:path"), 1);
 
 // src/stats/stats.ts
-var import_table = __toESM(require_src2());
+var import_table = __toESM(require_src2(), 1);
 var getStats = (source) => {
   const files = getFiles(source, true, true);
   const stats = {};
@@ -36874,7 +36870,7 @@ var builder8 = (builder10) => {
   });
 };
 var handler8 = (argv) => {
-  const source = import_path19.default.resolve(argv.source);
+  const source = import_node_path13.default.resolve(argv.source);
   getStats(source);
 };
 
@@ -36886,13 +36882,49 @@ __export(upscale_exports, {
   describe: () => describe9,
   handler: () => handler9
 });
-var import_path22 = __toESM(require("path"));
+var import_node_path16 = __toESM(require("node:path"), 1);
+
+// src/upscale/upscaleTiledDiffusion.ts
+var import_node_fs10 = __toESM(require("node:fs"), 1);
+var import_node_path14 = require("node:path");
+var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
+  if (!import_node_fs10.default.existsSync(source)) {
+    logger(`Source directory ${source} does not exist`);
+    process.exit(1);
+  }
+  const queries = [];
+  const filesList = getFiles(source, recursive);
+  const denoising = denoisingArray ?? [0.4];
+  const upscaling = upscalingArray ?? [2];
+  for await (const file of filesList) {
+    const query = await extractFromFile(file, "json", true);
+    if (query) {
+      query.tiledDiffusion = {
+        method: "MultiDiffusion" /* MultiDiffusion */
+      };
+      query.width = file.width;
+      query.height = file.height;
+      query.initImageOrFolder = file.filename;
+      query.denoising = denoising;
+      query.scaleFactor = upscaling;
+      query.filename = (0, import_node_path14.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
+      query.prompt = Array.isArray(query.prompt) ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "")) : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "");
+      query.pattern = `[datetime]-x{scaleFactor}-multidiffusion-{filename}`;
+      if (checkpoint) {
+        query.checkpoints = checkpoint;
+      }
+      queries.push(query);
+    }
+  }
+  queries.sort((a, b) => a.checkpoints.localeCompare(b.checkpoints));
+  prompts({ prompts: queries }, false);
+};
 
 // src/upscale/upscaleTiles.ts
-var import_fs14 = __toESM(require("fs"));
-var import_path20 = require("path");
+var import_node_fs11 = __toESM(require("node:fs"), 1);
+var import_node_path15 = require("node:path");
 var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs14.default.existsSync(source)) {
+  if (!import_node_fs11.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -36917,45 +36949,9 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
       query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
-      query.filename = (0, import_path20.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
+      query.filename = (0, import_node_path15.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
       query.prompt = Array.isArray(query.prompt) ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "")) : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "");
       query.pattern = `[datetime]-x{scaleFactor}-cntiles-{filename}`;
-      if (checkpoint) {
-        query.checkpoints = checkpoint;
-      }
-      queries.push(query);
-    }
-  }
-  queries.sort((a, b) => a.checkpoints.localeCompare(b.checkpoints));
-  prompts({ prompts: queries }, false);
-};
-
-// src/upscale/upscaleTiledDiffusion.ts
-var import_fs15 = __toESM(require("fs"));
-var import_path21 = require("path");
-var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs15.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
-    process.exit(1);
-  }
-  const queries = [];
-  const filesList = getFiles(source, recursive);
-  const denoising = denoisingArray ?? [0.4];
-  const upscaling = upscalingArray ?? [2];
-  for await (const file of filesList) {
-    const query = await extractFromFile(file, "json", true);
-    if (query) {
-      query.tiledDiffusion = {
-        method: "MultiDiffusion" /* MultiDiffusion */
-      };
-      query.width = file.width;
-      query.height = file.height;
-      query.initImageOrFolder = file.filename;
-      query.denoising = denoising;
-      query.scaleFactor = upscaling;
-      query.filename = (0, import_path21.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
-      query.prompt = Array.isArray(query.prompt) ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "")) : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "");
-      query.pattern = `[datetime]-x{scaleFactor}-multidiffusion-{filename}`;
       if (checkpoint) {
         query.checkpoints = checkpoint;
       }
@@ -37047,7 +37043,7 @@ var builder9 = (builder10) => {
   });
 };
 var handler9 = (argv) => {
-  const source = import_path22.default.resolve(argv.source);
+  const source = import_node_path16.default.resolve(argv.source);
   const { method } = argv;
   const initialized = Config.get("initialized");
   if (!initialized) {

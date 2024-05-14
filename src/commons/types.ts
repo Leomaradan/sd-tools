@@ -1,8 +1,8 @@
-import { IAdetailer } from './extensions/adetailer';
-import { IControlNet } from './extensions/controlNet';
-import { ICutOff } from './extensions/cutoff';
-import { ITiledDiffusion, ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
-import { IUltimateSDUpscale, UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
+import { type IAdetailer } from './extensions/adetailer';
+import { type IControlNet } from './extensions/controlNet';
+import { type ICutOff } from './extensions/cutoff';
+import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
+import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
 export * from './extensions/controlNet';
 export * from './extensions/ultimateSdUpscale';

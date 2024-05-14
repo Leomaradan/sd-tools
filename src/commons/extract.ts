@@ -1,7 +1,7 @@
 
-import { IFile } from './file';
+import {type  IFile } from './file';
 import { interrogateQuery } from './query';
-import { IAdetailerPrompt, IPromptSingle } from './types';
+import { type IAdetailerPrompt, type IPromptSingle } from './types';
 
 export interface IExtractOptions {
   addBefore?: string;

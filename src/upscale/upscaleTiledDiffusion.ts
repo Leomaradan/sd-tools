@@ -1,13 +1,14 @@
-import fs from 'fs';
-import { basename } from 'path';
+import fs from 'node:fs';
+import { basename } from 'node:path';
+
+import type { IPrompt } from '../commons/types';
+import type { IUpscaleOptions } from './types';
 
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { prompts } from '../commons/prompts';
-import { IPrompt } from '../commons/types';
-import { IUpscaleOptions } from './types';
 
 export const upscaleTiledDiffusion = async (
   source: string,

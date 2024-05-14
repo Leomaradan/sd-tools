@@ -1,13 +1,14 @@
-import fs from 'fs';
-import { basename } from 'path';
+import fs from 'node:fs';
+import { basename } from 'node:path';
+
+import type { IUpscaleOptions } from './types';
 
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule } from '../commons/models';
 import { prompts } from '../commons/prompts';
-import { ControlNetMode, ControlNetResizes, IPrompt } from '../commons/types';
-import { IUpscaleOptions } from './types';
+import { ControlNetMode, ControlNetResizes, type IPrompt } from '../commons/types';
 
 export const upscaleTiles = async (
   source: string,

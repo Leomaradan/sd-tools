@@ -1,13 +1,13 @@
-import fs from 'fs';
-import { basename } from 'path';
+import fs from 'node:fs';
+import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
-import { IFile, getBase64Image, getFiles } from '../commons/file';
+import { type IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
-import { ControlNetMode, ControlNetResizes, IControlNet, IPrompt, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { ControlNetMode, ControlNetResizes, type IControlNet, type IPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';

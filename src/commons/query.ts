@@ -1,13 +1,21 @@
 import axios from 'axios';
-import fs from 'fs';
+import fs from 'node:fs';
 
 import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
-import { ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
+import { type ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
 import { logger, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
-import { IBaseQuery, IImg2ImgQuery, IInterrogateResponse, IModel, ITxt2ImgQuery, RedrawMode, TargetSizeType } from './types';
+import {
+  type IBaseQuery,
+  type IImg2ImgQuery,
+  type IInterrogateResponse,
+  type IModel,
+  type ITxt2ImgQuery,
+  RedrawMode,
+  TargetSizeType
+} from './types';
 
 const headerRequest = {
   headers: {
