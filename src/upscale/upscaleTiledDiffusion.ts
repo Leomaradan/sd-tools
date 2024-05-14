@@ -6,8 +6,8 @@ import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { prompts } from '../commons/prompts';
-import { IUpscaleOptions } from './types';
 import { IPrompt } from '../commons/types';
+import { IUpscaleOptions } from './types';
 
 export const upscaleTiledDiffusion = async (
   source: string,

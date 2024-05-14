@@ -1,4 +1,4 @@
-import { Version, MetadataVersionKey } from '../types';
+import { MetadataVersionKey, Version } from '../types';
 
 type ControlNetModules =
   | 'animal_openpose'

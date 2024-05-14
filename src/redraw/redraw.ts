@@ -5,10 +5,9 @@ import { Config } from '../commons/config';
 import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
-import { interrogateQuery } from '../commons/query';
-import { IPrompt } from '../commons/types';
-import { ControlNetMode, ControlNetResizes, IControlNet, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
 import { prompts } from '../commons/prompts';
+import { interrogateQuery } from '../commons/query';
+import { ControlNetMode, ControlNetResizes, IControlNet, IPrompt, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
@@ -259,8 +258,8 @@ const prepareQueryIpAdapter = async (
     pattern: `[datetime]-{denoising}-${style}-ipadapter-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
     restoreFaces: true,
-    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     sdxl: !!sdxl,
+    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     width
   };
 

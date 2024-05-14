@@ -64,8 +64,7 @@ export const renameConfigFromCFile = (source: string, target: string, config: st
     const data = fs.readFileSync(config, 'utf8');
     jsonContent = JSON.parse(data);
   } catch (err) {
-    console.group({ err });
-    logger(`Unable to parse JSON in ${config}`);
+    logger(`Unable to parse JSON in ${config} (${err})`);
     process.exit(1);
   }
 

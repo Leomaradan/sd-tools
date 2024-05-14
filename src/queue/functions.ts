@@ -1,10 +1,9 @@
 import fs from 'fs';
 import { Validator } from 'jsonschema';
+import { resolve } from 'path';
 
 import { logger } from '../commons/logger';
-import { prompts } from '../commons/prompts';
 import queueSchema from '../commons/schema/queue.json';
-import { resolve } from 'path';
 import { IPrompts, IPromptsResolved } from '../commons/types';
 
 const validator = new Validator();
@@ -36,6 +35,7 @@ const getConfigs = (source: string) => {
   }
 
   if (source.endsWith('.js') || source.endsWith('.cjs')) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const jsonContentFromJs: IPrompts = require(source);
 
     const validation = validator.validate(jsonContentFromJs, queueSchema, { nestedErrors: true });

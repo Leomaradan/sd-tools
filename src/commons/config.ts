@@ -1,4 +1,5 @@
-import Configstore from 'configstore';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
 import { logger } from './logger';

@@ -5,8 +5,8 @@ import { Config } from '../commons/config';
 import { logger } from '../commons/logger';
 import { findCheckpoint, findControlnetModel } from '../commons/models';
 import { IUpscaleOptions, IUpscaleOptionsFull } from './types';
-import { upscaleTiles } from './upscaleTiles';
 import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
+import { upscaleTiles } from './upscaleTiles';
 
 const OPTION_CONTROLNET = 'controlnet';
 const OPTION_TILED_DIFFUSION = 'tiled-diffusion';

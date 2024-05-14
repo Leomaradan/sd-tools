@@ -19,11 +19,8 @@ import {
   IPrompt,
   IPromptPermutations,
   IPromptSingle,
-  IPrompts,
   IPromptsResolved,
-  ITxt2ImgQuery,
-  IUltimateSDUpscale
-} from './types';
+  ITxt2ImgQuery} from './types';
 
 interface IPrepareSingleQuery {
   autoCutOff: boolean;

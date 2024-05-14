@@ -13,7 +13,7 @@ describe('queue test', () => {
           height: 512,
           negativePrompt: 'test negative prompt 1',
           prompt: 'test prompt 1',
-          sampler: 'DPM++ 2M Karras',
+          sampler: 'DPM++ 2M',
           steps: 20,
           width: 512
         }
@@ -41,7 +41,7 @@ describe('queue test', () => {
           height: 768,
           negativePrompt: 'test negative prompt 1',
           prompt: 'test prompt 1',
-          sampler: 'DPM++ 2M Karras',
+          sampler: 'DPM++ 2M',
           steps: [25, 50],
           upscaler: 'UltraSharp',
           width: 512
@@ -61,7 +61,7 @@ describe('queue test', () => {
           negativePrompt: 'test negative prompt 2',
           pattern: '{filename} pattern',
           prompt: 'test prompt 2',
-          sampler: 'DPM++ 2M Karras',
+          sampler: 'DPM++ 2M',
           width: 512
         }
       ]
@@ -86,7 +86,7 @@ describe('queue test', () => {
       },
       prompt: 'before, test prompt 2',
       restore_faces: false,
-      sampler_name: 'DPM++ 2M Karras',
+      sampler_name: 'DPM++ 2M',
       seed: undefined,
       steps: undefined,
       width: 512
@@ -117,7 +117,7 @@ describe('queue test', () => {
           height: 768,
           negativePrompt: 'test negative prompt 1',
           prompt: 'test prompt 1',
-          sampler: 'DPM++ 2M Karras',
+          sampler: 'DPM++ 2M',
           steps: [25, 50],
           upscaler: 'UltraSharp',
           width: 512
@@ -137,7 +137,7 @@ describe('queue test', () => {
           negativePrompt: 'test negative prompt 2',
           pattern: '{filename} pattern',
           prompt: 'test prompt 2',
-          sampler: 'DPM++ 2M Karras',
+          sampler: 'DPM++ 2M',
           width: 512
         }
       ]

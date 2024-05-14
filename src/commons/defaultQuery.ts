@@ -1,6 +1,8 @@
 import { findSampler } from './models';
 import { IBaseQuery, MetadataAccelerator, MetadataVersionKey } from './types';
 
+const DEFAULT_SAMPLERS = ['DPM++ 2M', 'Euler a']
+
 const baseParamsAll: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } = {
   alwayson_scripts: {},
   //cfg_scale: 7,
@@ -11,7 +13,7 @@ const baseParamsAll: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?:
   override_settings_restore_afterwards: true,
   prompt: '',
   restore_faces: false,
-  //sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+  //sampler_name: findSampler('DPM++ 2M', 'Euler a')?.name as string,
   save_images: true,
   seed: -1,
   send_images: false,
@@ -39,12 +41,12 @@ export const getDefaultQuery15 = (
   return {
     ...baseParams,
     cfg_scale: 7,
-    sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
     steps: 20
   };
 };
 export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
-  const baseParams = { ...baseParamsAll, sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string };
+  const baseParams = { ...baseParamsAll, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string };
   if (sizeFull) {
     // Other accelerator than LCM are not supported
     return {
@@ -77,16 +79,16 @@ export const getDefaultQueryXL = (
       return {
         ...baseParams,
         cfg_scale: 2,
-        forcedSampler: 'DPM++ SDE Karras',
-        sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
+        forcedSampler: 'DPM++ SDE',
+        sampler_name: findSampler('DPM++ SDE')?.name as string,
         steps: 6
       };
     case 'turbo':
       return {
         ...baseParams,
         cfg_scale: 2,
-        forcedSampler: 'DPM++ SDE Karras',
-        sampler_name: findSampler('DPM++ SDE Karras')?.name as string,
+        forcedSampler: 'DPM++ SDE',
+        sampler_name: findSampler('DPM++ SDE')?.name as string,
         steps: 8
       };
     case 'distilled':
@@ -95,7 +97,7 @@ export const getDefaultQueryXL = (
       return {
         ...baseParams,
         cfg_scale: 7,
-        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+        sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
         steps: 20
       };
   }
@@ -125,7 +127,7 @@ export const getDefaultQuery = (
         ...baseParamsAll,
         cfg_scale: 7,
         height: 512,
-        sampler_name: findSampler('DPM++ 2M Karras', 'Euler a')?.name as string,
+        sampler_name: findSampler('DPM++ 2M', 'Euler a')?.name as string,
         steps: 20,
         width: 512
       };

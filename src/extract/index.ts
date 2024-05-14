@@ -1,9 +1,9 @@
 import path from 'path';
 import yargs from 'yargs';
 
+import { IExtractOptions, IExtractOptionsFull } from '../commons/extract';
 import { logger } from '../commons/logger';
 import { extract } from './extract';
-import { IExtractOptions, IExtractOptionsFull } from '../commons/extract';
 
 export const command = 'extract <source> <format>';
 export const describe = 'extract prompts from directory';

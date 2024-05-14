@@ -51,17 +51,17 @@ export const renderQuery: Query = async (query, type) => {
     if (value !== undefined) {
       if (typeof value === 'object') {
         if (baseQuery[key as keyof typeof baseQuery] === undefined) {
-          (baseQuery as any)[key] = {};
+          (baseQuery as unknown as Record<string, unknown>)[key] = {};
         }
 
         Object.keys(value).forEach((subKey) => {
           const subValue = value[subKey as keyof typeof value];
           if (subValue !== undefined) {
-            (baseQuery as any)[key][subKey] = subValue;
+            (baseQuery as unknown as Record<string, Record<string, unknown>>)[key][subKey] = subValue;
           }
         });
       } else {
-        (baseQuery as any)[key] = value;
+        (baseQuery as unknown as Record<string, unknown>)[key] = value;
       }
     }
   });

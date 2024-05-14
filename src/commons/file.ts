@@ -11,6 +11,8 @@ import { Cache } from './config';
 import { logger } from './logger';
 import { CacheMetadata, ICivitAIInfoFile, IMetadata, IMetadataCheckpoint, IMetadataLora, Version } from './types';
 
+const CIVITAI_FILE = '.civitai.info'
+
 const readFile = (path: string, noCache?: boolean): string[] | undefined => {
   let data = undefined;
   const cacheImageData = noCache ? {} : Cache.get('imageData');
@@ -393,7 +395,7 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
 };
 
 export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {
-  if (!url.endsWith('.civitai.info')) {
+  if (!url.endsWith(CIVITAI_FILE)) {
     logger(`Invalid metadata file : ${url}`);
   }
 
@@ -466,7 +468,7 @@ export const getMetadataCivitAiRest = async (
       metadata.model.description = parseDescriptions(metadata.model.description);
     }
 
-    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.civitai.info');
+    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
 
     fs.writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
 
@@ -500,7 +502,7 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
   // If nothing is found, try getting metadata from CivitAI REST API
 
   try {
-    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, '.civitai.info');
+    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
     const metadataCivitAiInfo = getMetadataCivitAiInfo(cacheMetadata, civitAiFile);
 
     if (metadataCivitAiInfo) {
