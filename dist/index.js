@@ -36063,7 +36063,7 @@ var applyBaseConfig = (config2) => {
   const resolved = {
     multiValueMethod: config2.multiValueMethod,
     permutations: config2.permutations,
-    prompts: []
+    prompts: config2.prompts ?? []
   };
   if (config2.basePrompt) {
     resolved.prompts = config2.prompts?.map((prompt) => {
