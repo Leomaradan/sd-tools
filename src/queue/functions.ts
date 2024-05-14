@@ -77,7 +77,7 @@ export const applyBaseConfig = (config: IPrompts): IPromptsResolved => {
   const resolved: IPromptsResolved = {
     multiValueMethod: config.multiValueMethod,
     permutations: config.permutations,
-    prompts: []
+    prompts: config.prompts ?? []
   };
 
   if (config.basePrompt) {

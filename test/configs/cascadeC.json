@@ -1,0 +1,9 @@
+{
+  "$schema": "../../src/commons/schema/queue.json",
+  "basePrompt": {
+    "checkpoints": "fake-checkpoint C",
+    "height": 640,
+    "pattern": "test-[seed]-[datetime]",
+    "width": 640
+  }
+}

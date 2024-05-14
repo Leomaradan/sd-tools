@@ -1,0 +1,33 @@
+{
+  "$schema": "../../src/commons/schema/queue.json",
+  "basePrompt": {
+    "cfg": 11.5,
+    "checkpoints": "fake-checkpoint",
+    "count": 4,
+    "height": 640,
+    "pattern": "[styles]-[seed]-[datetime]",
+    "stylesSets": [["Digital Art"], ["Isometric Style"]],
+    "width": 1024
+  },
+  "prompts": [
+    {
+      "prompt": "image prompt 1"
+    },
+    {
+      "checkpoints": "fake-checkpoint 2",
+      "pattern": "[styles]-[datetime]",
+      "prompt": "image prompt 2",
+      "clipSkip": 2
+    },
+    {
+      "cfg": 7,
+      "checkpoints": "fake-checkpoint",
+      "count": 4,
+      "height": 512,
+      "pattern": "[seed]-[datetime]",
+      "prompt": "image prompt 3",
+      "stylesSets": [],
+      "width": 512
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../../src/commons/schema/queue.json",
+  "extends": "./cascadeC.json",
+  "permutations": [
+    {
+     "afterFilename": "image afterFilename B",
+     "afterPrompt": "image afterPrompt B"
+    }
+  ],
+  "prompts": [
+    {
+      "prompt": "image prompt B"
+    }
+  ]
+}
