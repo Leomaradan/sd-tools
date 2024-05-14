@@ -6,8 +6,9 @@ import { IFile, getBase64Image, getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { interrogateQuery } from '../commons/query';
-import { IPrompt, queue } from '../commons/queue';
+import { IPrompt } from '../commons/types';
 import { ControlNetMode, ControlNetResizes, IControlNet, IRedrawMethod, IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { prompts } from '../commons/prompts';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
@@ -369,7 +370,7 @@ export const redraw = async (
     (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
   );*/
 
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 
   /*for await (const queryParams of queriesTxt2Img) {
     await renderQuery(queryParams, 'txt2img');

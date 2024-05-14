@@ -225,6 +225,11 @@ export const getBase64Image = (url: string) => {
     return imageCache[url].data;
   }
 
+  if(fs.statSync(url).isDirectory()) {
+    return;
+  }
+  
+
   const buffer = fs.readFileSync(url);
   const data = buffer.toString('base64');
 
@@ -236,6 +241,28 @@ export const getBase64Image = (url: string) => {
   };
 
   return data;
+};
+
+export const getImageSize = (url: string) => {
+  if (imageCache[url] !== undefined) {
+    return { height: imageCache[url].height, width: imageCache[url].width };
+  }
+
+  if(fs.statSync(url).isDirectory()) {
+    return { height: -1, width: -1 };
+  }
+
+  const buffer = fs.readFileSync(url);
+  const data = buffer.toString('base64');
+
+  const sizes = sizeOf(url);
+  imageCache[url] = {
+    data,
+    height: sizes.height ?? -1,
+    width: sizes.width ?? -1
+  };
+
+  return { height: sizes.height ?? -1, width: sizes.width ?? -1 };
 };
 
 /*export const getMetadataAutomatic1111 = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {

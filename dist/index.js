@@ -56,56 +56,56 @@ var require_polyfills = __commonJS({
     }
     var chdir;
     module2.exports = patch;
-    function patch(fs11) {
+    function patch(fs12) {
       if (constants.hasOwnProperty("O_SYMLINK") && process.version.match(/^v0\.6\.[0-2]|^v0\.5\./)) {
-        patchLchmod(fs11);
+        patchLchmod(fs12);
       }
-      if (!fs11.lutimes) {
-        patchLutimes(fs11);
+      if (!fs12.lutimes) {
+        patchLutimes(fs12);
       }
-      fs11.chown = chownFix(fs11.chown);
-      fs11.fchown = chownFix(fs11.fchown);
-      fs11.lchown = chownFix(fs11.lchown);
-      fs11.chmod = chmodFix(fs11.chmod);
-      fs11.fchmod = chmodFix(fs11.fchmod);
-      fs11.lchmod = chmodFix(fs11.lchmod);
-      fs11.chownSync = chownFixSync(fs11.chownSync);
-      fs11.fchownSync = chownFixSync(fs11.fchownSync);
-      fs11.lchownSync = chownFixSync(fs11.lchownSync);
-      fs11.chmodSync = chmodFixSync(fs11.chmodSync);
-      fs11.fchmodSync = chmodFixSync(fs11.fchmodSync);
-      fs11.lchmodSync = chmodFixSync(fs11.lchmodSync);
-      fs11.stat = statFix(fs11.stat);
-      fs11.fstat = statFix(fs11.fstat);
-      fs11.lstat = statFix(fs11.lstat);
-      fs11.statSync = statFixSync(fs11.statSync);
-      fs11.fstatSync = statFixSync(fs11.fstatSync);
-      fs11.lstatSync = statFixSync(fs11.lstatSync);
-      if (fs11.chmod && !fs11.lchmod) {
-        fs11.lchmod = function(path13, mode, cb) {
+      fs12.chown = chownFix(fs12.chown);
+      fs12.fchown = chownFix(fs12.fchown);
+      fs12.lchown = chownFix(fs12.lchown);
+      fs12.chmod = chmodFix(fs12.chmod);
+      fs12.fchmod = chmodFix(fs12.fchmod);
+      fs12.lchmod = chmodFix(fs12.lchmod);
+      fs12.chownSync = chownFixSync(fs12.chownSync);
+      fs12.fchownSync = chownFixSync(fs12.fchownSync);
+      fs12.lchownSync = chownFixSync(fs12.lchownSync);
+      fs12.chmodSync = chmodFixSync(fs12.chmodSync);
+      fs12.fchmodSync = chmodFixSync(fs12.fchmodSync);
+      fs12.lchmodSync = chmodFixSync(fs12.lchmodSync);
+      fs12.stat = statFix(fs12.stat);
+      fs12.fstat = statFix(fs12.fstat);
+      fs12.lstat = statFix(fs12.lstat);
+      fs12.statSync = statFixSync(fs12.statSync);
+      fs12.fstatSync = statFixSync(fs12.fstatSync);
+      fs12.lstatSync = statFixSync(fs12.lstatSync);
+      if (fs12.chmod && !fs12.lchmod) {
+        fs12.lchmod = function(path13, mode, cb) {
           if (cb)
             process.nextTick(cb);
         };
-        fs11.lchmodSync = function() {
+        fs12.lchmodSync = function() {
         };
       }
-      if (fs11.chown && !fs11.lchown) {
-        fs11.lchown = function(path13, uid, gid, cb) {
+      if (fs12.chown && !fs12.lchown) {
+        fs12.lchown = function(path13, uid, gid, cb) {
           if (cb)
             process.nextTick(cb);
         };
-        fs11.lchownSync = function() {
+        fs12.lchownSync = function() {
         };
       }
       if (platform === "win32") {
-        fs11.rename = typeof fs11.rename !== "function" ? fs11.rename : function(fs$rename) {
+        fs12.rename = typeof fs12.rename !== "function" ? fs12.rename : function(fs$rename) {
           function rename(from, to, cb) {
             var start = Date.now();
             var backoff = 0;
             fs$rename(from, to, function CB(er) {
               if (er && (er.code === "EACCES" || er.code === "EPERM" || er.code === "EBUSY") && Date.now() - start < 6e4) {
                 setTimeout(function() {
-                  fs11.stat(to, function(stater, st) {
+                  fs12.stat(to, function(stater, st) {
                     if (stater && stater.code === "ENOENT")
                       fs$rename(from, to, CB);
                     else
@@ -123,9 +123,9 @@ var require_polyfills = __commonJS({
           if (Object.setPrototypeOf)
             Object.setPrototypeOf(rename, fs$rename);
           return rename;
-        }(fs11.rename);
+        }(fs12.rename);
       }
-      fs11.read = typeof fs11.read !== "function" ? fs11.read : function(fs$read) {
+      fs12.read = typeof fs12.read !== "function" ? fs12.read : function(fs$read) {
         function read(fd, buffer, offset, length, position, callback_) {
           var callback;
           if (callback_ && typeof callback_ === "function") {
@@ -133,23 +133,23 @@ var require_polyfills = __commonJS({
             callback = function(er, _, __) {
               if (er && er.code === "EAGAIN" && eagCounter < 10) {
                 eagCounter++;
-                return fs$read.call(fs11, fd, buffer, offset, length, position, callback);
+                return fs$read.call(fs12, fd, buffer, offset, length, position, callback);
               }
               callback_.apply(this, arguments);
             };
           }
-          return fs$read.call(fs11, fd, buffer, offset, length, position, callback);
+          return fs$read.call(fs12, fd, buffer, offset, length, position, callback);
         }
         if (Object.setPrototypeOf)
           Object.setPrototypeOf(read, fs$read);
         return read;
-      }(fs11.read);
-      fs11.readSync = typeof fs11.readSync !== "function" ? fs11.readSync : /* @__PURE__ */ function(fs$readSync) {
+      }(fs12.read);
+      fs12.readSync = typeof fs12.readSync !== "function" ? fs12.readSync : /* @__PURE__ */ function(fs$readSync) {
         return function(fd, buffer, offset, length, position) {
           var eagCounter = 0;
           while (true) {
             try {
-              return fs$readSync.call(fs11, fd, buffer, offset, length, position);
+              return fs$readSync.call(fs12, fd, buffer, offset, length, position);
             } catch (er) {
               if (er.code === "EAGAIN" && eagCounter < 10) {
                 eagCounter++;
@@ -159,10 +159,10 @@ var require_polyfills = __commonJS({
             }
           }
         };
-      }(fs11.readSync);
-      function patchLchmod(fs12) {
-        fs12.lchmod = function(path13, mode, callback) {
-          fs12.open(
+      }(fs12.readSync);
+      function patchLchmod(fs13) {
+        fs13.lchmod = function(path13, mode, callback) {
+          fs13.open(
             path13,
             constants.O_WRONLY | constants.O_SYMLINK,
             mode,
@@ -172,8 +172,8 @@ var require_polyfills = __commonJS({
                   callback(err);
                 return;
               }
-              fs12.fchmod(fd, mode, function(err2) {
-                fs12.close(fd, function(err22) {
+              fs13.fchmod(fd, mode, function(err2) {
+                fs13.close(fd, function(err22) {
                   if (callback)
                     callback(err2 || err22);
                 });
@@ -181,68 +181,68 @@ var require_polyfills = __commonJS({
             }
           );
         };
-        fs12.lchmodSync = function(path13, mode) {
-          var fd = fs12.openSync(path13, constants.O_WRONLY | constants.O_SYMLINK, mode);
+        fs13.lchmodSync = function(path13, mode) {
+          var fd = fs13.openSync(path13, constants.O_WRONLY | constants.O_SYMLINK, mode);
           var threw = true;
           var ret;
           try {
-            ret = fs12.fchmodSync(fd, mode);
+            ret = fs13.fchmodSync(fd, mode);
             threw = false;
           } finally {
             if (threw) {
               try {
-                fs12.closeSync(fd);
+                fs13.closeSync(fd);
               } catch (er) {
               }
             } else {
-              fs12.closeSync(fd);
+              fs13.closeSync(fd);
             }
           }
           return ret;
         };
       }
-      function patchLutimes(fs12) {
-        if (constants.hasOwnProperty("O_SYMLINK") && fs12.futimes) {
-          fs12.lutimes = function(path13, at, mt, cb) {
-            fs12.open(path13, constants.O_SYMLINK, function(er, fd) {
+      function patchLutimes(fs13) {
+        if (constants.hasOwnProperty("O_SYMLINK") && fs13.futimes) {
+          fs13.lutimes = function(path13, at, mt, cb) {
+            fs13.open(path13, constants.O_SYMLINK, function(er, fd) {
               if (er) {
                 if (cb)
                   cb(er);
                 return;
               }
-              fs12.futimes(fd, at, mt, function(er2) {
-                fs12.close(fd, function(er22) {
+              fs13.futimes(fd, at, mt, function(er2) {
+                fs13.close(fd, function(er22) {
                   if (cb)
                     cb(er2 || er22);
                 });
               });
             });
           };
-          fs12.lutimesSync = function(path13, at, mt) {
-            var fd = fs12.openSync(path13, constants.O_SYMLINK);
+          fs13.lutimesSync = function(path13, at, mt) {
+            var fd = fs13.openSync(path13, constants.O_SYMLINK);
             var ret;
             var threw = true;
             try {
-              ret = fs12.futimesSync(fd, at, mt);
+              ret = fs13.futimesSync(fd, at, mt);
               threw = false;
             } finally {
               if (threw) {
                 try {
-                  fs12.closeSync(fd);
+                  fs13.closeSync(fd);
                 } catch (er) {
                 }
               } else {
-                fs12.closeSync(fd);
+                fs13.closeSync(fd);
               }
             }
             return ret;
           };
-        } else if (fs12.futimes) {
-          fs12.lutimes = function(_a3, _b2, _c2, cb) {
+        } else if (fs13.futimes) {
+          fs13.lutimes = function(_a3, _b2, _c2, cb) {
             if (cb)
               process.nextTick(cb);
           };
-          fs12.lutimesSync = function() {
+          fs13.lutimesSync = function() {
           };
         }
       }
@@ -250,7 +250,7 @@ var require_polyfills = __commonJS({
         if (!orig)
           return orig;
         return function(target, mode, cb) {
-          return orig.call(fs11, target, mode, function(er) {
+          return orig.call(fs12, target, mode, function(er) {
             if (chownErOk(er))
               er = null;
             if (cb)
@@ -263,7 +263,7 @@ var require_polyfills = __commonJS({
           return orig;
         return function(target, mode) {
           try {
-            return orig.call(fs11, target, mode);
+            return orig.call(fs12, target, mode);
           } catch (er) {
             if (!chownErOk(er))
               throw er;
@@ -274,7 +274,7 @@ var require_polyfills = __commonJS({
         if (!orig)
           return orig;
         return function(target, uid, gid, cb) {
-          return orig.call(fs11, target, uid, gid, function(er) {
+          return orig.call(fs12, target, uid, gid, function(er) {
             if (chownErOk(er))
               er = null;
             if (cb)
@@ -287,7 +287,7 @@ var require_polyfills = __commonJS({
           return orig;
         return function(target, uid, gid) {
           try {
-            return orig.call(fs11, target, uid, gid);
+            return orig.call(fs12, target, uid, gid);
           } catch (er) {
             if (!chownErOk(er))
               throw er;
@@ -312,14 +312,14 @@ var require_polyfills = __commonJS({
             if (cb)
               cb.apply(this, arguments);
           }
-          return options3 ? orig.call(fs11, target, options3, callback) : orig.call(fs11, target, callback);
+          return options3 ? orig.call(fs12, target, options3, callback) : orig.call(fs12, target, callback);
         };
       }
       function statFixSync(orig) {
         if (!orig)
           return orig;
         return function(target, options3) {
-          var stats = options3 ? orig.call(fs11, target, options3) : orig.call(fs11, target);
+          var stats = options3 ? orig.call(fs12, target, options3) : orig.call(fs12, target);
           if (stats) {
             if (stats.uid < 0)
               stats.uid += 4294967296;
@@ -350,7 +350,7 @@ var require_legacy_streams = __commonJS({
   "node_modules/graceful-fs/legacy-streams.js"(exports2, module2) {
     var Stream = require("stream").Stream;
     module2.exports = legacy;
-    function legacy(fs11) {
+    function legacy(fs12) {
       return {
         ReadStream,
         WriteStream
@@ -395,7 +395,7 @@ var require_legacy_streams = __commonJS({
           });
           return;
         }
-        fs11.open(this.path, this.flags, this.mode, function(err, fd) {
+        fs12.open(this.path, this.flags, this.mode, function(err, fd) {
           if (err) {
             self2.emit("error", err);
             self2.readable = false;
@@ -435,7 +435,7 @@ var require_legacy_streams = __commonJS({
         this.busy = false;
         this._queue = [];
         if (this.fd === null) {
-          this._open = fs11.open;
+          this._open = fs12.open;
           this._queue.push([this._open, this.path, this.flags, this.mode, void 0]);
           this.flush();
         }
@@ -470,7 +470,7 @@ var require_clone = __commonJS({
 // node_modules/graceful-fs/graceful-fs.js
 var require_graceful_fs = __commonJS({
   "node_modules/graceful-fs/graceful-fs.js"(exports2, module2) {
-    var fs11 = require("fs");
+    var fs12 = require("fs");
     var polyfills = require_polyfills();
     var legacy = require_legacy_streams();
     var clone = require_clone();
@@ -486,10 +486,10 @@ var require_graceful_fs = __commonJS({
     }
     function noop2() {
     }
-    function publishQueue(context, queue3) {
+    function publishQueue(context, queue2) {
       Object.defineProperty(context, gracefulQueue, {
         get: function() {
-          return queue3;
+          return queue2;
         }
       });
     }
@@ -502,12 +502,12 @@ var require_graceful_fs = __commonJS({
         m = "GFS4: " + m.split(/\n/).join("\nGFS4: ");
         console.error(m);
       };
-    if (!fs11[gracefulQueue]) {
-      queue2 = global[gracefulQueue] || [];
-      publishQueue(fs11, queue2);
-      fs11.close = function(fs$close) {
+    if (!fs12[gracefulQueue]) {
+      queue = global[gracefulQueue] || [];
+      publishQueue(fs12, queue);
+      fs12.close = function(fs$close) {
         function close(fd, cb) {
-          return fs$close.call(fs11, fd, function(err) {
+          return fs$close.call(fs12, fd, function(err) {
             if (!err) {
               resetQueue();
             }
@@ -519,40 +519,40 @@ var require_graceful_fs = __commonJS({
           value: fs$close
         });
         return close;
-      }(fs11.close);
-      fs11.closeSync = function(fs$closeSync) {
+      }(fs12.close);
+      fs12.closeSync = function(fs$closeSync) {
         function closeSync(fd) {
-          fs$closeSync.apply(fs11, arguments);
+          fs$closeSync.apply(fs12, arguments);
           resetQueue();
         }
         Object.defineProperty(closeSync, previousSymbol, {
           value: fs$closeSync
         });
         return closeSync;
-      }(fs11.closeSync);
+      }(fs12.closeSync);
       if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || "")) {
         process.on("exit", function() {
-          debug(fs11[gracefulQueue]);
-          require("assert").equal(fs11[gracefulQueue].length, 0);
+          debug(fs12[gracefulQueue]);
+          require("assert").equal(fs12[gracefulQueue].length, 0);
         });
       }
     }
-    var queue2;
+    var queue;
     if (!global[gracefulQueue]) {
-      publishQueue(global, fs11[gracefulQueue]);
+      publishQueue(global, fs12[gracefulQueue]);
     }
-    module2.exports = patch(clone(fs11));
-    if (process.env.TEST_GRACEFUL_FS_GLOBAL_PATCH && !fs11.__patched) {
-      module2.exports = patch(fs11);
-      fs11.__patched = true;
+    module2.exports = patch(clone(fs12));
+    if (process.env.TEST_GRACEFUL_FS_GLOBAL_PATCH && !fs12.__patched) {
+      module2.exports = patch(fs12);
+      fs12.__patched = true;
     }
-    function patch(fs12) {
-      polyfills(fs12);
-      fs12.gracefulify = patch;
-      fs12.createReadStream = createReadStream;
-      fs12.createWriteStream = createWriteStream;
-      var fs$readFile = fs12.readFile;
-      fs12.readFile = readFile2;
+    function patch(fs13) {
+      polyfills(fs13);
+      fs13.gracefulify = patch;
+      fs13.createReadStream = createReadStream;
+      fs13.createWriteStream = createWriteStream;
+      var fs$readFile = fs13.readFile;
+      fs13.readFile = readFile2;
       function readFile2(path13, options3, cb) {
         if (typeof options3 === "function")
           cb = options3, options3 = null;
@@ -568,8 +568,8 @@ var require_graceful_fs = __commonJS({
           });
         }
       }
-      var fs$writeFile = fs12.writeFile;
-      fs12.writeFile = writeFile2;
+      var fs$writeFile = fs13.writeFile;
+      fs13.writeFile = writeFile2;
       function writeFile2(path13, data, options3, cb) {
         if (typeof options3 === "function")
           cb = options3, options3 = null;
@@ -585,9 +585,9 @@ var require_graceful_fs = __commonJS({
           });
         }
       }
-      var fs$appendFile = fs12.appendFile;
+      var fs$appendFile = fs13.appendFile;
       if (fs$appendFile)
-        fs12.appendFile = appendFile;
+        fs13.appendFile = appendFile;
       function appendFile(path13, data, options3, cb) {
         if (typeof options3 === "function")
           cb = options3, options3 = null;
@@ -603,9 +603,9 @@ var require_graceful_fs = __commonJS({
           });
         }
       }
-      var fs$copyFile = fs12.copyFile;
+      var fs$copyFile = fs13.copyFile;
       if (fs$copyFile)
-        fs12.copyFile = copyFile;
+        fs13.copyFile = copyFile;
       function copyFile(src, dest, flags, cb) {
         if (typeof flags === "function") {
           cb = flags;
@@ -623,8 +623,8 @@ var require_graceful_fs = __commonJS({
           });
         }
       }
-      var fs$readdir = fs12.readdir;
-      fs12.readdir = readdir;
+      var fs$readdir = fs13.readdir;
+      fs13.readdir = readdir;
       var noReaddirOptionVersions = /^v[0-5]\./;
       function readdir(path13, options3, cb) {
         if (typeof options3 === "function")
@@ -665,21 +665,21 @@ var require_graceful_fs = __commonJS({
         }
       }
       if (process.version.substr(0, 4) === "v0.8") {
-        var legStreams = legacy(fs12);
+        var legStreams = legacy(fs13);
         ReadStream = legStreams.ReadStream;
         WriteStream = legStreams.WriteStream;
       }
-      var fs$ReadStream = fs12.ReadStream;
+      var fs$ReadStream = fs13.ReadStream;
       if (fs$ReadStream) {
         ReadStream.prototype = Object.create(fs$ReadStream.prototype);
         ReadStream.prototype.open = ReadStream$open;
       }
-      var fs$WriteStream = fs12.WriteStream;
+      var fs$WriteStream = fs13.WriteStream;
       if (fs$WriteStream) {
         WriteStream.prototype = Object.create(fs$WriteStream.prototype);
         WriteStream.prototype.open = WriteStream$open;
       }
-      Object.defineProperty(fs12, "ReadStream", {
+      Object.defineProperty(fs13, "ReadStream", {
         get: function() {
           return ReadStream;
         },
@@ -689,7 +689,7 @@ var require_graceful_fs = __commonJS({
         enumerable: true,
         configurable: true
       });
-      Object.defineProperty(fs12, "WriteStream", {
+      Object.defineProperty(fs13, "WriteStream", {
         get: function() {
           return WriteStream;
         },
@@ -700,7 +700,7 @@ var require_graceful_fs = __commonJS({
         configurable: true
       });
       var FileReadStream = ReadStream;
-      Object.defineProperty(fs12, "FileReadStream", {
+      Object.defineProperty(fs13, "FileReadStream", {
         get: function() {
           return FileReadStream;
         },
@@ -711,7 +711,7 @@ var require_graceful_fs = __commonJS({
         configurable: true
       });
       var FileWriteStream = WriteStream;
-      Object.defineProperty(fs12, "FileWriteStream", {
+      Object.defineProperty(fs13, "FileWriteStream", {
         get: function() {
           return FileWriteStream;
         },
@@ -760,13 +760,13 @@ var require_graceful_fs = __commonJS({
         });
       }
       function createReadStream(path13, options3) {
-        return new fs12.ReadStream(path13, options3);
+        return new fs13.ReadStream(path13, options3);
       }
       function createWriteStream(path13, options3) {
-        return new fs12.WriteStream(path13, options3);
+        return new fs13.WriteStream(path13, options3);
       }
-      var fs$open = fs12.open;
-      fs12.open = open;
+      var fs$open = fs13.open;
+      fs13.open = open;
       function open(path13, flags, mode, cb) {
         if (typeof mode === "function")
           cb = mode, mode = null;
@@ -782,20 +782,20 @@ var require_graceful_fs = __commonJS({
           });
         }
       }
-      return fs12;
+      return fs13;
     }
     function enqueue(elem) {
       debug("ENQUEUE", elem[0].name, elem[1]);
-      fs11[gracefulQueue].push(elem);
+      fs12[gracefulQueue].push(elem);
       retry();
     }
     var retryTimer;
     function resetQueue() {
       var now = Date.now();
-      for (var i = 0; i < fs11[gracefulQueue].length; ++i) {
-        if (fs11[gracefulQueue][i].length > 2) {
-          fs11[gracefulQueue][i][3] = now;
-          fs11[gracefulQueue][i][4] = now;
+      for (var i = 0; i < fs12[gracefulQueue].length; ++i) {
+        if (fs12[gracefulQueue][i].length > 2) {
+          fs12[gracefulQueue][i][3] = now;
+          fs12[gracefulQueue][i][4] = now;
         }
       }
       retry();
@@ -803,9 +803,9 @@ var require_graceful_fs = __commonJS({
     function retry() {
       clearTimeout(retryTimer);
       retryTimer = void 0;
-      if (fs11[gracefulQueue].length === 0)
+      if (fs12[gracefulQueue].length === 0)
         return;
-      var elem = fs11[gracefulQueue].shift();
+      var elem = fs12[gracefulQueue].shift();
       var fn = elem[0];
       var args = elem[1];
       var err = elem[2];
@@ -827,7 +827,7 @@ var require_graceful_fs = __commonJS({
           debug("RETRY", fn.name, args);
           fn.apply(null, args.concat([startTime]));
         } else {
-          fs11[gracefulQueue].push(elem);
+          fs12[gracefulQueue].push(elem);
         }
       }
       if (retryTimer === void 0) {
@@ -1187,7 +1187,7 @@ var require_write_file_atomic = __commonJS({
     module2.exports.sync = writeFileSync;
     module2.exports._getTmpname = getTmpname;
     module2.exports._cleanupOnExit = cleanupOnExit;
-    var fs11 = require("fs");
+    var fs12 = require("fs");
     var MurmurHash3 = require_imurmurhash();
     var onExit = require_signal_exit();
     var path13 = require("path");
@@ -1210,18 +1210,18 @@ var require_write_file_atomic = __commonJS({
     function cleanupOnExit(tmpfile) {
       return () => {
         try {
-          fs11.unlinkSync(typeof tmpfile === "function" ? tmpfile() : tmpfile);
+          fs12.unlinkSync(typeof tmpfile === "function" ? tmpfile() : tmpfile);
         } catch (_) {
         }
       };
     }
     function serializeActiveFile(absoluteName) {
-      return new Promise((resolve5) => {
+      return new Promise((resolve7) => {
         if (!activeFiles[absoluteName])
           activeFiles[absoluteName] = [];
-        activeFiles[absoluteName].push(resolve5);
+        activeFiles[absoluteName].push(resolve7);
         if (activeFiles[absoluteName].length === 1)
-          resolve5();
+          resolve7();
       });
     }
     function isChownErrOk(err) {
@@ -1246,10 +1246,10 @@ var require_write_file_atomic = __commonJS({
       const absoluteName = path13.resolve(filename);
       try {
         await serializeActiveFile(absoluteName);
-        const truename = await promisify2(fs11.realpath)(filename).catch(() => filename);
+        const truename = await promisify2(fs12.realpath)(filename).catch(() => filename);
         tmpfile = getTmpname(truename);
         if (!options3.mode || !options3.chown) {
-          const stats = await promisify2(fs11.stat)(truename).catch(() => {
+          const stats = await promisify2(fs12.stat)(truename).catch(() => {
           });
           if (stats) {
             if (options3.mode == null) {
@@ -1260,7 +1260,7 @@ var require_write_file_atomic = __commonJS({
             }
           }
         }
-        fd = await promisify2(fs11.open)(tmpfile, "w", options3.mode);
+        fd = await promisify2(fs12.open)(tmpfile, "w", options3.mode);
         if (options3.tmpfileCreated) {
           await options3.tmpfileCreated(tmpfile);
         }
@@ -1268,40 +1268,40 @@ var require_write_file_atomic = __commonJS({
           data = typedArrayToBuffer(data);
         }
         if (Buffer.isBuffer(data)) {
-          await promisify2(fs11.write)(fd, data, 0, data.length, 0);
+          await promisify2(fs12.write)(fd, data, 0, data.length, 0);
         } else if (data != null) {
-          await promisify2(fs11.write)(fd, String(data), 0, String(options3.encoding || "utf8"));
+          await promisify2(fs12.write)(fd, String(data), 0, String(options3.encoding || "utf8"));
         }
         if (options3.fsync !== false) {
-          await promisify2(fs11.fsync)(fd);
+          await promisify2(fs12.fsync)(fd);
         }
-        await promisify2(fs11.close)(fd);
+        await promisify2(fs12.close)(fd);
         fd = null;
         if (options3.chown) {
-          await promisify2(fs11.chown)(tmpfile, options3.chown.uid, options3.chown.gid).catch((err) => {
+          await promisify2(fs12.chown)(tmpfile, options3.chown.uid, options3.chown.gid).catch((err) => {
             if (!isChownErrOk(err)) {
               throw err;
             }
           });
         }
         if (options3.mode) {
-          await promisify2(fs11.chmod)(tmpfile, options3.mode).catch((err) => {
+          await promisify2(fs12.chmod)(tmpfile, options3.mode).catch((err) => {
             if (!isChownErrOk(err)) {
               throw err;
             }
           });
         }
-        await promisify2(fs11.rename)(tmpfile, truename);
+        await promisify2(fs12.rename)(tmpfile, truename);
       } finally {
         if (fd) {
-          await promisify2(fs11.close)(fd).catch(
+          await promisify2(fs12.close)(fd).catch(
             /* istanbul ignore next */
             () => {
             }
           );
         }
         removeOnExitHandler();
-        await promisify2(fs11.unlink)(tmpfile).catch(() => {
+        await promisify2(fs12.unlink)(tmpfile).catch(() => {
         });
         activeFiles[absoluteName].shift();
         if (activeFiles[absoluteName].length > 0) {
@@ -1327,13 +1327,13 @@ var require_write_file_atomic = __commonJS({
       else if (!options3)
         options3 = {};
       try {
-        filename = fs11.realpathSync(filename);
+        filename = fs12.realpathSync(filename);
       } catch (ex) {
       }
       const tmpfile = getTmpname(filename);
       if (!options3.mode || !options3.chown) {
         try {
-          const stats = fs11.statSync(filename);
+          const stats = fs12.statSync(filename);
           options3 = Object.assign({}, options3);
           if (!options3.mode) {
             options3.mode = stats.mode;
@@ -1349,7 +1349,7 @@ var require_write_file_atomic = __commonJS({
       const removeOnExitHandler = onExit(cleanup);
       let threw = true;
       try {
-        fd = fs11.openSync(tmpfile, "w", options3.mode || 438);
+        fd = fs12.openSync(tmpfile, "w", options3.mode || 438);
         if (options3.tmpfileCreated) {
           options3.tmpfileCreated(tmpfile);
         }
@@ -1357,18 +1357,18 @@ var require_write_file_atomic = __commonJS({
           data = typedArrayToBuffer(data);
         }
         if (Buffer.isBuffer(data)) {
-          fs11.writeSync(fd, data, 0, data.length, 0);
+          fs12.writeSync(fd, data, 0, data.length, 0);
         } else if (data != null) {
-          fs11.writeSync(fd, String(data), 0, String(options3.encoding || "utf8"));
+          fs12.writeSync(fd, String(data), 0, String(options3.encoding || "utf8"));
         }
         if (options3.fsync !== false) {
-          fs11.fsyncSync(fd);
+          fs12.fsyncSync(fd);
         }
-        fs11.closeSync(fd);
+        fs12.closeSync(fd);
         fd = null;
         if (options3.chown) {
           try {
-            fs11.chownSync(tmpfile, options3.chown.uid, options3.chown.gid);
+            fs12.chownSync(tmpfile, options3.chown.uid, options3.chown.gid);
           } catch (err) {
             if (!isChownErrOk(err)) {
               throw err;
@@ -1377,19 +1377,19 @@ var require_write_file_atomic = __commonJS({
         }
         if (options3.mode) {
           try {
-            fs11.chmodSync(tmpfile, options3.mode);
+            fs12.chmodSync(tmpfile, options3.mode);
           } catch (err) {
             if (!isChownErrOk(err)) {
               throw err;
             }
           }
         }
-        fs11.renameSync(tmpfile, filename);
+        fs12.renameSync(tmpfile, filename);
         threw = false;
       } finally {
         if (fd) {
           try {
-            fs11.closeSync(fd);
+            fs12.closeSync(fd);
           } catch (ex) {
           }
         }
@@ -10634,7 +10634,7 @@ var require_form_data = __commonJS({
     var http2 = require("http");
     var https2 = require("https");
     var parseUrl = require("url").parse;
-    var fs11 = require("fs");
+    var fs12 = require("fs");
     var Stream = require("stream").Stream;
     var mime = require_mime_types();
     var asynckit = require_asynckit();
@@ -10699,7 +10699,7 @@ var require_form_data = __commonJS({
         if (value.end != void 0 && value.end != Infinity && value.start != void 0) {
           callback(null, value.end + 1 - (value.start ? value.start : 0));
         } else {
-          fs11.stat(value.path, function(err, stat) {
+          fs12.stat(value.path, function(err, stat) {
             var fileSize;
             if (err) {
               callback(err);
@@ -12584,7 +12584,7 @@ var require_ico = __commonJS({
       const value = input[offset];
       return value === 0 ? 256 : value;
     }
-    function getImageSize(input, imageIndex) {
+    function getImageSize2(input, imageIndex) {
       const offset = SIZE_HEADER + imageIndex * SIZE_IMAGE_ENTRY;
       return {
         height: getSizeFromOffset(input, offset + 1),
@@ -12602,12 +12602,12 @@ var require_ico = __commonJS({
       },
       calculate(input) {
         const nbImages = (0, utils_1.readUInt16LE)(input, 4);
-        const imageSize = getImageSize(input, 0);
+        const imageSize = getImageSize2(input, 0);
         if (nbImages === 1)
           return imageSize;
         const imgs = [imageSize];
         for (let imageIndex = 1; imageIndex < nbImages; imageIndex += 1) {
-          imgs.push(getImageSize(input, imageIndex));
+          imgs.push(getImageSize2(input, imageIndex));
         }
         return {
           height: imageSize.height,
@@ -12779,7 +12779,7 @@ var require_icns = __commonJS({
         (0, utils_1.readUInt32BE)(input, imageLengthOffset)
       ];
     }
-    function getImageSize(type) {
+    function getImageSize2(type) {
       const size = ICON_TYPE_SIZE[type];
       return { width: size, height: size, type };
     }
@@ -12790,7 +12790,7 @@ var require_icns = __commonJS({
         const fileLength = (0, utils_1.readUInt32BE)(input, FILE_LENGTH_OFFSET);
         let imageOffset = SIZE_HEADER;
         let imageHeader = readImageHeader(input, imageOffset);
-        let imageSize = getImageSize(imageHeader[0]);
+        let imageSize = getImageSize2(imageHeader[0]);
         imageOffset += imageHeader[1];
         if (imageOffset === fileLength)
           return imageSize;
@@ -12801,7 +12801,7 @@ var require_icns = __commonJS({
         };
         while (imageOffset < fileLength && imageOffset < inputLength) {
           imageHeader = readImageHeader(input, imageOffset);
-          imageSize = getImageSize(imageHeader[0]);
+          imageSize = getImageSize2(imageHeader[0]);
           imageOffset += imageHeader[1];
           result.images.push(imageSize);
         }
@@ -13239,19 +13239,19 @@ var require_tiff = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.TIFF = void 0;
-    var fs11 = require("fs");
+    var fs12 = require("fs");
     var utils_1 = require_utils();
     function readIFD(input, filepath, isBigEndian) {
       const ifdOffset = (0, utils_1.readUInt)(input, 32, 4, isBigEndian);
       let bufferSize = 1024;
-      const fileSize = fs11.statSync(filepath).size;
+      const fileSize = fs12.statSync(filepath).size;
       if (ifdOffset + bufferSize > fileSize) {
         bufferSize = fileSize - ifdOffset - 10;
       }
       const endBuffer = new Uint8Array(bufferSize);
-      const descriptor = fs11.openSync(filepath, "r");
-      fs11.readSync(descriptor, endBuffer, 0, bufferSize, ifdOffset);
-      fs11.closeSync(descriptor);
+      const descriptor = fs12.openSync(filepath, "r");
+      fs12.readSync(descriptor, endBuffer, 0, bufferSize, ifdOffset);
+      fs12.closeSync(descriptor);
       return endBuffer.slice(2);
     }
     function readValue(input, isBigEndian) {
@@ -13464,13 +13464,13 @@ var require_dist = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.types = exports2.setConcurrency = exports2.disableTypes = exports2.disableFS = exports2.imageSize = void 0;
-    var fs11 = require("fs");
+    var fs12 = require("fs");
     var path13 = require("path");
     var queue_1 = require_queue();
     var index_1 = require_types();
     var detector_1 = require_detector();
     var MaxInputSize = 512 * 1024;
-    var queue2 = new queue_1.default({ concurrency: 100, autostart: true });
+    var queue = new queue_1.default({ concurrency: 100, autostart: true });
     var globalOptions = {
       disabledFS: false,
       disabledTypes: []
@@ -13492,7 +13492,7 @@ var require_dist = __commonJS({
       throw new TypeError("unsupported file type: " + type + " (file: " + filepath + ")");
     }
     async function readFileAsync(filepath) {
-      const handle = await fs11.promises.open(filepath, "r");
+      const handle = await fs12.promises.open(filepath, "r");
       try {
         const { size } = await handle.stat();
         if (size <= 0) {
@@ -13507,18 +13507,18 @@ var require_dist = __commonJS({
       }
     }
     function readFileSync4(filepath) {
-      const descriptor = fs11.openSync(filepath, "r");
+      const descriptor = fs12.openSync(filepath, "r");
       try {
-        const { size } = fs11.fstatSync(descriptor);
+        const { size } = fs12.fstatSync(descriptor);
         if (size <= 0) {
           throw new Error("Empty file");
         }
         const inputSize = Math.min(size, MaxInputSize);
         const input = new Uint8Array(inputSize);
-        fs11.readSync(descriptor, input, 0, inputSize, 0);
+        fs12.readSync(descriptor, input, 0, inputSize, 0);
         return input;
       } finally {
-        fs11.closeSync(descriptor);
+        fs12.closeSync(descriptor);
       }
     }
     module2.exports = exports2 = imageSize;
@@ -13532,7 +13532,7 @@ var require_dist = __commonJS({
       }
       const filepath = path13.resolve(input);
       if (typeof callback === "function") {
-        queue2.push(() => readFileAsync(filepath).then((input2) => process.nextTick(callback, null, lookup(input2, filepath))).catch(callback));
+        queue.push(() => readFileAsync(filepath).then((input2) => process.nextTick(callback, null, lookup(input2, filepath))).catch(callback));
       } else {
         const input2 = readFileSync4(filepath);
         return lookup(input2, filepath);
@@ -13548,7 +13548,7 @@ var require_dist = __commonJS({
     };
     exports2.disableTypes = disableTypes;
     var setConcurrency = (c) => {
-      queue2.concurrency = c;
+      queue.concurrency = c;
     };
     exports2.setConcurrency = setConcurrency;
     exports2.types = Object.keys(index_1.typeHandlers);
@@ -13948,7 +13948,7 @@ var require_helpers = __commonJS({
       this.base = base;
       this.schemas = schemas;
     };
-    SchemaContext.prototype.resolve = function resolve5(target) {
+    SchemaContext.prototype.resolve = function resolve7(target) {
       return uri.resolve(this.base, target);
     };
     SchemaContext.prototype.makeChild = function makeChild(schema, propertyName) {
@@ -15103,7 +15103,7 @@ var require_validator = __commonJS({
       }
       return schema;
     };
-    Validator3.prototype.resolve = function resolve5(schema, switchSchema, ctx) {
+    Validator3.prototype.resolve = function resolve7(schema, switchSchema, ctx) {
       switchSchema = ctx.resolve(switchSchema);
       if (ctx.schemas[switchSchema]) {
         return { subschema: ctx.schemas[switchSchema], switchSchema };
@@ -16145,10 +16145,10 @@ var require_route = __commonJS({
     }
     function deriveBFS(fromModel) {
       const graph = buildGraph();
-      const queue2 = [fromModel];
+      const queue = [fromModel];
       graph[fromModel].distance = 0;
-      while (queue2.length) {
-        const current = queue2.pop();
+      while (queue.length) {
+        const current = queue.pop();
         const adjacents = Object.keys(conversions[current]);
         for (let len = adjacents.length, i = 0; i < len; i++) {
           const adjacent = adjacents[i];
@@ -16156,7 +16156,7 @@ var require_route = __commonJS({
           if (node.distance === -1) {
             node.distance = graph[current].distance + 1;
             node.parent = current;
-            queue2.unshift(adjacent);
+            queue.unshift(adjacent);
           }
         }
       }
@@ -24692,12 +24692,12 @@ var YargsInstance = class {
   async getCompletion(args, done) {
     argsert("<array> [function]", [args, done], arguments.length);
     if (!done) {
-      return new Promise((resolve5, reject) => {
+      return new Promise((resolve7, reject) => {
         __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, (err, completions) => {
           if (err)
             reject(err);
           else
-            resolve5(completions);
+            resolve7(completions);
         });
       });
     } else {
@@ -27229,10 +27229,10 @@ utils_default.inherits(CanceledError, AxiosError_default, {
 var CanceledError_default = CanceledError;
 
 // node_modules/axios/lib/core/settle.js
-function settle(resolve5, reject, response) {
+function settle(resolve7, reject, response) {
   const validateStatus2 = response.config.validateStatus;
   if (!response.status || !validateStatus2 || validateStatus2(response.status)) {
-    resolve5(response);
+    resolve7(response);
   } else {
     reject(new AxiosError_default(
       "Request failed with status code " + response.status,
@@ -27722,7 +27722,7 @@ function setProxy(options3, configProxy, location) {
 }
 var isHttpAdapterSupported = typeof process !== "undefined" && utils_default.kindOf(process) === "process";
 var wrapAsync = (asyncExecutor) => {
-  return new Promise((resolve5, reject) => {
+  return new Promise((resolve7, reject) => {
     let onDone;
     let isDone;
     const done = (value, isRejected) => {
@@ -27733,7 +27733,7 @@ var wrapAsync = (asyncExecutor) => {
     };
     const _resolve = (value) => {
       done(value);
-      resolve5(value);
+      resolve7(value);
     };
     const _reject = (reason) => {
       done(reason, true);
@@ -27753,7 +27753,7 @@ var resolveFamily = ({ address, family }) => {
 };
 var buildAddressEntry = (address, family) => resolveFamily(utils_default.isObject(address) ? address : { address, family });
 var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
-  return wrapAsync(async function dispatchHttpRequest(resolve5, reject, onDone) {
+  return wrapAsync(async function dispatchHttpRequest(resolve7, reject, onDone) {
     let { data, lookup, family } = config2;
     const { responseType, responseEncoding } = config2;
     const method = config2.method.toUpperCase();
@@ -27805,7 +27805,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
     if (protocol === "data:") {
       let convertedData;
       if (method !== "GET") {
-        return settle(resolve5, reject, {
+        return settle(resolve7, reject, {
           status: 405,
           statusText: "method not allowed",
           headers: {},
@@ -27827,7 +27827,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
       } else if (responseType === "stream") {
         convertedData = import_stream4.default.Readable.from(convertedData);
       }
-      return settle(resolve5, reject, {
+      return settle(resolve7, reject, {
         data: convertedData,
         status: 200,
         statusText: "OK",
@@ -28044,7 +28044,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
       };
       if (responseType === "stream") {
         response.data = responseStream;
-        settle(resolve5, reject, response);
+        settle(resolve7, reject, response);
       } else {
         const responseBuffer = [];
         let totalResponseBytes = 0;
@@ -28093,7 +28093,7 @@ var http_default = isHttpAdapterSupported && function httpAdapter(config2) {
           } catch (err) {
             return reject(AxiosError_default.from(err, null, config2, response.request, response));
           }
-          settle(resolve5, reject, response);
+          settle(resolve7, reject, response);
         });
       }
       emitter.once("abort", (err) => {
@@ -28263,7 +28263,7 @@ function progressEventReducer(listener, isDownloadStream) {
 }
 var isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
 var xhr_default = isXHRAdapterSupported && function(config2) {
-  return new Promise(function dispatchXhrRequest(resolve5, reject) {
+  return new Promise(function dispatchXhrRequest(resolve7, reject) {
     let requestData = config2.data;
     const requestHeaders = AxiosHeaders_default.from(config2.headers).normalize();
     let { responseType, withXSRFToken } = config2;
@@ -28311,7 +28311,7 @@ var xhr_default = isXHRAdapterSupported && function(config2) {
         request
       };
       settle(function _resolve(value) {
-        resolve5(value);
+        resolve7(value);
         done();
       }, function _reject(err) {
         reject(err);
@@ -28810,8 +28810,8 @@ var CancelToken = class _CancelToken {
       throw new TypeError("executor must be a function.");
     }
     let resolvePromise;
-    this.promise = new Promise(function promiseExecutor(resolve5) {
-      resolvePromise = resolve5;
+    this.promise = new Promise(function promiseExecutor(resolve7) {
+      resolvePromise = resolve7;
     });
     const token = this;
     this.promise.then((cancel) => {
@@ -28825,9 +28825,9 @@ var CancelToken = class _CancelToken {
     });
     this.promise.then = (onfulfilled) => {
       let _resolve;
-      const promise = new Promise((resolve5) => {
-        token.subscribe(resolve5);
-        _resolve = resolve5;
+      const promise = new Promise((resolve7) => {
+        token.subscribe(resolve7);
+        _resolve = resolve7;
       }).then(onfulfilled);
       promise.cancel = function reject() {
         token.unsubscribe(_resolve);
@@ -32053,13 +32053,13 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
   return result;
 };
 var getHash = (url2) => {
-  return new Promise((resolve5, reject) => {
+  return new Promise((resolve7, reject) => {
     const hashBuilder = import_crypto2.default.createHash("sha256");
     hashBuilder.setEncoding("hex");
     const stream4 = import_fs6.default.createReadStream(url2);
     stream4.on("end", function() {
       hashBuilder.end();
-      resolve5(hashBuilder.read());
+      resolve7(hashBuilder.read());
     });
     stream4.on("error", (error) => {
       hashBuilder.end();
@@ -32088,6 +32088,9 @@ var getBase64Image = (url2) => {
   if (imageCache[url2] !== void 0) {
     return imageCache[url2].data;
   }
+  if (import_fs6.default.statSync(url2).isDirectory()) {
+    return;
+  }
   const buffer = import_fs6.default.readFileSync(url2);
   const data = buffer.toString("base64");
   const sizes = (0, import_image_size.default)(url2);
@@ -32097,6 +32100,23 @@ var getBase64Image = (url2) => {
     width: sizes.width ?? -1
   };
   return data;
+};
+var getImageSize = (url2) => {
+  if (imageCache[url2] !== void 0) {
+    return { height: imageCache[url2].height, width: imageCache[url2].width };
+  }
+  if (import_fs6.default.statSync(url2).isDirectory()) {
+    return { height: -1, width: -1 };
+  }
+  const buffer = import_fs6.default.readFileSync(url2);
+  const data = buffer.toString("base64");
+  const sizes = (0, import_image_size.default)(url2);
+  imageCache[url2] = {
+    data,
+    height: sizes.height ?? -1,
+    width: sizes.width ?? -1
+  };
+  return { height: sizes.height ?? -1, width: sizes.width ?? -1 };
 };
 var getMetadataFromCivitAi = (metadata) => {
   try {
@@ -33698,7 +33718,7 @@ var extract2 = async (source, { addBefore, format: format3, output, recursive })
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  const prompts = [];
+  const prompts2 = [];
   const filesList = getFiles(source, recursive);
   for await (const file of filesList) {
     const addBeforePrompts = addBefore ? addBefore.split("|") : [""];
@@ -33706,20 +33726,20 @@ var extract2 = async (source, { addBefore, format: format3, output, recursive })
       const prompt = await extractFromFile(file, format3);
       if (prompt) {
         if (addBeforePrompts.length === 0) {
-          prompts.push(prompt);
+          prompts2.push(prompt);
         } else {
           addBeforePrompts.forEach((addBeforePrompt) => {
             if (typeof prompt === "string") {
-              prompts.push(prompt.replace('--prompt "', `--prompt "${addBeforePrompt}, `));
+              prompts2.push(prompt.replace('--prompt "', `--prompt "${addBeforePrompt}, `));
             } else {
-              prompts.push({ ...prompt, prompt: `${addBeforePrompt}, ${prompt.prompt}` });
+              prompts2.push({ ...prompt, prompt: `${addBeforePrompt}, ${prompt.prompt}` });
             }
           });
         }
       }
     }
   }
-  const result = format3 === "json" ? JSON.stringify({ prompts }) : prompts.join("\n");
+  const result = format3 === "json" ? JSON.stringify({ prompts: prompts2 }) : prompts2.join("\n");
   const outputFile = output ?? import_path10.default.resolve(source, `prompts.${format3 === "json" ? "json" : "txt"}`);
   logger(`Extracted prompts to ${outputFile}`);
   import_fs8.default.writeFileSync(outputFile, result);
@@ -33778,14 +33798,14 @@ __export(queue_exports, {
   describe: () => describe5,
   handler: () => handler5
 });
-var import_path12 = __toESM(require("path"));
+var import_path14 = __toESM(require("path"));
 
 // src/queue/queue.ts
-var import_fs10 = __toESM(require("fs"));
-var import_jsonschema = __toESM(require_lib());
+var import_fs11 = __toESM(require("fs"));
 
-// src/commons/queue.ts
+// src/commons/prompts.ts
 var import_fs9 = require("fs");
+var import_path12 = require("path");
 
 // src/commons/extensions/cutoff.ts
 var getCutOffTokens = (prompt) => {
@@ -33801,7 +33821,7 @@ var getCutOffTokens = (prompt) => {
   });
 };
 
-// src/commons/queue.ts
+// src/commons/prompts.ts
 var updateFilename = (query, token, value) => {
   query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(
     `{${token}}`,
@@ -33815,6 +33835,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     cfg,
     checkpointsOption,
     clipSkip,
+    controlNet,
     denoising,
     enableHighRes,
     height,
@@ -33835,7 +33856,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     vaeOption,
     width
   } = options3;
-  const prompts = [];
+  const prompts2 = [];
   const count = basePrompt.count ?? 1;
   for (let i = 0; i < count; i++) {
     const stylesSet = Array.isArray(stylesSets) ? stylesSets : [stylesSets];
@@ -33891,8 +33912,21 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       vae,
       width
     };
-    if (basePrompt.controlNet) {
-      prompt.controlNet = Array.isArray(basePrompt.controlNet) ? basePrompt.controlNet : [basePrompt.controlNet];
+    if (prompt.initImage) {
+      const { height: height2, width: width2 } = getImageSize(prompt.initImage);
+      prompt.width = !prompt.width && width2 != -1 ? width2 : void 0;
+      prompt.height = !prompt.height && height2 != -1 ? height2 : void 0;
+    }
+    if (controlNet) {
+      prompt.controlNet = Array.isArray(controlNet) ? controlNet : [controlNet];
+      if (prompt.controlNet.some((controlNet2) => controlNet2.input_image)) {
+        const firstImage = prompt.controlNet.find((controlNet2) => controlNet2.input_image)?.input_image;
+        if (firstImage) {
+          const { height: height2, width: width2 } = getImageSize(firstImage);
+          prompt.width = !prompt.width && width2 != -1 ? width2 : void 0;
+          prompt.height = !prompt.height && height2 != -1 ? height2 : void 0;
+        }
+      }
     }
     if (scaleFactor && prompt.pattern?.includes("{scaleFactor}")) {
       prompt.pattern = prompt.pattern.replace("{scaleFactor}", String(scaleFactor));
@@ -33916,7 +33950,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       prompt.height = scaleFactor2 * (prompt.height ?? 512);
       delete prompt.scaleFactor;
     }
-    prompts.push([(checkpoints ?? "") + (vae ?? "") + (upscaler ?? "") + JSON.stringify(prompt) + i, prompt]);
+    prompts2.push([(checkpoints ?? "") + (vae ?? "") + (upscaler ?? "") + JSON.stringify(prompt) + i, prompt]);
     if (permutations) {
       permutations.forEach((permutation) => {
         const permutedPrompt = { ...prompt };
@@ -33952,14 +33986,14 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
         if (permutation.beforePrompt) {
           permutedPrompt.prompt = permutedPrompt.prompt ? `${permutation.beforePrompt}, ${permutedPrompt.prompt}` : permutation.beforePrompt;
         }
-        prompts.push([
+        prompts2.push([
           (permutedPrompt.checkpoints ?? "") + (permutedPrompt.vae ?? "") + (permutedPrompt.upscaler ?? "") + JSON.stringify(permutedPrompt) + i,
           permutedPrompt
         ]);
       });
     }
   }
-  return prompts;
+  return prompts2;
 };
 var getPermutations = (permutations, options3, property) => {
   return permutations.reduce((acc, current) => {
@@ -33970,13 +34004,14 @@ var getPermutations = (permutations, options3, property) => {
   }, []);
 };
 var prepareSingleQueryPermutations = (basePrompt, options3) => {
-  let prompts = [];
+  let prompts2 = [];
   const {
     autoCutOffArray,
     autoLCMArray,
     cfgArray,
     checkpointsArray,
     clipSkipArray,
+    controlNetArray,
     denoisingArray,
     enableHighResArray,
     heightArray,
@@ -34022,15 +34057,17 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
   permutationsArray = getPermutations(permutationsArray, upscalerArray, "upscaler");
   permutationsArray = getPermutations(permutationsArray, vaeArray, "vaeOption");
   permutationsArray = getPermutations(permutationsArray, widthArray, "width");
+  permutationsArray = getPermutations(permutationsArray, controlNetArray, "controlNet");
   permutationsArray.forEach((permutationItem) => {
-    prompts = [
-      ...prompts,
+    prompts2 = [
+      ...prompts2,
       ...prepareSingleQuery(basePrompt, permutations, {
         autoCutOff: permutationItem.autoCutOff,
         autoLCM: permutationItem.autoLCM,
         cfg: permutationItem.cfg,
         checkpointsOption: permutationItem.checkpointsOption,
         clipSkip: permutationItem.clipSkip,
+        controlNet: permutationItem.controlNet,
         denoising: permutationItem.denoising,
         enableHighRes: permutationItem.enableHighRes,
         height: permutationItem.height,
@@ -34053,7 +34090,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
       })
     ];
   });
-  return prompts;
+  return prompts2;
 };
 var pickRandomItem = (array) => array[Math.floor(Math.random() * array.length)];
 var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
@@ -34108,12 +34145,14 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
   const upscaler = pickRandomItem(upscalerArray);
   const vaeOption = pickRandomItem(vaeArray);
   const width = pickRandomItem(widthArray);
+  const controlNet = pickRandomItem(options3.controlNetArray);
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
     autoLCM,
     cfg,
     checkpointsOption,
     clipSkip,
+    controlNet,
     denoising,
     enableHighRes,
     height,
@@ -34186,6 +34225,27 @@ var getArraysInitImage = (value, defaultValue = void 0) => {
   });
   return initImagesArray;
 };
+var getArraysControlNet = (value) => {
+  if (value === void 0) {
+    return [void 0];
+  }
+  const controlNetArray = Array.isArray(value) ? value : [value];
+  const controlNetImage = controlNetArray[0].input_image;
+  if (!controlNetImage) {
+    return [controlNetArray];
+  }
+  const initImagesArray = [];
+  if ((0, import_fs9.statSync)(controlNetImage).isDirectory()) {
+    const files = (0, import_fs9.readdirSync)(controlNetImage);
+    initImagesArray.push(...files.map((file) => (0, import_path12.resolve)(controlNetImage, file)));
+  } else {
+    initImagesArray.push(controlNetImage);
+  }
+  return initImagesArray.map((initImage) => {
+    const [first, ...rest] = controlNetArray;
+    return [{ ...first, input_image: initImage }, ...rest];
+  });
+};
 var getArraysTiledVAE = (value) => {
   if (typeof value === "object") {
     return [value];
@@ -34199,7 +34259,7 @@ var getArraysTiledVAE = (value) => {
   return [value ?? {}];
 };
 var prepareQueries = (basePrompts) => {
-  const prompts = /* @__PURE__ */ new Map();
+  const prompts2 = /* @__PURE__ */ new Map();
   const isPermutation = (basePrompts.multiValueMethod ?? "permutation") === "permutation";
   basePrompts.prompts.forEach((basePrompt) => {
     const autoCutOffArray = getArraysBoolean(basePrompt.autoCutOff);
@@ -34224,6 +34284,7 @@ var prepareQueries = (basePrompts) => {
     const widthArray = getArrays(basePrompt.width);
     const clipSkipArray = getArrays(basePrompt.clipSkip);
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [void 0]);
+    const controlNetArray = getArraysControlNet(basePrompt.controlNet);
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? void 0];
     const tiledDiffusionArray = Array.isArray(basePrompt.tiledDiffusion) ? basePrompt.tiledDiffusion : [basePrompt.tiledDiffusion ?? void 0];
     const prepareSingleQueryParameter = {
@@ -34232,6 +34293,7 @@ var prepareQueries = (basePrompts) => {
       cfgArray,
       checkpointsArray,
       clipSkipArray,
+      controlNetArray,
       denoisingArray,
       enableHighResArray,
       heightArray,
@@ -34255,11 +34317,11 @@ var prepareQueries = (basePrompts) => {
     };
     const results = isPermutation ? prepareSingleQueryPermutations(basePrompt, prepareSingleQueryParameter) : prepareSingleQueryRandomSelection(basePrompt, prepareSingleQueryParameter);
     results.forEach(([key, prompt]) => {
-      prompts.set(key, prompt);
+      prompts2.set(key, prompt);
     });
   });
-  const sorted = Array.from(prompts.keys()).sort((a, b) => a.localeCompare(b));
-  return sorted.map((key) => prompts.get(key));
+  const sorted = Array.from(prompts2.keys()).sort((a, b) => a.localeCompare(b));
+  return sorted.map((key) => prompts2.get(key));
 };
 var validTokensTemplate = [
   "[seed]",
@@ -34302,7 +34364,7 @@ var validateTemplate = (template) => {
     }
   });
 };
-var prepareQueue = (config2) => {
+var preparePrompts = (config2) => {
   const queries = [];
   const queriesArray = prepareQueries(config2);
   queriesArray.forEach((singleQuery) => {
@@ -34574,8 +34636,8 @@ var prepareQueue = (config2) => {
   });
   return queries;
 };
-var queue = async (config2, validateOnly) => {
-  const queries = prepareQueue(config2);
+var prompts = async (config2, validateOnly) => {
+  const queries = preparePrompts(config2);
   logger(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {
     writeLog(queries);
@@ -34590,10 +34652,24 @@ var queue = async (config2, validateOnly) => {
   }
 };
 
+// src/queue/functions.ts
+var import_fs10 = __toESM(require("fs"));
+var import_jsonschema = __toESM(require_lib());
+
 // src/commons/schema/queue.json
 var queue_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
-  additionalProperties: false,
+  anyOf: [
+    {
+      $ref: "#/definitions/IPromptsWithPrompt"
+    },
+    {
+      $ref: "#/definitions/IPromptsWithBasePrompt"
+    },
+    {
+      $ref: "#/definitions/IPromptsWithExtends"
+    }
+  ],
   definitions: {
     ControlNetMode: {
       enum: [
@@ -34684,8 +34760,7 @@ var queue_default = {
         }
       },
       required: [
-        "checkpoint",
-        "vae"
+        "checkpoint"
       ],
       title: "ICheckpointWithVAE",
       type: "object"
@@ -35178,6 +35253,138 @@ var queue_default = {
       title: "IPromptReplace",
       type: "object"
     },
+    IPromptsWithBasePrompt: {
+      additionalProperties: false,
+      properties: {
+        $schema: {
+          title: "$schema",
+          type: "string"
+        },
+        basePrompt: {
+          $ref: "#/definitions/Partial<IPrompt>",
+          title: "basePrompt"
+        },
+        extends: {
+          title: "extends",
+          type: "string"
+        },
+        multiValueMethod: {
+          enum: [
+            "permutation",
+            "random-selection"
+          ],
+          title: "multiValueMethod",
+          type: "string"
+        },
+        permutations: {
+          items: {
+            $ref: "#/definitions/IPromptPermutations"
+          },
+          title: "permutations",
+          type: "array"
+        },
+        prompts: {
+          items: {
+            $ref: "#/definitions/IPrompt"
+          },
+          title: "prompts",
+          type: "array"
+        }
+      },
+      required: [
+        "basePrompt"
+      ],
+      title: "IPromptsWithBasePrompt",
+      type: "object"
+    },
+    IPromptsWithExtends: {
+      additionalProperties: false,
+      properties: {
+        $schema: {
+          title: "$schema",
+          type: "string"
+        },
+        basePrompt: {
+          $ref: "#/definitions/Partial<IPrompt>",
+          title: "basePrompt"
+        },
+        extends: {
+          title: "extends",
+          type: "string"
+        },
+        multiValueMethod: {
+          enum: [
+            "permutation",
+            "random-selection"
+          ],
+          title: "multiValueMethod",
+          type: "string"
+        },
+        permutations: {
+          items: {
+            $ref: "#/definitions/IPromptPermutations"
+          },
+          title: "permutations",
+          type: "array"
+        },
+        prompts: {
+          items: {
+            $ref: "#/definitions/IPrompt"
+          },
+          title: "prompts",
+          type: "array"
+        }
+      },
+      required: [
+        "extends"
+      ],
+      title: "IPromptsWithExtends",
+      type: "object"
+    },
+    IPromptsWithPrompt: {
+      additionalProperties: false,
+      properties: {
+        $schema: {
+          title: "$schema",
+          type: "string"
+        },
+        basePrompt: {
+          $ref: "#/definitions/Partial<IPrompt>",
+          title: "basePrompt"
+        },
+        extends: {
+          title: "extends",
+          type: "string"
+        },
+        multiValueMethod: {
+          enum: [
+            "permutation",
+            "random-selection"
+          ],
+          title: "multiValueMethod",
+          type: "string"
+        },
+        permutations: {
+          items: {
+            $ref: "#/definitions/IPromptPermutations"
+          },
+          title: "permutations",
+          type: "array"
+        },
+        prompts: {
+          items: {
+            $ref: "#/definitions/IPrompt"
+          },
+          title: "prompts",
+          type: "array"
+        }
+      },
+      required: [
+        "prompts"
+      ],
+      title: "IPromptsWithPrompt",
+      type: "object"
+    },
     ITiledDiffusion: {
       additionalProperties: false,
       properties: {
@@ -35273,6 +35480,382 @@ var queue_default = {
         "width"
       ],
       title: "IUltimateSDUpscale",
+      type: "object"
+    },
+    "Partial<IPrompt>": {
+      additionalProperties: false,
+      properties: {
+        adetailer: {
+          items: {
+            $ref: "#/definitions/IAdetailerPrompt"
+          },
+          title: "adetailer",
+          type: "array"
+        },
+        autoCutOff: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "autoCutOff"
+        },
+        autoLCM: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "autoLCM"
+        },
+        cfg: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "cfg"
+        },
+        checkpoints: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              items: {
+                $ref: "#/definitions/ICheckpointWithVAE"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "checkpoints"
+        },
+        clipSkip: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "clipSkip"
+        },
+        controlNet: {
+          anyOf: [
+            {
+              $ref: "#/definitions/IControlNet"
+            },
+            {
+              items: {
+                $ref: "#/definitions/IControlNet"
+              },
+              type: "array"
+            }
+          ],
+          title: "controlNet"
+        },
+        count: {
+          title: "count",
+          type: "number"
+        },
+        denoising: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "denoising"
+        },
+        enableHighRes: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "enableHighRes"
+        },
+        filename: {
+          title: "filename",
+          type: "string"
+        },
+        height: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "height"
+        },
+        highRes: {
+          title: "highRes",
+          typeof: "function"
+        },
+        initImageOrFolder: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "initImageOrFolder"
+        },
+        negativePrompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "negativePrompt"
+        },
+        outDir: {
+          title: "outDir",
+          type: "string"
+        },
+        pattern: {
+          title: "pattern",
+          type: "string"
+        },
+        prompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "prompt"
+        },
+        restoreFaces: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "restoreFaces"
+        },
+        sampler: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "sampler"
+        },
+        scaleFactor: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "scaleFactor"
+        },
+        seed: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              pattern: "^[0-9]*-[0-9]*$",
+              type: "string"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "seed"
+        },
+        steps: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "steps"
+        },
+        styles: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "styles"
+        },
+        stylesSets: {
+          items: {
+            anyOf: [
+              {
+                items: {
+                  type: "string"
+                },
+                type: "array"
+              },
+              {
+                type: "string"
+              }
+            ]
+          },
+          title: "stylesSets",
+          type: "array"
+        },
+        tiledDiffusion: {
+          anyOf: [
+            {
+              $ref: "#/definitions/ITiledDiffusion"
+            },
+            {
+              items: {
+                $ref: "#/definitions/ITiledDiffusion"
+              },
+              type: "array"
+            }
+          ],
+          title: "tiledDiffusion"
+        },
+        tiledVAE: {
+          anyOf: [
+            {
+              $ref: "#/definitions/ITiledVAE"
+            },
+            {
+              enum: [
+                "both",
+                false,
+                true
+              ]
+            }
+          ],
+          title: "tiledVAE"
+        },
+        tiling: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "tiling"
+        },
+        ultimateSdUpscale: {
+          enum: [
+            "both",
+            false,
+            true
+          ],
+          title: "ultimateSdUpscale"
+        },
+        upscaler: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "upscaler"
+        },
+        vae: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "vae"
+        },
+        width: {
+          anyOf: [
+            {
+              items: {
+                type: "number"
+              },
+              type: "array"
+            },
+            {
+              type: "number"
+            }
+          ],
+          title: "width"
+        }
+      },
+      title: "Partial<IPrompt>",
       type: "object"
     },
     "Partial<IPromptSingle>": {
@@ -35419,62 +36002,92 @@ var queue_default = {
       title: "TiledDiffusionMethods",
       type: "string"
     }
-  },
-  properties: {
-    $schema: {
-      title: "$schema",
-      type: "string"
-    },
-    multiValueMethod: {
-      enum: [
-        "permutation",
-        "random-selection"
-      ],
-      title: "multiValueMethod",
-      type: "string"
-    },
-    permutations: {
-      items: {
-        $ref: "#/definitions/IPromptPermutations"
-      },
-      title: "permutations",
-      type: "array"
-    },
-    prompts: {
-      items: {
-        $ref: "#/definitions/IPrompt"
-      },
-      title: "prompts",
-      type: "array"
-    }
-  },
-  required: [
-    "prompts"
-  ],
-  type: "object"
+  }
 };
 
-// src/queue/queue.ts
+// src/queue/functions.ts
+var import_path13 = require("path");
 var validator = new import_jsonschema.Validator();
-var queueFromFile = async (source, validateOnly) => {
+var getConfigs = (source) => {
   if (!import_fs10.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
     process.exit(1);
   }
-  let jsonContent = { prompts: [] };
-  try {
-    const data = import_fs10.default.readFileSync(source, "utf8");
-    jsonContent = JSON.parse(data);
-  } catch (err) {
-    logger(`Unable to parse JSON in ${source}`);
+  if (source.endsWith(".json")) {
+    let jsonContent = { prompts: [] };
+    try {
+      const data = import_fs10.default.readFileSync(source, "utf8");
+      jsonContent = JSON.parse(data);
+    } catch (err) {
+      logger(`Unable to parse JSON in ${source}`);
+      process.exit(1);
+    }
+    const validation2 = validator.validate(jsonContent, queue_default, { nestedErrors: true });
+    if (!validation2.valid) {
+      logger(`JSON has invalid properties : ${validation2.toString()}`);
+      process.exit(1);
+    }
+    return jsonContent;
+  }
+  if (source.endsWith(".js") || source.endsWith(".cjs")) {
+    const jsonContentFromJs = require(source);
+    const validation2 = validator.validate(jsonContentFromJs, queue_default, { nestedErrors: true });
+    if (!validation2.valid) {
+      logger(`JS return invalid properties : ${validation2.toString()}`);
+      process.exit(1);
+    }
+    return jsonContentFromJs;
+  }
+};
+var mergeConfigs = (source) => {
+  const jsonContent = getConfigs(source);
+  if (!jsonContent) {
+    logger(`Invalid file : ${source}`);
     process.exit(1);
   }
-  const validation2 = validator.validate(jsonContent, queue_default, { nestedErrors: true });
-  if (!validation2.valid) {
-    logger(`JSON has invalid properties : ${validation2.toString()}`);
+  if (jsonContent.extends) {
+    const extendsPath = jsonContent.extends.startsWith(".") ? (0, import_path13.resolve)(source, "..", jsonContent.extends) : jsonContent.extends;
+    const extendsContent = mergeConfigs(extendsPath);
+    if (extendsContent) {
+      return {
+        basePrompt: { ...extendsContent.basePrompt ?? {}, ...jsonContent.basePrompt ?? {} },
+        multiValueMethod: jsonContent.multiValueMethod ?? extendsContent.multiValueMethod,
+        permutations: [...extendsContent.permutations ?? [], ...jsonContent.permutations ?? []],
+        prompts: [...extendsContent.prompts ?? [], ...jsonContent.prompts ?? []]
+      };
+    }
+  }
+  return jsonContent;
+};
+var applyBaseConfig = (config2) => {
+  const resolved = {
+    multiValueMethod: config2.multiValueMethod,
+    permutations: config2.permutations,
+    prompts: []
+  };
+  if (config2.basePrompt) {
+    resolved.prompts = config2.prompts?.map((prompt) => {
+      return { ...config2.basePrompt, ...prompt };
+    }) ?? [];
+  }
+  return resolved;
+};
+
+// src/queue/queue.ts
+var queueFromFile = async (source, validateOnly) => {
+  if (!import_fs11.default.existsSync(source)) {
+    logger(`Source file ${source} does not exist`);
     process.exit(1);
   }
-  queue(jsonContent, validateOnly);
+  const config2 = mergeConfigs(source);
+  if (config2) {
+    const promptsResolved = applyBaseConfig(config2);
+    if (promptsResolved.prompts.length === 0) {
+      logger(`Merged config from ${source} has no prompts`);
+      process.exit(1);
+    }
+    prompts(promptsResolved, validateOnly);
+  }
 };
 
 // src/queue/index.ts
@@ -35498,7 +36111,7 @@ var builder5 = (builder10) => {
   });
 };
 var handler5 = (argv) => {
-  const source = import_path12.default.resolve(argv.source);
+  const source = import_path14.default.resolve(argv.source);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -35515,11 +36128,11 @@ __export(redraw_exports, {
   describe: () => describe6,
   handler: () => handler6
 });
-var import_path14 = __toESM(require("path"));
+var import_path16 = __toESM(require("path"));
 
 // src/redraw/redraw.ts
-var import_fs11 = __toESM(require("fs"));
-var import_path13 = require("path");
+var import_fs12 = __toESM(require("fs"));
+var import_path15 = require("path");
 var IP_ADAPTER = "ip-adapter";
 var prepareQueryData = (baseParamsProps, file) => {
   const baseParams = { ...baseParamsProps };
@@ -35653,7 +36266,7 @@ var prepareQueryClassical = async (file, style, denoising_strength, addToPrompt,
     controlNet: [],
     denoising: denoising_strength,
     enableHighRes: true,
-    filename: (0, import_path13.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
+    filename: (0, import_path15.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
     height,
     initImageOrFolder: file.filename,
     negativePrompt: sdxl ? Config.get("commonNegative") : Config.get("commonNegativeXL"),
@@ -35702,7 +36315,7 @@ var prepareQueryIpAdapter = async (file, style, denoising_strength, addToPrompt,
     controlNet: [],
     denoising: denoising_strength,
     enableHighRes: true,
-    filename: (0, import_path13.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
+    filename: (0, import_path15.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", ""),
     height,
     negativePrompt: sdxl ? Config.get("commonNegative") : Config.get("commonNegativeXL"),
     pattern: `[datetime]-{denoising}-${style}-ipadapter-{filename}`,
@@ -35752,7 +36365,7 @@ var getCombination = (filesList, styles, methods) => {
   return combinations;
 };
 var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }) => {
-  if (!import_fs11.default.existsSync(source)) {
+  if (!import_fs12.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -35776,7 +36389,7 @@ var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, re
     }
   }
   queries.sort((a, b) => a.checkpoints.localeCompare(b.checkpoints));
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 };
 
 // src/redraw/index.ts
@@ -35874,7 +36487,7 @@ var builder6 = (builder10) => {
   });
 };
 var handler6 = (argv) => {
-  const source = import_path14.default.resolve(argv.source);
+  const source = import_path16.default.resolve(argv.source);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -35901,12 +36514,12 @@ __export(rename_exports, {
   describe: () => describe7,
   handler: () => handler7
 });
-var import_path16 = __toESM(require("path"));
+var import_path18 = __toESM(require("path"));
 
 // src/rename/rename.ts
-var import_fs12 = __toESM(require("fs"));
+var import_fs13 = __toESM(require("fs"));
 var import_jsonschema2 = __toESM(require_lib());
-var import_path15 = __toESM(require("path"));
+var import_path17 = __toESM(require("path"));
 
 // src/commons/schema/rename.json
 var rename_default = {
@@ -36023,12 +36636,12 @@ var executeConfig = (config2, source, promptData) => {
 // src/rename/rename.ts
 var validator2 = new import_jsonschema2.Validator();
 var renameConfig = (source, target, config2, test) => {
-  if (!import_fs12.default.existsSync(source)) {
+  if (!import_fs13.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs12.default.existsSync(target)) {
-    import_fs12.default.mkdirSync(target, { recursive: true });
+  if (!import_fs13.default.existsSync(target)) {
+    import_fs13.default.mkdirSync(target, { recursive: true });
   }
   const validation2 = validator2.validate(config2, rename_default);
   if (!validation2.valid) {
@@ -36042,27 +36655,27 @@ var renameConfig = (source, target, config2, test) => {
       if (param && param[0] !== "") {
         const [targetFile, scene] = param;
         logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
-        if (!test && scene && !import_fs12.default.existsSync(import_path15.default.join(target, scene))) {
-          import_fs12.default.mkdirSync(import_path15.default.join(target, scene));
+        if (!test && scene && !import_fs13.default.existsSync(import_path17.default.join(target, scene))) {
+          import_fs13.default.mkdirSync(import_path17.default.join(target, scene));
         }
         if (!test) {
-          import_fs12.default.renameSync(file.filename, import_path15.default.join(target, targetFile));
+          import_fs13.default.renameSync(file.filename, import_path17.default.join(target, targetFile));
         }
       }
     }
   });
 };
 var renameConfigFromCFile = (source, target, config2, test) => {
-  if (!import_fs12.default.existsSync(source)) {
+  if (!import_fs13.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
-  if (!import_fs12.default.existsSync(target)) {
-    import_fs12.default.mkdirSync(target, { recursive: true });
+  if (!import_fs13.default.existsSync(target)) {
+    import_fs13.default.mkdirSync(target, { recursive: true });
   }
   let jsonContent = { keys: [], pattern: "" };
   try {
-    const data = import_fs12.default.readFileSync(config2, "utf8");
+    const data = import_fs13.default.readFileSync(config2, "utf8");
     jsonContent = JSON.parse(data);
   } catch (err) {
     console.group({ err });
@@ -36149,8 +36762,8 @@ var builder7 = (builder10) => {
   });
 };
 var handler7 = (argv) => {
-  const source = import_path16.default.resolve(argv.source);
-  const target = import_path16.default.resolve(argv.target);
+  const source = import_path18.default.resolve(argv.source);
+  const target = import_path18.default.resolve(argv.target);
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
@@ -36174,7 +36787,7 @@ __export(stats_exports, {
   describe: () => describe8,
   handler: () => handler8
 });
-var import_path17 = __toESM(require("path"));
+var import_path19 = __toESM(require("path"));
 
 // src/stats/stats.ts
 var import_table = __toESM(require_src2());
@@ -36233,7 +36846,7 @@ var builder8 = (builder10) => {
   });
 };
 var handler8 = (argv) => {
-  const source = import_path17.default.resolve(argv.source);
+  const source = import_path19.default.resolve(argv.source);
   getStats(source);
 };
 
@@ -36245,13 +36858,13 @@ __export(upscale_exports, {
   describe: () => describe9,
   handler: () => handler9
 });
-var import_path20 = __toESM(require("path"));
+var import_path22 = __toESM(require("path"));
 
 // src/upscale/upscaleTiles.ts
-var import_fs13 = __toESM(require("fs"));
-var import_path18 = require("path");
+var import_fs14 = __toESM(require("fs"));
+var import_path20 = require("path");
 var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs13.default.existsSync(source)) {
+  if (!import_fs14.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -36276,7 +36889,7 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
       query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
-      query.filename = (0, import_path18.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
+      query.filename = (0, import_path20.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
       query.prompt = Array.isArray(query.prompt) ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "")) : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "");
       query.pattern = `[datetime]-x{scaleFactor}-cntiles-{filename}`;
       if (checkpoint) {
@@ -36286,14 +36899,14 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
     }
   }
   queries.sort((a, b) => a.checkpoints.localeCompare(b.checkpoints));
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 };
 
 // src/upscale/upscaleTiledDiffusion.ts
-var import_fs14 = __toESM(require("fs"));
-var import_path19 = require("path");
+var import_fs15 = __toESM(require("fs"));
+var import_path21 = require("path");
 var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
-  if (!import_fs14.default.existsSync(source)) {
+  if (!import_fs15.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
     process.exit(1);
   }
@@ -36312,7 +36925,7 @@ var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArr
       query.initImageOrFolder = file.filename;
       query.denoising = denoising;
       query.scaleFactor = upscaling;
-      query.filename = (0, import_path19.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
+      query.filename = (0, import_path21.basename)(file.file).replace(".png", "").replace(".jpg", "").replace(".jpeg", "");
       query.prompt = Array.isArray(query.prompt) ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "")) : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, "");
       query.pattern = `[datetime]-x{scaleFactor}-multidiffusion-{filename}`;
       if (checkpoint) {
@@ -36322,7 +36935,7 @@ var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArr
     }
   }
   queries.sort((a, b) => a.checkpoints.localeCompare(b.checkpoints));
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 };
 
 // src/upscale/index.ts
@@ -36406,7 +37019,7 @@ var builder9 = (builder10) => {
   });
 };
 var handler9 = (argv) => {
-  const source = import_path20.default.resolve(argv.source);
+  const source = import_path22.default.resolve(argv.source);
   const { method } = argv;
   const initialized = Config.get("initialized");
   if (!initialized) {

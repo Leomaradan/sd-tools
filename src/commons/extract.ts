@@ -1,6 +1,6 @@
 
-import { IFile } from '../commons/file';
-import { IAdetailerPrompt, IPromptSingle } from '../commons/queue';
+import { IFile } from './file';
+import { IAdetailerPrompt, IPromptSingle } from './types';
 import { interrogateQuery } from './query';
 
 export interface IExtractOptions {

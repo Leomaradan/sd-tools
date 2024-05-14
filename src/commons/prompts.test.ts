@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /// <reference types="jest" />
 
-import { IPrompts, prepareQueue } from './queue';
+import { preparePrompts } from './prompts';
+import { IPrompts } from './types';
 
 describe('queue test', () => {
   it('should generate the query from single config', () => {
@@ -19,7 +20,7 @@ describe('queue test', () => {
       ]
     };
 
-    const result = prepareQueue(config);
+    const result = preparePrompts(config);
 
     expect(result.length).toBe(1);
     expect(result[0].prompt).toBe('test prompt 1');
@@ -66,7 +67,7 @@ describe('queue test', () => {
       ]
     };
 
-    const result = prepareQueue(config);
+    const result = preparePrompts(config);
 
     const filtered = result.filter((r) => r.prompt === 'before, test prompt 2' && r.height === 768 && r.cfg_scale === 8);
 
@@ -86,10 +87,8 @@ describe('queue test', () => {
       prompt: 'before, test prompt 2',
       restore_faces: false,
       sampler_name: 'DPM++ 2M Karras',
-      sdxl: false,
       seed: undefined,
       steps: undefined,
-      vae: 'orangemix.vae',
       width: 512
     });
   });
@@ -144,7 +143,7 @@ describe('queue test', () => {
       ]
     };
 
-    const result = prepareQueue(config);
+    const result = preparePrompts(config);
 
     const filtered = result.filter(
       (r) =>
@@ -170,10 +169,8 @@ describe('queue test', () => {
       prompt: 'before, test prompt 2',
       restore_faces: false,
       sampler_name: 'Euler a',
-      sdxl: false,
       seed: undefined,
       steps: undefined,
-      vae: 'orangemix.vae',
       width: 512
     });
   });

@@ -1,0 +1,15 @@
+{
+  "$schema": "../../src/commons/schema/queue.json",
+  "prompts": [
+    {
+      "cfg": 11.5,
+      "checkpoints": "fake-checkpoint",
+      "count": 4,
+      "height": 640,
+      "pattern": "[styles]-[seed]-[datetime]",
+      "prompt": "image prompt",
+      "stylesSets": [["Digital Art"], ["Isometric Style"]],
+      "width": 1024
+    }
+  ]
+}

@@ -1,11 +1,8 @@
 import fs from 'fs';
-import { Validator } from 'jsonschema';
 
 import { logger } from '../commons/logger';
-import { IPrompts, queue } from '../commons/queue';
-import queueSchema from '../commons/schema/queue.json';
-
-const validator = new Validator();
+import { prompts } from '../commons/prompts';
+import { applyBaseConfig, mergeConfigs } from './functions';
 
 export const queueFromFile = async (source: string, validateOnly: boolean) => {
   if (!fs.existsSync(source)) {
@@ -13,22 +10,13 @@ export const queueFromFile = async (source: string, validateOnly: boolean) => {
     process.exit(1);
   }
 
-  let jsonContent: IPrompts = { prompts: [] };
-  try {
-    const data = fs.readFileSync(source, 'utf8');
-    jsonContent = JSON.parse(data);
-  } catch (err) {
-    logger(`Unable to parse JSON in ${source}`);
-    process.exit(1);
+  const config = mergeConfigs(source);
+  if (config) {
+    const promptsResolved = applyBaseConfig(config);
+    if (promptsResolved.prompts.length === 0) {
+      logger(`Merged config from ${source} has no prompts`);
+      process.exit(1);
+    }
+    prompts(promptsResolved, validateOnly);
   }
-
-  const validation = validator.validate(jsonContent, queueSchema, { nestedErrors: true });
-
-  if (!validation.valid) {
-    logger(`JSON has invalid properties : ${validation.toString()}`);
-    process.exit(1);
-  }
-
-  queue(jsonContent, validateOnly);
-
 };

@@ -5,8 +5,9 @@ import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpsca
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
-import { IPrompt, queue } from '../commons/queue';
+import { prompts } from '../commons/prompts';
 import { IUpscaleOptions } from './types';
+import { IPrompt } from '../commons/types';
 
 export const upscaleTiledDiffusion = async (
   source: string,
@@ -52,5 +53,5 @@ export const upscaleTiledDiffusion = async (
 
   queries.sort((a, b) => (a.checkpoints as string).localeCompare(b.checkpoints as string));
 
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 };

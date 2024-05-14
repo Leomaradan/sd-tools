@@ -5,8 +5,8 @@ import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
 import { logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule } from '../commons/models';
-import { IPrompt, queue } from '../commons/queue';
-import { ControlNetMode, ControlNetResizes } from '../commons/types';
+import { prompts } from '../commons/prompts';
+import { ControlNetMode, ControlNetResizes, IPrompt } from '../commons/types';
 import { IUpscaleOptions } from './types';
 
 export const upscaleTiles = async (
@@ -59,5 +59,5 @@ export const upscaleTiles = async (
 
   queries.sort((a, b) => (a.checkpoints as string).localeCompare(b.checkpoints as string));
 
-  queue({ prompts: queries }, false);
+  prompts({ prompts: queries }, false);
 };

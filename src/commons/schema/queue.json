@@ -1,6 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "additionalProperties": false,
+    "anyOf": [
+        {
+            "$ref": "#/definitions/IPromptsWithPrompt"
+        },
+        {
+            "$ref": "#/definitions/IPromptsWithBasePrompt"
+        },
+        {
+            "$ref": "#/definitions/IPromptsWithExtends"
+        }
+    ],
     "definitions": {
         "ControlNetMode": {
             "enum": [
@@ -91,8 +101,7 @@
                 }
             },
             "required": [
-                "checkpoint",
-                "vae"
+                "checkpoint"
             ],
             "title": "ICheckpointWithVAE",
             "type": "object"
@@ -585,6 +594,138 @@
             "title": "IPromptReplace",
             "type": "object"
         },
+        "IPromptsWithBasePrompt": {
+            "additionalProperties": false,
+            "properties": {
+                "$schema": {
+                    "title": "$schema",
+                    "type": "string"
+                },
+                "basePrompt": {
+                    "$ref": "#/definitions/Partial<IPrompt>",
+                    "title": "basePrompt"
+                },
+                "extends": {
+                    "title": "extends",
+                    "type": "string"
+                },
+                "multiValueMethod": {
+                    "enum": [
+                        "permutation",
+                        "random-selection"
+                    ],
+                    "title": "multiValueMethod",
+                    "type": "string"
+                },
+                "permutations": {
+                    "items": {
+                        "$ref": "#/definitions/IPromptPermutations"
+                    },
+                    "title": "permutations",
+                    "type": "array"
+                },
+                "prompts": {
+                    "items": {
+                        "$ref": "#/definitions/IPrompt"
+                    },
+                    "title": "prompts",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "basePrompt"
+            ],
+            "title": "IPromptsWithBasePrompt",
+            "type": "object"
+        },
+        "IPromptsWithExtends": {
+            "additionalProperties": false,
+            "properties": {
+                "$schema": {
+                    "title": "$schema",
+                    "type": "string"
+                },
+                "basePrompt": {
+                    "$ref": "#/definitions/Partial<IPrompt>",
+                    "title": "basePrompt"
+                },
+                "extends": {
+                    "title": "extends",
+                    "type": "string"
+                },
+                "multiValueMethod": {
+                    "enum": [
+                        "permutation",
+                        "random-selection"
+                    ],
+                    "title": "multiValueMethod",
+                    "type": "string"
+                },
+                "permutations": {
+                    "items": {
+                        "$ref": "#/definitions/IPromptPermutations"
+                    },
+                    "title": "permutations",
+                    "type": "array"
+                },
+                "prompts": {
+                    "items": {
+                        "$ref": "#/definitions/IPrompt"
+                    },
+                    "title": "prompts",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "extends"
+            ],
+            "title": "IPromptsWithExtends",
+            "type": "object"
+        },
+        "IPromptsWithPrompt": {
+            "additionalProperties": false,
+            "properties": {
+                "$schema": {
+                    "title": "$schema",
+                    "type": "string"
+                },
+                "basePrompt": {
+                    "$ref": "#/definitions/Partial<IPrompt>",
+                    "title": "basePrompt"
+                },
+                "extends": {
+                    "title": "extends",
+                    "type": "string"
+                },
+                "multiValueMethod": {
+                    "enum": [
+                        "permutation",
+                        "random-selection"
+                    ],
+                    "title": "multiValueMethod",
+                    "type": "string"
+                },
+                "permutations": {
+                    "items": {
+                        "$ref": "#/definitions/IPromptPermutations"
+                    },
+                    "title": "permutations",
+                    "type": "array"
+                },
+                "prompts": {
+                    "items": {
+                        "$ref": "#/definitions/IPrompt"
+                    },
+                    "title": "prompts",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "prompts"
+            ],
+            "title": "IPromptsWithPrompt",
+            "type": "object"
+        },
         "ITiledDiffusion": {
             "additionalProperties": false,
             "properties": {
@@ -680,6 +821,382 @@
                 "width"
             ],
             "title": "IUltimateSDUpscale",
+            "type": "object"
+        },
+        "Partial<IPrompt>": {
+            "additionalProperties": false,
+            "properties": {
+                "adetailer": {
+                    "items": {
+                        "$ref": "#/definitions/IAdetailerPrompt"
+                    },
+                    "title": "adetailer",
+                    "type": "array"
+                },
+                "autoCutOff": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "autoCutOff"
+                },
+                "autoLCM": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "autoLCM"
+                },
+                "cfg": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "cfg"
+                },
+                "checkpoints": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/ICheckpointWithVAE"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "checkpoints"
+                },
+                "clipSkip": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "clipSkip"
+                },
+                "controlNet": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/IControlNet"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/IControlNet"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "title": "controlNet"
+                },
+                "count": {
+                    "title": "count",
+                    "type": "number"
+                },
+                "denoising": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "denoising"
+                },
+                "enableHighRes": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "enableHighRes"
+                },
+                "filename": {
+                    "title": "filename",
+                    "type": "string"
+                },
+                "height": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "height"
+                },
+                "highRes": {
+                    "title": "highRes",
+                    "typeof": "function"
+                },
+                "initImageOrFolder": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "initImageOrFolder"
+                },
+                "negativePrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "negativePrompt"
+                },
+                "outDir": {
+                    "title": "outDir",
+                    "type": "string"
+                },
+                "pattern": {
+                    "title": "pattern",
+                    "type": "string"
+                },
+                "prompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "prompt"
+                },
+                "restoreFaces": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "restoreFaces"
+                },
+                "sampler": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "sampler"
+                },
+                "scaleFactor": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "scaleFactor"
+                },
+                "seed": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "pattern": "^[0-9]*-[0-9]*$",
+                            "type": "string"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "seed"
+                },
+                "steps": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "steps"
+                },
+                "styles": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "styles"
+                },
+                "stylesSets": {
+                    "items": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "title": "stylesSets",
+                    "type": "array"
+                },
+                "tiledDiffusion": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ITiledDiffusion"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/ITiledDiffusion"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "title": "tiledDiffusion"
+                },
+                "tiledVAE": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ITiledVAE"
+                        },
+                        {
+                            "enum": [
+                                "both",
+                                false,
+                                true
+                            ]
+                        }
+                    ],
+                    "title": "tiledVAE"
+                },
+                "tiling": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "tiling"
+                },
+                "ultimateSdUpscale": {
+                    "enum": [
+                        "both",
+                        false,
+                        true
+                    ],
+                    "title": "ultimateSdUpscale"
+                },
+                "upscaler": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscaler"
+                },
+                "vae": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "vae"
+                },
+                "width": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "number"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ],
+                    "title": "width"
+                }
+            },
+            "title": "Partial<IPrompt>",
             "type": "object"
         },
         "Partial<IPromptSingle>": {
@@ -826,38 +1343,6 @@
             "title": "TiledDiffusionMethods",
             "type": "string"
         }
-    },
-    "properties": {
-        "$schema": {
-            "title": "$schema",
-            "type": "string"
-        },
-        "multiValueMethod": {
-            "enum": [
-                "permutation",
-                "random-selection"
-            ],
-            "title": "multiValueMethod",
-            "type": "string"
-        },
-        "permutations": {
-            "items": {
-                "$ref": "#/definitions/IPromptPermutations"
-            },
-            "title": "permutations",
-            "type": "array"
-        },
-        "prompts": {
-            "items": {
-                "$ref": "#/definitions/IPrompt"
-            },
-            "title": "prompts",
-            "type": "array"
-        }
-    },
-    "required": [
-        "prompts"
-    ],
-    "type": "object"
+    }
 }
 

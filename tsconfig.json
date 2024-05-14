@@ -11,6 +11,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "CommonJS",
+    // "verbatimModuleSyntax": true,
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,

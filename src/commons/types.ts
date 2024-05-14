@@ -260,3 +260,148 @@ export interface ICache {
   interrogator: CacheInterrogator;
   metadata: CacheMetadata;
 }
+
+export interface IAdetailerPrompt {
+  height?: number;
+  model: string;
+  negative?: string;
+  prompt?: string;
+  strength?: number;
+  width?: number;
+}
+
+export interface ICheckpointWithVAE {
+  addAfterFilename?: string;
+  addAfterNegativePrompt?: string;
+  addAfterPrompt?: string;
+  addBeforeFilename?: string;
+  addBeforeNegativePrompt?: string;
+  addBeforePrompt?: string;
+  checkpoint: string;
+  vae?: string;
+}
+
+export interface IPrompt {
+  adetailer?: IAdetailerPrompt[];
+  autoCutOff?: 'both' | boolean;
+  autoLCM?: 'both' | boolean;
+  cfg?: number | number[];
+  checkpoints?: ICheckpointWithVAE[] | string | string[];
+  clipSkip?: number | number[];
+  controlNet?: IControlNet | IControlNet[];
+  count?: number;
+  denoising?: number | number[];
+  enableHighRes?: 'both' | boolean;
+  filename?: string;
+  height?: number | number[];
+  highRes?: {
+    afterNegativePrompt?: string;
+    afterPrompt?: string;
+    beforeNegativePrompt?: string;
+    beforePrompt?: string;
+  };
+  initImageOrFolder?: string | string[];
+  negativePrompt?: string | string[];
+  outDir?: string;
+  pattern?: string;
+  prompt: string | string[];
+  restoreFaces?: 'both' | boolean;
+  sampler?: string | string[];
+  scaleFactor?: number | number[];
+  seed?: `${number}-${number}` | number | number[];
+  steps?: number | number[];
+  styles?: string | string[];
+  stylesSets?: Array<string | string[]>;
+  tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
+  tiledVAE?: 'both' | ITiledVAE | boolean;
+  tiling?: 'both' | boolean;
+  ultimateSdUpscale?: 'both' | boolean;
+  upscaler?: string | string[];
+  vae?: string | string[];
+  width?: number | number[];
+}
+
+export interface IPromptSingle {
+  adetailer?: IAdetailerPrompt[];
+  autoCutOff?: boolean;
+  autoLCM?: boolean;
+  cfg?: number;
+  checkpoints?: string;
+  clipSkip?: number;
+  controlNet?: IControlNet[];
+  denoising?: number;
+  enableHighRes?: boolean;
+  filename?: string;
+  height?: number;
+  highRes?: {
+    afterNegativePrompt?: string;
+    afterPrompt?: string;
+    beforeNegativePrompt?: string;
+    beforePrompt?: string;
+  };
+  initImage?: string;
+  negativePrompt?: string;
+  outDir?: string;
+  pattern?: string;
+  prompt: string;
+  restoreFaces?: boolean;
+  sampler?: string;
+  scaleFactor?: number;
+  seed?: number;
+  steps?: number;
+  styles?: string[];
+  tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
+  tiling?: boolean;
+  ultimateSdUpscale?: IUltimateSDUpscale;
+  upscaler?: string;
+  vae?: string;
+  width?: number;
+}
+
+interface IPromptReplace {
+  from: string;
+  to: string;
+}
+
+export interface IPromptPermutations {
+  afterFilename?: string;
+  afterNegativePrompt?: string;
+  afterPrompt?: string;
+  beforeFilename?: string;
+  beforeNegativePrompt?: string;
+  beforePrompt?: string;
+  filenameReplace?: IPromptReplace[];
+  overwrite?: Partial<IPromptSingle>;
+  promptReplace?: IPromptReplace[];
+}
+
+interface IPromptsCommon {
+  $schema?: string;
+  multiValueMethod?: 'permutation' | 'random-selection';
+  permutations?: IPromptPermutations[];
+}
+
+interface IPromptsWithPrompt extends IPromptsCommon {
+  basePrompt?: Partial<IPrompt>;
+  extends?: string;
+  prompts: IPrompt[];
+}
+
+interface IPromptsWithBasePrompt extends IPromptsCommon {
+  basePrompt: Partial<IPrompt>;
+  extends?: string;
+  prompts?: IPrompt[];
+}
+
+interface IPromptsWithExtends extends IPromptsCommon {
+  basePrompt?: Partial<IPrompt>;
+  extends: string;
+  prompts?: IPrompt[];
+}
+
+export type IPrompts = IPromptsWithBasePrompt | IPromptsWithExtends | IPromptsWithPrompt;
+
+export interface IPromptsResolved extends IPromptsCommon {
+  prompts: IPrompt[];
+}

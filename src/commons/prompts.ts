@@ -1,144 +1,29 @@
 import { readdirSync, statSync } from 'fs';
+import { resolve } from 'path';
 
-import { IAdetailer } from '../commons/extensions/adetailer';
-import { getCutOffTokens } from '../commons/extensions/cutoff';
-import { logger, writeLog } from '../commons/logger';
-import {
-  findADetailersModel,
-  findCheckpoint,
-  findControlnetModel,
-  findControlnetModule,
-  findStyle,
-  findUpscaler,
-  findVAE
-} from '../commons/models';
-import { isTxt2ImgQuery, renderQuery } from '../commons/query';
-import { ControlNetMode, ControlNetResizes, IControlNet, IImg2ImgQuery, IModel, ITxt2ImgQuery, IUltimateSDUpscale } from '../commons/types';
 import { getDefaultQuery } from './defaultQuery';
+import { IAdetailer } from './extensions/adetailer';
+import { getCutOffTokens } from './extensions/cutoff';
 import { ITiledDiffusion, ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
-import { getBase64Image } from './file';
-
-export interface IAdetailerPrompt {
-  height?: number;
-  model: string;
-  negative?: string;
-  prompt?: string;
-  strength?: number;
-  width?: number;
-}
-
-interface ICheckpointWithVAE {
-  addAfterFilename?: string;
-  addAfterNegativePrompt?: string;
-  addAfterPrompt?: string;
-  addBeforeFilename?: string;
-  addBeforeNegativePrompt?: string;
-  addBeforePrompt?: string;
-  checkpoint: string;
-  vae: string;
-}
-
-export interface IPrompt {
-  adetailer?: IAdetailerPrompt[];
-  autoCutOff?: 'both' | boolean;
-  autoLCM?: 'both' | boolean;
-  cfg?: number | number[];
-  checkpoints?: ICheckpointWithVAE[] | string | string[];
-  clipSkip?: number | number[];
-  controlNet?: IControlNet | IControlNet[];
-  count?: number;
-  denoising?: number | number[];
-  enableHighRes?: 'both' | boolean;
-  filename?: string;
-  height?: number | number[];
-  highRes?: {
-    afterNegativePrompt?: string;
-    afterPrompt?: string;
-    beforeNegativePrompt?: string;
-    beforePrompt?: string;
-  };
-  initImageOrFolder?: string | string[];
-  negativePrompt?: string | string[];
-  outDir?: string;
-  pattern?: string;
-  prompt: string | string[];
-  restoreFaces?: 'both' | boolean;
-  sampler?: string | string[];
-  scaleFactor?: number | number[];
-  seed?: `${number}-${number}` | number | number[];
-  steps?: number | number[];
-  styles?: string | string[];
-  stylesSets?: Array<string | string[]>;
-  tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
-  tiledVAE?: 'both' | ITiledVAE | boolean;
-  tiling?: 'both' | boolean;
-  ultimateSdUpscale?: 'both' | boolean;
-  upscaler?: string | string[];
-  vae?: string | string[];
-  width?: number | number[];
-}
-
-export interface IPromptSingle {
-  adetailer?: IAdetailerPrompt[];
-  autoCutOff?: boolean;
-  autoLCM?: boolean;
-  cfg?: number;
-  checkpoints?: string;
-  clipSkip?: number;
-  controlNet?: IControlNet[];
-  denoising?: number;
-  enableHighRes?: boolean;
-  filename?: string;
-  height?: number;
-  highRes?: {
-    afterNegativePrompt?: string;
-    afterPrompt?: string;
-    beforeNegativePrompt?: string;
-    beforePrompt?: string;
-  };
-  initImage?: string;
-  negativePrompt?: string;
-  outDir?: string;
-  pattern?: string;
-  prompt: string;
-  restoreFaces?: boolean;
-  sampler?: string;
-  scaleFactor?: number;
-  seed?: number;
-  steps?: number;
-  styles?: string[];
-  tiledDiffusion?: ITiledDiffusion;
-  tiledVAE?: ITiledVAE;
-  tiling?: boolean;
-  ultimateSdUpscale?: IUltimateSDUpscale;
-  upscaler?: string;
-  vae?: string;
-  width?: number;
-}
-
-interface IPromptReplace {
-  from: string;
-  to: string;
-}
-
-export interface IPromptPermutations {
-  afterFilename?: string;
-  afterNegativePrompt?: string;
-  afterPrompt?: string;
-  beforeFilename?: string;
-  beforeNegativePrompt?: string;
-  beforePrompt?: string;
-  filenameReplace?: IPromptReplace[];
-  overwrite?: Partial<IPromptSingle>;
-  promptReplace?: IPromptReplace[];
-}
-
-export interface IPrompts {
-  $schema?: string;
-  multiValueMethod?: 'permutation' | 'random-selection';
-  permutations?: IPromptPermutations[];
-  prompts: IPrompt[];
-}
+import { getBase64Image, getImageSize } from './file';
+import { logger, writeLog } from './logger';
+import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
+import { isTxt2ImgQuery, renderQuery } from './query';
+import {
+  ControlNetMode,
+  ControlNetResizes,
+  ICheckpointWithVAE,
+  IControlNet,
+  IImg2ImgQuery,
+  IModel,
+  IPrompt,
+  IPromptPermutations,
+  IPromptSingle,
+  IPrompts,
+  IPromptsResolved,
+  ITxt2ImgQuery,
+  IUltimateSDUpscale
+} from './types';
 
 interface IPrepareSingleQuery {
   autoCutOff: boolean;
@@ -146,6 +31,7 @@ interface IPrepareSingleQuery {
   cfg: number | undefined;
   checkpointsOption: ICheckpointWithVAE | string | undefined;
   clipSkip: number | undefined;
+  controlNet: IControlNet[] | undefined;
   denoising: number | undefined;
   enableHighRes: boolean;
   height: number | undefined;
@@ -173,6 +59,8 @@ interface IPrepareSingleQueryFromArray {
   cfgArray: (number | undefined)[];
   checkpointsArray: Array<ICheckpointWithVAE | string | undefined>;
   clipSkipArray: (number | undefined)[];
+  //controlNet?: IControlNet | IControlNet[];
+  controlNetArray: Array<IControlNet[] | undefined>;
   denoisingArray: (number | undefined)[];
   enableHighResArray: boolean[];
   heightArray: (number | undefined)[];
@@ -213,6 +101,7 @@ const prepareSingleQuery = (
     cfg,
     checkpointsOption,
     clipSkip,
+    controlNet,
     denoising,
     enableHighRes,
     height,
@@ -307,8 +196,23 @@ const prepareSingleQuery = (
       width
     };
 
-    if (basePrompt.controlNet) {
-      prompt.controlNet = Array.isArray(basePrompt.controlNet) ? basePrompt.controlNet : [basePrompt.controlNet];
+    if (prompt.initImage) {
+      const { height, width } = getImageSize(prompt.initImage);
+      prompt.width = !prompt.width && width != -1 ? width : undefined;
+      prompt.height = !prompt.height && height != -1 ? height : undefined;
+    }
+
+    if (controlNet) {
+      prompt.controlNet = Array.isArray(controlNet) ? controlNet : [controlNet];
+
+      if (prompt.controlNet.some((controlNet) => controlNet.input_image)) {
+        const firstImage = prompt.controlNet.find((controlNet) => controlNet.input_image)?.input_image;
+        if (firstImage) {
+          const { height, width } = getImageSize(firstImage);
+          prompt.width = !prompt.width && width != -1 ? width : undefined;
+          prompt.height = !prompt.height && height != -1 ? height : undefined;
+        }
+      }
     }
 
     if (scaleFactor && prompt.pattern?.includes('{scaleFactor}')) {
@@ -425,6 +329,7 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
     cfgArray,
     checkpointsArray,
     clipSkipArray,
+    controlNetArray,
     denoisingArray,
     enableHighResArray,
     heightArray,
@@ -474,6 +379,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   permutationsArray = getPermutations(permutationsArray, vaeArray, 'vaeOption');
   permutationsArray = getPermutations(permutationsArray, widthArray, 'width');
 
+  permutationsArray = getPermutations(permutationsArray, controlNetArray, 'controlNet');
+
   (permutationsArray as IPrepareSingleQuery[]).forEach((permutationItem) => {
     prompts = [
       ...prompts,
@@ -483,6 +390,7 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
         cfg: permutationItem.cfg,
         checkpointsOption: permutationItem.checkpointsOption,
         clipSkip: permutationItem.clipSkip,
+        controlNet: permutationItem.controlNet,
         denoising: permutationItem.denoising,
         enableHighRes: permutationItem.enableHighRes,
         height: permutationItem.height,
@@ -564,6 +472,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
   const upscaler = pickRandomItem(upscalerArray);
   const vaeOption = pickRandomItem(vaeArray);
   const width = pickRandomItem(widthArray);
+  const controlNet = pickRandomItem(options.controlNetArray);
 
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
@@ -571,6 +480,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     cfg,
     checkpointsOption,
     clipSkip,
+    controlNet,
     denoising,
     enableHighRes,
     height,
@@ -663,6 +573,35 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
+const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
+  if (value === undefined) {
+    return [undefined];
+  }
+
+  const controlNetArray = Array.isArray(value) ? value : [value];
+  const controlNetImage = controlNetArray[0].input_image;
+
+  if (!controlNetImage) {
+    return [controlNetArray];
+  }
+
+  const initImagesArray: string[] = [];
+
+  if (statSync(controlNetImage).isDirectory()) {
+    const files = readdirSync(controlNetImage);
+    initImagesArray.push(...files.map((file) => resolve(controlNetImage, file)));
+    //initImagesArray.push(...readFiles(initImageOrFolder, initImageOrFolder)) :
+  } else {
+    initImagesArray.push(controlNetImage);
+  }
+
+  return initImagesArray.map((initImage) => {
+    const [first, ...rest] = controlNetArray;
+
+    return [{ ...first, input_image: initImage }, ...rest];
+  });
+};
+
 const getArraysTiledVAE = (value: 'both' | ITiledVAE | boolean | undefined): Array<ITiledVAE | undefined> => {
   if (typeof value === 'object') {
     return [value];
@@ -679,7 +618,7 @@ const getArraysTiledVAE = (value: 'both' | ITiledVAE | boolean | undefined): Arr
   return [value ?? ({} as ITiledVAE)];
 };
 
-const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
+const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
   const prompts = new Map<string, IPromptSingle>();
 
   const isPermutation = (basePrompts.multiValueMethod ?? 'permutation') === 'permutation';
@@ -711,6 +650,7 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
     const widthArray = getArrays(basePrompt.width);
     const clipSkipArray = getArrays(basePrompt.clipSkip);
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [undefined]);
+    const controlNetArray = getArraysControlNet(basePrompt.controlNet);
 
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? undefined];
 
@@ -724,6 +664,7 @@ const prepareQueries = (basePrompts: IPrompts): IPromptSingle[] => {
       cfgArray,
       checkpointsArray,
       clipSkipArray,
+      controlNetArray,
       denoisingArray,
       enableHighResArray,
       heightArray,
@@ -805,7 +746,7 @@ const validateTemplate = (template: string) => {
   });
 };
 
-export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
+export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
   const queries: Array<IImg2ImgQuery | ITxt2ImgQuery> = [];
 
   const queriesArray = prepareQueries(config);
@@ -1127,8 +1068,8 @@ export const prepareQueue = (config: IPrompts): Array<IImg2ImgQuery | ITxt2ImgQu
   return queries;
 };
 
-export const queue = async (config: IPrompts, validateOnly: boolean) => {
-  const queries = prepareQueue(config);
+export const prompts = async (config: IPromptsResolved, validateOnly: boolean) => {
+  const queries = preparePrompts(config);
 
   logger(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {
