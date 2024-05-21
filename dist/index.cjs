@@ -32429,7 +32429,7 @@ var findSampler = (...sampleName) => {
       if (item.name === modelName) {
         return item.name;
       }
-      if (item.aliases.find((alias) => alias === modelName)) {
+      if (item.aliases?.find((alias) => alias === modelName)) {
         return item.name;
       }
     },
@@ -32437,7 +32437,7 @@ var findSampler = (...sampleName) => {
       if (item.name.includes(modelName)) {
         return item.name;
       }
-      if (item.aliases.find((alias) => alias.includes(modelName))) {
+      if (item.aliases?.find((alias) => alias.includes(modelName))) {
         return item.name;
       }
     }
@@ -32515,7 +32515,12 @@ var getDefaultQuery15 = (accelarator) => {
   };
 };
 var getDefaultQuery20 = (sizeFull) => {
-  const baseParams = { ...baseParamsAll, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name };
+  const baseParams = {
+    ...baseParamsAll,
+    cfg_scale: 7,
+    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name,
+    steps: 20
+  };
   if (sizeFull) {
     return {
       ...baseParams,
@@ -32627,7 +32632,7 @@ var renderQuery = async (query, type) => {
   });
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
     logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
-    process.exit(1);
+    process.exit(43 /* QUERY_INVALID_SAMPLER */);
   }
   let script = false;
   const isSDXL = checkpoint?.version === "sdxl";
@@ -32859,7 +32864,7 @@ var handler = async (argv) => {
   const adModelsQuery = await getAdModelQuery();
   if (!modelsQuery || !vaeQuery || !samplersQuery || !upscalersQuery || !extensionsQuery || !lorasQuery || !embeddingsQuery || !stylesQuery) {
     logger("Error: Cannot initialize config : Error in SD API");
-    process.exit(1);
+    process.exit(1 /* INIT_NO_SD_API */);
   }
   const modelsQueryResolved = [];
   for await (const modelQuery of modelsQuery) {
@@ -32967,7 +32972,7 @@ var handler = async (argv) => {
     const controlnetModulesQuery = await getControlnetModulesQuery();
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
       logger("Error: Cannot initialize config : Error in ControlNet");
-      process.exit(1);
+      process.exit(2 /* INIT_NO_CONTROLNET */);
     }
     Config.set(
       "controlnetModels",
@@ -33225,7 +33230,7 @@ var builder2 = (builder10) => {
     type: "string"
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(3 /* CONFIG_GET_INVALID_OPTIONS */);
   });
 };
 var handler2 = (argv) => {
@@ -33233,13 +33238,13 @@ var handler2 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   if (!config2) {
     const listOptions = [...options].sort((a, b) => a.option.localeCompare(b.option)).map((o) => `  - ${o.option} : ${o.description}`);
     logger(`Available options: 
 ${listOptions.join("\n")}`);
-    process.exit(1);
+    process.exit(5 /* CONFIG_GET_NO_OPTIONS */);
   }
   switch (config2) {
     case "config-version":
@@ -33363,7 +33368,7 @@ var builder3 = (builder10) => {
     // type: 'string',
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(6 /* CONFIG_SET_INVALID_OPTIONS */);
   });
 };
 var handler3 = (argv) => {
@@ -33371,7 +33376,7 @@ var handler3 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   switch (config2) {
     case "auto-lcm":
@@ -33385,7 +33390,7 @@ var handler3 = (argv) => {
     case "auto-tiled-diffusion":
       if (!Config.get("extensions").includes("tiled diffusion")) {
         logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(7 /* CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED */);
       }
       if (!value || value === "false") {
         Config.set("autoTiledDiffusion", false);
@@ -33393,7 +33398,7 @@ var handler3 = (argv) => {
         logger(
           `Value for ${config2} must be either "${"Mixture of Diffusers" /* MixtureOfDiffusers */}" or "${"MultiDiffusion" /* MultiDiffusion */}"`
         );
-        process.exit(1);
+        process.exit(8 /* CONFIG_SET_INVALID_MULTIDIFFUSION */);
       } else {
         Config.set("autoTiledDiffusion", value);
       }
@@ -33403,7 +33408,7 @@ var handler3 = (argv) => {
     case "auto-tiled-vae":
       if (!Config.get("extensions").includes("tiled vae")) {
         logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(7 /* CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED */);
       }
       Config.set("autoTiledVAE", getParamBoolean(value));
       getConfigAutoTiledVAE();
@@ -33427,7 +33432,7 @@ var handler3 = (argv) => {
     case "auto-cutoff":
       if (!Config.get("extensions").includes("cutoff")) {
         logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
       }
       Config.set("cutoff", getParamBoolean(value));
       getConfigCutoff();
@@ -33440,11 +33445,11 @@ var handler3 = (argv) => {
         }
         if (valueArray.some((val) => typeof val !== "string")) {
           logger(`Value for ${config2} must be a array of string`);
-          process.exit(1);
+          process.exit(10 /* CONFIG_SET_CUTOFF_INVALID_TOKEN */);
         }
         if (!Config.get("extensions").includes("cutoff")) {
           logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          process.exit(1);
+          process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
         }
         Config.set("cutoffTokens", Array.from(new Set(valueArray)));
         getConfigCutoffTokens();
@@ -33455,11 +33460,11 @@ var handler3 = (argv) => {
         const valueNumber = Number(value);
         if (typeof valueNumber !== "number" || isNaN(valueNumber)) {
           logger(`Value for ${config2} must be a number`);
-          process.exit(1);
+          process.exit(11 /* CONFIG_SET_CUTOFF_INVALID_WEIGHT */);
         }
         if (!Config.get("extensions").includes("cutoff")) {
           logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          process.exit(1);
+          process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
         }
         Config.set("cutoffWeight", valueNumber);
         getConfigCutoffWeight();
@@ -33488,7 +33493,7 @@ var handler3 = (argv) => {
           return !foundLora;
         })) {
           logger(`Value for ${config2} contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
-          process.exit(1);
+          process.exit(12 /* CONFIG_SET_LCM_INVALID_TOKEN */);
         }
         const lcm = Config.get("lcm");
         valueArray.forEach((keyValue) => {
@@ -33525,7 +33530,7 @@ var handler3 = (argv) => {
           logger(
             `Value for ${config2} contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:" or "animeXL:" followed by a valid model name`
           );
-          process.exit(1);
+          process.exit(13 /* CONFIG_SET_REDRAW_INVALID_MODELS */);
         }
         const redrawModels = Config.get("redrawModels");
         valueArray.forEach((keyValue) => {
@@ -33542,7 +33547,7 @@ var handler3 = (argv) => {
     case "scheduler":
       if (!Config.get("extensions").includes("scheduler")) {
         logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(14 /* CONFIG_SET_NO_AGENT_INSTALLED */);
       }
       Config.set("scheduler", getParamBoolean(value));
       getConfigScheduler();
@@ -33757,7 +33762,7 @@ var import_node_path4 = __toESM(require("node:path"), 1);
 var extract2 = async (source, { addBefore, format: format3, output, recursive }) => {
   if (!import_node_fs4.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(15 /* EXTRACT_NO_SOURCE */);
   }
   const prompts2 = [];
   const filesList = getFiles(source, recursive);
@@ -33817,7 +33822,7 @@ var builder4 = (builder10) => {
     }
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(16 /* EXTRACT_INVALID_PARAMS */);
   });
 };
 var handler4 = (argv) => {
@@ -34385,7 +34390,7 @@ var validateTemplate = (template) => {
   matches.forEach((match) => {
     if (!validTokensTemplate.includes(match)) {
       logger(`Invalid token ${match} in ${template}`);
-      process.exit(1);
+      process.exit(44 /* PROMPT_INVALID_STRING_TOKEN */);
     }
   });
 };
@@ -34451,7 +34456,7 @@ var preparePrompts = (config2) => {
     const defaultValues = getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none");
     if (query.sampler_name !== void 0 && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
       logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
-      process.exit(1);
+      process.exit(45 /* PROMPT_INVALID_SAMPLER */);
     }
     if (controlNet) {
       controlNet.forEach((controlNetPrompt) => {
@@ -34459,11 +34464,11 @@ var preparePrompts = (config2) => {
         const controlNetModel = findControlnetModel(controlNetPrompt.model);
         if (!controlNetModule) {
           logger(`Invalid ControlNet module ${controlNetPrompt.module}`);
-          process.exit(1);
+          process.exit(46 /* PROMPT_INVALID_CONTROLNET_MODULE */);
         }
         if (!controlNetModel) {
           logger(`Invalid ControlNet model ${controlNetPrompt.model}`);
-          process.exit(1);
+          process.exit(47 /* PROMPT_INVALID_CONTROLNET_MODEL */);
         }
         query.controlNet?.push({
           control_mode: controlNetPrompt.control_mode ?? 0 /* Balanced */,
@@ -34480,7 +34485,7 @@ var preparePrompts = (config2) => {
         query.override_settings.sd_vae = foundVAE === "None" ? "" : foundVAE;
       } else {
         logger(`Invalid VAE ${vae}`);
-        process.exit(1);
+        process.exit(48 /* PROMPT_INVALID_VAE */);
       }
     }
     if (autoCutOff) {
@@ -34495,7 +34500,7 @@ var preparePrompts = (config2) => {
         query.hr_upscaler = foundUpscaler.name;
       } else {
         logger(`Invalid Upscaler ${upscaler}`);
-        process.exit(1);
+        process.exit(49 /* PROMPT_INVALID_UPSCALER */);
       }
     }
     if (isTxt2ImgQuery(query)) {
@@ -34549,7 +34554,7 @@ var preparePrompts = (config2) => {
           query.adetailer.push(adetailerQuery);
         } else {
           logger(`Invalid Adetailer model ${adetailer2.model}`);
-          process.exit(1);
+          process.exit(50 /* PROMPT_INVALID_ADETAILER_MODEL */);
         }
       });
     }
@@ -34559,7 +34564,7 @@ var preparePrompts = (config2) => {
         query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
         logger(`Invalid checkpoints ${checkpoints}`);
-        process.exit(1);
+        process.exit(51 /* PROMPT_INVALID_CHECKPOINT */);
       }
     }
     if (pattern) {
@@ -34582,7 +34587,7 @@ var preparePrompts = (config2) => {
         matches.forEach((match) => {
           if (!allowedTokens.includes(match.replace("{", "").replace("}", ""))) {
             logger(`Invalid pattern token ${match}`);
-            process.exit(1);
+            process.exit(52 /* PROMPT_INVALID_PATTERN_TOKEN */);
           }
         });
       }
@@ -34653,7 +34658,7 @@ var preparePrompts = (config2) => {
           }
         } else {
           logger(`Invalid Style ${styleName}`);
-          process.exit(1);
+          process.exit(53 /* PROMPT_INVALID_STYLE */);
         }
       });
     }
@@ -36036,7 +36041,7 @@ var validator = new import_jsonschema.Validator();
 var getConfigs = (source) => {
   if (!import_node_fs6.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
-    process.exit(1);
+    process.exit(23 /* QUEUE_NO_SOURCE_INTERNAL */);
   }
   if (source.endsWith(".json")) {
     let jsonContent = { prompts: [] };
@@ -36045,12 +36050,12 @@ var getConfigs = (source) => {
       jsonContent = JSON.parse(data);
     } catch (err) {
       logger(`Unable to parse JSON in ${source}`);
-      process.exit(1);
+      process.exit(19 /* QUEUE_CORRUPTED_JSON */);
     }
     const validation2 = validator.validate(jsonContent, queue_default, { nestedErrors: true });
     if (!validation2.valid) {
       logger(`JSON has invalid properties : ${validation2.toString()}`);
-      process.exit(1);
+      process.exit(18 /* QUEUE_INVALID_JSON */);
     }
     return jsonContent;
   }
@@ -36059,7 +36064,7 @@ var getConfigs = (source) => {
     const validation2 = validator.validate(jsonContentFromJs, queue_default, { nestedErrors: true });
     if (!validation2.valid) {
       logger(`JS return invalid properties : ${validation2.toString()}`);
-      process.exit(1);
+      process.exit(20 /* QUEUE_INVALID_JS */);
     }
     return jsonContentFromJs;
   }
@@ -36068,7 +36073,7 @@ var mergeConfigs = (source) => {
   const jsonContent = getConfigs(source);
   if (!jsonContent) {
     logger(`Invalid file : ${source}`);
-    process.exit(1);
+    process.exit(21 /* QUEUE_INVALID_FILE */);
   }
   if (jsonContent.extends) {
     const extendsPath = jsonContent.extends.startsWith(".") ? (0, import_node_path7.resolve)(source, "..", jsonContent.extends) : jsonContent.extends;
@@ -36102,14 +36107,14 @@ var applyBaseConfig = (config2) => {
 var queueFromFile = async (source, validateOnly) => {
   if (!import_node_fs7.default.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
-    process.exit(1);
+    process.exit(17 /* QUEUE_NO_SOURCE */);
   }
   const config2 = mergeConfigs(source);
   if (config2) {
     const promptsResolved = applyBaseConfig(config2);
     if (promptsResolved.prompts.length === 0) {
       logger(`Merged config from ${source} has no prompts`);
-      process.exit(1);
+      process.exit(24 /* QUEUE_NO_RESULTING_PROMPTS */);
     }
     prompts(promptsResolved, validateOnly);
   }
@@ -36132,7 +36137,7 @@ var builder5 = (builder10) => {
     }
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(22 /* QUEUE_INVALID_PARAMS */);
   });
 };
 var handler5 = (argv) => {
@@ -36140,7 +36145,7 @@ var handler5 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   queueFromFile(source, argv.validate ?? false);
 };
@@ -36308,7 +36313,7 @@ var prepareQueryClassical = async (file, style, denoising_strength, addToPrompt,
     baseParams.controlNet.push(controlNet1);
   } else {
     logger(`Controlnet models for lineart not found`);
-    process.exit(1);
+    process.exit(26 /* REDRAW_LINEART_MODEL_NOT_FOUND */);
   }
   if (controlNet2) {
     baseParams.controlNet.push(controlNet2);
@@ -36356,7 +36361,7 @@ var prepareQueryIpAdapter = async (file, style, denoising_strength, addToPrompt,
     baseParams.controlNet.push(controlNet1);
   } else {
     logger(`Controlnet models for ip-adapter not found`);
-    process.exit(1);
+    process.exit(27 /* REDRAW_IPADAPTER_MODEL_NOT_FOUND */);
   }
   if (controlNet2) {
     baseParams.controlNet.push(controlNet2);
@@ -36392,7 +36397,7 @@ var getCombination = (filesList, styles, methods) => {
 var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }) => {
   if (!import_node_fs8.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(28 /* REDRAW_NO_SOURCE */);
   }
   const queries = [];
   const filesList = getFiles(source, recursive);
@@ -36508,7 +36513,7 @@ var builder6 = (builder10) => {
     }
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(25 /* REDRAW_INVALID_PARAMS */);
   });
 };
 var handler6 = (argv) => {
@@ -36516,7 +36521,7 @@ var handler6 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   const options3 = {
     addToPrompt: argv["add-before"] ?? void 0,
@@ -36663,7 +36668,7 @@ var validator2 = new import_jsonschema2.Validator();
 var renameConfig = (source, target, config2, test) => {
   if (!import_node_fs9.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(35 /* RENAME_NO_SOURCE_INTERNAL */);
   }
   if (!import_node_fs9.default.existsSync(target)) {
     import_node_fs9.default.mkdirSync(target, { recursive: true });
@@ -36671,7 +36676,7 @@ var renameConfig = (source, target, config2, test) => {
   const validation2 = validator2.validate(config2, rename_default);
   if (!validation2.valid) {
     logger(`JSON has invalid properties : ${validation2.toString()}`);
-    process.exit(1);
+    process.exit(32 /* RENAME_INVALID_JSON */);
   }
   const filesList = getFiles(source);
   filesList.forEach((file) => {
@@ -36693,7 +36698,7 @@ var renameConfig = (source, target, config2, test) => {
 var renameConfigFromCFile = (source, target, config2, test) => {
   if (!import_node_fs9.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(33 /* RENAME_NO_CONFIG_FILE */);
   }
   if (!import_node_fs9.default.existsSync(target)) {
     import_node_fs9.default.mkdirSync(target, { recursive: true });
@@ -36704,7 +36709,7 @@ var renameConfigFromCFile = (source, target, config2, test) => {
     jsonContent = JSON.parse(data);
   } catch (err) {
     logger(`Unable to parse JSON in ${config2} (${err})`);
-    process.exit(1);
+    process.exit(34 /* RENAME_INVALID_CONFIG_JSON */);
   }
   renameConfig(source, target, jsonContent, test);
 };
@@ -36782,7 +36787,7 @@ var builder7 = (builder10) => {
     }
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(29 /* RENAME_INVALID_PARAMS */);
   });
 };
 var handler7 = (argv) => {
@@ -36791,7 +36796,7 @@ var handler7 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   if (argv.config) {
     renameConfigFromCFile(source, target, argv.config, argv.test ?? false);
@@ -36799,7 +36804,7 @@ var handler7 = (argv) => {
     renameKeyPattern(source, target, argv.keys, argv.pattern, argv.test ?? false);
   } else {
     logger("Either config or keys and pattern must be provided");
-    process.exit(1);
+    process.exit(30 /* RENAME_INVALID_CONFIG */);
   }
 };
 
@@ -36866,7 +36871,7 @@ var builder8 = (builder10) => {
     type: "string"
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(36 /* STATS_INVALID_PARAMS */);
   });
 };
 var handler8 = (argv) => {
@@ -36890,7 +36895,7 @@ var import_node_path14 = require("node:path");
 var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
   if (!import_node_fs10.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(41 /* UPSCALE_MULTIDIFFUSION_NO_SOURCE */);
   }
   const queries = [];
   const filesList = getFiles(source, recursive);
@@ -36926,7 +36931,7 @@ var import_node_path15 = require("node:path");
 var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
   if (!import_node_fs11.default.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(42 /* UPSCALE_TILES_NO_SOURCE */);
   }
   const queries = [];
   const filesList = getFiles(source, recursive);
@@ -37039,7 +37044,7 @@ var builder9 = (builder10) => {
     }
   }).fail((msg) => {
     logger(msg);
-    process.exit(1);
+    process.exit(37 /* UPSCALE_INVALID_PARAMS */);
   });
 };
 var handler9 = (argv) => {
@@ -37048,7 +37053,7 @@ var handler9 = (argv) => {
   const initialized = Config.get("initialized");
   if (!initialized) {
     logger("Config must be initialized first");
-    process.exit(1);
+    process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   const options3 = {
     checkpoint: argv.checkpoint ?? void 0,
@@ -37060,12 +37065,12 @@ var handler9 = (argv) => {
     const hasControlnet = Config.get("extensions").includes("controlnet");
     if (!hasControlnet) {
       logger("ControlNet is required");
-      process.exit(1);
+      process.exit(38 /* UPSCALE_NO_CONTROLNET */);
     }
     const tiles = findControlnetModel("control_v11f1e_sd15_tile");
     if (!tiles) {
       logger("ControlNet Tiles model is required");
-      process.exit(1);
+      process.exit(39 /* UPSCALE_NO_CONTROLNET_TILES */);
     }
     upscaleTiles(source, options3);
   }
@@ -37073,7 +37078,7 @@ var handler9 = (argv) => {
     const hasTiledDiffusion = Config.get("extensions").includes("tiled diffusion");
     if (!hasTiledDiffusion) {
       logger("Tiled Diffusion is required");
-      process.exit(1);
+      process.exit(40 /* UPSCALE_NO_TILED_DIFFUSION */);
     }
     upscaleTiledDiffusion(source, options3);
   }

@@ -2,7 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { renameConfigFromCFile, renameKeyPattern } from './rename';
 
 interface IRenameOptions {
@@ -71,7 +71,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       })
       .fail((msg) => {
         logger(msg);
-        process.exit(1);
+        process.exit(ExitCodes.RENAME_INVALID_PARAMS);
       })
   );
 };
@@ -84,7 +84,7 @@ export const handler = (argv: IRenameOptions) => {
 
   if (!initialized) {
     logger('Config must be initialized first');
-    process.exit(1);
+    process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   if (argv.config) {
@@ -93,6 +93,6 @@ export const handler = (argv: IRenameOptions) => {
     renameKeyPattern(source, target, argv.keys, argv.pattern, argv.test ?? false);
   } else {
     logger('Either config or keys and pattern must be provided');
-    process.exit(1);
+    process.exit(ExitCodes.RENAME_INVALID_CONFIG);
   }
 };

@@ -4,7 +4,7 @@ import yargs from 'yargs';
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
   getAdModelQuery,
@@ -81,7 +81,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     !stylesQuery
   ) {
     logger('Error: Cannot initialize config : Error in SD API');
-    process.exit(1);
+    process.exit(ExitCodes.INIT_NO_SD_API);
   }
 
   const modelsQueryResolved = [];
@@ -218,7 +218,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
 
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
       logger('Error: Cannot initialize config : Error in ControlNet');
-      process.exit(1);
+      process.exit(ExitCodes.INIT_NO_CONTROLNET);
     }
 
     Config.set(

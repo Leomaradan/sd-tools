@@ -6,7 +6,7 @@ import { type IAdetailer } from './extensions/adetailer';
 import { getCutOffTokens } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
-import { logger, writeLog } from './logger';
+import { ExitCodes, logger, writeLog } from './logger';
 import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
 import { isTxt2ImgQuery, renderQuery } from './query';
 import {
@@ -739,7 +739,7 @@ const validateTemplate = (template: string) => {
   matches.forEach((match) => {
     if (!validTokensTemplate.includes(match)) {
       logger(`Invalid token ${match} in ${template}`);
-      process.exit(1);
+      process.exit(ExitCodes.PROMPT_INVALID_STRING_TOKEN);
     }
   });
 };
@@ -812,7 +812,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
     if (query.sampler_name !== undefined && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
       logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
-      process.exit(1);
+      process.exit(ExitCodes.PROMPT_INVALID_SAMPLER);
     }
 
     if (controlNet) {
@@ -822,12 +822,12 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
         if (!controlNetModule) {
           logger(`Invalid ControlNet module ${controlNetPrompt.module}`);
-          process.exit(1);
+          process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODULE);
         }
 
         if (!controlNetModel) {
           logger(`Invalid ControlNet model ${controlNetPrompt.model}`);
-          process.exit(1);
+          process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODEL);
         }
 
         query.controlNet?.push({
@@ -846,7 +846,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         query.override_settings.sd_vae = foundVAE === 'None' ? '' : foundVAE;
       } else {
         logger(`Invalid VAE ${vae}`);
-        process.exit(1);
+        process.exit(ExitCodes.PROMPT_INVALID_VAE);
       }
     }
 
@@ -864,7 +864,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         query.hr_upscaler = foundUpscaler.name;
       } else {
         logger(`Invalid Upscaler ${upscaler}`);
-        process.exit(1);
+        process.exit(ExitCodes.PROMPT_INVALID_UPSCALER);
       }
     }
 
@@ -928,7 +928,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           (query.adetailer as IAdetailer[]).push(adetailerQuery);
         } else {
           logger(`Invalid Adetailer model ${adetailer.model}`);
-          process.exit(1);
+          process.exit(ExitCodes.PROMPT_INVALID_ADETAILER_MODEL);
         }
       });
     }
@@ -939,7 +939,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
         logger(`Invalid checkpoints ${checkpoints}`);
-        process.exit(1);
+        process.exit(ExitCodes.PROMPT_INVALID_CHECKPOINT);
       }
     }
 
@@ -966,7 +966,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         matches.forEach((match) => {
           if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
             logger(`Invalid pattern token ${match}`);
-            process.exit(1);
+            process.exit(ExitCodes.PROMPT_INVALID_PATTERN_TOKEN);
           }
         });
       }
@@ -1055,7 +1055,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           }
         } else {
           logger(`Invalid Style ${styleName}`);
-          process.exit(1);
+          process.exit(ExitCodes.PROMPT_INVALID_STYLE);
         }
       });
     }

@@ -2,7 +2,7 @@ import { Validator } from 'jsonschema';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import queueSchema from '../commons/schema/queue.json';
 import { type IPrompts, type IPromptsResolved } from '../commons/types';
 
@@ -11,7 +11,7 @@ const validator = new Validator();
 const getConfigs = (source: string) => {
   if (!fs.existsSync(source)) {
     logger(`Source file ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.QUEUE_NO_SOURCE_INTERNAL);
   }
 
   if (source.endsWith('.json')) {
@@ -21,14 +21,14 @@ const getConfigs = (source: string) => {
       jsonContent = JSON.parse(data);
     } catch (err) {
       logger(`Unable to parse JSON in ${source}`);
-      process.exit(1);
+      process.exit(ExitCodes.QUEUE_CORRUPTED_JSON);
     }
 
     const validation = validator.validate(jsonContent, queueSchema, { nestedErrors: true });
 
     if (!validation.valid) {
       logger(`JSON has invalid properties : ${validation.toString()}`);
-      process.exit(1);
+      process.exit(ExitCodes.QUEUE_INVALID_JSON);
     }
 
     return jsonContent;
@@ -42,7 +42,7 @@ const getConfigs = (source: string) => {
 
     if (!validation.valid) {
       logger(`JS return invalid properties : ${validation.toString()}`);
-      process.exit(1);
+      process.exit(ExitCodes.QUEUE_INVALID_JS);
     }
 
     return jsonContentFromJs;
@@ -54,7 +54,7 @@ export const mergeConfigs = (source: string): IPrompts | undefined => {
 
   if (!jsonContent) {
     logger(`Invalid file : ${source}`);
-    process.exit(1);
+    process.exit(ExitCodes.QUEUE_INVALID_FILE);
   }
 
   if (jsonContent.extends) {

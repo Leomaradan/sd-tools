@@ -2,7 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 
 import { type IExtractOptions, type IExtractOptionsFull } from '../commons/extract';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { extract } from './extract';
 
 export const command = 'extract <source> <format>';
@@ -39,7 +39,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     })
     .fail((msg) => {
       logger(msg);
-      process.exit(1);
+      process.exit(ExitCodes.EXTRACT_INVALID_PARAMS);
     });
 };
 

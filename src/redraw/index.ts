@@ -2,7 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { findUpscaler } from '../commons/models';
 import { IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 import { redraw } from './redraw';
@@ -125,7 +125,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     })
     .fail((msg) => {
       logger(msg);
-      process.exit(1);
+      process.exit(ExitCodes.REDRAW_INVALID_PARAMS);
     });
 };
 
@@ -136,7 +136,7 @@ export const handler = (argv: IRedrawArgsOptions) => {
 
   if (!initialized) {
     logger('Config must be initialized first');
-    process.exit(1);
+    process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   const options: IRedrawOptions = {

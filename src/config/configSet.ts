@@ -2,7 +2,7 @@ import yargs from 'yargs';
 
 import { Config, getParamBoolean } from '../commons/config.js';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
-import { logger } from '../commons/logger.js';
+import { ExitCodes, logger } from '../commons/logger.js';
 import { findCheckpoint, findLORA } from '../commons/models.js';
 import {
   type EditableOptions,
@@ -133,7 +133,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     })
     .fail((msg) => {
       logger(msg);
-      process.exit(1);
+      process.exit(ExitCodes.CONFIG_SET_INVALID_OPTIONS);
     });
 };
 
@@ -144,7 +144,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
   if (!initialized) {
     logger('Config must be initialized first');
-    process.exit(1);
+    process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   switch (config) {
@@ -159,7 +159,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
     case 'auto-tiled-diffusion':
       if (!Config.get('extensions').includes('tiled diffusion')) {
         logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(ExitCodes.CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED);
       }
 
       if (!value || (value as string) === 'false') {
@@ -168,7 +168,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         logger(
           `Value for ${config} must be either "${TiledDiffusionMethods.MixtureOfDiffusers}" or "${TiledDiffusionMethods.MultiDiffusion}"`
         );
-        process.exit(1);
+        process.exit(ExitCodes.CONFIG_SET_INVALID_MULTIDIFFUSION);
       } else {
         Config.set('autoTiledDiffusion', value);
       }
@@ -179,7 +179,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
     case 'auto-tiled-vae':
       if (!Config.get('extensions').includes('tiled vae')) {
         logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(ExitCodes.CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED);
       }
 
       Config.set('autoTiledVAE', getParamBoolean(value));
@@ -204,7 +204,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
     case 'auto-cutoff':
       if (!Config.get('extensions').includes('cutoff')) {
         logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
       }
 
       Config.set('cutoff', getParamBoolean(value));
@@ -220,12 +220,12 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
         if (valueArray.some((val) => typeof val !== 'string')) {
           logger(`Value for ${config} must be a array of string`);
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_CUTOFF_INVALID_TOKEN);
         }
 
         if (!Config.get('extensions').includes('cutoff')) {
           logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
         }
 
         Config.set('cutoffTokens', Array.from(new Set(valueArray)));
@@ -237,12 +237,12 @@ export const handler = (argv: ISetConfigArgsOptions) => {
         const valueNumber = Number(value);
         if (typeof valueNumber !== 'number' || isNaN(valueNumber)) {
           logger(`Value for ${config} must be a number`);
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_CUTOFF_INVALID_WEIGHT);
         }
 
         if (!Config.get('extensions').includes('cutoff')) {
           logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
         }
 
         Config.set('cutoffWeight', valueNumber);
@@ -280,7 +280,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
           })
         ) {
           logger(`Value for ${config} contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_LCM_INVALID_TOKEN);
         }
 
         const lcm = Config.get('lcm');
@@ -328,7 +328,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
           logger(
             `Value for ${config} contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:" or "animeXL:" followed by a valid model name`
           );
-          process.exit(1);
+          process.exit(ExitCodes.CONFIG_SET_REDRAW_INVALID_MODELS);
         }
 
         const redrawModels = Config.get('redrawModels');
@@ -350,7 +350,7 @@ export const handler = (argv: ISetConfigArgsOptions) => {
     case 'scheduler':
       if (!Config.get('extensions').includes('scheduler')) {
         logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        process.exit(1);
+        process.exit(ExitCodes.CONFIG_SET_NO_AGENT_INSTALLED);
       }
 
       Config.set('scheduler', getParamBoolean(value));

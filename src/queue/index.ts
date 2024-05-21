@@ -2,7 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { queueFromFile } from './queue';
 
 interface IQueueArgsOptions {
@@ -29,7 +29,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     })
     .fail((msg) => {
       logger(msg);
-      process.exit(1);
+      process.exit(ExitCodes.QUEUE_INVALID_PARAMS);
     });
 };
 
@@ -40,7 +40,7 @@ export const handler = (argv: IQueueArgsOptions) => {
 
   if (!initialized) {
     logger('Config must be initialized first');
-    process.exit(1);
+    process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   queueFromFile(source, argv.validate ?? false);

@@ -5,7 +5,7 @@ import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
-import { logger, writeLog } from './logger';
+import { ExitCodes, logger, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
   type IBaseQuery,
@@ -76,7 +76,7 @@ export const renderQuery: Query = async (query, type) => {
 
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
     logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
-    process.exit(1);
+    process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
   }
 
   let script = false;

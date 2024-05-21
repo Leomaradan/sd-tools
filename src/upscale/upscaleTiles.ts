@@ -5,7 +5,7 @@ import type { IUpscaleOptions } from './types';
 
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { ControlNetMode, ControlNetResizes, type IPrompt } from '../commons/types';
@@ -16,7 +16,7 @@ export const upscaleTiles = async (
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.UPSCALE_TILES_NO_SOURCE);
   }
 
   const queries: IPrompt[] = [];

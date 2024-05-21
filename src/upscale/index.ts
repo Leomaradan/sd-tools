@@ -2,7 +2,7 @@ import path from 'node:path';
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { findCheckpoint, findControlnetModel } from '../commons/models';
 import { type IUpscaleOptions, type IUpscaleOptionsFull } from './types';
 import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
@@ -98,7 +98,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     })
     .fail((msg) => {
       logger(msg);
-      process.exit(1);
+      process.exit(ExitCodes.UPSCALE_INVALID_PARAMS);
     });
 };
 
@@ -110,7 +110,7 @@ export const handler = (argv: IUpscaleOptionsFull) => {
 
   if (!initialized) {
     logger('Config must be initialized first');
-    process.exit(1);
+    process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   const options: IUpscaleOptions = {
@@ -125,13 +125,13 @@ export const handler = (argv: IUpscaleOptionsFull) => {
 
     if (!hasControlnet) {
       logger('ControlNet is required');
-      process.exit(1);
+      process.exit(ExitCodes.UPSCALE_NO_CONTROLNET);
     }
 
     const tiles = findControlnetModel('control_v11f1e_sd15_tile');
     if (!tiles) {
       logger('ControlNet Tiles model is required');
-      process.exit(1);
+      process.exit(ExitCodes.UPSCALE_NO_CONTROLNET_TILES);
     }
 
     upscaleTiles(source, options);
@@ -142,7 +142,7 @@ export const handler = (argv: IUpscaleOptionsFull) => {
 
     if (!hasTiledDiffusion) {
       logger('Tiled Diffusion is required');
-      process.exit(1);
+      process.exit(ExitCodes.UPSCALE_NO_TILED_DIFFUSION);
     }
 
     upscaleTiledDiffusion(source, options);

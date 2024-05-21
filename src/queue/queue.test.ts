@@ -4,6 +4,7 @@ jest.mock('../commons/prompts');
 
 import path from 'node:path';
 
+import { ExitCodes } from '../commons/logger';
 import { prompts } from '../commons/prompts';
 import { queueFromFile } from './queue';
 
@@ -152,7 +153,7 @@ describe('queue loader test', () => {
       queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeC.json'), true);
 
       expect(prompts).toHaveBeenCalledTimes(1);
-      expect(mockExit).toHaveBeenCalledWith(1);
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_NO_RESULTING_PROMPTS);
     });
   });
 });

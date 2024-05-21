@@ -1,4 +1,3 @@
-/* eslint-env node */
 module.exports = {
   extends: [
     'eslint:recommended',
@@ -6,6 +5,12 @@ module.exports = {
     'plugin:perfectionist/recommended-natural',
     'plugin:sonarjs/recommended',
     'prettier'
+  ],
+  overrides: [
+    {
+      env: { node: true },
+      files: ['*.cjs']
+    }
   ],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'perfectionist', 'only-warn'],

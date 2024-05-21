@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import renameSchema from '../commons/schema/rename.json';
 import { type  IRenameConfig, executeConfig } from './config';
 
@@ -12,7 +12,7 @@ const validator = new Validator();
 export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.RENAME_NO_SOURCE_INTERNAL);
   }
 
   if (!fs.existsSync(target)) {
@@ -23,7 +23,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
 
   if (!validation.valid) {
     logger(`JSON has invalid properties : ${validation.toString()}`);
-    process.exit(1);
+    process.exit(ExitCodes.RENAME_INVALID_JSON);
   }
 
   const filesList = getFiles(source);
@@ -52,7 +52,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
 export const renameConfigFromCFile = (source: string, target: string, config: string, test: boolean) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.RENAME_NO_CONFIG_FILE);
   }
 
   if (!fs.existsSync(target)) {
@@ -65,7 +65,7 @@ export const renameConfigFromCFile = (source: string, target: string, config: st
     jsonContent = JSON.parse(data);
   } catch (err) {
     logger(`Unable to parse JSON in ${config} (${err})`);
-    process.exit(1);
+    process.exit(ExitCodes.RENAME_INVALID_CONFIG_JSON);
   }
 
   renameConfig(source, target, jsonContent, test);

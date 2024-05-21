@@ -125,7 +125,7 @@ export const findSampler = (...sampleName: string[]): ISampler | undefined => {
         return item.name;
       }
 
-      if (item.aliases.find((alias) => alias === modelName)) {
+      if (item.aliases?.find((alias) => alias === modelName)) {
         return item.name;
       }
     },
@@ -134,7 +134,7 @@ export const findSampler = (...sampleName: string[]): ISampler | undefined => {
         return item.name;
       }
 
-      if (item.aliases.find((alias) => alias.includes(modelName))) {
+      if (item.aliases?.find((alias) => alias.includes(modelName))) {
         return item.name;
       }
     }

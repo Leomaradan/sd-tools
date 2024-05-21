@@ -3,13 +3,13 @@ import path from 'node:path';
 
 import { type IExtractOptions, extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { type IPromptSingle } from '../commons/types';
 
 export const extract = async (source: string, { addBefore, format, output, recursive }: IExtractOptions) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.EXTRACT_NO_SOURCE);
   }
 
   const prompts: (IPromptSingle | string)[] = [];

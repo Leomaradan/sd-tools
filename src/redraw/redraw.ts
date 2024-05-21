@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { type IFile, getBase64Image, getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
@@ -205,7 +205,7 @@ const prepareQueryClassical = async (
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
   } else {
     logger(`Controlnet models for lineart not found`);
-    process.exit(1);
+    process.exit(ExitCodes.REDRAW_LINEART_MODEL_NOT_FOUND);
   }
 
   if (controlNet2) {
@@ -270,7 +270,7 @@ const prepareQueryIpAdapter = async (
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
   } else {
     logger(`Controlnet models for ip-adapter not found`);
-    process.exit(1);
+    process.exit(ExitCodes.REDRAW_IPADAPTER_MODEL_NOT_FOUND);
   }
 
   if (controlNet2) {
@@ -323,7 +323,7 @@ export const redraw = async (
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.REDRAW_NO_SOURCE);
   }
 
   const queries: IPrompt[] = [];

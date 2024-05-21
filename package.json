@@ -52,7 +52,7 @@
     "sd-tools.js"
   ],
   "type": "module",
-  "packageManager": "yarn@4.1.1",
+  "packageManager": "yarn@4.2.2",
   "scripts": {
     "build": "yarn schema && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs",
     "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs --watch",

@@ -41,7 +41,7 @@ class Configstore {
         }
       ],
       redrawModels: {},
-      samplers: [{ name: 'DPM++ 2M' }, { aliases: ['Euler a'], name: 'euler test' }],
+      samplers: [{ name: 'DPM++ 2M' }, { aliases: ['Euler a'], name: 'euler test' }, { name: 'LCM' }, { name: 'DPM++ SDE'}],
       scheduler: false,
       styles: [],
       upscalers: [

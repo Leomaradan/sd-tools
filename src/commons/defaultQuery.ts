@@ -45,8 +45,13 @@ export const getDefaultQuery15 = (
     steps: 20
   };
 };
+
 export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
-  const baseParams = { ...baseParamsAll, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string };
+  const baseParams = { ...baseParamsAll, 
+    cfg_scale: 7,
+    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
+    steps: 20 
+  };
   if (sizeFull) {
     // Other accelerator than LCM are not supported
     return {
@@ -62,6 +67,7 @@ export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { en
     width: 512
   };
 };
+
 export const getDefaultQueryXL = (
   accelarator?: MetadataAccelerator
 ): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {

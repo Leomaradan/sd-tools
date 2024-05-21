@@ -7,7 +7,7 @@ import type { IUpscaleOptions } from './types';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { logger } from '../commons/logger';
+import { ExitCodes, logger } from '../commons/logger';
 import { prompts } from '../commons/prompts';
 
 export const upscaleTiledDiffusion = async (
@@ -16,7 +16,7 @@ export const upscaleTiledDiffusion = async (
 ) => {
   if (!fs.existsSync(source)) {
     logger(`Source directory ${source} does not exist`);
-    process.exit(1);
+    process.exit(ExitCodes.UPSCALE_MULTIDIFFUSION_NO_SOURCE);
   }
 
   const queries: IPrompt[] = [];
