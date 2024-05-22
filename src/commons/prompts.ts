@@ -217,6 +217,10 @@ const prepareSingleQuery = (
       prompt.pattern = prompt.pattern.replace('{scaleFactor}', String(scaleFactor));
     }
 
+    if (count && prompt.pattern?.includes('{count}')) {
+      prompt.pattern = prompt.pattern.replace('{count}', String(i + 1));
+    }
+
     if (ultimateSdUpscale) {
       const scaleFactor = prompt.scaleFactor ?? 2;
       prompt.ultimateSdUpscale = {
@@ -949,14 +953,20 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       const allowedTokens = [
         'filename',
         'cfg',
+        'checkpoint',
         'clipSkip',
+        'cutOff',
         'denoising',
         'enableHighRes',
         'height',
         'restoreFaces',
+        'sampler',
         'scaleFactor',
         'seed',
         'steps',
+        'tiling',
+        'upscaler',
+        'vae',
         'width'
       ];
 
@@ -979,12 +989,17 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         updateFilename(query, 'filename', filename);
       }
 
-      if (cfg) {
-        updateFilename(query, 'cfg', cfg.toFixed(2));
-      }
+      // Alias to official tokens
+      updateFilename(query, 'cfg', '[cfg]');
+      updateFilename(query, 'checkpoint', '[model_name]');
+      updateFilename(query, 'clipSkip', '[clip_skip]');
+      updateFilename(query, 'height', '[height]');
+      updateFilename(query, 'seed', '[seed]');
+      updateFilename(query, 'steps', '[steps]');
+      updateFilename(query, 'width', '[width]');
 
-      if (clipSkip) {
-        updateFilename(query, 'clipSkip', clipSkip.toFixed(0));
+      if (autoCutOff !== undefined) {
+        updateFilename(query, 'cutOff', autoCutOff.toString());
       }
 
       if (denoising) {
@@ -995,28 +1010,28 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         updateFilename(query, 'highRes', enableHighRes.toString());
       }
 
-      if (height) {
-        updateFilename(query, 'height', height.toFixed(0));
-      }
-
       if (restoreFaces !== undefined) {
         updateFilename(query, 'restoreFaces', restoreFaces.toString());
+      }
+
+      if (sampler !== undefined) {
+        updateFilename(query, 'sampler', sampler.toString());
       }
 
       if (scaleFactor) {
         updateFilename(query, 'scaleFactor', scaleFactor.toFixed(0));
       }
 
-      if (seed) {
-        updateFilename(query, 'seed', seed.toFixed(0));
+      if (tiling !== undefined) {
+        updateFilename(query, 'tiling', tiling.toString());
       }
 
-      if (steps) {
-        updateFilename(query, 'steps', steps.toFixed(0));
+      if (upscaler !== undefined) {
+        updateFilename(query, 'upscaler', upscaler.toString());
       }
 
-      if (width) {
-        updateFilename(query, 'width', width.toFixed(0));
+      if (vae !== undefined) {
+        updateFilename(query, 'vae', vae.toString());
       }
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;

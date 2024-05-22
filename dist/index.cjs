@@ -33961,6 +33961,9 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     if (scaleFactor && prompt.pattern?.includes("{scaleFactor}")) {
       prompt.pattern = prompt.pattern.replace("{scaleFactor}", String(scaleFactor));
     }
+    if (count && prompt.pattern?.includes("{count}")) {
+      prompt.pattern = prompt.pattern.replace("{count}", String(i + 1));
+    }
     if (ultimateSdUpscale) {
       const scaleFactor2 = prompt.scaleFactor ?? 2;
       prompt.ultimateSdUpscale = {
@@ -34572,14 +34575,20 @@ var preparePrompts = (config2) => {
       const allowedTokens = [
         "filename",
         "cfg",
+        "checkpoint",
         "clipSkip",
+        "cutOff",
         "denoising",
         "enableHighRes",
         "height",
         "restoreFaces",
+        "sampler",
         "scaleFactor",
         "seed",
         "steps",
+        "tiling",
+        "upscaler",
+        "vae",
         "width"
       ];
       const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
@@ -34597,11 +34606,15 @@ var preparePrompts = (config2) => {
         }
         updateFilename(query, "filename", filename);
       }
-      if (cfg) {
-        updateFilename(query, "cfg", cfg.toFixed(2));
-      }
-      if (clipSkip) {
-        updateFilename(query, "clipSkip", clipSkip.toFixed(0));
+      updateFilename(query, "cfg", "[cfg]");
+      updateFilename(query, "checkpoint", "[model_name]");
+      updateFilename(query, "clipSkip", "[clip_skip]");
+      updateFilename(query, "height", "[height]");
+      updateFilename(query, "seed", "[seed]");
+      updateFilename(query, "steps", "[steps]");
+      updateFilename(query, "width", "[width]");
+      if (autoCutOff !== void 0) {
+        updateFilename(query, "cutOff", autoCutOff.toString());
       }
       if (denoising) {
         updateFilename(query, "denoising", denoising.toFixed(2));
@@ -34609,23 +34622,23 @@ var preparePrompts = (config2) => {
       if (enableHighRes !== void 0) {
         updateFilename(query, "highRes", enableHighRes.toString());
       }
-      if (height) {
-        updateFilename(query, "height", height.toFixed(0));
-      }
       if (restoreFaces !== void 0) {
         updateFilename(query, "restoreFaces", restoreFaces.toString());
+      }
+      if (sampler !== void 0) {
+        updateFilename(query, "sampler", sampler.toString());
       }
       if (scaleFactor) {
         updateFilename(query, "scaleFactor", scaleFactor.toFixed(0));
       }
-      if (seed) {
-        updateFilename(query, "seed", seed.toFixed(0));
+      if (tiling !== void 0) {
+        updateFilename(query, "tiling", tiling.toString());
       }
-      if (steps) {
-        updateFilename(query, "steps", steps.toFixed(0));
+      if (upscaler !== void 0) {
+        updateFilename(query, "upscaler", upscaler.toString());
       }
-      if (width) {
-        updateFilename(query, "width", width.toFixed(0));
+      if (vae !== void 0) {
+        updateFilename(query, "vae", vae.toString());
       }
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
