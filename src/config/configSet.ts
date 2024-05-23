@@ -1,9 +1,9 @@
 import yargs from 'yargs';
 
-import { Config, getParamBoolean } from '../commons/config.js';
-import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
-import { ExitCodes, logger } from '../commons/logger.js';
-import { findCheckpoint, findLORA } from '../commons/models.js';
+import { Config, getParamBoolean } from '../commons/config';
+import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
+import { ExitCodes, logger } from '../commons/logger';
+import { findCheckpoint, findLORA } from '../commons/models';
 import {
   type EditableOptions,
   getConfigAutoLCM,
@@ -20,7 +20,7 @@ import {
   getConfigLCM,
   getConfigRedrawModels,
   getConfigScheduler
-} from './functions.js';
+} from './functions';
 
 interface ISetConfig {
   config: EditableOptions;

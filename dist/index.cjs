@@ -32309,6 +32309,9 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
   } catch (error) {
     if (error instanceof Error) {
       logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
+      if (error.message.includes("404")) {
+        return false;
+      }
     } else {
       logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
     }
@@ -32330,6 +32333,14 @@ var getMetadata = async (url2) => {
       const [cacheMetadataNew, metadata] = metadataCivitAiRest;
       Cache.set("metadata", cacheMetadataNew);
       return metadata;
+    } else if (metadataCivitAiRest === false) {
+      const fakeMetadata = {
+        accelerator: "none",
+        keywords: [],
+        sdVersion: "unknown"
+      };
+      cacheMetadata[url2] = { ...fakeMetadata, timestamp: Date.now().toString() };
+      Cache.set("metadata", cacheMetadata);
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -33069,7 +33080,7 @@ var handler = async (argv) => {
 var { default: Configstore2 } = (init_configstore(), __toCommonJS(configstore_exports));
 var config = new Configstore2("sd-tools");
 var cache = new Configstore2("sd-tools-cache");
-var LATEST_CONFIG_VERSION = 2;
+var LATEST_CONFIG_VERSION = 3;
 var migrations = {
   0: () => {
     Config.set("configVersion", 1);
@@ -33081,6 +33092,10 @@ var migrations = {
   1: () => {
     config.delete("adetailersCustomModels");
     Config.set("adetailersModels", []);
+  },
+  2: () => {
+    Config.set("autoAdetailers", []);
+    Config.set("autoControlnetPose", []);
   }
 };
 var configMigration = async () => {
@@ -33185,6 +33200,47 @@ var getConfigRedrawModels = () => {
 - Realist (SDXL) : ${realistxl}`);
 };
 var getConfigScheduler = () => logger(`Scheduler: ${Config.get("scheduler") ? "enabled" : "disabled"}`);
+var getConfigAutoAdetailers = () => {
+  const autoAdetailers = Config.get("autoAdetailers");
+  const list = autoAdetailers.map((item) => {
+    const {
+      ad_denoising_strength,
+      ad_inpaint_height,
+      ad_inpaint_width,
+      ad_model,
+      ad_negative_prompt,
+      ad_prompt,
+      ad_use_inpaint_width_height,
+      trigger
+    } = item;
+    let text2 = `!ad:${trigger}: ${ad_model}`;
+    if (ad_prompt) {
+      text2 += ` | Prompt: ${ad_prompt}`;
+    }
+    if (ad_negative_prompt) {
+      text2 += ` | Negative Prompt: ${ad_negative_prompt}`;
+    }
+    if (ad_denoising_strength) {
+      text2 += ` | Denoising Strength: ${ad_denoising_strength}`;
+    }
+    if (ad_inpaint_height && ad_inpaint_width) {
+      text2 += ` | Inpaint Size: ${ad_inpaint_height}x${ad_inpaint_width}`;
+    }
+    if (ad_use_inpaint_width_height) {
+      text2 += ` | Use Inpaint Width/Height: ${ad_use_inpaint_width_height}`;
+    }
+    return text2;
+  });
+  logger(`Auto Adetailers: ${displayList(list)}`);
+};
+var getConfigAutoControlnetPoses = () => {
+  const autoControlnetPose = Config.get("autoControlnetPose");
+  const list = autoControlnetPose.map((item) => {
+    const { pose, trigger } = item;
+    return `!pose:${trigger}: ${pose}`;
+  });
+  logger(`Auto ControlNet Poses: ${displayList(list)}`);
+};
 
 // src/config/configGet.ts
 var options = [
@@ -33196,6 +33252,8 @@ var options = [
     option: "auto-tiled-diffusion"
   },
   { description: "If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled", option: "auto-tiled-vae" },
+  { description: "If the Add Details extension exists, it will allow to automatically add models", option: "auto-adetailers" },
+  { description: "If the ControlNet extension exists, it will allow to automatically set a pose", option: "auto-controlnet-pose" },
   { description: "Negative prompt to add on each queries using SD 1.5 (except queue query)", option: "common-negative" },
   { description: "Negative prompt to add on each queries using SD XL (except queue query)", option: "common-negative-xl" },
   { description: "Prompt to add on each queries using SD 1.5 (except queue query)", option: "common-positive" },
@@ -33256,6 +33314,9 @@ ${listOptions.join("\n")}`);
     case "controlnet-modules":
       getConfigControlnetModules();
       break;
+    case "auto-controlnet-pose":
+      getConfigAutoControlnetPoses();
+      break;
     case "embeddings":
       getConfigEmbeddings();
       break;
@@ -33282,6 +33343,9 @@ ${listOptions.join("\n")}`);
       break;
     case "adetailers-models":
       getConfigAddDetailerModels();
+      break;
+    case "auto-adetailers":
+      getConfigAutoAdetailers();
       break;
     case "auto-lcm":
       getConfigAutoLCM();
@@ -34400,6 +34464,8 @@ var validateTemplate = (template) => {
 var preparePrompts = (config2) => {
   const queries = [];
   const queriesArray = prepareQueries(config2);
+  const autoAdetailers = Config.get("autoAdetailers");
+  const autoControlnetPose = Config.get("autoControlnetPose");
   queriesArray.forEach((singleQuery) => {
     const {
       adetailer,
@@ -34482,6 +34548,31 @@ var preparePrompts = (config2) => {
         });
       });
     }
+    const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
+    if (findPose.length > 1) {
+      logger(`Multiple controlnet poses found in prompt`);
+      process.exit(54 /* PROMPT_INVALID_CONTROLNET_POSE */);
+    }
+    if (findPose.length === 1) {
+      const pose = findPose[0];
+      query.prompt = query.prompt.replace(`!pose:${pose.trigger}`, "");
+      if (query.controlNet === void 0) {
+        query.controlNet = [];
+      }
+      const findExistingPose = query.controlNet.find((controlNet2) => controlNet2.model.includes("openpose"));
+      if (!findExistingPose) {
+        const model = (checkpoint?.version === "sdxl" ? findControlnetModel("xl_openpose", "xl_dw_openpose") : findControlnetModel("sd15_openpose"))?.name;
+        if (model) {
+          query.controlNet.push({
+            control_mode: 0 /* Balanced */,
+            input_image: getBase64Image(pose.pose),
+            model,
+            module: "none",
+            resize_mode: 2 /* Envelope */
+          });
+        }
+      }
+    }
     if (vae) {
       const foundVAE = findVAE(vae);
       if (foundVAE) {
@@ -34561,6 +34652,19 @@ var preparePrompts = (config2) => {
         }
       });
     }
+    autoAdetailers.forEach((autoAdetailer) => {
+      const trigger = `!ad:${autoAdetailer.trigger}`;
+      if (query.prompt.includes(trigger)) {
+        if (query.adetailer === void 0) {
+          query.adetailer = [];
+        }
+        const existing = query.adetailer.find((adetailer2) => adetailer2.ad_model === autoAdetailer.ad_model);
+        if (!existing) {
+          query.adetailer.push(autoAdetailer);
+        }
+        query.prompt = query.prompt.replace(trigger, "");
+      }
+    });
     if (checkpoints && typeof checkpoints === "string") {
       const modelCheckpoint = findCheckpoint(checkpoints);
       if (modelCheckpoint) {

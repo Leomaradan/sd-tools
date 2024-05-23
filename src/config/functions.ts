@@ -4,6 +4,8 @@ import { BaseUpscalers } from '../commons/models';
 
 export type ReadonlyOptions =
   | 'adetailers-models'
+  | 'auto-adetailers'
+  | 'auto-controlnet-pose'
   | 'config-version'
   | 'controlnet-models'
   | 'controlnet-modules'
@@ -75,6 +77,7 @@ export const getConfigCutoff = () => logger(`Auto CutOff: ${Config.get('cutoff')
 export const getConfigCutoffTokens = () => logger(`CutOff Auto Tokens: ${displayList(Config.get('cutoffTokens'))}`);
 export const getConfigCutoffWeight = () => logger(`CutOff Weight: ${Config.get('cutoffWeight')}`);
 export const getConfigEndpoint = () => logger(`Endpoint: ${Config.get('endpoint')}`);
+
 export const getConfigLCM = () => {
   const { sd15, sdxl } = Config.get('lcm');
   logger(`Redraw models: 
@@ -90,3 +93,51 @@ export const getConfigRedrawModels = () => {
 - Realist (SDXL) : ${realistxl}`);
 };
 export const getConfigScheduler = () => logger(`Scheduler: ${Config.get('scheduler') ? 'enabled' : 'disabled'}`);
+
+export const getConfigAutoAdetailers = () => {
+  const autoAdetailers = Config.get('autoAdetailers');
+
+  const list = autoAdetailers.map((item) => {
+    const {
+      ad_denoising_strength,
+      ad_inpaint_height,
+      ad_inpaint_width,
+      ad_model,
+      ad_negative_prompt,
+      ad_prompt,
+      ad_use_inpaint_width_height,
+      trigger
+    } = item;
+    let text = `!ad:${trigger}: ${ad_model}`;
+    if (ad_prompt) {
+      text += ` | Prompt: ${ad_prompt}`;
+    }
+    if (ad_negative_prompt) {
+      text += ` | Negative Prompt: ${ad_negative_prompt}`;
+    }
+    if (ad_denoising_strength) {
+      text += ` | Denoising Strength: ${ad_denoising_strength}`;
+    }
+    if (ad_inpaint_height && ad_inpaint_width) {
+      text += ` | Inpaint Size: ${ad_inpaint_height}x${ad_inpaint_width}`;
+    }
+    if (ad_use_inpaint_width_height) {
+      text += ` | Use Inpaint Width/Height: ${ad_use_inpaint_width_height}`;
+    }
+
+    return text;
+  });
+
+  logger(`Auto Adetailers: ${displayList(list)}`);
+};
+
+export const getConfigAutoControlnetPoses = () => {
+  const autoControlnetPose = Config.get('autoControlnetPose');
+
+  const list = autoControlnetPose.map((item) => {
+    const { pose, trigger } = item;
+    return `!pose:${trigger}: ${pose}`;
+  });
+
+  logger(`Auto ControlNet Poses: ${displayList(list)}`);
+};

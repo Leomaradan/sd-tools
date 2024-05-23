@@ -217,8 +217,19 @@ export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
 export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
 export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
+export interface IAutoAdetailer extends IAdetailer {
+  trigger: string;
+}
+
+export interface IAutoControlnetPose {
+  pose: string;
+  trigger: string;
+}
+
 export interface IConfig {
   adetailersModels: string[];
+  autoAdetailers: IAutoAdetailer[];
+  autoControlnetPose: IAutoControlnetPose[];
   autoTiledDiffusion: TiledDiffusionMethods | false;
   autoTiledVAE: boolean;
   commonNegative?: string;

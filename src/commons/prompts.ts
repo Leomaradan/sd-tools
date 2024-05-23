@@ -1,6 +1,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type IAdetailer } from './extensions/adetailer';
 import { getCutOffTokens } from './extensions/cutoff';
@@ -753,6 +754,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
   const queriesArray = prepareQueries(config);
 
+  const autoAdetailers = Config.get('autoAdetailers');
+  const autoControlnetPose = Config.get('autoControlnetPose');
+
   queriesArray.forEach((singleQuery) => {
     const {
       adetailer,
@@ -842,6 +846,40 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           resize_mode: controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope
         });
       });
+    }
+
+    const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
+    if (findPose.length > 1) {
+      logger(`Multiple controlnet poses found in prompt`);
+      process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_POSE);
+    }
+
+    if (findPose.length === 1) {
+      const pose = findPose[0];
+
+      query.prompt = query.prompt.replace(`!pose:${pose.trigger}`, '');
+
+      if (query.controlNet === undefined) {
+        query.controlNet = [];
+      }
+
+      const findExistingPose = query.controlNet.find((controlNet) => controlNet.model.includes('openpose'));
+
+      if (!findExistingPose) {
+        const model = (
+          checkpoint?.version === 'sdxl' ? findControlnetModel('xl_openpose', 'xl_dw_openpose') : findControlnetModel('sd15_openpose')
+        )?.name;
+
+        if (model) {
+          query.controlNet.push({
+            control_mode: ControlNetMode.Balanced,
+            input_image: getBase64Image(pose.pose),
+            model,
+            module: 'none',
+            resize_mode: ControlNetResizes.Envelope
+          });
+        }
+      }
     }
 
     if (vae) {
@@ -936,6 +974,22 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         }
       });
     }
+
+    autoAdetailers.forEach((autoAdetailer) => {
+      const trigger = `!ad:${autoAdetailer.trigger}`;
+      if (query.prompt.includes(trigger)) {
+        if (query.adetailer === undefined) {
+          query.adetailer = [];
+        }
+
+        const existing = query.adetailer.find((adetailer) => adetailer.ad_model === autoAdetailer.ad_model);
+        if (!existing) {
+          query.adetailer.push(autoAdetailer);
+        }
+
+        query.prompt = query.prompt.replace(trigger, '');
+      }
+    });
 
     if (checkpoints && typeof checkpoints === 'string') {
       const modelCheckpoint = findCheckpoint(checkpoints);
