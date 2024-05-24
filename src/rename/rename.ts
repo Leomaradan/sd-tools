@@ -3,15 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getFiles } from '../commons/file';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import renameSchema from '../commons/schema/rename.json';
-import { type  IRenameConfig, executeConfig } from './config';
+import { type IRenameConfig, executeConfig } from './config';
 
 const validator = new Validator();
 
 export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
   if (!fs.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.RENAME_NO_SOURCE_INTERNAL);
   }
 
@@ -22,7 +22,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
   const validation = validator.validate(config, renameSchema);
 
   if (!validation.valid) {
-    logger(`JSON has invalid properties : ${validation.toString()}`);
+    loggerInfo(`JSON has invalid properties : ${validation.toString()}`);
     process.exit(ExitCodes.RENAME_INVALID_JSON);
   }
 
@@ -35,7 +35,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
       if (param && param[0] !== '') {
         const [targetFile, scene] = param;
 
-        logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
+        loggerVerbose(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
 
         if (!test && scene && !fs.existsSync(path.join(target, scene))) {
           fs.mkdirSync(path.join(target, scene));
@@ -51,7 +51,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
 
 export const renameConfigFromCFile = (source: string, target: string, config: string, test: boolean) => {
   if (!fs.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.RENAME_NO_CONFIG_FILE);
   }
 
@@ -64,7 +64,7 @@ export const renameConfigFromCFile = (source: string, target: string, config: st
     const data = fs.readFileSync(config, 'utf8');
     jsonContent = JSON.parse(data);
   } catch (err) {
-    logger(`Unable to parse JSON in ${config} (${err})`);
+    loggerInfo(`Unable to parse JSON in ${config} (${err})`);
     process.exit(ExitCodes.RENAME_INVALID_CONFIG_JSON);
   }
 
