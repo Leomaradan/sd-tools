@@ -5,7 +5,7 @@ import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
-import { ExitCodes,  loggerInfo, loggerVerbose, writeLog } from './logger';
+import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
   type IBaseQuery,
@@ -221,10 +221,12 @@ export const renderQuery: Query = async (query, type) => {
 
   writeLog({ baseQuery, endpoint });
 
-  await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-    loggerInfo(`Error: `);
-    loggerInfo(error.message);
-  });
+  if (!mode.simulate) {
+    await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+  }
 };
 
 export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {

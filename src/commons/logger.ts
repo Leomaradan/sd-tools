@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const mode = { info: true, log: true, verbose: false };
+export const mode = { info: true, log: true, simulate: false, verbose: false };
 
 export const loggerInfo = (message: string) => {
   if (mode.info) {

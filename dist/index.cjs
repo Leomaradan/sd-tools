@@ -31954,7 +31954,7 @@ var import_png_chunks_extract = __toESM(require_png_chunks_extract(), 1);
 // src/commons/logger.ts
 var import_node_fs = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
-var mode = { info: true, log: true, verbose: false };
+var mode = { info: true, log: true, simulate: false, verbose: false };
 var loggerInfo = (message) => {
   if (mode.info) {
     console.log(message);
@@ -32779,10 +32779,12 @@ var renderQuery = async (query, type) => {
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
   loggerVerbose(`Executing query to ${Config.get("endpoint")}/${endpoint}${useScheduler ? "" : ". This may take some time!"}`);
   writeLog({ baseQuery, endpoint });
-  await axios_default.post(`${Config.get("endpoint")}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-    loggerInfo(`Error: `);
-    loggerInfo(error.message);
-  });
+  if (!mode.simulate) {
+    await axios_default.post(`${Config.get("endpoint")}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+  }
 };
 var interrogateQuery = async (imagePath) => {
   const interrogatorCache = Cache.get("interrogator");
@@ -33610,6 +33612,12 @@ var addBaseCommandOptions = (builder10) => {
       describe: "If set, more informations will be displayed in the console",
       type: "boolean"
     }
+  }).options({
+    simulate: {
+      default: false,
+      describe: "If set, the generation request will not be sent",
+      type: "boolean"
+    }
   }).conflicts("silent", "verbose");
 };
 var resolveBaseOptions = (argv2) => {
@@ -33619,6 +33627,7 @@ var resolveBaseOptions = (argv2) => {
   mode.info = !silent;
   mode.verbose = verbose;
   mode.log = !options3.noLog;
+  mode.simulate = options3.simulate;
 };
 
 // src/commons/extract.ts

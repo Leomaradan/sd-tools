@@ -23,11 +23,18 @@ export const addBaseCommandOptions = (builder: yargs.Argv<object>) => {
         type: 'boolean'
       }
     })
+    .options({
+      simulate: {
+        default: false,
+        describe: 'If set, the generation request will not be sent',
+        type: 'boolean'
+      }
+    })
     .conflicts('silent', 'verbose');
 };
 
 export const resolveBaseOptions = (argv: unknown) => {
-  const options = argv as { noLog: boolean; silent?: boolean; verbose?: boolean };
+  const options = argv as { noLog: boolean; silent?: boolean; simulate: boolean, verbose?: boolean };
 
   const silent = options.silent ?? false;
   const verbose = options.verbose ?? false;
@@ -35,4 +42,5 @@ export const resolveBaseOptions = (argv: unknown) => {
   mode.info = !silent;
   mode.verbose = verbose;
   mode.log = !options.noLog;
+  mode.simulate = options.simulate;
 };
