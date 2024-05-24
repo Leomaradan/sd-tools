@@ -990,6 +990,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       }
 
       // Alias to official tokens
+
       updateFilename(query, 'cfg', '[cfg]');
       updateFilename(query, 'checkpoint', '[model_name]');
       updateFilename(query, 'clipSkip', '[clip_skip]');
@@ -998,41 +999,15 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       updateFilename(query, 'steps', '[steps]');
       updateFilename(query, 'width', '[width]');
 
-      if (autoCutOff !== undefined) {
-        updateFilename(query, 'cutOff', autoCutOff.toString());
-      }
-
-      if (denoising) {
-        updateFilename(query, 'denoising', denoising.toFixed(2));
-      }
-
-      if (enableHighRes !== undefined) {
-        updateFilename(query, 'highRes', enableHighRes.toString());
-      }
-
-      if (restoreFaces !== undefined) {
-        updateFilename(query, 'restoreFaces', restoreFaces.toString());
-      }
-
-      if (sampler !== undefined) {
-        updateFilename(query, 'sampler', sampler.toString());
-      }
-
-      if (scaleFactor) {
-        updateFilename(query, 'scaleFactor', scaleFactor.toFixed(0));
-      }
-
-      if (tiling !== undefined) {
-        updateFilename(query, 'tiling', tiling.toString());
-      }
-
-      if (upscaler !== undefined) {
-        updateFilename(query, 'upscaler', upscaler.toString());
-      }
-
-      if (vae !== undefined) {
-        updateFilename(query, 'vae', vae.toString());
-      }
+      updateFilename(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
+      updateFilename(query, 'denoising', denoising?.toFixed(2) ?? '');
+      updateFilename(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateFilename(query, 'restoreFaces', restoreFaces !== undefined ? restoreFaces.toString() : '');
+      updateFilename(query, 'sampler', sampler !== undefined ? sampler.toString() : '');
+      updateFilename(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
+      updateFilename(query, 'tiling', tiling !== undefined ? tiling.toString() : '');
+      updateFilename(query, 'upscaler', upscaler !== undefined ? upscaler.toString() : '');
+      updateFilename(query, 'vae', vae !== undefined ? vae.toString() : '');
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
