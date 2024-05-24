@@ -34778,10 +34778,11 @@ var preparePrompts = (config2) => {
         }
       });
     }
-    const allAdTriggers = query.prompt.match(/!ad:([a-z0-9]+)/gi);
+    const allAdTriggers = query.prompt.match(/!ad:([a-z0-9]+)/gi) ?? [];
     const globalAdTriggers = query.prompt.match(/!ad( |,|$)/gi);
-    if (allAdTriggers) {
+    if (allAdTriggers.length > 0 || globalAdTriggers) {
       query.prompt = query.prompt.replace(/!ad:([a-z0-9]+)/gi, "");
+      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, "");
       autoAdetailers.forEach((autoAdetailer) => {
         const trigger = `!ad:${autoAdetailer.trigger}`;
         if (allAdTriggers.includes(trigger) || globalAdTriggers) {
@@ -34794,9 +34795,6 @@ var preparePrompts = (config2) => {
           }
         }
       });
-    }
-    if (globalAdTriggers) {
-      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, "");
     }
     if (checkpoints && typeof checkpoints === "string") {
       const modelCheckpoint = findCheckpoint(checkpoints);
