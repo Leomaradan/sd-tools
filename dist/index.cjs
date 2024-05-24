@@ -34682,7 +34682,7 @@ var import_jsonschema = __toESM(require_lib(), 1);
 var import_node_fs6 = __toESM(require("node:fs"), 1);
 var import_node_path7 = require("node:path");
 
-// src/commons/schema/queue.json
+// schema/queue.json
 var queue_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   anyOf: [
@@ -36546,7 +36546,7 @@ var import_jsonschema2 = __toESM(require_lib(), 1);
 var import_node_fs9 = __toESM(require("node:fs"), 1);
 var import_node_path11 = __toESM(require("node:path"), 1);
 
-// src/commons/schema/rename.json
+// schema/rename.json
 var rename_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   additionalProperties: false,

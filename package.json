@@ -40,7 +40,8 @@
   "main": "./dist/index.js",
   "exports": {
     "./package.json": "./package.json",
-    "./schema.json": "./src/commons/schema/queue.json",
+    "./schema/queue.json": "./schema/queue.json",
+    "./schema/rename.json": "./schema/rename.json",
     ".": {
       "require": {
         "default": "./dist/index.js"
@@ -59,7 +60,7 @@
     "start": "node dist/index.cjs",
     "test": "jest",
     "schema": "yarn schema:queue && yarn schema:rename",
-    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out src/commons/schema/queue.json --titles --useTypeOfKeyword",
-    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out src/commons/schema/rename.json --titles --useTypeOfKeyword"
+    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
+    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword"
   }
 }
