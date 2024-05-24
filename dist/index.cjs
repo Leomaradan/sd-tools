@@ -33947,6 +33947,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingNegativePrompt,
     upscalingPrompt,
     vaeOption,
     width
@@ -34004,6 +34005,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       tiledVAE,
       tiling,
       upscaler,
+      upscalingNegativePrompt,
       upscalingPrompt,
       vae,
       width
@@ -34129,6 +34131,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingNegativePromptArray,
     upscalingPromptArray,
     vaeArray,
     widthArray
@@ -34156,6 +34159,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
   permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, "ultimateSdUpscale");
   permutationsArray = getPermutations(permutationsArray, upscalerArray, "upscaler");
   permutationsArray = getPermutations(permutationsArray, upscalingPromptArray, "upscalingPrompt");
+  permutationsArray = getPermutations(permutationsArray, upscalingNegativePromptArray, "upscalingNegativePrompt");
   permutationsArray = getPermutations(permutationsArray, vaeArray, "vaeOption");
   permutationsArray = getPermutations(permutationsArray, widthArray, "width");
   permutationsArray = getPermutations(permutationsArray, controlNetArray, "controlNet");
@@ -34186,6 +34190,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
         tiling: permutationItem.tiling,
         ultimateSdUpscale: permutationItem.ultimateSdUpscale,
         upscaler: permutationItem.upscaler,
+        upscalingNegativePrompt: permutationItem.upscalingNegativePrompt,
         upscalingPrompt: permutationItem.upscalingPrompt,
         vaeOption: permutationItem.vaeOption,
         width: permutationItem.width
@@ -34221,6 +34226,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingNegativePromptArray,
     upscalingPromptArray,
     vaeArray,
     widthArray
@@ -34251,6 +34257,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
   const width = pickRandomItem(widthArray);
   const controlNet = pickRandomItem(controlNetArray);
   const upscalingPrompt = pickRandomItem(upscalingPromptArray);
+  const upscalingNegativePrompt = pickRandomItem(upscalingNegativePromptArray);
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
     autoLCM,
@@ -34275,6 +34282,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingNegativePrompt,
     upscalingPrompt,
     vaeOption,
     width
@@ -34392,6 +34400,7 @@ var prepareQueries = (basePrompts) => {
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [void 0]);
     const controlNetArray = getArraysControlNet(basePrompt.controlNet);
     const upscalingPromptArray = getArrays(basePrompt.upscalingPrompt);
+    const upscalingNegativePromptArray = getArrays(basePrompt.upscalingNegativePrompt);
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? void 0];
     const tiledDiffusionArray = Array.isArray(basePrompt.tiledDiffusion) ? basePrompt.tiledDiffusion : [basePrompt.tiledDiffusion ?? void 0];
     const prepareSingleQueryParameter = {
@@ -34419,6 +34428,7 @@ var prepareQueries = (basePrompts) => {
       tilingArray,
       ultimateSdUpscaleArray,
       upscalerArray,
+      upscalingNegativePromptArray,
       upscalingPromptArray,
       vaeArray,
       widthArray
@@ -34505,6 +34515,7 @@ var preparePrompts = (config2) => {
       tiling,
       ultimateSdUpscale,
       upscaler,
+      upscalingNegativePrompt,
       upscalingPrompt,
       vae,
       width
@@ -34590,7 +34601,7 @@ var preparePrompts = (config2) => {
         query.hr_scale = 2;
         query.denoising_strength = query.denoising_strength ?? 0.5;
         query.hr_prompt = upscalingPrompt ?? "";
-        query.hr_negative_prompt = "";
+        query.hr_negative_prompt = upscalingNegativePrompt ?? "";
       }
     } else {
       query.enable_hr = false;
@@ -34600,9 +34611,7 @@ var preparePrompts = (config2) => {
     }
     if (isTxt2ImgQuery(query) && highRes) {
       const { afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt } = highRes;
-      if (beforeNegativePrompt || afterNegativePrompt) {
-        query.hr_negative_prompt = `${beforeNegativePrompt ?? ""},${query.negative_prompt ?? ""},${afterNegativePrompt ?? ""}`;
-      }
+      query.hr_negative_prompt = `${beforeNegativePrompt ?? ""},${upscalingNegativePrompt ?? query.negative_prompt ?? ""},${afterNegativePrompt ?? ""}`;
       query.hr_prompt = `${beforePrompt ?? ""},${upscalingPrompt ?? query.prompt ?? ""},${afterPrompt ?? ""}`;
     }
     if (outDir) {
@@ -35249,6 +35258,20 @@ var queue_default = {
             }
           ],
           title: "upscaler"
+        },
+        upscalingNegativePrompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "upscalingNegativePrompt"
         },
         upscalingPrompt: {
           anyOf: [
@@ -35940,6 +35963,20 @@ var queue_default = {
           ],
           title: "upscaler"
         },
+        upscalingNegativePrompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "upscalingNegativePrompt"
+        },
         upscalingPrompt: {
           anyOf: [
             {
@@ -36108,6 +36145,10 @@ var queue_default = {
         },
         upscaler: {
           title: "upscaler",
+          type: "string"
+        },
+        upscalingNegativePrompt: {
+          title: "upscalingNegativePrompt",
           type: "string"
         },
         upscalingPrompt: {
