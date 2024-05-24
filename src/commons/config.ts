@@ -2,7 +2,7 @@
 const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
-import { logger } from './logger';
+import { loggerVerbose, mode } from './logger';
 import { type ICache, type IConfig } from './types';
 
 const config = new Configstore('sd-tools');
@@ -39,7 +39,13 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-    logger('Config has changed, refreshing models...');
+
+    // Manually manage the flags here
+    mode.verbose = process.argv.includes('--verbose');
+    mode.info = !process.argv.includes('--silent');
+    mode.log = !process.argv.includes('--noLog');
+
+    loggerVerbose('Config has changed, refreshing models...');
     await init({ force: true });
     Config.set('configVersion', LATEST_CONFIG_VERSION);
   }

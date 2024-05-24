@@ -5,7 +5,7 @@ import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image } from './file';
-import { ExitCodes, logger, writeLog } from './logger';
+import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
   type IBaseQuery,
@@ -75,7 +75,7 @@ export const renderQuery: Query = async (query, type) => {
   });
 
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
-    logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
     process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
   }
 
@@ -172,7 +172,7 @@ export const renderQuery: Query = async (query, type) => {
   if (cutOff || autoCutOff) {
     const tokens = Array.from(new Set([...(cutOff?.tokens ?? []), ...(autoCutOff ? Array.from(Config.get('cutoffTokens')) : [])]));
     const weight = cutOff?.weight ?? Config.get('cutoffWeight');
-    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, ...tokens, weight] };
+    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
   }
 
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
@@ -217,14 +217,16 @@ export const renderQuery: Query = async (query, type) => {
 
   const useScheduler = Config.get('scheduler');
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
-  logger(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
+  loggerVerbose(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
 
-  writeLog(endpoint, baseQuery);
+  writeLog({ baseQuery, endpoint });
 
-  await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-    logger(`Error: `);
-    logger(error.message);
-  });
+  if (!mode.simulate) {
+    await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+  }
 };
 
 export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
@@ -238,7 +240,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
     delete interrogatorCache[imagePath];
   }
 
-  logger(`Executing query to interrogator for ${imagePath}`);
+  loggerVerbose(`Executing query to interrogator for ${imagePath}`);
   const base64Image = getBase64Image(imagePath);
 
   const query = {
@@ -253,8 +255,8 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
       return response.data;
     })
     .catch((error) => {
-      logger(`Error: `);
-      logger(error.message);
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
     });
 
   if (response) {
@@ -282,7 +284,7 @@ type MiscQueryApi =
   | 'sdapi/v1/upscalers';
 
 const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> => {
-  logger(`Executing misc query ${api}`);
+  loggerVerbose(`Executing misc query ${api}`);
 
   return await axios
     .get(`${Config.get('endpoint')}/${api}`, headerRequest)
@@ -290,8 +292,8 @@ const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> 
       return response.data;
     })
     .catch((error) => {
-      logger(`Error: `);
-      logger(error.message);
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
     });
 };
 

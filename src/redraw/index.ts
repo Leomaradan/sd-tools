@@ -1,8 +1,9 @@
 import path from 'node:path';
 import yargs from 'yargs';
 
+import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { findUpscaler } from '../commons/models';
 import { IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 import { redraw } from './redraw';
@@ -22,7 +23,7 @@ interface IRedrawArgsOptions {
 export const command = 'redraw <source> <style> <method>';
 export const describe = 'redraw image in specific style';
 export const builder = (builder: yargs.Argv<object>) => {
-  return builder
+  return addBaseCommandOptions(builder)
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
@@ -124,7 +125,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       }
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.REDRAW_INVALID_PARAMS);
     });
 };
@@ -132,10 +133,12 @@ export const builder = (builder: yargs.Argv<object>) => {
 export const handler = (argv: IRedrawArgsOptions) => {
   const source = path.resolve(argv.source);
 
+  resolveBaseOptions(argv);
+
   const initialized = Config.get('initialized');
 
   if (!initialized) {
-    logger('Config must be initialized first');
+    loggerInfo('Config must be initialized first');
     process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 

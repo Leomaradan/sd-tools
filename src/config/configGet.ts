@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 
 import { Config } from '../commons/config.js';
-import { ExitCodes, logger } from '../commons/logger.js';
+import { ExitCodes,  loggerInfo } from '../commons/logger.js';
 import {
   type Options,
   getConfigAddDetailerModels,
@@ -76,7 +76,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.CONFIG_GET_INVALID_OPTIONS);
     });
 };
@@ -87,13 +87,13 @@ export const handler = (argv: { config?: string }) => {
   const initialized = Config.get('initialized');
 
   if (!initialized) {
-    logger('Config must be initialized first');
+    loggerInfo('Config must be initialized first');
     process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   if (!config) {
     const listOptions = [...options].sort((a, b) => a.option.localeCompare(b.option)).map((o) => `  - ${o.option} : ${o.description}`);
-    logger(`Available options: \n${listOptions.join('\n')}`);
+    loggerInfo(`Available options: \n${listOptions.join('\n')}`);
     process.exit(ExitCodes.CONFIG_GET_NO_OPTIONS);
   }
 

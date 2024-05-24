@@ -3,12 +3,12 @@ import path from 'node:path';
 
 import { type IExtractOptions, extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { type IPromptSingle } from '../commons/types';
 
 export const extract = async (source: string, { addBefore, format, output, recursive }: IExtractOptions) => {
   if (!fs.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.EXTRACT_NO_SOURCE);
   }
 
@@ -42,6 +42,6 @@ export const extract = async (source: string, { addBefore, format, output, recur
 
   const outputFile = output ?? path.resolve(source, `prompts.${format === 'json' ? 'json' : 'txt'}`);
 
-  logger(`Extracted prompts to ${outputFile}`);
+  loggerInfo(`Extracted prompts to ${outputFile}`);
   fs.writeFileSync(outputFile, result);
 };

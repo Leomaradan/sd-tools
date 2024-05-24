@@ -9976,10 +9976,10 @@ var require_browser = __commonJS({
 var require_has_flag = __commonJS({
   "node_modules/has-flag/index.js"(exports2, module2) {
     "use strict";
-    module2.exports = (flag, argv = process.argv) => {
+    module2.exports = (flag, argv2 = process.argv) => {
       const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
-      const position = argv.indexOf(prefix + flag);
-      const terminatorPosition = argv.indexOf("--");
+      const position = argv2.indexOf(prefix + flag);
+      const terminatorPosition = argv2.indexOf("--");
       return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
     };
   }
@@ -12395,7 +12395,7 @@ var require_polyfills = __commonJS({
       fs12.fstatSync = statFixSync(fs12.fstatSync);
       fs12.lstatSync = statFixSync(fs12.lstatSync);
       if (fs12.chmod && !fs12.lchmod) {
-        fs12.lchmod = function(path13, mode, cb) {
+        fs12.lchmod = function(path13, mode2, cb) {
           if (cb)
             process.nextTick(cb);
         };
@@ -12474,18 +12474,18 @@ var require_polyfills = __commonJS({
         };
       }(fs12.readSync);
       function patchLchmod(fs13) {
-        fs13.lchmod = function(path13, mode, callback) {
+        fs13.lchmod = function(path13, mode2, callback) {
           fs13.open(
             path13,
             constants.O_WRONLY | constants.O_SYMLINK,
-            mode,
+            mode2,
             function(err, fd) {
               if (err) {
                 if (callback)
                   callback(err);
                 return;
               }
-              fs13.fchmod(fd, mode, function(err2) {
+              fs13.fchmod(fd, mode2, function(err2) {
                 fs13.close(fd, function(err22) {
                   if (callback)
                     callback(err2 || err22);
@@ -12494,12 +12494,12 @@ var require_polyfills = __commonJS({
             }
           );
         };
-        fs13.lchmodSync = function(path13, mode) {
-          var fd = fs13.openSync(path13, constants.O_WRONLY | constants.O_SYMLINK, mode);
+        fs13.lchmodSync = function(path13, mode2) {
+          var fd = fs13.openSync(path13, constants.O_WRONLY | constants.O_SYMLINK, mode2);
           var threw = true;
           var ret;
           try {
-            ret = fs13.fchmodSync(fd, mode);
+            ret = fs13.fchmodSync(fd, mode2);
             threw = false;
           } finally {
             if (threw) {
@@ -12562,8 +12562,8 @@ var require_polyfills = __commonJS({
       function chmodFix(orig) {
         if (!orig)
           return orig;
-        return function(target, mode, cb) {
-          return orig.call(fs12, target, mode, function(er) {
+        return function(target, mode2, cb) {
+          return orig.call(fs12, target, mode2, function(er) {
             if (chownErOk(er))
               er = null;
             if (cb)
@@ -12574,9 +12574,9 @@ var require_polyfills = __commonJS({
       function chmodFixSync(orig) {
         if (!orig)
           return orig;
-        return function(target, mode) {
+        return function(target, mode2) {
           try {
-            return orig.call(fs12, target, mode);
+            return orig.call(fs12, target, mode2);
           } catch (er) {
             if (!chownErOk(er))
               throw er;
@@ -13080,14 +13080,14 @@ var require_graceful_fs = __commonJS({
       }
       var fs$open = fs13.open;
       fs13.open = open;
-      function open(path13, flags, mode, cb) {
-        if (typeof mode === "function")
-          cb = mode, mode = null;
-        return go$open(path13, flags, mode, cb);
-        function go$open(path14, flags2, mode2, cb2, startTime) {
-          return fs$open(path14, flags2, mode2, function(err, fd) {
+      function open(path13, flags, mode2, cb) {
+        if (typeof mode2 === "function")
+          cb = mode2, mode2 = null;
+        return go$open(path13, flags, mode2, cb);
+        function go$open(path14, flags2, mode3, cb2, startTime) {
+          return fs$open(path14, flags2, mode3, function(err, fd) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$open, [path14, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$open, [path14, flags2, mode3, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -21697,7 +21697,7 @@ var YargsParser = class {
     let error = null;
     checkConfiguration();
     let notFlags = [];
-    const argv = Object.assign(/* @__PURE__ */ Object.create(null), { _: [] });
+    const argv2 = Object.assign(/* @__PURE__ */ Object.create(null), { _: [] });
     const argvReturn = {};
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
@@ -21835,41 +21835,41 @@ var YargsParser = class {
         pushPositional(arg);
       }
     }
-    applyEnvVars(argv, true);
-    applyEnvVars(argv, false);
-    setConfig(argv);
+    applyEnvVars(argv2, true);
+    applyEnvVars(argv2, false);
+    setConfig(argv2);
     setConfigObjects();
-    applyDefaultsAndAliases(argv, flags.aliases, defaults2, true);
-    applyCoercions(argv);
+    applyDefaultsAndAliases(argv2, flags.aliases, defaults2, true);
+    applyCoercions(argv2);
     if (configuration["set-placeholder-key"])
-      setPlaceholderKeys(argv);
+      setPlaceholderKeys(argv2);
     Object.keys(flags.counts).forEach(function(key) {
-      if (!hasKey(argv, key.split(".")))
+      if (!hasKey(argv2, key.split(".")))
         setArg(key, 0);
     });
     if (notFlagsOption && notFlags.length)
-      argv[notFlagsArgv] = [];
+      argv2[notFlagsArgv] = [];
     notFlags.forEach(function(key) {
-      argv[notFlagsArgv].push(key);
+      argv2[notFlagsArgv].push(key);
     });
     if (configuration["camel-case-expansion"] && configuration["strip-dashed"]) {
-      Object.keys(argv).filter((key) => key !== "--" && key.includes("-")).forEach((key) => {
-        delete argv[key];
+      Object.keys(argv2).filter((key) => key !== "--" && key.includes("-")).forEach((key) => {
+        delete argv2[key];
       });
     }
     if (configuration["strip-aliased"]) {
       ;
       [].concat(...Object.keys(aliases).map((k) => aliases[k])).forEach((alias) => {
         if (configuration["camel-case-expansion"] && alias.includes("-")) {
-          delete argv[alias.split(".").map((prop) => camelCase(prop)).join(".")];
+          delete argv2[alias.split(".").map((prop) => camelCase(prop)).join(".")];
         }
-        delete argv[alias];
+        delete argv2[alias];
       });
     }
     function pushPositional(arg) {
       const maybeCoercedNumber = maybeCoerceNumber("_", arg);
       if (typeof maybeCoercedNumber === "string" || typeof maybeCoercedNumber === "number") {
-        argv._.push(maybeCoercedNumber);
+        argv2._.push(maybeCoercedNumber);
       }
     }
     function eatNargs(i, key, args2, argAfterEqualSign) {
@@ -21949,11 +21949,11 @@ var YargsParser = class {
       }
       const value = processValue(key, val, shouldStripQuotes);
       const splitKey = key.split(".");
-      setKey(argv, splitKey, value);
+      setKey(argv2, splitKey, value);
       if (flags.aliases[key]) {
         flags.aliases[key].forEach(function(x) {
           const keyProperties = x.split(".");
-          setKey(argv, keyProperties, value);
+          setKey(argv2, keyProperties, value);
         });
       }
       if (splitKey.length > 1 && configuration["dot-notation"]) {
@@ -21964,7 +21964,7 @@ var YargsParser = class {
           a.shift();
           keyProperties = keyProperties.concat(a);
           if (!(flags.aliases[key] || []).includes(keyProperties.join("."))) {
-            setKey(argv, keyProperties, value);
+            setKey(argv2, keyProperties, value);
           }
         });
       }
@@ -22027,11 +22027,11 @@ var YargsParser = class {
       }
       return value;
     }
-    function setConfig(argv2) {
+    function setConfig(argv3) {
       const configLookup = /* @__PURE__ */ Object.create(null);
       applyDefaultsAndAliases(configLookup, flags.aliases, defaults2);
       Object.keys(flags.configs).forEach(function(configKey) {
-        const configPath = argv2[configKey] || configLookup[configKey];
+        const configPath = argv3[configKey] || configLookup[configKey];
         if (configPath) {
           try {
             let config2 = null;
@@ -22054,7 +22054,7 @@ var YargsParser = class {
           } catch (ex) {
             if (ex.name === "PermissionDenied")
               error = ex;
-            else if (argv2[configKey])
+            else if (argv3[configKey])
               error = Error(__("Invalid JSON config file: %s", configPath));
           }
         }
@@ -22067,7 +22067,7 @@ var YargsParser = class {
         if (typeof value === "object" && value !== null && !Array.isArray(value) && configuration["dot-notation"]) {
           setConfigObject(value, fullKey);
         } else {
-          if (!hasKey(argv, fullKey.split(".")) || checkAllAliases(fullKey, flags.arrays) && configuration["combine-arrays"]) {
+          if (!hasKey(argv2, fullKey.split(".")) || checkAllAliases(fullKey, flags.arrays) && configuration["combine-arrays"]) {
             setArg(fullKey, value);
           }
         }
@@ -22080,7 +22080,7 @@ var YargsParser = class {
         });
       }
     }
-    function applyEnvVars(argv2, configOnly) {
+    function applyEnvVars(argv3, configOnly) {
       if (typeof envPrefix === "undefined")
         return;
       const prefix = typeof envPrefix === "string" ? envPrefix : "";
@@ -22093,24 +22093,24 @@ var YargsParser = class {
             }
             return camelCase(key);
           });
-          if ((configOnly && flags.configs[keys.join(".")] || !configOnly) && !hasKey(argv2, keys)) {
+          if ((configOnly && flags.configs[keys.join(".")] || !configOnly) && !hasKey(argv3, keys)) {
             setArg(keys.join("."), env3[envVar]);
           }
         }
       });
     }
-    function applyCoercions(argv2) {
+    function applyCoercions(argv3) {
       let coerce;
       const applied = /* @__PURE__ */ new Set();
-      Object.keys(argv2).forEach(function(key) {
+      Object.keys(argv3).forEach(function(key) {
         if (!applied.has(key)) {
           coerce = checkAllAliases(key, flags.coercions);
           if (typeof coerce === "function") {
             try {
-              const value = maybeCoerceNumber(key, coerce(argv2[key]));
+              const value = maybeCoerceNumber(key, coerce(argv3[key]));
               [].concat(flags.aliases[key] || [], key).forEach((ali) => {
                 applied.add(ali);
-                argv2[ali] = value;
+                argv3[ali] = value;
               });
             } catch (err) {
               error = err;
@@ -22119,14 +22119,14 @@ var YargsParser = class {
         }
       });
     }
-    function setPlaceholderKeys(argv2) {
+    function setPlaceholderKeys(argv3) {
       flags.keys.forEach((key) => {
         if (~key.indexOf("."))
           return;
-        if (typeof argv2[key] === "undefined")
-          argv2[key] = void 0;
+        if (typeof argv3[key] === "undefined")
+          argv3[key] = void 0;
       });
-      return argv2;
+      return argv3;
     }
     function applyDefaultsAndAliases(obj, aliases2, defaults3, canLog = false) {
       Object.keys(defaults3).forEach(function(key) {
@@ -22337,7 +22337,7 @@ var YargsParser = class {
     }
     return {
       aliases: Object.assign({}, flags.aliases),
-      argv: Object.assign(argvReturn, argv),
+      argv: Object.assign(argvReturn, argv2),
       configuration,
       defaulted: Object.assign({}, defaulted),
       error,
@@ -22884,7 +22884,7 @@ function commandMiddlewareFactory(commandMiddleware) {
     return middleware;
   });
 }
-function applyMiddleware(argv, yargs10, middlewares, beforeValidation) {
+function applyMiddleware(argv2, yargs10, middlewares, beforeValidation) {
   return middlewares.reduce((acc, middleware) => {
     if (middleware.applyBeforeValidation !== beforeValidation) {
       return acc;
@@ -22900,7 +22900,7 @@ function applyMiddleware(argv, yargs10, middlewares, beforeValidation) {
       const result = middleware(acc, yargs10);
       return isPromise(result) ? result.then((middlewareObj) => Object.assign(acc, middlewareObj)) : Object.assign(acc, result);
     }
-  }, argv);
+  }, argv2);
 }
 
 // node_modules/yargs/build/lib/utils/maybe-async-result.js
@@ -23073,9 +23073,9 @@ var CommandInstance = class {
       innerYargs.getInternalMethods().getUsageInstance().usage(this.usageFromParentCommandsCommandHandler(parentCommands, commandHandler), commandHandler.description);
     }
     const innerArgv = innerYargs.getInternalMethods().runYargsParserAndExecuteCommands(null, void 0, true, commandIndex, helpOnly);
-    return isPromise(innerArgv) ? innerArgv.then((argv) => ({
+    return isPromise(innerArgv) ? innerArgv.then((argv2) => ({
       aliases: innerYargs.parsed.aliases,
-      innerArgv: argv
+      innerArgv: argv2
     })) : {
       aliases: innerYargs.parsed.aliases,
       innerArgv
@@ -23138,31 +23138,31 @@ var CommandInstance = class {
     const maybePromiseArgv = applyMiddleware(innerArgv, yargs10, middlewares, true);
     return isPromise(maybePromiseArgv) ? maybePromiseArgv.then((resolvedInnerArgv) => this.handleValidationAndGetResult(isDefaultCommand, commandHandler, resolvedInnerArgv, currentContext, aliases, yargs10, middlewares, positionalMap)) : this.handleValidationAndGetResult(isDefaultCommand, commandHandler, maybePromiseArgv, currentContext, aliases, yargs10, middlewares, positionalMap);
   }
-  populatePositionals(commandHandler, argv, context, yargs10) {
-    argv._ = argv._.slice(context.commands.length);
+  populatePositionals(commandHandler, argv2, context, yargs10) {
+    argv2._ = argv2._.slice(context.commands.length);
     const demanded = commandHandler.demanded.slice(0);
     const optional = commandHandler.optional.slice(0);
     const positionalMap = {};
-    this.validation.positionalCount(demanded.length, argv._.length);
+    this.validation.positionalCount(demanded.length, argv2._.length);
     while (demanded.length) {
       const demand = demanded.shift();
-      this.populatePositional(demand, argv, positionalMap);
+      this.populatePositional(demand, argv2, positionalMap);
     }
     while (optional.length) {
       const maybe = optional.shift();
-      this.populatePositional(maybe, argv, positionalMap);
+      this.populatePositional(maybe, argv2, positionalMap);
     }
-    argv._ = context.commands.concat(argv._.map((a) => "" + a));
-    this.postProcessPositionals(argv, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs10);
+    argv2._ = context.commands.concat(argv2._.map((a) => "" + a));
+    this.postProcessPositionals(argv2, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs10);
     return positionalMap;
   }
-  populatePositional(positional, argv, positionalMap) {
+  populatePositional(positional, argv2, positionalMap) {
     const cmd = positional.cmd[0];
     if (positional.variadic) {
-      positionalMap[cmd] = argv._.splice(0).map(String);
+      positionalMap[cmd] = argv2._.splice(0).map(String);
     } else {
-      if (argv._.length)
-        positionalMap[cmd] = [String(argv._.shift())];
+      if (argv2._.length)
+        positionalMap[cmd] = [String(argv2._.shift())];
     }
   }
   cmdToParseOptions(cmdString) {
@@ -23192,7 +23192,7 @@ var CommandInstance = class {
     });
     return parseOptions;
   }
-  postProcessPositionals(argv, positionalMap, parseOptions, yargs10) {
+  postProcessPositionals(argv2, positionalMap, parseOptions, yargs10) {
     const options3 = Object.assign({}, yargs10.getOptions());
     options3.default = Object.assign(parseOptions.default, options3.default);
     for (const key of Object.keys(parseOptions.alias)) {
@@ -23228,10 +23228,10 @@ var CommandInstance = class {
         if (positionalKeys.includes(key)) {
           if (!positionalMap[key])
             positionalMap[key] = parsed.argv[key];
-          if (!this.isInConfigs(yargs10, key) && !this.isDefaulted(yargs10, key) && Object.prototype.hasOwnProperty.call(argv, key) && Object.prototype.hasOwnProperty.call(parsed.argv, key) && (Array.isArray(argv[key]) || Array.isArray(parsed.argv[key]))) {
-            argv[key] = [].concat(argv[key], parsed.argv[key]);
+          if (!this.isInConfigs(yargs10, key) && !this.isDefaulted(yargs10, key) && Object.prototype.hasOwnProperty.call(argv2, key) && Object.prototype.hasOwnProperty.call(parsed.argv, key) && (Array.isArray(argv2[key]) || Array.isArray(parsed.argv[key]))) {
+            argv2[key] = [].concat(argv2[key], parsed.argv[key]);
           } else {
-            argv[key] = parsed.argv[key];
+            argv2[key] = parsed.argv[key];
           }
         }
       });
@@ -23370,7 +23370,7 @@ function usage(yargs10, shim3) {
   };
   let failureOutput = false;
   self2.fail = function fail(msg, err) {
-    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
+    const logger = yargs10.getInternalMethods().getLoggerInstance();
     if (fails.length) {
       for (let i = fails.length - 1; i >= 0; --i) {
         const fail2 = fails[i];
@@ -23390,15 +23390,15 @@ function usage(yargs10, shim3) {
         failureOutput = true;
         if (showHelpOnFail) {
           yargs10.showHelp("error");
-          logger2.error();
+          logger.error();
         }
         if (msg || err)
-          logger2.error(msg || err);
+          logger.error(msg || err);
         const globalOrCommandFailMessage = failMessage || globalFailMessage;
         if (globalOrCommandFailMessage) {
           if (msg || err)
-            logger2.error("");
-          logger2.error(globalOrCommandFailMessage);
+            logger.error("");
+          logger.error(globalOrCommandFailMessage);
         }
       }
       err = err || new YError(msg);
@@ -23747,10 +23747,10 @@ function usage(yargs10, shim3) {
     return yargs10.getOptions().hiddenOptions.indexOf(key) < 0 || yargs10.parsed.argv[yargs10.getOptions().showHiddenOpt];
   }
   self2.showHelp = (level) => {
-    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
+    const logger = yargs10.getInternalMethods().getLoggerInstance();
     if (!level)
       level = "error";
-    const emit = typeof level === "function" ? level : logger2[level];
+    const emit = typeof level === "function" ? level : logger[level];
     emit(self2.help());
   };
   self2.functionDescription = (fn) => {
@@ -23803,10 +23803,10 @@ function usage(yargs10, shim3) {
     version = ver;
   };
   self2.showVersion = (level) => {
-    const logger2 = yargs10.getInternalMethods().getLoggerInstance();
+    const logger = yargs10.getInternalMethods().getLoggerInstance();
     if (!level)
       level = "error";
-    const emit = typeof level === "function" ? level : logger2[level];
+    const emit = typeof level === "function" ? level : logger[level];
     emit(version);
   };
   self2.reset = function reset(localLookup) {
@@ -23936,7 +23936,7 @@ var Completion = class {
     this.indexAfterLastReset = 0;
     this.zshShell = (_c2 = ((_a3 = this.shim.getEnv("SHELL")) === null || _a3 === void 0 ? void 0 : _a3.includes("zsh")) || ((_b2 = this.shim.getEnv("ZSH_NAME")) === null || _b2 === void 0 ? void 0 : _b2.includes("zsh"))) !== null && _c2 !== void 0 ? _c2 : false;
   }
-  defaultCompletion(args, argv, current, done) {
+  defaultCompletion(args, argv2, current, done) {
     const handlers = this.command.getCommandHandlers();
     for (let i = 0, ii = args.length; i < ii; ++i) {
       if (handlers[args[i]] && handlers[args[i]].builder) {
@@ -23951,9 +23951,9 @@ var Completion = class {
     }
     const completions = [];
     this.commandCompletions(completions, args, current);
-    this.optionCompletions(completions, args, argv, current);
-    this.choicesFromOptionsCompletions(completions, args, argv, current);
-    this.choicesFromPositionalsCompletions(completions, args, argv, current);
+    this.optionCompletions(completions, args, argv2, current);
+    this.choicesFromOptionsCompletions(completions, args, argv2, current);
+    this.choicesFromPositionalsCompletions(completions, args, argv2, current);
     done(null, completions);
   }
   commandCompletions(completions, args, current) {
@@ -23972,7 +23972,7 @@ var Completion = class {
       });
     }
   }
-  optionCompletions(completions, args, argv, current) {
+  optionCompletions(completions, args, argv2, current) {
     if ((current.match(/^-/) || current === "" && completions.length === 0) && !this.previousArgHasChoices(args)) {
       const options3 = this.yargs.getOptions();
       const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
@@ -23985,7 +23985,7 @@ var Completion = class {
       });
     }
   }
-  choicesFromOptionsCompletions(completions, args, argv, current) {
+  choicesFromOptionsCompletions(completions, args, argv2, current) {
     if (this.previousArgHasChoices(args)) {
       const choices = this.getPreviousArgChoices(args);
       if (choices && choices.length > 0) {
@@ -23993,13 +23993,13 @@ var Completion = class {
       }
     }
   }
-  choicesFromPositionalsCompletions(completions, args, argv, current) {
+  choicesFromPositionalsCompletions(completions, args, argv2, current) {
     if (current === "" && completions.length > 0 && this.previousArgHasChoices(args)) {
       return;
     }
     const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
     const offset = Math.max(this.indexAfterLastReset, this.yargs.getInternalMethods().getContext().commands.length + 1);
-    const positionalKey = positionalKeys[argv._.length - offset - 1];
+    const positionalKey = positionalKeys[argv2._.length - offset - 1];
     if (!positionalKey) {
       return;
     }
@@ -24077,10 +24077,10 @@ var Completion = class {
       completions.push(dashes + "no-" + keyWithDesc);
     }
   }
-  customCompletion(args, argv, current, done) {
+  customCompletion(args, argv2, current, done) {
     assertNotStrictEqual(this.customCompletionFunction, null, this.shim);
     if (isSyncCompletionFunction(this.customCompletionFunction)) {
-      const result = this.customCompletionFunction(current, argv);
+      const result = this.customCompletionFunction(current, argv2);
       if (isPromise(result)) {
         return result.then((list) => {
           this.shim.process.nextTick(() => {
@@ -24094,20 +24094,20 @@ var Completion = class {
       }
       return done(null, result);
     } else if (isFallbackCompletionFunction(this.customCompletionFunction)) {
-      return this.customCompletionFunction(current, argv, (onCompleted = done) => this.defaultCompletion(args, argv, current, onCompleted), (completions) => {
+      return this.customCompletionFunction(current, argv2, (onCompleted = done) => this.defaultCompletion(args, argv2, current, onCompleted), (completions) => {
         done(null, completions);
       });
     } else {
-      return this.customCompletionFunction(current, argv, (completions) => {
+      return this.customCompletionFunction(current, argv2, (completions) => {
         done(null, completions);
       });
     }
   }
   getCompletion(args, done) {
     const current = args.length ? args[args.length - 1] : "";
-    const argv = this.yargs.parse(args, true);
-    const completionFunction = this.customCompletionFunction ? (argv2) => this.customCompletion(args, argv2, current, done) : (argv2) => this.defaultCompletion(args, argv2, current, done);
-    return isPromise(argv) ? argv.then(completionFunction) : completionFunction(argv);
+    const argv2 = this.yargs.parse(args, true);
+    const completionFunction = this.customCompletionFunction ? (argv3) => this.customCompletion(args, argv3, current, done) : (argv3) => this.defaultCompletion(args, argv3, current, done);
+    return isPromise(argv2) ? argv2.then(completionFunction) : completionFunction(argv2);
   }
   generateCompletionScript($0, cmd) {
     let script = this.zshShell ? completionZshTemplate : completionShTemplate;
@@ -24172,9 +24172,9 @@ function validation(yargs10, usage2, shim3) {
   const __ = shim3.y18n.__;
   const __n = shim3.y18n.__n;
   const self2 = {};
-  self2.nonOptionCount = function nonOptionCount(argv) {
+  self2.nonOptionCount = function nonOptionCount(argv2) {
     const demandedCommands = yargs10.getDemandedCommands();
-    const positionalCount = argv._.length + (argv["--"] ? argv["--"].length : 0);
+    const positionalCount = argv2._.length + (argv2["--"] ? argv2["--"].length : 0);
     const _s = positionalCount - yargs10.getInternalMethods().getContext().commands.length;
     if (demandedCommands._ && (_s < demandedCommands._.min || _s > demandedCommands._.max)) {
       if (_s < demandedCommands._.min) {
@@ -24197,10 +24197,10 @@ function validation(yargs10, usage2, shim3) {
       usage2.fail(__n("Not enough non-option arguments: got %s, need at least %s", "Not enough non-option arguments: got %s, need at least %s", observed, observed + "", required + ""));
     }
   };
-  self2.requiredArguments = function requiredArguments(argv, demandedOptions) {
+  self2.requiredArguments = function requiredArguments(argv2, demandedOptions) {
     let missing = null;
     for (const key of Object.keys(demandedOptions)) {
-      if (!Object.prototype.hasOwnProperty.call(argv, key) || typeof argv[key] === "undefined") {
+      if (!Object.prototype.hasOwnProperty.call(argv2, key) || typeof argv2[key] === "undefined") {
         missing = missing || {};
         missing[key] = demandedOptions[key];
       }
@@ -24218,18 +24218,18 @@ ${customMsgs.join("\n")}` : "";
       usage2.fail(__n("Missing required argument: %s", "Missing required arguments: %s", Object.keys(missing).length, Object.keys(missing).join(", ") + customMsg));
     }
   };
-  self2.unknownArguments = function unknownArguments(argv, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
+  self2.unknownArguments = function unknownArguments(argv2, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
     var _a3;
     const commandKeys = yargs10.getInternalMethods().getCommandInstance().getCommands();
     const unknown = [];
     const currentContext = yargs10.getInternalMethods().getContext();
-    Object.keys(argv).forEach((key) => {
+    Object.keys(argv2).forEach((key) => {
       if (!specialKeys.includes(key) && !Object.prototype.hasOwnProperty.call(positionalMap, key) && !Object.prototype.hasOwnProperty.call(yargs10.getInternalMethods().getParseContext(), key) && !self2.isValidAndSomeAliasIsNotNew(key, aliases)) {
         unknown.push(key);
       }
     });
     if (checkPositionals && (currentContext.commands.length > 0 || commandKeys.length > 0 || isDefaultCommand)) {
-      argv._.slice(currentContext.commands.length).forEach((key) => {
+      argv2._.slice(currentContext.commands.length).forEach((key) => {
         if (!commandKeys.includes("" + key)) {
           unknown.push("" + key);
         }
@@ -24239,8 +24239,8 @@ ${customMsgs.join("\n")}` : "";
       const demandedCommands = yargs10.getDemandedCommands();
       const maxNonOptDemanded = ((_a3 = demandedCommands._) === null || _a3 === void 0 ? void 0 : _a3.max) || 0;
       const expected = currentContext.commands.length + maxNonOptDemanded;
-      if (expected < argv._.length) {
-        argv._.slice(expected).forEach((key) => {
+      if (expected < argv2._.length) {
+        argv2._.slice(expected).forEach((key) => {
           key = String(key);
           if (!currentContext.commands.includes(key) && !unknown.includes(key)) {
             unknown.push(key);
@@ -24252,12 +24252,12 @@ ${customMsgs.join("\n")}` : "";
       usage2.fail(__n("Unknown argument: %s", "Unknown arguments: %s", unknown.length, unknown.map((s) => s.trim() ? s : `"${s}"`).join(", ")));
     }
   };
-  self2.unknownCommands = function unknownCommands(argv) {
+  self2.unknownCommands = function unknownCommands(argv2) {
     const commandKeys = yargs10.getInternalMethods().getCommandInstance().getCommands();
     const unknown = [];
     const currentContext = yargs10.getInternalMethods().getContext();
     if (currentContext.commands.length > 0 || commandKeys.length > 0) {
-      argv._.slice(currentContext.commands.length).forEach((key) => {
+      argv2._.slice(currentContext.commands.length).forEach((key) => {
         if (!commandKeys.includes("" + key)) {
           unknown.push("" + key);
         }
@@ -24277,14 +24277,14 @@ ${customMsgs.join("\n")}` : "";
     const newAliases = yargs10.parsed.newAliases;
     return [key, ...aliases[key]].some((a) => !Object.prototype.hasOwnProperty.call(newAliases, a) || !newAliases[key]);
   };
-  self2.limitedChoices = function limitedChoices(argv) {
+  self2.limitedChoices = function limitedChoices(argv2) {
     const options3 = yargs10.getOptions();
     const invalid = {};
     if (!Object.keys(options3.choices).length)
       return;
-    Object.keys(argv).forEach((key) => {
+    Object.keys(argv2).forEach((key) => {
       if (specialKeys.indexOf(key) === -1 && Object.prototype.hasOwnProperty.call(options3.choices, key)) {
-        [].concat(argv[key]).forEach((value) => {
+        [].concat(argv2[key]).forEach((value) => {
           if (options3.choices[key].indexOf(value) === -1 && value !== void 0) {
             invalid[key] = (invalid[key] || []).concat(value);
           }
@@ -24324,28 +24324,28 @@ ${customMsgs.join("\n")}` : "";
   self2.getImplied = function getImplied() {
     return implied;
   };
-  function keyExists(argv, val) {
+  function keyExists(argv2, val) {
     const num = Number(val);
     val = isNaN(num) ? val : num;
     if (typeof val === "number") {
-      val = argv._.length >= val;
+      val = argv2._.length >= val;
     } else if (val.match(/^--no-.+/)) {
       val = val.match(/^--no-(.+)/)[1];
-      val = !Object.prototype.hasOwnProperty.call(argv, val);
+      val = !Object.prototype.hasOwnProperty.call(argv2, val);
     } else {
-      val = Object.prototype.hasOwnProperty.call(argv, val);
+      val = Object.prototype.hasOwnProperty.call(argv2, val);
     }
     return val;
   }
-  self2.implications = function implications(argv) {
+  self2.implications = function implications(argv2) {
     const implyFail = [];
     Object.keys(implied).forEach((key) => {
       const origKey = key;
       (implied[key] || []).forEach((value) => {
         let key2 = origKey;
         const origValue = value;
-        key2 = keyExists(argv, key2);
-        value = keyExists(argv, value);
+        key2 = keyExists(argv2, key2);
+        value = keyExists(argv2, value);
         if (key2 && !value) {
           implyFail.push(` ${origKey} -> ${origValue}`);
         }
@@ -24380,11 +24380,11 @@ ${customMsgs.join("\n")}` : "";
     }
   };
   self2.getConflicting = () => conflicting;
-  self2.conflicting = function conflictingFn(argv) {
-    Object.keys(argv).forEach((key) => {
+  self2.conflicting = function conflictingFn(argv2) {
+    Object.keys(argv2).forEach((key) => {
       if (conflicting[key]) {
         conflicting[key].forEach((value) => {
-          if (value && argv[key] !== void 0 && argv[value] !== void 0) {
+          if (value && argv2[key] !== void 0 && argv2[value] !== void 0) {
             usage2.fail(__("Arguments %s and %s are mutually exclusive", key, value));
           }
         });
@@ -24393,7 +24393,7 @@ ${customMsgs.join("\n")}` : "";
     if (yargs10.getInternalMethods().getParserConfiguration()["strip-dashed"]) {
       Object.keys(conflicting).forEach((key) => {
         conflicting[key].forEach((value) => {
-          if (value && argv[shim3.Parser.camelCase(key)] !== void 0 && argv[shim3.Parser.camelCase(value)] !== void 0) {
+          if (value && argv2[shim3.Parser.camelCase(key)] !== void 0 && argv2[shim3.Parser.camelCase(value)] !== void 0) {
             usage2.fail(__("Arguments %s and %s are mutually exclusive", key, value));
           }
         });
@@ -24692,19 +24692,19 @@ var YargsInstance = class {
   }
   check(f, global2) {
     argsert("<function> [boolean]", [f, global2], arguments.length);
-    this.middleware((argv, _yargs) => {
+    this.middleware((argv2, _yargs) => {
       return maybeAsyncResult(() => {
-        return f(argv, _yargs.getOptions());
+        return f(argv2, _yargs.getOptions());
       }, (result) => {
         if (!result) {
           __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(__classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__("Argument check failed: %s", f.toString()));
         } else if (typeof result === "string" || result instanceof Error) {
           __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(result.toString(), result);
         }
-        return argv;
+        return argv2;
       }, (err) => {
         __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(err.message ? err.message : err.toString(), err);
-        return argv;
+        return argv2;
       });
     }, false, global2);
     return this;
@@ -24734,24 +24734,24 @@ var YargsInstance = class {
       throw new YError("coerce callback must be provided");
     }
     __classPrivateFieldGet(this, _YargsInstance_options, "f").key[keys] = true;
-    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv, yargs10) => {
+    __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv2, yargs10) => {
       let aliases;
-      const shouldCoerce = Object.prototype.hasOwnProperty.call(argv, keys);
+      const shouldCoerce = Object.prototype.hasOwnProperty.call(argv2, keys);
       if (!shouldCoerce) {
-        return argv;
+        return argv2;
       }
       return maybeAsyncResult(() => {
         aliases = yargs10.getAliases();
-        return value(argv[keys]);
+        return value(argv2[keys]);
       }, (result) => {
-        argv[keys] = result;
+        argv2[keys] = result;
         const stripAliased = yargs10.getInternalMethods().getParserConfiguration()["strip-aliased"];
         if (aliases[keys] && stripAliased !== true) {
           for (const alias of aliases[keys]) {
-            argv[alias] = result;
+            argv2[alias] = result;
           }
         }
-        return argv;
+        return argv2;
       }, (err) => {
         throw new YError(err.message);
       });
@@ -25211,10 +25211,10 @@ var YargsInstance = class {
     const tmpParsed = this.parsed;
     __classPrivateFieldGet(this, _YargsInstance_completion, "f").setParsed(this.parsed);
     if (isPromise(parsed)) {
-      return parsed.then((argv) => {
+      return parsed.then((argv2) => {
         if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
-          __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), argv, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
-        return argv;
+          __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), argv2, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+        return argv2;
       }).catch((err) => {
         if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f")) {
           __classPrivateFieldGet(this, _YargsInstance_parseFn, "f")(err, this.parsed.argv, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
@@ -25455,15 +25455,15 @@ var YargsInstance = class {
     __classPrivateFieldGet(this, _YargsInstance_usage, "f").wrap(cols);
     return this;
   }
-  [(_YargsInstance_command = /* @__PURE__ */ new WeakMap(), _YargsInstance_cwd = /* @__PURE__ */ new WeakMap(), _YargsInstance_context = /* @__PURE__ */ new WeakMap(), _YargsInstance_completion = /* @__PURE__ */ new WeakMap(), _YargsInstance_completionCommand = /* @__PURE__ */ new WeakMap(), _YargsInstance_defaultShowHiddenOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitError = /* @__PURE__ */ new WeakMap(), _YargsInstance_detectLocale = /* @__PURE__ */ new WeakMap(), _YargsInstance_emittedWarnings = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitProcess = /* @__PURE__ */ new WeakMap(), _YargsInstance_frozens = /* @__PURE__ */ new WeakMap(), _YargsInstance_globalMiddleware = /* @__PURE__ */ new WeakMap(), _YargsInstance_groups = /* @__PURE__ */ new WeakMap(), _YargsInstance_hasOutput = /* @__PURE__ */ new WeakMap(), _YargsInstance_helpOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_isGlobalContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_logger = /* @__PURE__ */ new WeakMap(), _YargsInstance_output = /* @__PURE__ */ new WeakMap(), _YargsInstance_options = /* @__PURE__ */ new WeakMap(), _YargsInstance_parentRequire = /* @__PURE__ */ new WeakMap(), _YargsInstance_parserConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseFn = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_pkgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_preservedGroups = /* @__PURE__ */ new WeakMap(), _YargsInstance_processArgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_recommendCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_shim = /* @__PURE__ */ new WeakMap(), _YargsInstance_strict = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictOptions = /* @__PURE__ */ new WeakMap(), _YargsInstance_usage = /* @__PURE__ */ new WeakMap(), _YargsInstance_usageConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_versionOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_validation = /* @__PURE__ */ new WeakMap(), kCopyDoubleDash)](argv) {
-    if (!argv._ || !argv["--"])
-      return argv;
-    argv._.push.apply(argv._, argv["--"]);
+  [(_YargsInstance_command = /* @__PURE__ */ new WeakMap(), _YargsInstance_cwd = /* @__PURE__ */ new WeakMap(), _YargsInstance_context = /* @__PURE__ */ new WeakMap(), _YargsInstance_completion = /* @__PURE__ */ new WeakMap(), _YargsInstance_completionCommand = /* @__PURE__ */ new WeakMap(), _YargsInstance_defaultShowHiddenOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitError = /* @__PURE__ */ new WeakMap(), _YargsInstance_detectLocale = /* @__PURE__ */ new WeakMap(), _YargsInstance_emittedWarnings = /* @__PURE__ */ new WeakMap(), _YargsInstance_exitProcess = /* @__PURE__ */ new WeakMap(), _YargsInstance_frozens = /* @__PURE__ */ new WeakMap(), _YargsInstance_globalMiddleware = /* @__PURE__ */ new WeakMap(), _YargsInstance_groups = /* @__PURE__ */ new WeakMap(), _YargsInstance_hasOutput = /* @__PURE__ */ new WeakMap(), _YargsInstance_helpOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_isGlobalContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_logger = /* @__PURE__ */ new WeakMap(), _YargsInstance_output = /* @__PURE__ */ new WeakMap(), _YargsInstance_options = /* @__PURE__ */ new WeakMap(), _YargsInstance_parentRequire = /* @__PURE__ */ new WeakMap(), _YargsInstance_parserConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseFn = /* @__PURE__ */ new WeakMap(), _YargsInstance_parseContext = /* @__PURE__ */ new WeakMap(), _YargsInstance_pkgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_preservedGroups = /* @__PURE__ */ new WeakMap(), _YargsInstance_processArgs = /* @__PURE__ */ new WeakMap(), _YargsInstance_recommendCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_shim = /* @__PURE__ */ new WeakMap(), _YargsInstance_strict = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictCommands = /* @__PURE__ */ new WeakMap(), _YargsInstance_strictOptions = /* @__PURE__ */ new WeakMap(), _YargsInstance_usage = /* @__PURE__ */ new WeakMap(), _YargsInstance_usageConfig = /* @__PURE__ */ new WeakMap(), _YargsInstance_versionOpt = /* @__PURE__ */ new WeakMap(), _YargsInstance_validation = /* @__PURE__ */ new WeakMap(), kCopyDoubleDash)](argv2) {
+    if (!argv2._ || !argv2["--"])
+      return argv2;
+    argv2._.push.apply(argv2._, argv2["--"]);
     try {
-      delete argv["--"];
+      delete argv2["--"];
     } catch (_err) {
     }
-    return argv;
+    return argv2;
   }
   [kCreateLogger]() {
     return {
@@ -25560,14 +25560,14 @@ var YargsInstance = class {
     const obj = this[kPkgUp]();
     return obj.version || "unknown";
   }
-  [kParsePositionalNumbers](argv) {
-    const args = argv["--"] ? argv["--"] : argv._;
+  [kParsePositionalNumbers](argv2) {
+    const args = argv2["--"] ? argv2["--"] : argv2._;
     for (let i = 0, arg; (arg = args[i]) !== void 0; i++) {
       if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.looksLikeNumber(arg) && Number.isSafeInteger(Math.floor(parseFloat(`${arg}`)))) {
         args[i] = Number(arg);
       }
     }
-    return argv;
+    return argv2;
   }
   [kPkgUp](rootPath) {
     const npath = rootPath || "*";
@@ -25683,8 +25683,8 @@ var YargsInstance = class {
     __classPrivateFieldGet(this, _YargsInstance_command, "f").unfreeze();
     __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").unfreeze();
   }
-  [kValidateAsync](validation2, argv) {
-    return maybeAsyncResult(argv, (result) => {
+  [kValidateAsync](validation2, argv2) {
+    return maybeAsyncResult(argv2, (result) => {
       validation2(result);
       return result;
     });
@@ -25736,22 +25736,22 @@ var YargsInstance = class {
   [kIsGlobalContext]() {
     return __classPrivateFieldGet(this, _YargsInstance_isGlobalContext, "f");
   }
-  [kPostProcess](argv, populateDoubleDash, calledFromCommand, runGlobalMiddleware) {
+  [kPostProcess](argv2, populateDoubleDash, calledFromCommand, runGlobalMiddleware) {
     if (calledFromCommand)
-      return argv;
-    if (isPromise(argv))
-      return argv;
+      return argv2;
+    if (isPromise(argv2))
+      return argv2;
     if (!populateDoubleDash) {
-      argv = this[kCopyDoubleDash](argv);
+      argv2 = this[kCopyDoubleDash](argv2);
     }
     const parsePositionalNumbers = this[kGetParserConfiguration]()["parse-positional-numbers"] || this[kGetParserConfiguration]()["parse-positional-numbers"] === void 0;
     if (parsePositionalNumbers) {
-      argv = this[kParsePositionalNumbers](argv);
+      argv2 = this[kParsePositionalNumbers](argv2);
     }
     if (runGlobalMiddleware) {
-      argv = applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+      argv2 = applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
     }
-    return argv;
+    return argv2;
   }
   [kReset](aliases = {}) {
     __classPrivateFieldSet(this, _YargsInstance_options, __classPrivateFieldGet(this, _YargsInstance_options, "f") || {}, "f");
@@ -25831,19 +25831,19 @@ var YargsInstance = class {
     const parsed = __classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.detailed(args, Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_options, "f"), {
       configuration: { "parse-positional-numbers": false, ...config2 }
     }));
-    const argv = Object.assign(parsed.argv, __classPrivateFieldGet(this, _YargsInstance_parseContext, "f"));
+    const argv2 = Object.assign(parsed.argv, __classPrivateFieldGet(this, _YargsInstance_parseContext, "f"));
     let argvPromise = void 0;
     const aliases = parsed.aliases;
     let helpOptSet = false;
     let versionOptSet = false;
-    Object.keys(argv).forEach((key) => {
-      if (key === __classPrivateFieldGet(this, _YargsInstance_helpOpt, "f") && argv[key]) {
+    Object.keys(argv2).forEach((key) => {
+      if (key === __classPrivateFieldGet(this, _YargsInstance_helpOpt, "f") && argv2[key]) {
         helpOptSet = true;
-      } else if (key === __classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && argv[key]) {
+      } else if (key === __classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && argv2[key]) {
         versionOptSet = true;
       }
     });
-    argv.$0 = this.$0;
+    argv2.$0 = this.$0;
     this.parsed = parsed;
     if (commandIndex === 0) {
       __classPrivateFieldGet(this, _YargsInstance_usage, "f").clearCachedHelpMessage();
@@ -25851,24 +25851,24 @@ var YargsInstance = class {
     try {
       this[kGuessLocale]();
       if (shortCircuit) {
-        return this[kPostProcess](argv, populateDoubleDash, !!calledFromCommand, false);
+        return this[kPostProcess](argv2, populateDoubleDash, !!calledFromCommand, false);
       }
       if (__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")) {
         const helpCmds = [__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")].concat(aliases[__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")] || []).filter((k) => k.length > 1);
-        if (helpCmds.includes("" + argv._[argv._.length - 1])) {
-          argv._.pop();
+        if (helpCmds.includes("" + argv2._[argv2._.length - 1])) {
+          argv2._.pop();
           helpOptSet = true;
         }
       }
       __classPrivateFieldSet(this, _YargsInstance_isGlobalContext, false, "f");
       const handlerKeys = __classPrivateFieldGet(this, _YargsInstance_command, "f").getCommands();
-      const requestCompletions = __classPrivateFieldGet(this, _YargsInstance_completion, "f").completionKey in argv;
+      const requestCompletions = __classPrivateFieldGet(this, _YargsInstance_completion, "f").completionKey in argv2;
       const skipRecommendation = helpOptSet || requestCompletions || helpOnly;
-      if (argv._.length) {
+      if (argv2._.length) {
         if (handlerKeys.length) {
           let firstUnknownCommand;
-          for (let i = commandIndex || 0, cmd; argv._[i] !== void 0; i++) {
-            cmd = String(argv._[i]);
+          for (let i = commandIndex || 0, cmd; argv2._[i] !== void 0; i++) {
+            cmd = String(argv2._[i]);
             if (handlerKeys.includes(cmd) && cmd !== __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) {
               const innerArgv = __classPrivateFieldGet(this, _YargsInstance_command, "f").runCommand(cmd, this, parsed, i + 1, helpOnly, helpOptSet || versionOptSet || helpOnly);
               return this[kPostProcess](innerArgv, populateDoubleDash, !!calledFromCommand, false);
@@ -25881,7 +25881,7 @@ var YargsInstance = class {
             __classPrivateFieldGet(this, _YargsInstance_validation, "f").recommendCommands(firstUnknownCommand, handlerKeys);
           }
         }
-        if (__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") && argv._.includes(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) && !requestCompletions) {
+        if (__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") && argv2._.includes(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) && !requestCompletions) {
           if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
             setBlocking(true);
           this.showCompletionScript();
@@ -25905,7 +25905,7 @@ var YargsInstance = class {
           });
           this.exit(0);
         });
-        return this[kPostProcess](argv, !populateDoubleDash, !!calledFromCommand, false);
+        return this[kPostProcess](argv2, !populateDoubleDash, !!calledFromCommand, false);
       }
       if (!__classPrivateFieldGet(this, _YargsInstance_hasOutput, "f")) {
         if (helpOptSet) {
@@ -25923,7 +25923,7 @@ var YargsInstance = class {
         }
       }
       if (!skipValidation && __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.length > 0) {
-        skipValidation = Object.keys(argv).some((key) => __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.indexOf(key) >= 0 && argv[key] === true);
+        skipValidation = Object.keys(argv2).some((key) => __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.indexOf(key) >= 0 && argv2[key] === true);
       }
       if (!skipValidation) {
         if (parsed.error)
@@ -25931,12 +25931,12 @@ var YargsInstance = class {
         if (!requestCompletions) {
           const validation2 = this[kRunValidation](aliases, {}, parsed.error);
           if (!calledFromCommand) {
-            argvPromise = applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), true);
+            argvPromise = applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), true);
           }
-          argvPromise = this[kValidateAsync](validation2, argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv);
+          argvPromise = this[kValidateAsync](validation2, argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv2);
           if (isPromise(argvPromise) && !calledFromCommand) {
             argvPromise = argvPromise.then(() => {
-              return applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+              return applyMiddleware(argv2, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
             });
           }
         }
@@ -25947,27 +25947,27 @@ var YargsInstance = class {
       else
         throw err;
     }
-    return this[kPostProcess](argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv, populateDoubleDash, !!calledFromCommand, true);
+    return this[kPostProcess](argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv2, populateDoubleDash, !!calledFromCommand, true);
   }
   [kRunValidation](aliases, positionalMap, parseErrors, isDefaultCommand) {
     const demandedOptions = { ...this.getDemandedOptions() };
-    return (argv) => {
+    return (argv2) => {
       if (parseErrors)
         throw new YError(parseErrors.message);
-      __classPrivateFieldGet(this, _YargsInstance_validation, "f").nonOptionCount(argv);
-      __classPrivateFieldGet(this, _YargsInstance_validation, "f").requiredArguments(argv, demandedOptions);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").nonOptionCount(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").requiredArguments(argv2, demandedOptions);
       let failedStrictCommands = false;
       if (__classPrivateFieldGet(this, _YargsInstance_strictCommands, "f")) {
-        failedStrictCommands = __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownCommands(argv);
+        failedStrictCommands = __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownCommands(argv2);
       }
       if (__classPrivateFieldGet(this, _YargsInstance_strict, "f") && !failedStrictCommands) {
-        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv, aliases, positionalMap, !!isDefaultCommand);
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv2, aliases, positionalMap, !!isDefaultCommand);
       } else if (__classPrivateFieldGet(this, _YargsInstance_strictOptions, "f")) {
-        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv, aliases, {}, false, false);
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv2, aliases, {}, false, false);
       }
-      __classPrivateFieldGet(this, _YargsInstance_validation, "f").limitedChoices(argv);
-      __classPrivateFieldGet(this, _YargsInstance_validation, "f").implications(argv);
-      __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicting(argv);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").limitedChoices(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").implications(argv2);
+      __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicting(argv2);
     };
   }
   [kSetHasOutput]() {
@@ -31954,34 +31954,50 @@ var import_png_chunks_extract = __toESM(require_png_chunks_extract(), 1);
 // src/commons/logger.ts
 var import_node_fs = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
-var logger = (message) => {
-  console.log(message);
+var mode = { info: true, log: true, simulate: false, verbose: false };
+var loggerInfo = (message) => {
+  if (mode.info) {
+    console.log(message);
+  }
 };
-var writeLog = (...data) => {
-  const logPath = import_node_path.default.resolve(__dirname, "..", "logs");
-  const logFile = import_node_path.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.txt`);
-  if (!import_node_fs.default.existsSync(logPath)) {
-    import_node_fs.default.mkdirSync(logPath);
+var loggerVerbose = (message) => {
+  if (mode.verbose) {
+    console.log(message);
   }
-  if (!import_node_fs.default.existsSync(logFile)) {
-    import_node_fs.default.writeFileSync(logFile, "");
-  }
-  import_node_fs.default.appendFileSync(
-    logFile,
-    `${Date.now()} ${JSON.stringify(data, (key, value) => {
-      if (["init_images", "input_image"].includes(key)) {
-        if (!value) {
+};
+var writeLog = (data, force = false) => {
+  if (mode.log || force) {
+    const logPath = import_node_path.default.resolve(__dirname, "..", "logs");
+    const logFile = import_node_path.default.resolve(logPath, `log-${(/* @__PURE__ */ new Date()).toISOString().substring(0, 10)}.json`);
+    if (!import_node_fs.default.existsSync(logPath)) {
+      import_node_fs.default.mkdirSync(logPath);
+    }
+    if (!import_node_fs.default.existsSync(logFile)) {
+      import_node_fs.default.writeFileSync(logFile, "[]");
+    }
+    const dataWithDate = { timestamp: Date.now(), ...data };
+    const content = JSON.parse(import_node_fs.default.readFileSync(logFile, { encoding: "utf8" }));
+    content.push(dataWithDate);
+    import_node_fs.default.writeFileSync(
+      logFile,
+      JSON.stringify(
+        content,
+        (key, value) => {
+          if (["init_images", "input_image"].includes(key)) {
+            if (!value) {
+              return value;
+            }
+            if (Array.isArray(value)) {
+              return value.map((item) => item.substring(0, 100));
+            }
+            return value?.substring(0, 100) ?? value;
+          }
           return value;
-        }
-        if (Array.isArray(value)) {
-          return value.map((item) => item.substring(0, 100));
-        }
-        return value?.substring(0, 100) ?? value;
-      }
-      return value;
-    })}
-`
-  );
+        },
+        2
+      )
+    );
+  }
 };
 
 // src/commons/extensions/cutoff.ts
@@ -32058,7 +32074,7 @@ var readFile = (path13, noCache) => {
       };
     }
   } catch (error) {
-    logger(String(error));
+    loggerInfo(String(error));
   } finally {
     if (!noCache) {
       Cache.set("imageData", cacheImageData);
@@ -32075,7 +32091,7 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
     }
     const prefix = recursive ? import_node_path2.default.relative(root, sourcepath).split(import_node_path2.default.sep).join(", ") : void 0;
     if (file.endsWith(".png")) {
-      logger(`Read ${file}`);
+      loggerVerbose(`Read ${file}`);
       const filename = import_node_path2.default.resolve(sourcepath, file);
       const data = readFile(filename, noCache);
       const sizes = (0, import_image_size.default)(filename);
@@ -32092,7 +32108,7 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
       });
     }
     if (file.endsWith(".jpg") || file.endsWith(".jpeg")) {
-      logger(`Read ${file}`);
+      loggerVerbose(`Read ${file}`);
       const filename = import_node_path2.default.resolve(sourcepath, file);
       const sizes = (0, import_image_size.default)(filename);
       const date = import_node_fs2.default.statSync(filename).birthtime.toISOString();
@@ -32108,7 +32124,7 @@ var readFiles = (sourcepath, root, recursive, noCache) => {
       });
     }
   });
-  logger(`Read ${result.length} files`);
+  loggerVerbose(`Read ${result.length} files`);
   return result;
 };
 var getHash = (url2) => {
@@ -32240,19 +32256,19 @@ var getMetadataFromCivitAi = (metadata) => {
     return result;
   } catch (error) {
     if (error instanceof Error) {
-      logger(`Error while parsing metadata : ${error.message}`);
+      loggerInfo(`Error while parsing metadata : ${error.message}`);
     } else {
-      logger(`Error while parsing metadata : ${error}`);
+      loggerInfo(`Error while parsing metadata : ${error}`);
     }
   }
   return void 0;
 };
 var getMetadataCivitAiInfo = (actualCacheMetadata, url2) => {
   if (!url2.endsWith(CIVITAI_FILE)) {
-    logger(`Invalid metadata file : ${url2}`);
+    loggerInfo(`Invalid metadata file : ${url2}`);
   }
   if (!import_node_fs2.default.existsSync(url2)) {
-    logger(`File does not exists : ${url2}`);
+    loggerInfo(`File does not exists : ${url2}`);
     return;
   }
   const cacheMetadata = { ...actualCacheMetadata };
@@ -32273,23 +32289,23 @@ var getMetadataCivitAiInfo = (actualCacheMetadata, url2) => {
     return [cacheMetadata, result];
   } catch (error) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url2} from CivitAI Info File : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url2} from CivitAI Info File : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url2} from CivitAI Info File : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url2} from CivitAI Info File : ${error}`);
     }
   }
   return void 0;
 };
 var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
   if (!import_node_fs2.default.existsSync(url2)) {
-    logger(`File does not exists : ${url2}`);
+    loggerInfo(`File does not exists : ${url2}`);
     return;
   }
   const cacheMetadata = { ...actualCacheMetadata };
   try {
-    logger(`Calculating hash for file ${url2}`);
+    loggerVerbose(`Calculating hash for file ${url2}`);
     const hash = await getHash(url2);
-    logger(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
+    loggerVerbose(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
     const response = await axios_default.get(`https://civitai.com/api/v1/model-versions/by-hash/${hash}`);
     const metadata = response.data;
     if (metadata.description) {
@@ -32308,9 +32324,9 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
     return [cacheMetadata, result];
   } catch (error) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
     }
   }
   return void 0;
@@ -32333,9 +32349,9 @@ var getMetadata = async (url2) => {
     }
   } catch (error) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url2} : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url2} : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url2} : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url2} : ${error}`);
     }
   }
   return void 0;
@@ -32631,7 +32647,7 @@ var renderQuery = async (query, type) => {
     }
   });
   if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
-    logger(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
     process.exit(43 /* QUERY_INVALID_SAMPLER */);
   }
   let script = false;
@@ -32702,7 +32718,7 @@ var renderQuery = async (query, type) => {
   if (cutOff || autoCutOff) {
     const tokens = Array.from(/* @__PURE__ */ new Set([...cutOff?.tokens ?? [], ...autoCutOff ? Array.from(Config.get("cutoffTokens")) : []]));
     const weight = cutOff?.weight ?? Config.get("cutoffWeight");
-    baseQuery.alwayson_scripts["Cutoff"] = { args: [true, ...tokens, weight] };
+    baseQuery.alwayson_scripts["Cutoff"] = { args: [true, tokens.join(", "), weight, false, false, "", "Lerp"] };
   }
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get("lcm");
   const accelarator = checkpoint?.accelarator ?? "none";
@@ -32761,12 +32777,14 @@ var renderQuery = async (query, type) => {
   }
   const useScheduler = Config.get("scheduler");
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
-  logger(`Executing query to ${Config.get("endpoint")}/${endpoint}${useScheduler ? "" : ". This may take some time!"}`);
-  writeLog(endpoint, baseQuery);
-  await axios_default.post(`${Config.get("endpoint")}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-    logger(`Error: `);
-    logger(error.message);
-  });
+  loggerVerbose(`Executing query to ${Config.get("endpoint")}/${endpoint}${useScheduler ? "" : ". This may take some time!"}`);
+  writeLog({ baseQuery, endpoint });
+  if (!mode.simulate) {
+    await axios_default.post(`${Config.get("endpoint")}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+  }
 };
 var interrogateQuery = async (imagePath) => {
   const interrogatorCache = Cache.get("interrogator");
@@ -32776,7 +32794,7 @@ var interrogateQuery = async (imagePath) => {
     }
     delete interrogatorCache[imagePath];
   }
-  logger(`Executing query to interrogator for ${imagePath}`);
+  loggerVerbose(`Executing query to interrogator for ${imagePath}`);
   const base64Image = getBase64Image(imagePath);
   const query = {
     clip_model_name: "ViT-L-14/openai",
@@ -32786,8 +32804,8 @@ var interrogateQuery = async (imagePath) => {
   const response = await axios_default.post(`${Config.get("endpoint")}/interrogator/prompt`, query, headerRequest).then((response2) => {
     return response2.data;
   }).catch((error) => {
-    logger(`Error: `);
-    logger(error.message);
+    loggerInfo(`Error: `);
+    loggerInfo(error.message);
   });
   if (response) {
     interrogatorCache[imagePath] = {
@@ -32798,12 +32816,12 @@ var interrogateQuery = async (imagePath) => {
   return response;
 };
 var miscQuery = async (api) => {
-  logger(`Executing misc query ${api}`);
+  loggerVerbose(`Executing misc query ${api}`);
   return await axios_default.get(`${Config.get("endpoint")}/${api}`, headerRequest).then((response) => {
     return response.data;
   }).catch((error) => {
-    logger(`Error: `);
-    logger(error.message);
+    loggerInfo(`Error: `);
+    loggerInfo(error.message);
   });
 };
 var getModelsQuery = () => miscQuery("sdapi/v1/sd-models");
@@ -32841,10 +32859,10 @@ var builder = (builder10) => {
     }
   });
 };
-var handler = async (argv) => {
-  const { endpoint, force } = argv;
+var handler = async (argv2) => {
+  const { endpoint, force } = argv2;
   const initialized = Config.get("initialized");
-  if (!initialized || force || argv["purge-cache"]) {
+  if (!initialized || force || argv2["purge-cache"]) {
     Cache.set("metadata", {});
     Cache.set("imageData", {});
     Cache.set("interrogator", {});
@@ -32863,7 +32881,7 @@ var handler = async (argv) => {
   const stylesQuery = await getStylesQuery();
   const adModelsQuery = await getAdModelQuery();
   if (!modelsQuery || !vaeQuery || !samplersQuery || !upscalersQuery || !extensionsQuery || !lorasQuery || !embeddingsQuery || !stylesQuery) {
-    logger("Error: Cannot initialize config : Error in SD API");
+    loggerInfo("Error: Cannot initialize config : Error in SD API");
     process.exit(1 /* INIT_NO_SD_API */);
   }
   const modelsQueryResolved = [];
@@ -32971,7 +32989,7 @@ var handler = async (argv) => {
     const controlnetModelsQuery = await getControlnetModelsQuery();
     const controlnetModulesQuery = await getControlnetModulesQuery();
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
-      logger("Error: Cannot initialize config : Error in ControlNet");
+      loggerInfo("Error: Cannot initialize config : Error in ControlNet");
       process.exit(2 /* INIT_NO_CONTROLNET */);
     }
     Config.set(
@@ -33001,7 +33019,7 @@ var handler = async (argv) => {
     Config.set("adetailersModels", []);
   }
   if (!initialized || force) {
-    logger("Refresh models");
+    loggerVerbose("Refresh models");
     Config.set("initialized", true);
     Config.set("cutoff", extensions.has("cutoff"));
     Config.set("cutoffTokens", [
@@ -33094,7 +33112,10 @@ var configMigration = async () => {
     migrated = true;
   }
   if (migrated) {
-    logger("Config has changed, refreshing models...");
+    mode.verbose = process.argv.includes("--verbose");
+    mode.info = !process.argv.includes("--silent");
+    mode.log = !process.argv.includes("--noLog");
+    loggerVerbose("Config has changed, refreshing models...");
     await handler({ force: true });
     Config.set("configVersion", LATEST_CONFIG_VERSION);
   }
@@ -33138,53 +33159,53 @@ var displayList = (list) => {
   }
   return "\n" + list.map((item) => `  - ${typeof item === "string" ? item : item.name}`).join("\n");
 };
-var getConfigVersion = () => logger(`Config version: ${Config.get("configVersion") ?? 0}`);
-var getConfigControlnetModels = () => logger(`ControlNet Models: ${displayList(Config.get("controlnetModels"))}`);
-var getConfigControlnetModules = () => logger(`ControlNet Modules: ${displayList(Config.get("controlnetModules"))}`);
-var getConfigEmbeddings = () => logger(`Embeddings: ${displayList(Config.get("embeddings"))}`);
-var getConfigExtensions = () => logger(`Managed extensions: ${displayList(Config.get("extensions"))}`);
-var getConfigLoras = () => logger(`LoRAs: ${displayList(Config.get("loras"))}`);
-var getConfigModels = () => logger(`Stable Diffusion Checkpoints: ${displayList(Config.get("models"))}`);
-var getConfigSamplers = () => logger(`Samplers: ${displayList(Config.get("samplers"))}`);
-var getConfigStyles = () => logger(`Styles: ${displayList(Config.get("styles"))}`);
-var getConfigUpscalers = () => logger(`Upscalers: ${displayList([...BaseUpscalers, ...Config.get("upscalers")])}`);
-var getConfigVAE = () => logger(`VAE: ${displayList(Config.get("vae"))}`);
-var getConfigAddDetailerModels = () => logger(`Add Detailers models: ${displayList(Config.get("adetailersModels"))}`);
+var getConfigVersion = () => loggerInfo(`Config version: ${Config.get("configVersion") ?? 0}`);
+var getConfigControlnetModels = () => loggerInfo(`ControlNet Models: ${displayList(Config.get("controlnetModels"))}`);
+var getConfigControlnetModules = () => loggerInfo(`ControlNet Modules: ${displayList(Config.get("controlnetModules"))}`);
+var getConfigEmbeddings = () => loggerInfo(`Embeddings: ${displayList(Config.get("embeddings"))}`);
+var getConfigExtensions = () => loggerInfo(`Managed extensions: ${displayList(Config.get("extensions"))}`);
+var getConfigLoras = () => loggerInfo(`LoRAs: ${displayList(Config.get("loras"))}`);
+var getConfigModels = () => loggerInfo(`Stable Diffusion Checkpoints: ${displayList(Config.get("models"))}`);
+var getConfigSamplers = () => loggerInfo(`Samplers: ${displayList(Config.get("samplers"))}`);
+var getConfigStyles = () => loggerInfo(`Styles: ${displayList(Config.get("styles"))}`);
+var getConfigUpscalers = () => loggerInfo(`Upscalers: ${displayList([...BaseUpscalers, ...Config.get("upscalers")])}`);
+var getConfigVAE = () => loggerInfo(`VAE: ${displayList(Config.get("vae"))}`);
+var getConfigAddDetailerModels = () => loggerInfo(`Add Detailers models: ${displayList(Config.get("adetailersModels"))}`);
 var getConfigAutoLCM = () => {
   const { auto } = Config.get("lcm");
-  logger(`Auto LCM: ${auto ? "enabled" : "disabled"}`);
+  loggerInfo(`Auto LCM: ${auto ? "enabled" : "disabled"}`);
 };
 var getConfigAutoTiledDiffusion = () => {
   const auto = Config.get("autoTiledDiffusion");
-  logger(`Auto Tiled Diffusion: ${auto || "disabled"}`);
+  loggerInfo(`Auto Tiled Diffusion: ${auto || "disabled"}`);
 };
 var getConfigAutoTiledVAE = () => {
   const auto = Config.get("autoTiledVAE");
-  logger(`Auto Tiled VAE: ${auto ? "enabled" : "disabled"}`);
+  loggerInfo(`Auto Tiled VAE: ${auto ? "enabled" : "disabled"}`);
 };
-var getConfigCommonNegative = () => logger(`Common negative prompt: ${Config.get("commonNegative")}`);
-var getConfigCommonNegativeXL = () => logger(`Common negative prompt (SDXL): ${Config.get("commonNegativeXL")}`);
-var getConfigCommonPositive = () => logger(`Common positive prompt: ${Config.get("commonPositive")}`);
-var getConfigCommonPositiveXL = () => logger(`Common positive prompt (SDXL): ${Config.get("commonPositiveXL")}`);
-var getConfigCutoff = () => logger(`Auto CutOff: ${Config.get("cutoff") ? "enabled" : "disabled"}`);
-var getConfigCutoffTokens = () => logger(`CutOff Auto Tokens: ${displayList(Config.get("cutoffTokens"))}`);
-var getConfigCutoffWeight = () => logger(`CutOff Weight: ${Config.get("cutoffWeight")}`);
-var getConfigEndpoint = () => logger(`Endpoint: ${Config.get("endpoint")}`);
+var getConfigCommonNegative = () => loggerInfo(`Common negative prompt: ${Config.get("commonNegative")}`);
+var getConfigCommonNegativeXL = () => loggerInfo(`Common negative prompt (SDXL): ${Config.get("commonNegativeXL")}`);
+var getConfigCommonPositive = () => loggerInfo(`Common positive prompt: ${Config.get("commonPositive")}`);
+var getConfigCommonPositiveXL = () => loggerInfo(`Common positive prompt (SDXL): ${Config.get("commonPositiveXL")}`);
+var getConfigCutoff = () => loggerInfo(`Auto CutOff: ${Config.get("cutoff") ? "enabled" : "disabled"}`);
+var getConfigCutoffTokens = () => loggerInfo(`CutOff Auto Tokens: ${displayList(Config.get("cutoffTokens"))}`);
+var getConfigCutoffWeight = () => loggerInfo(`CutOff Weight: ${Config.get("cutoffWeight")}`);
+var getConfigEndpoint = () => loggerInfo(`Endpoint: ${Config.get("endpoint")}`);
 var getConfigLCM = () => {
   const { sd15, sdxl } = Config.get("lcm");
-  logger(`Redraw models: 
+  loggerInfo(`Redraw models: 
   - SD 1.5 : ${sd15}
   - SDXL : ${sdxl}`);
 };
 var getConfigRedrawModels = () => {
   const { anime15, animexl, realist15, realistxl } = Config.get("redrawModels");
-  logger(`Redraw models: 
+  loggerInfo(`Redraw models: 
 - Anime : ${anime15}
 - Anime (SDXL) : ${animexl}
 - Realist : ${realist15}
 - Realist (SDXL) : ${realistxl}`);
 };
-var getConfigScheduler = () => logger(`Scheduler: ${Config.get("scheduler") ? "enabled" : "disabled"}`);
+var getConfigScheduler = () => loggerInfo(`Scheduler: ${Config.get("scheduler") ? "enabled" : "disabled"}`);
 
 // src/config/configGet.ts
 var options = [
@@ -33229,20 +33250,20 @@ var builder2 = (builder10) => {
     describe: "config option to get",
     type: "string"
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(3 /* CONFIG_GET_INVALID_OPTIONS */);
   });
 };
-var handler2 = (argv) => {
-  const { config: config2 } = argv;
+var handler2 = (argv2) => {
+  const { config: config2 } = argv2;
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   if (!config2) {
     const listOptions = [...options].sort((a, b) => a.option.localeCompare(b.option)).map((o) => `  - ${o.option} : ${o.description}`);
-    logger(`Available options: 
+    loggerInfo(`Available options: 
 ${listOptions.join("\n")}`);
     process.exit(5 /* CONFIG_GET_NO_OPTIONS */);
   }
@@ -33367,15 +33388,15 @@ var builder3 = (builder10) => {
     describe: "config value to set"
     // type: 'string',
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(6 /* CONFIG_SET_INVALID_OPTIONS */);
   });
 };
-var handler3 = (argv) => {
-  const { config: config2, value } = argv;
+var handler3 = (argv2) => {
+  const { config: config2, value } = argv2;
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   switch (config2) {
@@ -33389,13 +33410,14 @@ var handler3 = (argv) => {
       break;
     case "auto-tiled-diffusion":
       if (!Config.get("extensions").includes("tiled diffusion")) {
-        logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerVerbose("MultiDiffusion Upscaler extension url: https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111.git");
         process.exit(7 /* CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED */);
       }
       if (!value || value === "false") {
         Config.set("autoTiledDiffusion", false);
       } else if (!["Mixture of Diffusers" /* MixtureOfDiffusers */, "MultiDiffusion" /* MultiDiffusion */].includes(value)) {
-        logger(
+        loggerInfo(
           `Value for ${config2} must be either "${"Mixture of Diffusers" /* MixtureOfDiffusers */}" or "${"MultiDiffusion" /* MultiDiffusion */}"`
         );
         process.exit(8 /* CONFIG_SET_INVALID_MULTIDIFFUSION */);
@@ -33407,7 +33429,8 @@ var handler3 = (argv) => {
       break;
     case "auto-tiled-vae":
       if (!Config.get("extensions").includes("tiled vae")) {
-        logger(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerVerbose("MultiDiffusion Upscaler extension url: https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111.git");
         process.exit(7 /* CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED */);
       }
       Config.set("autoTiledVAE", getParamBoolean(value));
@@ -33431,7 +33454,8 @@ var handler3 = (argv) => {
       break;
     case "auto-cutoff":
       if (!Config.get("extensions").includes("cutoff")) {
-        logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerVerbose("Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff");
         process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
       }
       Config.set("cutoff", getParamBoolean(value));
@@ -33444,11 +33468,12 @@ var handler3 = (argv) => {
           valueArray = value.split(",");
         }
         if (valueArray.some((val) => typeof val !== "string")) {
-          logger(`Value for ${config2} must be a array of string`);
+          loggerInfo(`Value for ${config2} must be a array of string`);
           process.exit(10 /* CONFIG_SET_CUTOFF_INVALID_TOKEN */);
         }
         if (!Config.get("extensions").includes("cutoff")) {
-          logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+          loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+          loggerVerbose("Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff");
           process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
         }
         Config.set("cutoffTokens", Array.from(new Set(valueArray)));
@@ -33459,11 +33484,12 @@ var handler3 = (argv) => {
       {
         const valueNumber = Number(value);
         if (typeof valueNumber !== "number" || isNaN(valueNumber)) {
-          logger(`Value for ${config2} must be a number`);
+          loggerInfo(`Value for ${config2} must be a number`);
           process.exit(11 /* CONFIG_SET_CUTOFF_INVALID_WEIGHT */);
         }
         if (!Config.get("extensions").includes("cutoff")) {
-          logger(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+          loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
+          loggerVerbose("Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff");
           process.exit(9 /* CONFIG_SET_NO_CUTOFF_INSTALLED */);
         }
         Config.set("cutoffWeight", valueNumber);
@@ -33486,13 +33512,13 @@ var handler3 = (argv) => {
           }
           const [category, lora] = val.split(":");
           if (!["sd15", "sdxl"].includes(category.toLowerCase())) {
-            logger(`Category for ${config2} is invalid`);
+            loggerInfo(`Category for ${config2} is invalid`);
             return true;
           }
           const foundLora = findLORA(lora);
           return !foundLora;
         })) {
-          logger(`Value for ${config2} contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
+          loggerInfo(`Value for ${config2} contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
           process.exit(12 /* CONFIG_SET_LCM_INVALID_TOKEN */);
         }
         const lcm = Config.get("lcm");
@@ -33521,13 +33547,13 @@ var handler3 = (argv) => {
           }
           const [category, model] = val.split(":");
           if (!["anime15", "animexl", "realist15", "realistxl"].includes(category.toLocaleLowerCase())) {
-            logger(`Category for ${config2} is invalid`);
+            loggerInfo(`Category for ${config2} is invalid`);
             return true;
           }
           const foundModel = findCheckpoint(model);
           return !foundModel;
         })) {
-          logger(
+          loggerInfo(
             `Value for ${config2} contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:" or "animeXL:" followed by a valid model name`
           );
           process.exit(13 /* CONFIG_SET_REDRAW_INVALID_MODELS */);
@@ -33546,7 +33572,8 @@ var handler3 = (argv) => {
       break;
     case "scheduler":
       if (!Config.get("extensions").includes("scheduler")) {
-        logger(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerInfo(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
+        loggerVerbose("Agent Scheduler extension url: https://github.com/ArtVentureX/sd-webui-agent-scheduler.git");
         process.exit(14 /* CONFIG_SET_NO_AGENT_INSTALLED */);
       }
       Config.set("scheduler", getParamBoolean(value));
@@ -33566,6 +33593,42 @@ __export(extract_exports, {
   handler: () => handler4
 });
 var import_node_path5 = __toESM(require("node:path"), 1);
+
+// src/commons/command.ts
+var addBaseCommandOptions = (builder10) => {
+  return builder10.options({
+    silent: {
+      describe: "If set, nothing will be displayed in the command line",
+      type: "boolean"
+    }
+  }).options({
+    noLog: {
+      default: false,
+      describe: "If set, nothing will be logged",
+      type: "boolean"
+    }
+  }).options({
+    verbose: {
+      describe: "If set, more informations will be displayed in the console",
+      type: "boolean"
+    }
+  }).options({
+    simulate: {
+      default: false,
+      describe: "If set, the generation request will not be sent",
+      type: "boolean"
+    }
+  }).conflicts("silent", "verbose");
+};
+var resolveBaseOptions = (argv2) => {
+  const options3 = argv2;
+  const silent = options3.silent ?? false;
+  const verbose = options3.verbose ?? false;
+  mode.info = !silent;
+  mode.verbose = verbose;
+  mode.log = !options3.noLog;
+  mode.simulate = options3.simulate;
+};
 
 // src/commons/extract.ts
 var getPromptTextBox = (options3) => {
@@ -33761,7 +33824,7 @@ var import_node_fs4 = __toESM(require("node:fs"), 1);
 var import_node_path4 = __toESM(require("node:path"), 1);
 var extract2 = async (source, { addBefore, format: format3, output, recursive }) => {
   if (!import_node_fs4.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(15 /* EXTRACT_NO_SOURCE */);
   }
   const prompts2 = [];
@@ -33787,7 +33850,7 @@ var extract2 = async (source, { addBefore, format: format3, output, recursive })
   }
   const result = format3 === "json" ? JSON.stringify({ prompts: prompts2 }) : prompts2.join("\n");
   const outputFile = output ?? import_node_path4.default.resolve(source, `prompts.${format3 === "json" ? "json" : "txt"}`);
-  logger(`Extracted prompts to ${outputFile}`);
+  loggerInfo(`Extracted prompts to ${outputFile}`);
   import_node_fs4.default.writeFileSync(outputFile, result);
 };
 
@@ -33795,7 +33858,7 @@ var extract2 = async (source, { addBefore, format: format3, output, recursive })
 var command5 = "extract <source> <format>";
 var describe4 = "extract prompts from directory";
 var builder4 = (builder10) => {
-  return builder10.positional("source", {
+  return addBaseCommandOptions(builder10).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"
@@ -33821,17 +33884,18 @@ var builder4 = (builder10) => {
       type: "boolean"
     }
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(16 /* EXTRACT_INVALID_PARAMS */);
   });
 };
-var handler4 = (argv) => {
-  const source = import_node_path5.default.resolve(argv.source);
+var handler4 = (argv2) => {
+  const source = import_node_path5.default.resolve(argv2.source);
+  resolveBaseOptions(argv2);
   const options3 = {
-    addBefore: argv.addBefore ?? void 0,
-    format: argv.format,
-    output: argv.output ?? void 0,
-    recursive: argv.recursive ?? false
+    addBefore: argv2.addBefore ?? void 0,
+    format: argv2.format,
+    output: argv2.output ?? void 0,
+    recursive: argv2.recursive ?? false
   };
   extract2(source, options3);
 };
@@ -34403,7 +34467,7 @@ var validateTemplate = (template) => {
   }
   matches.forEach((match) => {
     if (!validTokensTemplate.includes(match)) {
-      logger(`Invalid token ${match} in ${template}`);
+      loggerInfo(`Invalid token ${match} in ${template}`);
       process.exit(44 /* PROMPT_INVALID_STRING_TOKEN */);
     }
   });
@@ -34470,7 +34534,7 @@ var preparePrompts = (config2) => {
     const checkpoint = checkpoints ? findCheckpoint(checkpoints) : { version: "unknown" };
     const defaultValues = getDefaultQuery(checkpoint?.version ?? "unknown", checkpoint?.accelarator ?? "none");
     if (query.sampler_name !== void 0 && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
-      logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
+      loggerInfo(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
       process.exit(45 /* PROMPT_INVALID_SAMPLER */);
     }
     if (controlNet) {
@@ -34478,11 +34542,11 @@ var preparePrompts = (config2) => {
         const controlNetModule = findControlnetModule(controlNetPrompt.module);
         const controlNetModel = findControlnetModel(controlNetPrompt.model);
         if (!controlNetModule) {
-          logger(`Invalid ControlNet module ${controlNetPrompt.module}`);
+          loggerInfo(`Invalid ControlNet module ${controlNetPrompt.module}`);
           process.exit(46 /* PROMPT_INVALID_CONTROLNET_MODULE */);
         }
         if (!controlNetModel) {
-          logger(`Invalid ControlNet model ${controlNetPrompt.model}`);
+          loggerInfo(`Invalid ControlNet model ${controlNetPrompt.model}`);
           process.exit(47 /* PROMPT_INVALID_CONTROLNET_MODEL */);
         }
         query.controlNet?.push({
@@ -34499,7 +34563,7 @@ var preparePrompts = (config2) => {
       if (foundVAE) {
         query.override_settings.sd_vae = foundVAE === "None" ? "" : foundVAE;
       } else {
-        logger(`Invalid VAE ${vae}`);
+        loggerInfo(`Invalid VAE ${vae}`);
         process.exit(48 /* PROMPT_INVALID_VAE */);
       }
     }
@@ -34514,7 +34578,7 @@ var preparePrompts = (config2) => {
       if (foundUpscaler) {
         query.hr_upscaler = foundUpscaler.name;
       } else {
-        logger(`Invalid Upscaler ${upscaler}`);
+        loggerInfo(`Invalid Upscaler ${upscaler}`);
         process.exit(49 /* PROMPT_INVALID_UPSCALER */);
       }
     }
@@ -34566,7 +34630,7 @@ var preparePrompts = (config2) => {
           }
           query.adetailer.push(adetailerQuery);
         } else {
-          logger(`Invalid Adetailer model ${adetailer2.model}`);
+          loggerInfo(`Invalid Adetailer model ${adetailer2.model}`);
           process.exit(50 /* PROMPT_INVALID_ADETAILER_MODEL */);
         }
       });
@@ -34576,7 +34640,7 @@ var preparePrompts = (config2) => {
       if (modelCheckpoint) {
         query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
-        logger(`Invalid checkpoints ${checkpoints}`);
+        loggerInfo(`Invalid checkpoints ${checkpoints}`);
         process.exit(51 /* PROMPT_INVALID_CHECKPOINT */);
       }
     }
@@ -34605,7 +34669,7 @@ var preparePrompts = (config2) => {
       if (matches) {
         matches.forEach((match) => {
           if (!allowedTokens.includes(match.replace("{", "").replace("}", ""))) {
-            logger(`Invalid pattern token ${match}`);
+            loggerInfo(`Invalid pattern token ${match}`);
             process.exit(52 /* PROMPT_INVALID_PATTERN_TOKEN */);
           }
         });
@@ -34623,33 +34687,15 @@ var preparePrompts = (config2) => {
       updateFilename(query, "seed", "[seed]");
       updateFilename(query, "steps", "[steps]");
       updateFilename(query, "width", "[width]");
-      if (autoCutOff !== void 0) {
-        updateFilename(query, "cutOff", autoCutOff.toString());
-      }
-      if (denoising) {
-        updateFilename(query, "denoising", denoising.toFixed(2));
-      }
-      if (enableHighRes !== void 0) {
-        updateFilename(query, "highRes", enableHighRes.toString());
-      }
-      if (restoreFaces !== void 0) {
-        updateFilename(query, "restoreFaces", restoreFaces.toString());
-      }
-      if (sampler !== void 0) {
-        updateFilename(query, "sampler", sampler.toString());
-      }
-      if (scaleFactor) {
-        updateFilename(query, "scaleFactor", scaleFactor.toFixed(0));
-      }
-      if (tiling !== void 0) {
-        updateFilename(query, "tiling", tiling.toString());
-      }
-      if (upscaler !== void 0) {
-        updateFilename(query, "upscaler", upscaler.toString());
-      }
-      if (vae !== void 0) {
-        updateFilename(query, "vae", vae.toString());
-      }
+      updateFilename(query, "cutOff", autoCutOff !== void 0 ? autoCutOff.toString() : "");
+      updateFilename(query, "denoising", denoising?.toFixed(2) ?? "");
+      updateFilename(query, "enableHighRes", enableHighRes !== void 0 ? enableHighRes.toString() : "");
+      updateFilename(query, "restoreFaces", restoreFaces !== void 0 ? restoreFaces.toString() : "");
+      updateFilename(query, "sampler", sampler !== void 0 ? sampler.toString() : "");
+      updateFilename(query, "scaleFactor", scaleFactor?.toFixed(0) ?? "");
+      updateFilename(query, "tiling", tiling !== void 0 ? tiling.toString() : "");
+      updateFilename(query, "upscaler", upscaler !== void 0 ? upscaler.toString() : "");
+      updateFilename(query, "vae", vae !== void 0 ? vae.toString() : "");
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
@@ -34680,7 +34726,7 @@ var preparePrompts = (config2) => {
             }
           }
         } else {
-          logger(`Invalid Style ${styleName}`);
+          loggerInfo(`Invalid Style ${styleName}`);
           process.exit(53 /* PROMPT_INVALID_STYLE */);
         }
       });
@@ -34691,9 +34737,9 @@ var preparePrompts = (config2) => {
 };
 var prompts = async (config2, validateOnly) => {
   const queries = preparePrompts(config2);
-  logger(`Your configuration seems valid. ${queries.length} queries has been generated.`);
+  loggerInfo(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {
-    writeLog(queries);
+    writeLog({ queries }, true);
     process.exit(0);
   }
   for await (const queryParams of queries) {
@@ -34710,7 +34756,7 @@ var import_jsonschema = __toESM(require_lib(), 1);
 var import_node_fs6 = __toESM(require("node:fs"), 1);
 var import_node_path7 = require("node:path");
 
-// src/commons/schema/queue.json
+// schema/queue.json
 var queue_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   anyOf: [
@@ -36095,7 +36141,7 @@ var queue_default = {
 var validator = new import_jsonschema.Validator();
 var getConfigs = (source) => {
   if (!import_node_fs6.default.existsSync(source)) {
-    logger(`Source file ${source} does not exist`);
+    loggerInfo(`Source file ${source} does not exist`);
     process.exit(23 /* QUEUE_NO_SOURCE_INTERNAL */);
   }
   if (source.endsWith(".json")) {
@@ -36104,12 +36150,12 @@ var getConfigs = (source) => {
       const data = import_node_fs6.default.readFileSync(source, "utf8");
       jsonContent = JSON.parse(data);
     } catch (err) {
-      logger(`Unable to parse JSON in ${source}`);
+      loggerInfo(`Unable to parse JSON in ${source}`);
       process.exit(19 /* QUEUE_CORRUPTED_JSON */);
     }
     const validation2 = validator.validate(jsonContent, queue_default, { nestedErrors: true });
     if (!validation2.valid) {
-      logger(`JSON has invalid properties : ${validation2.toString()}`);
+      loggerInfo(`JSON has invalid properties : ${validation2.toString()}`);
       process.exit(18 /* QUEUE_INVALID_JSON */);
     }
     return jsonContent;
@@ -36118,7 +36164,7 @@ var getConfigs = (source) => {
     const jsonContentFromJs = require(source);
     const validation2 = validator.validate(jsonContentFromJs, queue_default, { nestedErrors: true });
     if (!validation2.valid) {
-      logger(`JS return invalid properties : ${validation2.toString()}`);
+      loggerInfo(`JS return invalid properties : ${validation2.toString()}`);
       process.exit(20 /* QUEUE_INVALID_JS */);
     }
     return jsonContentFromJs;
@@ -36127,7 +36173,7 @@ var getConfigs = (source) => {
 var mergeConfigs = (source) => {
   const jsonContent = getConfigs(source);
   if (!jsonContent) {
-    logger(`Invalid file : ${source}`);
+    loggerInfo(`Invalid file : ${source}`);
     process.exit(21 /* QUEUE_INVALID_FILE */);
   }
   if (jsonContent.extends) {
@@ -36161,14 +36207,14 @@ var applyBaseConfig = (config2) => {
 // src/queue/queue.ts
 var queueFromFile = async (source, validateOnly) => {
   if (!import_node_fs7.default.existsSync(source)) {
-    logger(`Source file ${source} does not exist`);
+    loggerInfo(`Source file ${source} does not exist`);
     process.exit(17 /* QUEUE_NO_SOURCE */);
   }
   const config2 = mergeConfigs(source);
   if (config2) {
     const promptsResolved = applyBaseConfig(config2);
     if (promptsResolved.prompts.length === 0) {
-      logger(`Merged config from ${source} has no prompts`);
+      loggerInfo(`Merged config from ${source} has no prompts`);
       process.exit(24 /* QUEUE_NO_RESULTING_PROMPTS */);
     }
     prompts(promptsResolved, validateOnly);
@@ -36179,7 +36225,7 @@ var queueFromFile = async (source, validateOnly) => {
 var command6 = "queue <source>";
 var describe5 = "queue image using a json file";
 var builder5 = (builder10) => {
-  return builder10.positional("source", {
+  return addBaseCommandOptions(builder10).positional("source", {
     demandOption: true,
     describe: "source json",
     type: "string"
@@ -36191,18 +36237,19 @@ var builder5 = (builder10) => {
       type: "boolean"
     }
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(22 /* QUEUE_INVALID_PARAMS */);
   });
 };
-var handler5 = (argv) => {
-  const source = import_node_path8.default.resolve(argv.source);
+var handler5 = (argv2) => {
+  const source = import_node_path8.default.resolve(argv2.source);
+  resolveBaseOptions(argv2);
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
-  queueFromFile(source, argv.validate ?? false);
+  queueFromFile(source, argv2.validate ?? false);
 };
 
 // src/redraw/index.ts
@@ -36367,7 +36414,7 @@ var prepareQueryClassical = async (file, style, denoising_strength, addToPrompt,
   if (controlNet1) {
     baseParams.controlNet.push(controlNet1);
   } else {
-    logger(`Controlnet models for lineart not found`);
+    loggerInfo(`Controlnet models for lineart not found`);
     process.exit(26 /* REDRAW_LINEART_MODEL_NOT_FOUND */);
   }
   if (controlNet2) {
@@ -36415,7 +36462,7 @@ var prepareQueryIpAdapter = async (file, style, denoising_strength, addToPrompt,
   if (controlNet1) {
     baseParams.controlNet.push(controlNet1);
   } else {
-    logger(`Controlnet models for ip-adapter not found`);
+    loggerInfo(`Controlnet models for ip-adapter not found`);
     process.exit(27 /* REDRAW_IPADAPTER_MODEL_NOT_FOUND */);
   }
   if (controlNet2) {
@@ -36451,7 +36498,7 @@ var getCombination = (filesList, styles, methods) => {
 };
 var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }) => {
   if (!import_node_fs8.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(28 /* REDRAW_NO_SOURCE */);
   }
   const queries = [];
@@ -36481,7 +36528,7 @@ var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, re
 var command7 = "redraw <source> <style> <method>";
 var describe6 = "redraw image in specific style";
 var builder6 = (builder10) => {
-  return builder10.positional("source", {
+  return addBaseCommandOptions(builder10).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"
@@ -36567,26 +36614,27 @@ var builder6 = (builder10) => {
       type: "array"
     }
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(25 /* REDRAW_INVALID_PARAMS */);
   });
 };
-var handler6 = (argv) => {
-  const source = import_node_path10.default.resolve(argv.source);
+var handler6 = (argv2) => {
+  const source = import_node_path10.default.resolve(argv2.source);
+  resolveBaseOptions(argv2);
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   const options3 = {
-    addToPrompt: argv["add-before"] ?? void 0,
-    denoising: argv.denoising ?? void 0,
-    method: argv.method,
-    recursive: argv.recursive ?? false,
-    sdxl: argv.sdxl ?? false,
-    style: argv.style,
-    upscaler: argv.upscaler ?? void 0,
-    upscales: argv.upscaling ?? void 0
+    addToPrompt: argv2["add-before"] ?? void 0,
+    denoising: argv2.denoising ?? void 0,
+    method: argv2.method,
+    recursive: argv2.recursive ?? false,
+    sdxl: argv2.sdxl ?? false,
+    style: argv2.style,
+    upscaler: argv2.upscaler ?? void 0,
+    upscales: argv2.upscaling ?? void 0
   };
   redraw(source, options3);
 };
@@ -36606,7 +36654,7 @@ var import_jsonschema2 = __toESM(require_lib(), 1);
 var import_node_fs9 = __toESM(require("node:fs"), 1);
 var import_node_path11 = __toESM(require("node:path"), 1);
 
-// src/commons/schema/rename.json
+// schema/rename.json
 var rename_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   additionalProperties: false,
@@ -36694,14 +36742,14 @@ var executeConfig = (config2, source, promptData) => {
     return ["", void 0];
   }
   config2.keys.forEach(({ key }) => {
-    logger(`Searching for ${key} in "${source}"`);
+    loggerVerbose(`Searching for ${key} in "${source}"`);
     const found = config2.keys.find((k) => k.key === key)?.value?.find((element) => {
       const item = Array.isArray(element) ? element[0] : element;
-      logger(`Searching for ${key} value "${item}" in "${source}"`);
+      loggerVerbose(`Searching for ${key} value "${item}" in "${source}"`);
       return promptData[0].includes(item);
     });
     if (!found) {
-      logger(`${key} not found in ${source}`);
+      loggerInfo(`${key} not found in ${source}`);
       return;
     }
     const searchName = Array.isArray(found) ? found[0] : found;
@@ -36722,7 +36770,7 @@ var executeConfig = (config2, source, promptData) => {
 var validator2 = new import_jsonschema2.Validator();
 var renameConfig = (source, target, config2, test) => {
   if (!import_node_fs9.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(35 /* RENAME_NO_SOURCE_INTERNAL */);
   }
   if (!import_node_fs9.default.existsSync(target)) {
@@ -36730,7 +36778,7 @@ var renameConfig = (source, target, config2, test) => {
   }
   const validation2 = validator2.validate(config2, rename_default);
   if (!validation2.valid) {
-    logger(`JSON has invalid properties : ${validation2.toString()}`);
+    loggerInfo(`JSON has invalid properties : ${validation2.toString()}`);
     process.exit(32 /* RENAME_INVALID_JSON */);
   }
   const filesList = getFiles(source);
@@ -36739,7 +36787,7 @@ var renameConfig = (source, target, config2, test) => {
       const param = executeConfig(config2, file.filename, file.data);
       if (param && param[0] !== "") {
         const [targetFile, scene] = param;
-        logger(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
+        loggerVerbose(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
         if (!test && scene && !import_node_fs9.default.existsSync(import_node_path11.default.join(target, scene))) {
           import_node_fs9.default.mkdirSync(import_node_path11.default.join(target, scene));
         }
@@ -36752,7 +36800,7 @@ var renameConfig = (source, target, config2, test) => {
 };
 var renameConfigFromCFile = (source, target, config2, test) => {
   if (!import_node_fs9.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(33 /* RENAME_NO_CONFIG_FILE */);
   }
   if (!import_node_fs9.default.existsSync(target)) {
@@ -36763,7 +36811,7 @@ var renameConfigFromCFile = (source, target, config2, test) => {
     const data = import_node_fs9.default.readFileSync(config2, "utf8");
     jsonContent = JSON.parse(data);
   } catch (err) {
-    logger(`Unable to parse JSON in ${config2} (${err})`);
+    loggerInfo(`Unable to parse JSON in ${config2} (${err})`);
     process.exit(34 /* RENAME_INVALID_CONFIG_JSON */);
   }
   renameConfig(source, target, jsonContent, test);
@@ -36797,7 +36845,7 @@ var renameKeyPattern = (source, target, keys, pattern, test) => {
 var command8 = "rename <source> <target>";
 var describe7 = "rename files from directory";
 var builder7 = (builder10) => {
-  return builder10.positional("source", {
+  return addBaseCommandOptions(builder10).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"
@@ -36841,24 +36889,25 @@ var builder7 = (builder10) => {
       type: "boolean"
     }
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(29 /* RENAME_INVALID_PARAMS */);
   });
 };
-var handler7 = (argv) => {
-  const source = import_node_path12.default.resolve(argv.source);
-  const target = import_node_path12.default.resolve(argv.target);
+var handler7 = (argv2) => {
+  const source = import_node_path12.default.resolve(argv2.source);
+  const target = import_node_path12.default.resolve(argv2.target);
+  resolveBaseOptions(argv2);
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
-  if (argv.config) {
-    renameConfigFromCFile(source, target, argv.config, argv.test ?? false);
-  } else if (argv.keys && argv.pattern) {
-    renameKeyPattern(source, target, argv.keys, argv.pattern, argv.test ?? false);
+  if (argv2.config) {
+    renameConfigFromCFile(source, target, argv2.config, argv2.test ?? false);
+  } else if (argv2.keys && argv2.pattern) {
+    renameKeyPattern(source, target, argv2.keys, argv2.pattern, argv2.test ?? false);
   } else {
-    logger("Either config or keys and pattern must be provided");
+    loggerInfo("Either config or keys and pattern must be provided");
     process.exit(30 /* RENAME_INVALID_CONFIG */);
   }
 };
@@ -36925,12 +36974,12 @@ var builder8 = (builder10) => {
     describe: "source images directory",
     type: "string"
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(36 /* STATS_INVALID_PARAMS */);
   });
 };
-var handler8 = (argv) => {
-  const source = import_node_path13.default.resolve(argv.source);
+var handler8 = (argv2) => {
+  const source = import_node_path13.default.resolve(argv2.source);
   getStats(source);
 };
 
@@ -36949,7 +36998,7 @@ var import_node_fs10 = __toESM(require("node:fs"), 1);
 var import_node_path14 = require("node:path");
 var upscaleTiledDiffusion = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
   if (!import_node_fs10.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(41 /* UPSCALE_MULTIDIFFUSION_NO_SOURCE */);
   }
   const queries = [];
@@ -36985,7 +37034,7 @@ var import_node_fs11 = __toESM(require("node:fs"), 1);
 var import_node_path15 = require("node:path");
 var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }) => {
   if (!import_node_fs11.default.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(42 /* UPSCALE_TILES_NO_SOURCE */);
   }
   const queries = [];
@@ -37028,7 +37077,7 @@ var OPTION_TILED_DIFFUSION = "tiled-diffusion";
 var command10 = "upscale <source> [method]";
 var describe9 = "upscale image";
 var builder9 = (builder10) => {
-  return builder10.positional("source", {
+  return addBaseCommandOptions(builder10).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"
@@ -37098,33 +37147,34 @@ var builder9 = (builder10) => {
       type: "array"
     }
   }).fail((msg) => {
-    logger(msg);
+    loggerInfo(msg);
     process.exit(37 /* UPSCALE_INVALID_PARAMS */);
   });
 };
-var handler9 = (argv) => {
-  const source = import_node_path16.default.resolve(argv.source);
-  const { method } = argv;
+var handler9 = (argv2) => {
+  const source = import_node_path16.default.resolve(argv2.source);
+  const { method } = argv2;
+  resolveBaseOptions(argv2);
   const initialized = Config.get("initialized");
   if (!initialized) {
-    logger("Config must be initialized first");
+    loggerInfo("Config must be initialized first");
     process.exit(4 /* CONFIG_NOT_INITIALIZED */);
   }
   const options3 = {
-    checkpoint: argv.checkpoint ?? void 0,
-    denoising: argv.denoising ?? void 0,
-    recursive: argv.recursive ?? false,
-    upscaling: argv.upscaling ?? void 0
+    checkpoint: argv2.checkpoint ?? void 0,
+    denoising: argv2.denoising ?? void 0,
+    recursive: argv2.recursive ?? false,
+    upscaling: argv2.upscaling ?? void 0
   };
   if (method === OPTION_CONTROLNET) {
     const hasControlnet = Config.get("extensions").includes("controlnet");
     if (!hasControlnet) {
-      logger("ControlNet is required");
+      loggerInfo("ControlNet is required");
       process.exit(38 /* UPSCALE_NO_CONTROLNET */);
     }
     const tiles = findControlnetModel("control_v11f1e_sd15_tile");
     if (!tiles) {
-      logger("ControlNet Tiles model is required");
+      loggerInfo("ControlNet Tiles model is required");
       process.exit(39 /* UPSCALE_NO_CONTROLNET_TILES */);
     }
     upscaleTiles(source, options3);
@@ -37132,7 +37182,7 @@ var handler9 = (argv) => {
   if (method === OPTION_TILED_DIFFUSION) {
     const hasTiledDiffusion = Config.get("extensions").includes("tiled diffusion");
     if (!hasTiledDiffusion) {
-      logger("Tiled Diffusion is required");
+      loggerInfo("Tiled Diffusion is required");
       process.exit(40 /* UPSCALE_NO_TILED_DIFFUSION */);
     }
     upscaleTiledDiffusion(source, options3);
@@ -37140,8 +37190,9 @@ var handler9 = (argv) => {
 };
 
 // src/index.ts
+var argv = process.argv.slice(2);
 Config.migrate().then(() => {
-  yargs_default(process.argv.slice(2)).command(init_exports).command(configSet_exports).command(configGet_exports).command(queue_exports).command(rename_exports).command(extract_exports).command(upscale_exports).command(redraw_exports).command(stats_exports).demandCommand(1, "You need at least one command before moving on").help().strict().parse();
+  yargs_default(argv).command(init_exports).command(configSet_exports).command(configGet_exports).command(queue_exports).command(rename_exports).command(extract_exports).command(upscale_exports).command(redraw_exports).command(stats_exports).demandCommand(1, "You need at least one command before moving on").help().strict().parse();
 });
 /*! Bundled license information:
 

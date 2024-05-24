@@ -1,14 +1,15 @@
 import path from 'node:path';
 import yargs from 'yargs';
 
+import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { type IExtractOptions, type IExtractOptionsFull } from '../commons/extract';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { extract } from './extract';
 
 export const command = 'extract <source> <format>';
 export const describe = 'extract prompts from directory';
 export const builder = (builder: yargs.Argv<object>) => {
-  return builder
+  return addBaseCommandOptions(builder)
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
@@ -38,13 +39,15 @@ export const builder = (builder: yargs.Argv<object>) => {
       }
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.EXTRACT_INVALID_PARAMS);
     });
 };
 
 export const handler = (argv: IExtractOptionsFull) => {
   const source = path.resolve(argv.source);
+
+  resolveBaseOptions(argv);
 
   const options: IExtractOptions = {
     addBefore: argv.addBefore ?? undefined,
