@@ -877,7 +877,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
     const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
     if (findPose.length > 1) {
-      logger(`Multiple controlnet poses found in prompt`);
+      loggerInfo(`Multiple controlnet poses found in prompt`);
       process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_POSE);
     }
 

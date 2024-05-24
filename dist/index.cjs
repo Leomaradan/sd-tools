@@ -32325,6 +32325,9 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
   } catch (error) {
     if (error instanceof Error) {
       loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
+      if (error.message.includes("404")) {
+        return false;
+      }
     } else {
       loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
     }
@@ -33218,6 +33221,47 @@ var getConfigRedrawModels = () => {
 - Realist (SDXL) : ${realistxl}`);
 };
 var getConfigScheduler = () => loggerInfo(`Scheduler: ${Config.get("scheduler") ? "enabled" : "disabled"}`);
+var getConfigAutoAdetailers = () => {
+  const autoAdetailers = Config.get("autoAdetailers");
+  const list = autoAdetailers.map((item) => {
+    const {
+      ad_denoising_strength,
+      ad_inpaint_height,
+      ad_inpaint_width,
+      ad_model,
+      ad_negative_prompt,
+      ad_prompt,
+      ad_use_inpaint_width_height,
+      trigger
+    } = item;
+    let text2 = `!ad:${trigger}: ${ad_model}`;
+    if (ad_prompt) {
+      text2 += ` | Prompt: ${ad_prompt}`;
+    }
+    if (ad_negative_prompt) {
+      text2 += ` | Negative Prompt: ${ad_negative_prompt}`;
+    }
+    if (ad_denoising_strength) {
+      text2 += ` | Denoising Strength: ${ad_denoising_strength}`;
+    }
+    if (ad_inpaint_height && ad_inpaint_width) {
+      text2 += ` | Inpaint Size: ${ad_inpaint_height}x${ad_inpaint_width}`;
+    }
+    if (ad_use_inpaint_width_height) {
+      text2 += ` | Use Inpaint Width/Height: ${ad_use_inpaint_width_height}`;
+    }
+    return text2;
+  });
+  loggerInfo(`Auto Adetailers: ${displayList(list)}`);
+};
+var getConfigAutoControlnetPoses = () => {
+  const autoControlnetPose = Config.get("autoControlnetPose");
+  const list = autoControlnetPose.map((item) => {
+    const { pose, trigger } = item;
+    return `!pose:${trigger}: ${pose}`;
+  });
+  loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);
+};
 
 // src/config/configGet.ts
 var options = [
@@ -34593,7 +34637,7 @@ var preparePrompts = (config2) => {
     }
     const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
     if (findPose.length > 1) {
-      logger(`Multiple controlnet poses found in prompt`);
+      loggerInfo(`Multiple controlnet poses found in prompt`);
       process.exit(54 /* PROMPT_INVALID_CONTROLNET_POSE */);
     }
     if (findPose.length === 1) {
