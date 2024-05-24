@@ -33883,6 +33883,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingPrompt,
     vaeOption,
     width
   } = options3;
@@ -33939,6 +33940,7 @@ var prepareSingleQuery = (basePrompt, permutations, options3) => {
       tiledVAE,
       tiling,
       upscaler,
+      upscalingPrompt,
       vae,
       width
     };
@@ -34063,6 +34065,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingPromptArray,
     vaeArray,
     widthArray
   } = options3;
@@ -34088,6 +34091,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
   permutationsArray = getPermutations(permutationsArray, tilingArray, "tiling");
   permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, "ultimateSdUpscale");
   permutationsArray = getPermutations(permutationsArray, upscalerArray, "upscaler");
+  permutationsArray = getPermutations(permutationsArray, upscalingPromptArray, "upscalingPrompt");
   permutationsArray = getPermutations(permutationsArray, vaeArray, "vaeOption");
   permutationsArray = getPermutations(permutationsArray, widthArray, "width");
   permutationsArray = getPermutations(permutationsArray, controlNetArray, "controlNet");
@@ -34118,6 +34122,7 @@ var prepareSingleQueryPermutations = (basePrompt, options3) => {
         tiling: permutationItem.tiling,
         ultimateSdUpscale: permutationItem.ultimateSdUpscale,
         upscaler: permutationItem.upscaler,
+        upscalingPrompt: permutationItem.upscalingPrompt,
         vaeOption: permutationItem.vaeOption,
         width: permutationItem.width
       })
@@ -34133,6 +34138,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     cfgArray,
     checkpointsArray,
     clipSkipArray,
+    controlNetArray,
     denoisingArray,
     enableHighResArray,
     heightArray,
@@ -34151,6 +34157,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingPromptArray,
     vaeArray,
     widthArray
   } = options3;
@@ -34178,7 +34185,8 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
   const upscaler = pickRandomItem(upscalerArray);
   const vaeOption = pickRandomItem(vaeArray);
   const width = pickRandomItem(widthArray);
-  const controlNet = pickRandomItem(options3.controlNetArray);
+  const controlNet = pickRandomItem(controlNetArray);
+  const upscalingPrompt = pickRandomItem(upscalingPromptArray);
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
     autoLCM,
@@ -34203,6 +34211,7 @@ var prepareSingleQueryRandomSelection = (basePrompt, options3) => {
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingPrompt,
     vaeOption,
     width
   });
@@ -34318,6 +34327,7 @@ var prepareQueries = (basePrompts) => {
     const clipSkipArray = getArrays(basePrompt.clipSkip);
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [void 0]);
     const controlNetArray = getArraysControlNet(basePrompt.controlNet);
+    const upscalingPromptArray = getArrays(basePrompt.upscalingPrompt);
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? void 0];
     const tiledDiffusionArray = Array.isArray(basePrompt.tiledDiffusion) ? basePrompt.tiledDiffusion : [basePrompt.tiledDiffusion ?? void 0];
     const prepareSingleQueryParameter = {
@@ -34345,6 +34355,7 @@ var prepareQueries = (basePrompts) => {
       tilingArray,
       ultimateSdUpscaleArray,
       upscalerArray,
+      upscalingPromptArray,
       vaeArray,
       widthArray
     };
@@ -34430,6 +34441,7 @@ var preparePrompts = (config2) => {
       tiling,
       ultimateSdUpscale,
       upscaler,
+      upscalingPrompt,
       vae,
       width
     } = singleQuery;
@@ -34513,7 +34525,7 @@ var preparePrompts = (config2) => {
       if (query.enable_hr === true) {
         query.hr_scale = 2;
         query.denoising_strength = query.denoising_strength ?? 0.5;
-        query.hr_prompt = "";
+        query.hr_prompt = upscalingPrompt ?? "";
         query.hr_negative_prompt = "";
       }
     } else {
@@ -34527,9 +34539,7 @@ var preparePrompts = (config2) => {
       if (beforeNegativePrompt || afterNegativePrompt) {
         query.hr_negative_prompt = `${beforeNegativePrompt ?? ""},${query.negative_prompt ?? ""},${afterNegativePrompt ?? ""}`;
       }
-      if (beforePrompt || afterPrompt) {
-        query.hr_prompt = `${beforePrompt ?? ""},${query.prompt ?? ""},${afterPrompt ?? ""}`;
-      }
+      query.hr_prompt = `${beforePrompt ?? ""},${upscalingPrompt ?? query.prompt ?? ""},${afterPrompt ?? ""}`;
     }
     if (outDir) {
       if (query.init_images) {
@@ -35193,6 +35203,20 @@ var queue_default = {
             }
           ],
           title: "upscaler"
+        },
+        upscalingPrompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "upscalingPrompt"
         },
         vae: {
           anyOf: [
@@ -35870,6 +35894,20 @@ var queue_default = {
           ],
           title: "upscaler"
         },
+        upscalingPrompt: {
+          anyOf: [
+            {
+              items: {
+                type: "string"
+              },
+              type: "array"
+            },
+            {
+              type: "string"
+            }
+          ],
+          title: "upscalingPrompt"
+        },
         vae: {
           anyOf: [
             {
@@ -36024,6 +36062,10 @@ var queue_default = {
         },
         upscaler: {
           title: "upscaler",
+          type: "string"
+        },
+        upscalingPrompt: {
+          title: "upscalingPrompt",
           type: "string"
         },
         vae: {
