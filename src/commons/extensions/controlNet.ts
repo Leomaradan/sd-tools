@@ -1050,4 +1050,18 @@ export interface IControlNet {
   resize_mode: ControlNetResizes | ControlNetResizesLegacy;
 }
 
+/**
+ * ControlNet is changing the query format
+ */
+export interface IControlNetQuery {
+  control_mode: ControlNetMode;
+  enabled: true;
+  input_image?: string;
+  lowvram?: boolean;
+  model: string;
+  module: string;
+  pixel_perfect?: boolean;
+  resize_mode: ControlNetResizes;
+}
+
 export const checkControlNet = (model: string, moduleName: ControlNetModules, version: MetadataVersionKey) => {};

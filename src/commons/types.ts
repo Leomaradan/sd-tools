@@ -1,5 +1,5 @@
 import { type IAdetailer } from './extensions/adetailer';
-import { type IControlNet } from './extensions/controlNet';
+import { type IControlNet, type IControlNetQuery } from './extensions/controlNet';
 import { type ICutOff } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
@@ -7,7 +7,7 @@ import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extension
 export * from './extensions/controlNet';
 export * from './extensions/ultimateSdUpscale';
 
-export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNet[] };
+export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNetQuery[] };
 
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 

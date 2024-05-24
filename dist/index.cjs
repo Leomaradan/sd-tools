@@ -32703,7 +32703,16 @@ var renderQuery = async (query, type) => {
   }
   if (controlNet) {
     const args = controlNet.map((controlNet2) => {
-      const params = { ...controlNet2 };
+      const params = {
+        control_mode: normalizeControlNetMode(controlNet2.control_mode),
+        enabled: true,
+        input_image: controlNet2.input_image,
+        lowvram: controlNet2.lowvram,
+        model: controlNet2.model,
+        module: controlNet2.module,
+        pixel_perfect: controlNet2.pixel_perfect,
+        resize_mode: normalizeControlNetResizes(controlNet2.resize_mode)
+      };
       if (params.lowvram === void 0) {
         params.lowvram = true;
       }
