@@ -1,7 +1,7 @@
 import path from 'node:path';
 import yargs from 'yargs';
 
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { getStats } from './stats';
 
 export const command = 'stats <source>';
@@ -14,7 +14,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.STATS_INVALID_PARAMS);
     });
 };

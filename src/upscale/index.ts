@@ -1,8 +1,9 @@
 import path from 'node:path';
 import yargs from 'yargs';
 
+import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { findCheckpoint, findControlnetModel } from '../commons/models';
 import { type IUpscaleOptions, type IUpscaleOptionsFull } from './types';
 import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
@@ -14,7 +15,7 @@ const OPTION_TILED_DIFFUSION = 'tiled-diffusion';
 export const command = 'upscale <source> [method]';
 export const describe = 'upscale image';
 export const builder = (builder: yargs.Argv<object>) => {
-  return builder
+  return addBaseCommandOptions(builder)
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
@@ -97,7 +98,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       }
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.UPSCALE_INVALID_PARAMS);
     });
 };
@@ -106,10 +107,12 @@ export const handler = (argv: IUpscaleOptionsFull) => {
   const source = path.resolve(argv.source);
   const { method } = argv;
 
+  resolveBaseOptions(argv);
+
   const initialized = Config.get('initialized');
 
   if (!initialized) {
-    logger('Config must be initialized first');
+    loggerInfo('Config must be initialized first');
     process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
@@ -124,13 +127,13 @@ export const handler = (argv: IUpscaleOptionsFull) => {
     const hasControlnet = Config.get('extensions').includes('controlnet');
 
     if (!hasControlnet) {
-      logger('ControlNet is required');
+      loggerInfo('ControlNet is required');
       process.exit(ExitCodes.UPSCALE_NO_CONTROLNET);
     }
 
     const tiles = findControlnetModel('control_v11f1e_sd15_tile');
     if (!tiles) {
-      logger('ControlNet Tiles model is required');
+      loggerInfo('ControlNet Tiles model is required');
       process.exit(ExitCodes.UPSCALE_NO_CONTROLNET_TILES);
     }
 
@@ -141,7 +144,7 @@ export const handler = (argv: IUpscaleOptionsFull) => {
     const hasTiledDiffusion = Config.get('extensions').includes('tiled diffusion');
 
     if (!hasTiledDiffusion) {
-      logger('Tiled Diffusion is required');
+      loggerInfo('Tiled Diffusion is required');
       process.exit(ExitCodes.UPSCALE_NO_TILED_DIFFUSION);
     }
 

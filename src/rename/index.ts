@@ -1,8 +1,9 @@
 import path from 'node:path';
 import yargs from 'yargs';
 
+import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { renameConfigFromCFile, renameKeyPattern } from './rename';
 
 interface IRenameOptions {
@@ -18,7 +19,7 @@ export const command = 'rename <source> <target>';
 export const describe = 'rename files from directory';
 export const builder = (builder: yargs.Argv<object>) => {
   return (
-    builder
+    addBaseCommandOptions(builder)
       .positional('source', {
         demandOption: true,
         describe: 'source directory',
@@ -70,7 +71,7 @@ export const builder = (builder: yargs.Argv<object>) => {
         }
       })
       .fail((msg) => {
-        logger(msg);
+        loggerInfo(msg);
         process.exit(ExitCodes.RENAME_INVALID_PARAMS);
       })
   );
@@ -80,10 +81,12 @@ export const handler = (argv: IRenameOptions) => {
   const source = path.resolve(argv.source);
   const target = path.resolve(argv.target);
 
+  resolveBaseOptions(argv);
+
   const initialized = Config.get('initialized');
 
   if (!initialized) {
-    logger('Config must be initialized first');
+    loggerInfo('Config must be initialized first');
     process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
@@ -92,7 +95,7 @@ export const handler = (argv: IRenameOptions) => {
   } else if (argv.keys && argv.pattern) {
     renameKeyPattern(source, target, argv.keys, argv.pattern, argv.test ?? false);
   } else {
-    logger('Either config or keys and pattern must be provided');
+    loggerInfo('Either config or keys and pattern must be provided');
     process.exit(ExitCodes.RENAME_INVALID_CONFIG);
   }
 };

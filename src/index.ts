@@ -11,8 +11,10 @@ import * as rename from './rename';
 import * as stats from './stats';
 import * as upscale from './upscale';
 
+const argv = process.argv.slice(2);
+
 Config.migrate().then(() => {
-  yargs(process.argv.slice(2))
+  yargs(argv)
     .command(init)
     .command(configSet)
     .command(configGet)

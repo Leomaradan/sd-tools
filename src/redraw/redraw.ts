@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { type IFile, getBase64Image, getFiles } from '../commons/file';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
@@ -204,7 +204,7 @@ const prepareQueryClassical = async (
   if (controlNet1) {
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
   } else {
-    logger(`Controlnet models for lineart not found`);
+    loggerInfo(`Controlnet models for lineart not found`);
     process.exit(ExitCodes.REDRAW_LINEART_MODEL_NOT_FOUND);
   }
 
@@ -269,7 +269,7 @@ const prepareQueryIpAdapter = async (
   if (controlNet1) {
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
   } else {
-    logger(`Controlnet models for ip-adapter not found`);
+    loggerInfo(`Controlnet models for ip-adapter not found`);
     process.exit(ExitCodes.REDRAW_IPADAPTER_MODEL_NOT_FOUND);
   }
 
@@ -322,7 +322,7 @@ export const redraw = async (
   { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
 ) => {
   if (!fs.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.REDRAW_NO_SOURCE);
   }
 
