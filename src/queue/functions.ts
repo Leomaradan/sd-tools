@@ -2,8 +2,8 @@ import { Validator } from 'jsonschema';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 
+import queueSchema from '../../schema/queue.json';
 import { ExitCodes, logger } from '../commons/logger';
-import queueSchema from '../commons/schema/queue.json';
 import { type IPrompts, type IPromptsResolved } from '../commons/types';
 
 const validator = new Validator();

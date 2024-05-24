@@ -2,9 +2,9 @@ import { Validator } from 'jsonschema';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import renameSchema from '../../schema/rename.json';
 import { getFiles } from '../commons/file';
 import { ExitCodes, logger } from '../commons/logger';
-import renameSchema from '../commons/schema/rename.json';
 import { type  IRenameConfig, executeConfig } from './config';
 
 const validator = new Validator();
