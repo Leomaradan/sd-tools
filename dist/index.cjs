@@ -32702,7 +32702,7 @@ var renderQuery = async (query, type) => {
   if (cutOff || autoCutOff) {
     const tokens = Array.from(/* @__PURE__ */ new Set([...cutOff?.tokens ?? [], ...autoCutOff ? Array.from(Config.get("cutoffTokens")) : []]));
     const weight = cutOff?.weight ?? Config.get("cutoffWeight");
-    baseQuery.alwayson_scripts["Cutoff"] = { args: [true, ...tokens, weight] };
+    baseQuery.alwayson_scripts["Cutoff"] = { args: [true, tokens.join(", "), weight, false, false, "", "Lerp"] };
   }
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get("lcm");
   const accelarator = checkpoint?.accelarator ?? "none";
@@ -34613,33 +34613,15 @@ var preparePrompts = (config2) => {
       updateFilename(query, "seed", "[seed]");
       updateFilename(query, "steps", "[steps]");
       updateFilename(query, "width", "[width]");
-      if (autoCutOff !== void 0) {
-        updateFilename(query, "cutOff", autoCutOff.toString());
-      }
-      if (denoising) {
-        updateFilename(query, "denoising", denoising.toFixed(2));
-      }
-      if (enableHighRes !== void 0) {
-        updateFilename(query, "highRes", enableHighRes.toString());
-      }
-      if (restoreFaces !== void 0) {
-        updateFilename(query, "restoreFaces", restoreFaces.toString());
-      }
-      if (sampler !== void 0) {
-        updateFilename(query, "sampler", sampler.toString());
-      }
-      if (scaleFactor) {
-        updateFilename(query, "scaleFactor", scaleFactor.toFixed(0));
-      }
-      if (tiling !== void 0) {
-        updateFilename(query, "tiling", tiling.toString());
-      }
-      if (upscaler !== void 0) {
-        updateFilename(query, "upscaler", upscaler.toString());
-      }
-      if (vae !== void 0) {
-        updateFilename(query, "vae", vae.toString());
-      }
+      updateFilename(query, "cutOff", autoCutOff !== void 0 ? autoCutOff.toString() : "");
+      updateFilename(query, "denoising", denoising?.toFixed(2) ?? "");
+      updateFilename(query, "enableHighRes", enableHighRes !== void 0 ? enableHighRes.toString() : "");
+      updateFilename(query, "restoreFaces", restoreFaces !== void 0 ? restoreFaces.toString() : "");
+      updateFilename(query, "sampler", sampler !== void 0 ? sampler.toString() : "");
+      updateFilename(query, "scaleFactor", scaleFactor?.toFixed(0) ?? "");
+      updateFilename(query, "tiling", tiling !== void 0 ? tiling.toString() : "");
+      updateFilename(query, "upscaler", upscaler !== void 0 ? upscaler.toString() : "");
+      updateFilename(query, "vae", vae !== void 0 ? vae.toString() : "");
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
@@ -34700,7 +34682,7 @@ var import_jsonschema = __toESM(require_lib(), 1);
 var import_node_fs6 = __toESM(require("node:fs"), 1);
 var import_node_path7 = require("node:path");
 
-// src/commons/schema/queue.json
+// schema/queue.json
 var queue_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   anyOf: [
@@ -36564,7 +36546,7 @@ var import_jsonschema2 = __toESM(require_lib(), 1);
 var import_node_fs9 = __toESM(require("node:fs"), 1);
 var import_node_path11 = __toESM(require("node:path"), 1);
 
-// src/commons/schema/rename.json
+// schema/rename.json
 var rename_default = {
   $schema: "http://json-schema.org/draft-07/schema#",
   additionalProperties: false,

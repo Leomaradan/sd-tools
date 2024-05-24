@@ -172,7 +172,7 @@ export const renderQuery: Query = async (query, type) => {
   if (cutOff || autoCutOff) {
     const tokens = Array.from(new Set([...(cutOff?.tokens ?? []), ...(autoCutOff ? Array.from(Config.get('cutoffTokens')) : [])]));
     const weight = cutOff?.weight ?? Config.get('cutoffWeight');
-    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, ...tokens, weight] };
+    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
   }
 
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
@@ -220,7 +220,7 @@ export const renderQuery: Query = async (query, type) => {
   logger(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
 
   writeLog(endpoint, baseQuery);
-
+  
   await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
     logger(`Error: `);
     logger(error.message);
