@@ -317,6 +317,7 @@ export interface IPrompt {
   tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
+  upscalingPrompt?: string | string[];
   vae?: string | string[];
   width?: number | number[];
 }
@@ -355,6 +356,7 @@ export interface IPromptSingle {
   tiling?: boolean;
   ultimateSdUpscale?: IUltimateSDUpscale;
   upscaler?: string;
+  upscalingPrompt?: string;
   vae?: string;
   width?: number;
 }

@@ -491,6 +491,20 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingPrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingPrompt"
+                },
                 "vae": {
                     "anyOf": [
                         {
@@ -1167,6 +1181,20 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingPrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingPrompt"
+                },
                 "vae": {
                     "anyOf": [
                         {
@@ -1321,6 +1349,10 @@
                 },
                 "upscaler": {
                     "title": "upscaler",
+                    "type": "string"
+                },
+                "upscalingPrompt": {
+                    "title": "upscalingPrompt",
                     "type": "string"
                 },
                 "vae": {
