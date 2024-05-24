@@ -491,6 +491,20 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingNegativePrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingNegativePrompt"
+                },
                 "upscalingPrompt": {
                     "anyOf": [
                         {
@@ -1181,6 +1195,20 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingNegativePrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingNegativePrompt"
+                },
                 "upscalingPrompt": {
                     "anyOf": [
                         {
@@ -1349,6 +1377,10 @@
                 },
                 "upscaler": {
                     "title": "upscaler",
+                    "type": "string"
+                },
+                "upscalingNegativePrompt": {
+                    "title": "upscalingNegativePrompt",
                     "type": "string"
                 },
                 "upscalingPrompt": {
