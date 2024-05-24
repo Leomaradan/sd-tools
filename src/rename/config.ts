@@ -1,4 +1,4 @@
-import { logger } from '../commons/logger';
+import {  loggerInfo, loggerVerbose } from '../commons/logger';
 
 type Key = [string, string] | string;
 
@@ -27,20 +27,20 @@ export const executeConfig = (config: IRenameConfig, source: string, promptData:
   }
 
   config.keys.forEach(({key}) => {
-    logger(`Searching for ${key} in "${source}"`);
+    loggerVerbose(`Searching for ${key} in "${source}"`);
 
     const found = config.keys
       .find((k) => k.key === key)
       ?.value?.find((element) => {
         const item = Array.isArray(element) ? element[0] : element;
 
-        logger(`Searching for ${key} value "${item}" in "${source}"`);
+        loggerVerbose(`Searching for ${key} value "${item}" in "${source}"`);
 
         return promptData[0].includes(item);
       });
 
     if (!found) {
-      logger(`${key} not found in ${source}`);
+      loggerInfo(`${key} not found in ${source}`);
       return;
     }
 

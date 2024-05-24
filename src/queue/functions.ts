@@ -2,15 +2,15 @@ import { Validator } from 'jsonschema';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 
-import { ExitCodes, logger } from '../commons/logger';
-import queueSchema from '../commons/schema/queue.json';
+import queueSchema from '../../schema/queue.json';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { type IPrompts, type IPromptsResolved } from '../commons/types';
 
 const validator = new Validator();
 
 const getConfigs = (source: string) => {
   if (!fs.existsSync(source)) {
-    logger(`Source file ${source} does not exist`);
+    loggerInfo(`Source file ${source} does not exist`);
     process.exit(ExitCodes.QUEUE_NO_SOURCE_INTERNAL);
   }
 
@@ -20,14 +20,14 @@ const getConfigs = (source: string) => {
       const data = fs.readFileSync(source, 'utf8');
       jsonContent = JSON.parse(data);
     } catch (err) {
-      logger(`Unable to parse JSON in ${source}`);
+      loggerInfo(`Unable to parse JSON in ${source}`);
       process.exit(ExitCodes.QUEUE_CORRUPTED_JSON);
     }
 
     const validation = validator.validate(jsonContent, queueSchema, { nestedErrors: true });
 
     if (!validation.valid) {
-      logger(`JSON has invalid properties : ${validation.toString()}`);
+      loggerInfo(`JSON has invalid properties : ${validation.toString()}`);
       process.exit(ExitCodes.QUEUE_INVALID_JSON);
     }
 
@@ -41,7 +41,7 @@ const getConfigs = (source: string) => {
     const validation = validator.validate(jsonContentFromJs, queueSchema, { nestedErrors: true });
 
     if (!validation.valid) {
-      logger(`JS return invalid properties : ${validation.toString()}`);
+      loggerInfo(`JS return invalid properties : ${validation.toString()}`);
       process.exit(ExitCodes.QUEUE_INVALID_JS);
     }
 
@@ -53,7 +53,7 @@ export const mergeConfigs = (source: string): IPrompts | undefined => {
   const jsonContent = getConfigs(source);
 
   if (!jsonContent) {
-    logger(`Invalid file : ${source}`);
+    loggerInfo(`Invalid file : ${source}`);
     process.exit(ExitCodes.QUEUE_INVALID_FILE);
   }
 

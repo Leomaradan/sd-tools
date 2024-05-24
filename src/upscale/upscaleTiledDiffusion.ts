@@ -7,7 +7,7 @@ import type { IUpscaleOptions } from './types';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import { prompts } from '../commons/prompts';
 
 export const upscaleTiledDiffusion = async (
@@ -15,7 +15,7 @@ export const upscaleTiledDiffusion = async (
   { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }: IUpscaleOptions
 ) => {
   if (!fs.existsSync(source)) {
-    logger(`Source directory ${source} does not exist`);
+    loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.UPSCALE_MULTIDIFFUSION_NO_SOURCE);
   }
 

@@ -7,7 +7,7 @@ import { type IAdetailer } from './extensions/adetailer';
 import { getCutOffTokens } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
-import { ExitCodes, logger, writeLog } from './logger';
+import { ExitCodes,  loggerInfo, writeLog } from './logger';
 import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
 import { isTxt2ImgQuery, renderQuery } from './query';
 import {
@@ -48,6 +48,8 @@ interface IPrepareSingleQuery {
   tiling: boolean;
   ultimateSdUpscale: boolean;
   upscaler: string | undefined;
+  upscalingNegativePrompt: string | undefined;
+  upscalingPrompt: string | undefined;
   vaeOption: string | undefined;
   width: number | undefined;
 }
@@ -78,6 +80,8 @@ interface IPrepareSingleQueryFromArray {
   tilingArray: boolean[];
   ultimateSdUpscaleArray: boolean[];
   upscalerArray: (string | undefined)[];
+  upscalingNegativePromptArray: (string | undefined)[];
+  upscalingPromptArray: (string | undefined)[];
   vaeArray: (string | undefined)[];
   widthArray: (number | undefined)[];
 }
@@ -118,6 +122,8 @@ const prepareSingleQuery = (
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingNegativePrompt,
+    upscalingPrompt,
     vaeOption,
     width
   } = options;
@@ -191,6 +197,8 @@ const prepareSingleQuery = (
       tiledVAE,
       tiling,
       upscaler,
+      upscalingNegativePrompt,
+      upscalingPrompt,
       vae,
       width
     };
@@ -351,6 +359,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingNegativePromptArray,
+    upscalingPromptArray,
     vaeArray,
     widthArray
   } = options;
@@ -379,6 +389,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   permutationsArray = getPermutations(permutationsArray, tilingArray, 'tiling');
   permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, 'ultimateSdUpscale');
   permutationsArray = getPermutations(permutationsArray, upscalerArray, 'upscaler');
+  permutationsArray = getPermutations(permutationsArray, upscalingPromptArray, 'upscalingPrompt');
+  permutationsArray = getPermutations(permutationsArray, upscalingNegativePromptArray, 'upscalingNegativePrompt');
   permutationsArray = getPermutations(permutationsArray, vaeArray, 'vaeOption');
   permutationsArray = getPermutations(permutationsArray, widthArray, 'width');
 
@@ -411,6 +423,8 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
         tiling: permutationItem.tiling,
         ultimateSdUpscale: permutationItem.ultimateSdUpscale,
         upscaler: permutationItem.upscaler,
+        upscalingNegativePrompt: permutationItem.upscalingNegativePrompt,
+        upscalingPrompt: permutationItem.upscalingPrompt,
         vaeOption: permutationItem.vaeOption,
         width: permutationItem.width
       })
@@ -429,6 +443,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     cfgArray,
     checkpointsArray,
     clipSkipArray,
+    controlNetArray,
     denoisingArray,
     enableHighResArray,
     heightArray,
@@ -447,6 +462,8 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     tilingArray,
     ultimateSdUpscaleArray,
     upscalerArray,
+    upscalingNegativePromptArray,
+    upscalingPromptArray,
     vaeArray,
     widthArray
   } = options;
@@ -475,7 +492,9 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
   const upscaler = pickRandomItem(upscalerArray);
   const vaeOption = pickRandomItem(vaeArray);
   const width = pickRandomItem(widthArray);
-  const controlNet = pickRandomItem(options.controlNetArray);
+  const controlNet = pickRandomItem(controlNetArray);
+  const upscalingPrompt = pickRandomItem(upscalingPromptArray);
+  const upscalingNegativePrompt = pickRandomItem(upscalingNegativePromptArray);
 
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
@@ -501,6 +520,8 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     tiling,
     ultimateSdUpscale,
     upscaler,
+    upscalingNegativePrompt,
+    upscalingPrompt,
     vaeOption,
     width
   });
@@ -654,6 +675,8 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
     const clipSkipArray = getArrays(basePrompt.clipSkip);
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [undefined]);
     const controlNetArray = getArraysControlNet(basePrompt.controlNet);
+    const upscalingPromptArray = getArrays(basePrompt.upscalingPrompt);
+    const upscalingNegativePromptArray = getArrays(basePrompt.upscalingNegativePrompt);
 
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? undefined];
 
@@ -686,6 +709,8 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
       tilingArray,
       ultimateSdUpscaleArray,
       upscalerArray,
+      upscalingNegativePromptArray,
+      upscalingPromptArray,
       vaeArray,
       widthArray
     };
@@ -743,7 +768,7 @@ const validateTemplate = (template: string) => {
 
   matches.forEach((match) => {
     if (!validTokensTemplate.includes(match)) {
-      logger(`Invalid token ${match} in ${template}`);
+      loggerInfo(`Invalid token ${match} in ${template}`);
       process.exit(ExitCodes.PROMPT_INVALID_STRING_TOKEN);
     }
   });
@@ -787,6 +812,8 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       tiling,
       ultimateSdUpscale,
       upscaler,
+      upscalingNegativePrompt,
+      upscalingPrompt,
       vae,
       width
     } = singleQuery;
@@ -819,7 +846,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     const defaultValues = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none');
 
     if (query.sampler_name !== undefined && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
-      logger(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
+      loggerInfo(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
       process.exit(ExitCodes.PROMPT_INVALID_SAMPLER);
     }
 
@@ -829,12 +856,12 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         const controlNetModel = findControlnetModel(controlNetPrompt.model);
 
         if (!controlNetModule) {
-          logger(`Invalid ControlNet module ${controlNetPrompt.module}`);
+          loggerInfo(`Invalid ControlNet module ${controlNetPrompt.module}`);
           process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODULE);
         }
 
         if (!controlNetModel) {
-          logger(`Invalid ControlNet model ${controlNetPrompt.model}`);
+          loggerInfo(`Invalid ControlNet model ${controlNetPrompt.model}`);
           process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODEL);
         }
 
@@ -887,7 +914,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       if (foundVAE) {
         query.override_settings.sd_vae = foundVAE === 'None' ? '' : foundVAE;
       } else {
-        logger(`Invalid VAE ${vae}`);
+        loggerInfo(`Invalid VAE ${vae}`);
         process.exit(ExitCodes.PROMPT_INVALID_VAE);
       }
     }
@@ -905,7 +932,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       if (foundUpscaler) {
         query.hr_upscaler = foundUpscaler.name;
       } else {
-        logger(`Invalid Upscaler ${upscaler}`);
+        loggerInfo(`Invalid Upscaler ${upscaler}`);
         process.exit(ExitCodes.PROMPT_INVALID_UPSCALER);
       }
     }
@@ -918,8 +945,8 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       if (query.enable_hr === true) {
         query.hr_scale = 2;
         query.denoising_strength = query.denoising_strength ?? 0.5;
-        query.hr_prompt = '';
-        query.hr_negative_prompt = '';
+        query.hr_prompt = upscalingPrompt ?? '';
+        query.hr_negative_prompt = upscalingNegativePrompt ?? '';
       }
     } else {
       (query as ITxt2ImgQuery).enable_hr = false;
@@ -932,13 +959,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     if (isTxt2ImgQuery(query) && highRes) {
       const { afterNegativePrompt, afterPrompt, beforeNegativePrompt, beforePrompt } = highRes;
 
-      if (beforeNegativePrompt || afterNegativePrompt) {
-        query.hr_negative_prompt = `${beforeNegativePrompt ?? ''},${query.negative_prompt ?? ''},${afterNegativePrompt ?? ''}`;
-      }
+      query.hr_negative_prompt = `${beforeNegativePrompt ?? ''},${upscalingNegativePrompt ?? query.negative_prompt ?? ''},${afterNegativePrompt ?? ''}`;
 
-      if (beforePrompt || afterPrompt) {
-        query.hr_prompt = `${beforePrompt ?? ''},${query.prompt ?? ''},${afterPrompt ?? ''}`;
-      }
+      query.hr_prompt = `${beforePrompt ?? ''},${upscalingPrompt ?? query.prompt ?? ''},${afterPrompt ?? ''}`;
     }
 
     if (outDir) {
@@ -969,7 +992,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
           (query.adetailer as IAdetailer[]).push(adetailerQuery);
         } else {
-          logger(`Invalid Adetailer model ${adetailer.model}`);
+          loggerInfo(`Invalid Adetailer model ${adetailer.model}`);
           process.exit(ExitCodes.PROMPT_INVALID_ADETAILER_MODEL);
         }
       });
@@ -996,7 +1019,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       if (modelCheckpoint) {
         query.override_settings.sd_model_checkpoint = modelCheckpoint.name;
       } else {
-        logger(`Invalid checkpoints ${checkpoints}`);
+        loggerInfo(`Invalid checkpoints ${checkpoints}`);
         process.exit(ExitCodes.PROMPT_INVALID_CHECKPOINT);
       }
     }
@@ -1029,7 +1052,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       if (matches) {
         matches.forEach((match) => {
           if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
-            logger(`Invalid pattern token ${match}`);
+            loggerInfo(`Invalid pattern token ${match}`);
             process.exit(ExitCodes.PROMPT_INVALID_PATTERN_TOKEN);
           }
         });
@@ -1044,6 +1067,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       }
 
       // Alias to official tokens
+
       updateFilename(query, 'cfg', '[cfg]');
       updateFilename(query, 'checkpoint', '[model_name]');
       updateFilename(query, 'clipSkip', '[clip_skip]');
@@ -1052,41 +1076,15 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       updateFilename(query, 'steps', '[steps]');
       updateFilename(query, 'width', '[width]');
 
-      if (autoCutOff !== undefined) {
-        updateFilename(query, 'cutOff', autoCutOff.toString());
-      }
-
-      if (denoising) {
-        updateFilename(query, 'denoising', denoising.toFixed(2));
-      }
-
-      if (enableHighRes !== undefined) {
-        updateFilename(query, 'highRes', enableHighRes.toString());
-      }
-
-      if (restoreFaces !== undefined) {
-        updateFilename(query, 'restoreFaces', restoreFaces.toString());
-      }
-
-      if (sampler !== undefined) {
-        updateFilename(query, 'sampler', sampler.toString());
-      }
-
-      if (scaleFactor) {
-        updateFilename(query, 'scaleFactor', scaleFactor.toFixed(0));
-      }
-
-      if (tiling !== undefined) {
-        updateFilename(query, 'tiling', tiling.toString());
-      }
-
-      if (upscaler !== undefined) {
-        updateFilename(query, 'upscaler', upscaler.toString());
-      }
-
-      if (vae !== undefined) {
-        updateFilename(query, 'vae', vae.toString());
-      }
+      updateFilename(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
+      updateFilename(query, 'denoising', denoising?.toFixed(2) ?? '');
+      updateFilename(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateFilename(query, 'restoreFaces', restoreFaces !== undefined ? restoreFaces.toString() : '');
+      updateFilename(query, 'sampler', sampler !== undefined ? sampler.toString() : '');
+      updateFilename(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
+      updateFilename(query, 'tiling', tiling !== undefined ? tiling.toString() : '');
+      updateFilename(query, 'upscaler', upscaler !== undefined ? upscaler.toString() : '');
+      updateFilename(query, 'vae', vae !== undefined ? vae.toString() : '');
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
@@ -1123,7 +1121,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
             }
           }
         } else {
-          logger(`Invalid Style ${styleName}`);
+          loggerInfo(`Invalid Style ${styleName}`);
           process.exit(ExitCodes.PROMPT_INVALID_STYLE);
         }
       });
@@ -1138,9 +1136,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 export const prompts = async (config: IPromptsResolved, validateOnly: boolean) => {
   const queries = preparePrompts(config);
 
-  logger(`Your configuration seems valid. ${queries.length} queries has been generated.`);
+  loggerInfo(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {
-    writeLog(queries);
+    writeLog({ queries }, true);
     process.exit(0);
   }
 

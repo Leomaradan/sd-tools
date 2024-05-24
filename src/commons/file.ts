@@ -8,7 +8,7 @@ import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
 import { Cache } from './config';
-import { logger } from './logger';
+import {  loggerInfo, loggerVerbose } from './logger';
 import { type CacheMetadata, type ICivitAIInfoFile, type IMetadata, type IMetadataCheckpoint, type IMetadataLora, Version } from './types';
 
 const CIVITAI_FILE = '.civitai.info'
@@ -51,7 +51,7 @@ const readFile = (path: string, noCache?: boolean): string[] | undefined => {
       };
     }
   } catch (error) {
-    logger(String(error));
+    loggerInfo(String(error));
   } finally {
     if (!noCache) {
       Cache.set('imageData', cacheImageData);
@@ -83,7 +83,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
     const prefix = recursive ? path.relative(root, sourcepath).split(path.sep).join(', ') : undefined;
 
     if (file.endsWith('.png')) {
-      logger(`Read ${file}`);
+      loggerVerbose(`Read ${file}`);
       const filename = path.resolve(sourcepath, file);
       const data = readFile(filename, noCache);
       const sizes = sizeOf(filename);
@@ -102,7 +102,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
     }
 
     if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
-      logger(`Read ${file}`);
+      loggerVerbose(`Read ${file}`);
       const filename = path.resolve(sourcepath, file);
       const sizes = sizeOf(filename);
       const date = fs.statSync(filename).birthtime.toISOString();
@@ -120,7 +120,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
     }
   });
 
-  logger(`Read ${result.length} files`);
+  loggerVerbose(`Read ${result.length} files`);
 
   return result;
 };
@@ -269,11 +269,11 @@ export const getImageSize = (url: string) => {
 
 /*export const getMetadataAutomatic1111 = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {
   if (!url.endsWith('.json')) {
-    logger(`Invalid metadata file : ${url}`);
+    loggerInfo(`Invalid metadata file : ${url}`);
   }
 
   if (!fs.existsSync(url)) {
-    logger(`File does not exists : ${url}`);
+    loggerInfo(`File does not exists : ${url}`);
     return;
   }
 
@@ -312,9 +312,9 @@ export const getImageSize = (url: string) => {
     return [cacheMetadata, result];
   } catch (error: unknown) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url} : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url} : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url} : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url} : ${error}`);
     }
   }
 
@@ -385,9 +385,9 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
     return result;
   } catch (error: unknown) {
     if (error instanceof Error) {
-      logger(`Error while parsing metadata : ${error.message}`);
+      loggerInfo(`Error while parsing metadata : ${error.message}`);
     } else {
-      logger(`Error while parsing metadata : ${error}`);
+      loggerInfo(`Error while parsing metadata : ${error}`);
     }
   }
 
@@ -396,11 +396,11 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
 
 export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {
   if (!url.endsWith(CIVITAI_FILE)) {
-    logger(`Invalid metadata file : ${url}`);
+    loggerInfo(`Invalid metadata file : ${url}`);
   }
 
   if (!fs.existsSync(url)) {
-    logger(`File does not exists : ${url}`);
+    loggerInfo(`File does not exists : ${url}`);
     return;
   }
 
@@ -429,9 +429,9 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
     return [cacheMetadata, result];
   } catch (error: unknown) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url} from CivitAI Info File : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url} from CivitAI Info File : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url} from CivitAI Info File : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url} from CivitAI Info File : ${error}`);
     }
   }
 
@@ -443,7 +443,7 @@ export const getMetadataCivitAiRest = async (
   url: string
 ): Promise<[CacheMetadata, IMetadata] | false | undefined> => {
   if (!fs.existsSync(url)) {
-    logger(`File does not exists : ${url}`);
+    loggerInfo(`File does not exists : ${url}`);
     return;
   }
 
@@ -452,10 +452,10 @@ export const getMetadataCivitAiRest = async (
   try {
     // Calculate the hash of the file
     // Calling the REST API
-    logger(`Calculating hash for file ${url}`);
+    loggerVerbose(`Calculating hash for file ${url}`);
     const hash = await getHash(url);
 
-    logger(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
+    loggerVerbose(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
     const response = await axios.get<ICivitAIInfoFile>(`https://civitai.com/api/v1/model-versions/by-hash/${hash}`);
 
     const metadata = response.data;
@@ -483,12 +483,12 @@ export const getMetadataCivitAiRest = async (
     return [cacheMetadata, result];
   } catch (error: unknown) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url} with CivitAI Rest API : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error.message}`);
       if(error.message.includes('404')) {
         return false;
       }
     } else {
-      logger(`Error while reading metadata for ${url} with CivitAI Rest API : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error}`);
     }
   }
 
@@ -536,9 +536,9 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      logger(`Error while reading metadata for ${url} : ${error.message}`);
+      loggerInfo(`Error while reading metadata for ${url} : ${error.message}`);
     } else {
-      logger(`Error while reading metadata for ${url} : ${error}`);
+      loggerInfo(`Error while reading metadata for ${url} : ${error}`);
     }
   }
 
