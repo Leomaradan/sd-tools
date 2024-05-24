@@ -32000,6 +32000,36 @@ var writeLog = (data, force = false) => {
   }
 };
 
+// src/commons/extensions/controlNet.ts
+var normalizeControlNetResizes = (input) => {
+  switch (input) {
+    case "Resize and Fill" /* Envelope */:
+    case 2 /* Envelope */:
+      return "Resize and Fill" /* Envelope */;
+    case "Crop and Resize" /* ScaleToFit */:
+    case 1 /* ScaleToFit */:
+      return "Crop and Resize" /* ScaleToFit */;
+    case "Just Resize" /* Resize */:
+    case 0 /* Resize */:
+    default:
+      return "Just Resize" /* Resize */;
+  }
+};
+var normalizeControlNetMode = (input) => {
+  switch (input) {
+    case "ControlNet is more important" /* ControleNetImportant */:
+    case 2 /* ControleNetImportant */:
+      return "ControlNet is more important" /* ControleNetImportant */;
+    case "My prompt is more important" /* PromptImportant */:
+    case 1 /* PromptImportant */:
+      return "My prompt is more important" /* PromptImportant */;
+    case "Balanced" /* Balanced */:
+    case 0 /* Balanced */:
+    default:
+      return "Balanced" /* Balanced */;
+  }
+};
+
 // src/commons/extensions/cutoff.ts
 var getCutOffTokens = (prompt) => {
   let tokens = prompt.split(/,|BREAK|SEP|SKIP/i);
@@ -33257,8 +33287,15 @@ var getConfigAutoAdetailers = () => {
 var getConfigAutoControlnetPoses = () => {
   const autoControlnetPose = Config.get("autoControlnetPose");
   const list = autoControlnetPose.map((item) => {
-    const { pose, trigger } = item;
-    return `!pose:${trigger}: ${pose}`;
+    const { afterPrompt, beforePrompt, pose, trigger } = item;
+    let text2 = `!pose:${trigger}: ${pose}`;
+    if (beforePrompt) {
+      text2 += ` | Before Prompt: "${beforePrompt}"`;
+    }
+    if (afterPrompt) {
+      text2 += ` | After Prompt: "${afterPrompt}"`;
+    }
+    return text2;
   });
   loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);
 };
@@ -34626,12 +34663,15 @@ var preparePrompts = (config2) => {
           loggerInfo(`Invalid ControlNet model ${controlNetPrompt.model}`);
           process.exit(47 /* PROMPT_INVALID_CONTROLNET_MODEL */);
         }
-        query.controlNet?.push({
-          control_mode: controlNetPrompt.control_mode ?? 0 /* Balanced */,
+        if (!query.controlNet) {
+          query.controlNet = [];
+        }
+        query.controlNet.push({
+          control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? "Balanced" /* Balanced */),
           input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : void 0,
           model: controlNetModel.name,
           module: controlNetModule,
-          resize_mode: controlNetPrompt.resize_mode ?? 2 /* Envelope */
+          resize_mode: normalizeControlNetResizes(controlNetPrompt.resize_mode ?? "Resize and Fill" /* Envelope */)
         });
       });
     }
@@ -34650,12 +34690,15 @@ var preparePrompts = (config2) => {
       if (!findExistingPose) {
         const model = (checkpoint?.version === "sdxl" ? findControlnetModel("xl_openpose", "xl_dw_openpose") : findControlnetModel("sd15_openpose"))?.name;
         if (model) {
+          if (pose.beforePrompt || pose.afterPrompt) {
+            query.prompt = `${pose.beforePrompt ?? ""},${query.prompt},${pose.afterPrompt ?? ""}`;
+          }
           query.controlNet.push({
-            control_mode: 0 /* Balanced */,
+            control_mode: "Balanced" /* Balanced */,
             input_image: getBase64Image(pose.pose),
             model,
             module: "none",
-            resize_mode: 2 /* Envelope */
+            resize_mode: "Resize and Fill" /* Envelope */
           });
         }
       }
@@ -34735,19 +34778,26 @@ var preparePrompts = (config2) => {
         }
       });
     }
-    autoAdetailers.forEach((autoAdetailer) => {
-      const trigger = `!ad:${autoAdetailer.trigger}`;
-      if (query.prompt.includes(trigger)) {
-        if (query.adetailer === void 0) {
-          query.adetailer = [];
+    const allAdTriggers = query.prompt.match(/!ad:([a-z0-9]+)/gi);
+    const globalAdTriggers = query.prompt.match(/!ad( |,|$)/gi);
+    if (allAdTriggers) {
+      query.prompt = query.prompt.replace(/!ad:([a-z0-9]+)/gi, "");
+      autoAdetailers.forEach((autoAdetailer) => {
+        const trigger = `!ad:${autoAdetailer.trigger}`;
+        if (allAdTriggers.includes(trigger) || globalAdTriggers) {
+          if (query.adetailer === void 0) {
+            query.adetailer = [];
+          }
+          const existing = query.adetailer.find((adetailer2) => adetailer2.ad_model === autoAdetailer.ad_model);
+          if (!existing) {
+            query.adetailer.push(autoAdetailer);
+          }
         }
-        const existing = query.adetailer.find((adetailer2) => adetailer2.ad_model === autoAdetailer.ad_model);
-        if (!existing) {
-          query.adetailer.push(autoAdetailer);
-        }
-        query.prompt = query.prompt.replace(trigger, "");
-      }
-    });
+      });
+    }
+    if (globalAdTriggers) {
+      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, "");
+    }
     if (checkpoints && typeof checkpoints === "string") {
       const modelCheckpoint = findCheckpoint(checkpoints);
       if (modelCheckpoint) {
@@ -34884,24 +34934,6 @@ var queue_default = {
     }
   ],
   definitions: {
-    ControlNetMode: {
-      enum: [
-        0,
-        2,
-        1
-      ],
-      title: "ControlNetMode",
-      type: "number"
-    },
-    ControlNetResizes: {
-      enum: [
-        2,
-        0,
-        1
-      ],
-      title: "ControlNetResizes",
-      type: "number"
-    },
     IAdetailerPrompt: {
       additionalProperties: false,
       properties: {
@@ -34982,7 +35014,14 @@ var queue_default = {
       additionalProperties: false,
       properties: {
         control_mode: {
-          $ref: "#/definitions/ControlNetMode",
+          enum: [
+            0,
+            1,
+            2,
+            "Balanced",
+            "ControlNet is more important",
+            "My prompt is more important"
+          ],
           title: "control_mode"
         },
         input_image: {
@@ -35006,7 +35045,14 @@ var queue_default = {
           type: "boolean"
         },
         resize_mode: {
-          $ref: "#/definitions/ControlNetResizes",
+          enum: [
+            0,
+            1,
+            2,
+            "Crop and Resize",
+            "Just Resize",
+            "Resize and Fill"
+          ],
           title: "resize_mode"
         }
       },
@@ -36478,10 +36524,10 @@ var getControlNetLineart = (sdxl, style) => {
   const controlnetModule = style === "anime" ? findControlnetModule("lineart_anime", "lineart") : findControlnetModule("lineart_realistic", "lineart");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 2 /* ControleNetImportant */,
+      control_mode: "ControlNet is more important" /* ControleNetImportant */,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -36504,11 +36550,11 @@ var getControlNetOpenPose = (sdxl, style, input_image) => {
   const controlnetModule = sdxl ? findControlnetModule("dw_openpose_full") : findControlnetModule("openpose_full", "openpose");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 1 /* PromptImportant */,
+      control_mode: "My prompt is more important" /* PromptImportant */,
       input_image: input_image ? getBase64Image(input_image.filename) : void 0,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -36523,11 +36569,11 @@ var getControlNetIPAdapter = (sdxl, file) => {
   const controlnetModule = sdxl ? findControlnetModule("ip-adapter_clip_sdxl_plus_vith", "adapter_clip_sdxl") : findControlnetModule("ip-adapter_clip_sd15");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 2 /* ControleNetImportant */,
+      control_mode: "ControlNet is more important" /* ControleNetImportant */,
       input_image: getBase64Image(file.filename),
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -37192,10 +37238,10 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
       query.ultimateSdUpscale = true;
       query.controlNet = [
         {
-          control_mode: 2 /* ControleNetImportant */,
+          control_mode: "ControlNet is more important" /* ControleNetImportant */,
           model: findControlnetModel("tile")?.name,
           module: findControlnetModule("tile_resample"),
-          resize_mode: 0 /* Resize */
+          resize_mode: "Just Resize" /* Resize */
         }
       ];
       query.width = file.width;

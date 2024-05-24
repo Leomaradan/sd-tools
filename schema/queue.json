@@ -12,24 +12,6 @@
         }
     ],
     "definitions": {
-        "ControlNetMode": {
-            "enum": [
-                0,
-                2,
-                1
-            ],
-            "title": "ControlNetMode",
-            "type": "number"
-        },
-        "ControlNetResizes": {
-            "enum": [
-                2,
-                0,
-                1
-            ],
-            "title": "ControlNetResizes",
-            "type": "number"
-        },
         "IAdetailerPrompt": {
             "additionalProperties": false,
             "properties": {
@@ -110,7 +92,14 @@
             "additionalProperties": false,
             "properties": {
                 "control_mode": {
-                    "$ref": "#/definitions/ControlNetMode",
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        "Balanced",
+                        "ControlNet is more important",
+                        "My prompt is more important"
+                    ],
                     "title": "control_mode"
                 },
                 "input_image": {
@@ -134,7 +123,14 @@
                     "type": "boolean"
                 },
                 "resize_mode": {
-                    "$ref": "#/definitions/ControlNetResizes",
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        "Crop and Resize",
+                        "Just Resize",
+                        "Resize and Fill"
+                    ],
                     "title": "resize_mode"
                 }
             },

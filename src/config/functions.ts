@@ -1,5 +1,5 @@
 import { Config } from '../commons/config';
-import {  loggerInfo } from '../commons/logger';
+import { loggerInfo } from '../commons/logger';
 import { BaseUpscalers } from '../commons/models';
 
 export type ReadonlyOptions =
@@ -134,8 +134,18 @@ export const getConfigAutoControlnetPoses = () => {
   const autoControlnetPose = Config.get('autoControlnetPose');
 
   const list = autoControlnetPose.map((item) => {
-    const { pose, trigger } = item;
-    return `!pose:${trigger}: ${pose}`;
+    const { afterPrompt, beforePrompt, pose, trigger } = item;
+    let text = `!pose:${trigger}: ${pose}`;
+
+    if (beforePrompt) {
+      text += ` | Before Prompt: "${beforePrompt}"`;
+    }
+
+    if (afterPrompt) {
+      text += ` | After Prompt: "${afterPrompt}"`;
+    }
+
+    return text;
   });
 
   loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);

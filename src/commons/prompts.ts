@@ -7,12 +7,14 @@ import { type IAdetailer } from './extensions/adetailer';
 import { getCutOffTokens } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
-import { ExitCodes,  loggerInfo, writeLog } from './logger';
+import { ExitCodes, loggerInfo, writeLog } from './logger';
 import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
 import { isTxt2ImgQuery, renderQuery } from './query';
 import {
   ControlNetMode,
   ControlNetResizes,
+  normalizeControlNetMode,
+  normalizeControlNetResizes,
   type ICheckpointWithVAE,
   type IControlNet,
   type IImg2ImgQuery,
@@ -865,12 +867,16 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODEL);
         }
 
-        query.controlNet?.push({
-          control_mode: controlNetPrompt.control_mode ?? ControlNetMode.Balanced,
+        if (!query.controlNet) {
+          query.controlNet = [];
+        }
+
+        query.controlNet.push({
+          control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? ControlNetMode.Balanced),
           input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : undefined,
           model: controlNetModel.name,
           module: controlNetModule,
-          resize_mode: controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope
+          resize_mode: normalizeControlNetResizes(controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope)
         });
       });
     }
@@ -898,6 +904,10 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         )?.name;
 
         if (model) {
+          if (pose.beforePrompt || pose.afterPrompt) {
+            query.prompt = `${pose.beforePrompt ?? ''},${query.prompt},${pose.afterPrompt ?? ''}`;
+          }
+
           query.controlNet.push({
             control_mode: ControlNetMode.Balanced,
             input_image: getBase64Image(pose.pose),
@@ -998,21 +1008,29 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       });
     }
 
-    autoAdetailers.forEach((autoAdetailer) => {
-      const trigger = `!ad:${autoAdetailer.trigger}`;
-      if (query.prompt.includes(trigger)) {
-        if (query.adetailer === undefined) {
-          query.adetailer = [];
-        }
+    const allAdTriggers = query.prompt.match(/!ad:([a-z0-9]+)/gi);
+    const globalAdTriggers = query.prompt.match(/!ad( |,|$)/gi);
 
-        const existing = query.adetailer.find((adetailer) => adetailer.ad_model === autoAdetailer.ad_model);
-        if (!existing) {
-          query.adetailer.push(autoAdetailer);
-        }
+    if (allAdTriggers) {
+      query.prompt = query.prompt.replace(/!ad:([a-z0-9]+)/gi, '');
+      autoAdetailers.forEach((autoAdetailer) => {
+        const trigger = `!ad:${autoAdetailer.trigger}`;
+        if (allAdTriggers.includes(trigger) || globalAdTriggers) {
+          if (query.adetailer === undefined) {
+            query.adetailer = [];
+          }
 
-        query.prompt = query.prompt.replace(trigger, '');
-      }
-    });
+          const existing = query.adetailer.find((adetailer) => adetailer.ad_model === autoAdetailer.ad_model);
+          if (!existing) {
+            query.adetailer.push(autoAdetailer);
+          }
+        }
+      });
+    }
+
+    if (globalAdTriggers) {
+      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, '');
+    }
 
     if (checkpoints && typeof checkpoints === 'string') {
       const modelCheckpoint = findCheckpoint(checkpoints);
