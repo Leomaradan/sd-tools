@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 
-import { Config } from '../commons/config.js';
-import { ExitCodes,  loggerInfo } from '../commons/logger.js';
+import { Config } from '../commons/config';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import {
   type Options,
   getConfigAddDetailerModels,
@@ -29,7 +29,7 @@ import {
   getConfigUpscalers,
   getConfigVAE,
   getConfigVersion
-} from './functions.js';
+} from './functions';
 
 export const options: { description: string; option: Options }[] = [
   { description: 'List of Add Details models, if existing', option: 'adetailers-models' },

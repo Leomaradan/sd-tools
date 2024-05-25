@@ -1,26 +1,25 @@
 import yargs from 'yargs';
 
-import { Config, getParamBoolean } from '../commons/config.js';
-import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler.js';
-import { ExitCodes,  loggerInfo, loggerVerbose } from '../commons/logger.js';
-import { findCheckpoint, findLORA } from '../commons/models.js';
+import { Config } from '../commons/config';
+import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import {
   type EditableOptions,
-  getConfigAutoLCM,
-  getConfigAutoTiledDiffusion,
-  getConfigAutoTiledVAE,
-  getConfigCommonNegative,
-  getConfigCommonNegativeXL,
-  getConfigCommonPositive,
-  getConfigCommonPositiveXL,
-  getConfigCutoff,
-  getConfigCutoffTokens,
-  getConfigCutoffWeight,
-  getConfigEndpoint,
-  getConfigLCM,
-  getConfigRedrawModels,
-  getConfigScheduler
-} from './functions.js';
+  setConfigAutoCutoff,
+  setConfigAutoLCM,
+  setConfigAutoTiledDiffusion,
+  setConfigAutoTiledVAE,
+  setConfigCommonNegative,
+  setConfigCommonNegativeXL,
+  setConfigCommonPositive,
+  setConfigCommonPositiveXL,
+  setConfigCutoffTokens,
+  setConfigCutoffWeight,
+  setConfigEndpoint,
+  setConfigLCMCommandLine,
+  setConfigRedrawModelsCommandLine,
+  setConfigScheduler
+} from './functions';
 
 interface ISetConfig {
   config: EditableOptions;
@@ -149,218 +148,51 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
   switch (config) {
     case 'auto-lcm':
-      {
-        const lcm = Config.get('lcm');
-        lcm.auto = getParamBoolean(value);
-        Config.set('lcm', lcm);
-        getConfigAutoLCM();
-      }
+      setConfigAutoLCM(value);
+
       break;
     case 'auto-tiled-diffusion':
-      if (!Config.get('extensions').includes('tiled diffusion')) {
-        loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        loggerVerbose('MultiDiffusion Upscaler extension url: https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111.git')
-        process.exit(ExitCodes.CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED);
-      }
-
-      if (!value || (value as string) === 'false') {
-        Config.set('autoTiledDiffusion', false);
-      } else if (![TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value)) {
-        loggerInfo(
-          `Value for ${config} must be either "${TiledDiffusionMethods.MixtureOfDiffusers}" or "${TiledDiffusionMethods.MultiDiffusion}"`
-        );
-        process.exit(ExitCodes.CONFIG_SET_INVALID_MULTIDIFFUSION);
-      } else {
-        Config.set('autoTiledDiffusion', value);
-      }
-
-      Config.set('autoTiledDiffusion', (value as string) === 'false' ? false : value);
-      getConfigAutoTiledDiffusion();
+      setConfigAutoTiledDiffusion(value);
       break;
     case 'auto-tiled-vae':
-      if (!Config.get('extensions').includes('tiled vae')) {
-        loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        loggerVerbose('MultiDiffusion Upscaler extension url: https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111.git')
-        process.exit(ExitCodes.CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED);
-      }
-
-      Config.set('autoTiledVAE', getParamBoolean(value));
-      getConfigAutoTiledVAE();
+      setConfigAutoTiledVAE(value);
       break;
     case 'common-negative':
-      Config.set('commonNegative', value);
-      getConfigCommonNegative();
+      setConfigCommonNegative(value);
       break;
     case 'common-negative-xl':
-      Config.set('commonNegativeXL', value);
-      getConfigCommonNegativeXL();
+      setConfigCommonNegativeXL(value);
       break;
     case 'common-positive':
-      Config.set('commonPositive', value);
-      getConfigCommonPositive();
+      setConfigCommonPositive(value);
       break;
     case 'common-positive-xl':
-      Config.set('commonPositiveXL', value);
-      getConfigCommonPositiveXL();
+      setConfigCommonPositiveXL(value);
       break;
     case 'auto-cutoff':
-      if (!Config.get('extensions').includes('cutoff')) {
-        loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-        loggerVerbose('Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff')
-        process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
-      }
-
-      Config.set('cutoff', getParamBoolean(value));
-      getConfigCutoff();
+      setConfigAutoCutoff(value);
       break;
 
     case 'cutoff-tokens':
-      {
-        let valueArray = value;
-        if (!Array.isArray(value)) {
-          valueArray = (value as string).split(',');
-        }
-
-        if (valueArray.some((val) => typeof val !== 'string')) {
-          loggerInfo(`Value for ${config} must be a array of string`);
-          process.exit(ExitCodes.CONFIG_SET_CUTOFF_INVALID_TOKEN);
-        }
-
-        if (!Config.get('extensions').includes('cutoff')) {
-          loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          loggerVerbose('Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff')
-          process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
-        }
-
-        Config.set('cutoffTokens', Array.from(new Set(valueArray)));
-        getConfigCutoffTokens();
-      }
+      setConfigCutoffTokens(value);
       break;
     case 'cutoff-weight':
-      {
-        const valueNumber = Number(value);
-        if (typeof valueNumber !== 'number' || isNaN(valueNumber)) {
-          loggerInfo(`Value for ${config} must be a number`);
-          process.exit(ExitCodes.CONFIG_SET_CUTOFF_INVALID_WEIGHT);
-        }
-
-        if (!Config.get('extensions').includes('cutoff')) {
-          loggerInfo(`Cutoff extension must be installed. Re-Run "sd-tools init" after installing it`);
-          loggerVerbose('Cutoff extension url: https://github.com/hnmr293/sd-webui-cutoff')
-          process.exit(ExitCodes.CONFIG_SET_NO_CUTOFF_INSTALLED);
-        }
-
-        Config.set('cutoffWeight', valueNumber);
-        getConfigCutoffWeight();
-      }
+      setConfigCutoffWeight(value);
       break;
     case 'endpoint':
-      Config.set('endpoint', value);
-      getConfigEndpoint();
+      setConfigEndpoint(value);
       break;
 
     case 'lcm':
-      {
-        let valueArray = value;
-        if (!Array.isArray(value)) {
-          valueArray = (value as string).split(',');
-        }
-
-        if (
-          valueArray.some((val) => {
-            if (val.indexOf(':') === -1) {
-              return true;
-            }
-
-            const [category, lora] = val.split(':');
-
-            if (!['sd15', 'sdxl'].includes(category.toLowerCase())) {
-              loggerInfo(`Category for ${config} is invalid`);
-              return true;
-            }
-
-            const foundLora = findLORA(lora);
-
-            return !foundLora;
-          })
-        ) {
-          loggerInfo(`Value for ${config} contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
-          process.exit(ExitCodes.CONFIG_SET_LCM_INVALID_TOKEN);
-        }
-
-        const lcm = Config.get('lcm');
-
-        valueArray.forEach((keyValue) => {
-          const [category, model] = keyValue.split(':');
-
-          const foundModel = findLORA(model);
-          if (category.toLowerCase() === 'sdxl') {
-            lcm.sdxl = foundModel?.name;
-          } else {
-            lcm.sd15 = foundModel?.name;
-          }
-        });
-
-        Config.set('lcm', lcm);
-        getConfigLCM();
-      }
+      setConfigLCMCommandLine(value);
       break;
 
     case 'redraw-models':
-      {
-        let valueArray = value;
-        if (!Array.isArray(value)) {
-          valueArray = (value as string).split(',');
-        }
-        if (
-          valueArray.some((val) => {
-            if (val.indexOf(':') === -1) {
-              return true;
-            }
-
-            const [category, model] = val.split(':');
-
-            if (!['anime15', 'animexl', 'realist15', 'realistxl'].includes(category.toLocaleLowerCase())) {
-              loggerInfo(`Category for ${config} is invalid`);
-              return true;
-            }
-
-            const foundModel = findCheckpoint(model);
-
-            return !foundModel;
-          })
-        ) {
-          loggerInfo(
-            `Value for ${config} contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:" or "animeXL:" followed by a valid model name`
-          );
-          process.exit(ExitCodes.CONFIG_SET_REDRAW_INVALID_MODELS);
-        }
-
-        const redrawModels = Config.get('redrawModels');
-
-        valueArray.forEach((keyValue) => {
-          const [category, model] = keyValue.split(':');
-
-          const foundModel = findCheckpoint(model);
-          if (foundModel) {
-            redrawModels[category.toLowerCase() as keyof typeof redrawModels] = foundModel.name;
-          }
-        });
-
-        Config.set('redrawModels', redrawModels);
-        getConfigRedrawModels();
-      }
+      setConfigRedrawModelsCommandLine(value);
       break;
 
     case 'scheduler':
-      if (!Config.get('extensions').includes('scheduler')) {
-        loggerInfo(`Agent Scheduler extension must be installed. Re-Run "sd-tools init" after installing it`);
-        loggerVerbose('Agent Scheduler extension url: https://github.com/ArtVentureX/sd-webui-agent-scheduler.git');
-        process.exit(ExitCodes.CONFIG_SET_NO_AGENT_INSTALLED);
-      }
-
-      Config.set('scheduler', getParamBoolean(value));
-      getConfigScheduler();
+      setConfigScheduler(value);
       break;
     default:
       break;
