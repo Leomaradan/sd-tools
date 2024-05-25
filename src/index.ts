@@ -4,6 +4,7 @@ import { Config } from './commons/config';
 import * as configGet from './config/configGet';
 import * as configSet from './config/configSet';
 import * as init from './config/init';
+import * as wizard from './config/wizard';
 import * as extract from './extract';
 import * as queue from './queue';
 import * as redraw from './redraw';
@@ -16,6 +17,7 @@ const argv = process.argv.slice(2);
 Config.migrate().then(() => {
   yargs(argv)
     .command(init)
+    .command(wizard)
     .command(configSet)
     .command(configGet)
     .command(queue)

@@ -19,3 +19,5 @@ export const getCutOffTokens = (prompt: string): string[] => {
     });
   });
 };
+
+export const CUTOFF_URL = 'https://github.com/hnmr293/sd-webui-cutoff';

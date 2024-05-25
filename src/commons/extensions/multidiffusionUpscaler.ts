@@ -75,3 +75,5 @@ def process(self, p: Processing,
             *bbox_control_states: List[Any],
         ):
 */
+
+export const MULTIDIFFUSION_URL = 'https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111.git';

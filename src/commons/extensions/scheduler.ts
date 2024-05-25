@@ -1,0 +1,1 @@
+export const SCHEDULER_URL = 'https://github.com/ArtVentureX/sd-webui-agent-scheduler.git';
