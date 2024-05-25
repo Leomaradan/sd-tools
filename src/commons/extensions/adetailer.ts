@@ -7,3 +7,5 @@ export interface IAdetailer {
   ad_prompt?: string;
   ad_use_inpaint_width_height?: boolean; // false;
 }
+
+export const ADTAILER_URL = 'https://github.com/Bing-su/adetailer.git';

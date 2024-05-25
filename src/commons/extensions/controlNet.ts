@@ -1065,3 +1065,6 @@ export interface IControlNetQuery {
 }
 
 export const checkControlNet = (model: string, moduleName: ControlNetModules, version: MetadataVersionKey) => {};
+
+
+export const CONTROLNET_URL = 'https://github.com/Mikubill/sd-webui-controlnet.git';

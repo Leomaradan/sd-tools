@@ -45,3 +45,5 @@ export type UltimateSDUpscaleArgs = [
   number, // custom_height
   number // custom_scale
 ];
+
+export const ULTIMATESDUPSCALE_URL = 'https://github.com/Coyote-A/ultimate-upscale-for-automatic1111.git';
