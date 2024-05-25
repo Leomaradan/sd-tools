@@ -2,7 +2,9 @@ class Configstore {
   store = {};
   constructor(_name) {
     this.store = {
-      adetailersCustomModels: [],
+      adetailersModels: [],
+      autoAdetailers: [],
+      autoControlnetPose: [],
       autoTiledDiffusion: false,
       autoTiledVAE: false,
       cacheMetadata: {},
@@ -10,7 +12,7 @@ class Configstore {
       commonNegativeXL: '',
       commonPositive: '',
       commonPositiveXL: '',
-      configVersion: '1',
+      configVersion: 3,
       controlnetModels: [],
       controlnetModules: [],
       cutoff: false,
@@ -41,7 +43,7 @@ class Configstore {
         }
       ],
       redrawModels: {},
-      samplers: [{ name: 'DPM++ 2M' }, { aliases: ['Euler a'], name: 'euler test' }, { name: 'LCM' }, { name: 'DPM++ SDE'}],
+      samplers: [{ name: 'DPM++ 2M' }, { aliases: ['Euler a'], name: 'euler test' }, { name: 'LCM' }, { name: 'DPM++ SDE' }],
       scheduler: false,
       styles: [],
       upscalers: [
