@@ -1,4 +1,7 @@
 import { Separator, confirm, input, select } from '@inquirer/prompts';
+import { existsSync } from 'fs';
+
+import type { IAutoAdetailer, IAutoControlnetPose } from '../commons/types';
 
 import { Config } from '../commons/config';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
@@ -30,25 +33,7 @@ interface IWizardOptions {
 }
 
 export const wizardOptions: Array<IWizardOptions | Separator> = [
-  {
-    callback: async () => {
-      const prompt = Config.get('endpoint');
-      const response = await input({
-        default: prompt,
-        message: 'New Endpoint URL',
-        validate: (value) => {
-          if (value.startsWith('http://') || value.startsWith('https://')) {
-            return true;
-          }
-          return 'Please enter a valid URL';
-        }
-      });
-      setConfigEndpoint(response);
-    },
-    description: 'Set endpoint',
-    name: 'Endpoint URL',
-    value: 'endpoint'
-  },
+  new Separator('Basic options'),
   {
     callback: async () => {
       const prompt = Config.get('commonPositive');
@@ -89,7 +74,7 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Common Negative XL',
     value: 'common-negative-xl'
   },
-  new Separator(),
+  new Separator('Select models'),
   {
     callback: async () => {
       const redrawModels = Config.get('redrawModels');
@@ -161,17 +146,26 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'LCM Models',
     value: 'lcm'
   },
+  new Separator('Execution options'),
   {
     callback: async () => {
-      const lcm = Config.get('lcm');
-      const response = await confirm({ default: lcm.auto, message: 'Activate Auto-LCM ?' });
-      setConfigAutoLCM(response);
+      const prompt = Config.get('endpoint');
+      const response = await input({
+        default: prompt,
+        message: 'New Endpoint URL',
+        validate: (value) => {
+          if (value.startsWith('http://') || value.startsWith('https://')) {
+            return true;
+          }
+          return 'Please enter a valid URL';
+        }
+      });
+      setConfigEndpoint(response);
     },
-    description: 'Enable or disable auto lcm',
-    name: 'Auto LCM',
-    value: 'auto-lcm'
+    description: 'Set endpoint',
+    name: 'Endpoint URL',
+    value: 'endpoint'
   },
-  new Separator(),
   {
     callback: async () => {
       const scheduler = Config.get('scheduler');
@@ -182,7 +176,202 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Agent Scheduler',
     value: 'scheduler'
   },
-  new Separator(),
+  new Separator('Automatic actions'),
+  {
+    callback: async () => {
+      const lcm = Config.get('lcm');
+      const response = await confirm({ default: lcm.auto, message: 'Activate Auto-LCM ?' });
+      setConfigAutoLCM(response);
+    },
+    description: 'Enable or disable auto lcm',
+    name: 'Auto LCM',
+    value: 'auto-lcm'
+  },
+  {
+    callback: async () => {
+      const actionType = await select({
+        choices: [
+          { name: 'Add a trigger', value: 'add' },
+          { name: 'Remove a trigger', value: 'remove' }
+        ],
+        message: 'Select action type'
+      });
+
+      if (actionType === 'add') {
+        const adetailersModels = Config.get('adetailersModels');
+        const autoAdetailers = Config.get('autoAdetailers');
+
+        const triggerName = await input({
+          message: 'Enter trigger',
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return 'Trigger must be a string with only letters, numbers, dash and underscore';
+            }
+
+            const found = autoAdetailers.find((model) => model.trigger === value);
+
+            if (found) {
+              return 'Trigger already exists';
+            }
+
+            return true;
+          }
+        });
+
+        if (!triggerName) {
+          return;
+        }
+
+        const usableModels = adetailersModels.filter((model) => !autoAdetailers.some((autoModel) => autoModel.ad_model === model));
+
+        const triggerModel = await select({
+          choices: [{ name: '(Cancel)', value: '-' }, new Separator(), ...usableModels.map((model) => ({ value: model }))],
+          message: 'Select model to trigger'
+        });
+
+        if (triggerName === '-') {
+          return;
+        }
+
+        const prompt = await input({ message: 'Enter optional prompt. Leave empty to skip' });
+        const negativePrompt = await input({ message: 'Enter optional negative prompt. Leave empty to skip' });
+        const denoisingStrength = await input({ message: 'Enter optional denoising strength. Leave empty to skip' });
+
+        const newAutoAdetailers: IAutoAdetailer = {
+          ad_denoising_strength: denoisingStrength ? Number(denoisingStrength) : undefined,
+          ad_model: triggerModel,
+          ad_negative_prompt: negativePrompt !== '' ? negativePrompt : undefined,
+          ad_prompt: prompt !== '' ? prompt : undefined,
+          trigger: triggerName
+        };
+
+        Config.set('autoAdetailers', Array.from(new Set([...autoAdetailers, newAutoAdetailers])));
+      } else {
+        const autoAdetailers = Config.get('autoAdetailers');
+
+        const triggerModel = await select({
+          choices: [
+            { name: '(Cancel)', value: '-' },
+            new Separator(),
+            ...autoAdetailers.map((model) => ({
+              description: `Prompt: "${model.ad_prompt ?? 'N/A'}", Negative Prompt: "${model.ad_negative_prompt ?? 'N/A'}", Denoising Strength: ${model.ad_denoising_strength ?? 'N/A'}`,
+              name: `!pose:${model.trigger} (${model.ad_model})`,
+              value: model.ad_model
+            })),
+            new Separator()
+          ],
+          message: 'Select trigger to remove'
+        });
+        if (triggerModel === '-') {
+          return;
+        }
+
+        const index = autoAdetailers.findIndex((model) => model.ad_model === triggerModel);
+        autoAdetailers.splice(index, 1);
+        Config.set('autoAdetailers', autoAdetailers);
+      }
+    },
+    description: 'Set the Auto Add Detailers triggers',
+    name: 'Auto Adetailers',
+    value: 'auto-adetailers'
+  },
+  {
+    callback: async () => {
+      const actionType = await select({
+        choices: [
+          { name: 'Add a trigger', value: 'add' },
+          { name: 'Remove a trigger', value: 'remove' }
+        ],
+        message: 'Select action type'
+      });
+
+      if (actionType === 'add') {
+        const autoControlnetPose = Config.get('autoControlnetPose');
+
+        const triggerName = await input({
+          message: 'Enter trigger',
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return 'Trigger must be a string with only letters, numbers, dash and underscore';
+            }
+
+            const found = autoControlnetPose.find((model) => model.trigger === value);
+
+            if (found) {
+              return 'Trigger already exists';
+            }
+
+            return true;
+          }
+        });
+
+        if (!triggerName) {
+          return;
+        }
+
+        const triggerPose = await input({
+          message: 'Select the path to the pose image',
+          validate: (value) => {
+            const found = autoControlnetPose.find((model) => model.pose === value);
+
+            if (found) {
+              return 'Pose is already used';
+            }
+
+            if (!existsSync(value)) {
+              return 'Pose file does not exist';
+            }
+
+            return true;
+          }
+        });
+
+        if (!triggerName) {
+          return;
+        }
+
+        const beforePrompt = await input({ message: 'Enter optional prompt that will be APPEND to the query prompt. Leave empty to skip' });
+        const afterPrompt = await input({ message: 'Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip' });
+
+        const newAutoControlNetPose: IAutoControlnetPose = {
+          afterPrompt: afterPrompt !== '' ? afterPrompt : undefined,
+          beforePrompt: beforePrompt !== '' ? beforePrompt : undefined,
+          pose: triggerPose,
+          trigger: triggerName
+        };
+
+        Config.set('autoControlnetPose', Array.from(new Set([...autoControlnetPose, newAutoControlNetPose])));
+      } else {
+        const autoControlnetPose = Config.get('autoControlnetPose');
+
+        const triggerModel = await select({
+          choices: [
+            { name: '(Cancel)', value: '-' },
+            new Separator(),
+            ...autoControlnetPose.map((model) => ({
+              description: `Before Prompt: "${model.beforePrompt ?? 'N/A'}", After Prompt: ${model.afterPrompt ?? 'N/A'}`,
+              name: `!ad:${model.trigger} (${model.pose})`,
+              value: model.pose
+            })),
+            new Separator()
+          ],
+          message: 'Select trigger to remove'
+        });
+        if (triggerModel === '-') {
+          return;
+        }
+
+        const index = autoControlnetPose.findIndex((model) => model.pose === triggerModel);
+        autoControlnetPose.splice(index, 1);
+        Config.set('autoControlnetPose', autoControlnetPose);
+      }
+    },
+    description: 'Set the Controlnet OpenPose triggers',
+    name: 'Auto Controlnet OpenPose',
+    value: 'auto-controlnet-pose'
+  },
   {
     callback: async () => {
       const cutoff = Config.get('cutoff');
@@ -193,57 +382,6 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Auto CutOff',
     value: 'auto-cutoff'
   },
-  {
-    callback: async () => {
-      const actionType = await select({
-        choices: [
-          { name: 'Add a token', value: 'add' },
-          { name: 'Remove a token', value: 'remove' }
-        ],
-        message: 'Select action type'
-      });
-
-      if (actionType === 'add') {
-        const token = await input({ message: 'Enter token to add' });
-        const cutoffTokens = Config.get('cutoffTokens');
-        cutoffTokens.push(token);
-        Config.set('cutoffTokens', Array.from(new Set(cutoffTokens)));
-      } else {
-        const token = await select({
-          choices: Config.get('cutoffTokens').map((token) => ({ value: token })),
-          message: 'Select token to remove'
-        });
-        const cutoffTokens = Config.get('cutoffTokens');
-        const index = cutoffTokens.indexOf(token);
-        cutoffTokens.splice(index, 1);
-        Config.set('cutoffTokens', cutoffTokens);
-      }
-    },
-    description: 'Set cutoff tokens',
-    name: 'CutOff Tokens',
-    value: 'cutoff-tokens'
-  },
-  {
-    callback: async () => {
-      const prompt = Config.get('cutoffWeight');
-      const response = await input({
-        default: String(prompt),
-        message: 'Cutoff weight',
-        validate: (value) => {
-          const pass = RegExp(/^\d+$/).exec(value);
-          if (!pass) {
-            return 'Please enter a valid URL';
-          }
-          return true;
-        }
-      });
-      setConfigCutoffWeight(Number(response));
-    },
-    description: 'Set cutoff weight',
-    name: 'CutOff Weight',
-    value: 'cutoff-weight'
-  },
-  new Separator(),
   {
     callback: async () => {
       const autoTiledDiffusion = Config.get('autoTiledDiffusion');
@@ -277,7 +415,68 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Auto TiledVAE',
     value: 'auto-tiled-vae'
   },
-  new Separator(),
+  new Separator('Cutoff Options'),
+  {
+    callback: async () => {
+      const actionType = await select({
+        choices: [
+          { name: 'Add a token', value: 'add' },
+          { name: 'Remove a token', value: 'remove' }
+        ],
+        message: 'Select action type'
+      });
+
+      if (actionType === 'add') {
+        const token = await input({ message: 'Enter token to add' });
+        if (!token) {
+          return;
+        }
+        const cutoffTokens = Config.get('cutoffTokens');
+        cutoffTokens.push(token);
+        Config.set('cutoffTokens', Array.from(new Set(cutoffTokens)));
+      } else {
+        const token = await select({
+          choices: [
+            { name: '(Cancel)', value: '-' },
+            new Separator(),
+            ...Config.get('cutoffTokens').map((token) => ({ value: token })),
+            new Separator()
+          ],
+          message: 'Select token to remove'
+        });
+        if (token === '-') {
+          return;
+        }
+        const cutoffTokens = Config.get('cutoffTokens');
+        const index = cutoffTokens.indexOf(token);
+        cutoffTokens.splice(index, 1);
+        Config.set('cutoffTokens', cutoffTokens);
+      }
+    },
+    description: 'Set cutoff tokens',
+    name: 'CutOff Tokens',
+    value: 'cutoff-tokens'
+  },
+  {
+    callback: async () => {
+      const prompt = Config.get('cutoffWeight');
+      const response = await input({
+        default: String(prompt),
+        message: 'Cutoff weight',
+        validate: (value) => {
+          const pass = RegExp(/^\d+$/).exec(value);
+          if (!pass) {
+            return 'Please enter a valid URL';
+          }
+          return true;
+        }
+      });
+      setConfigCutoffWeight(Number(response));
+    },
+    description: 'Set cutoff weight',
+    name: 'CutOff Weight',
+    value: 'cutoff-weight'
+  }
 ];
 
 const wizardOptionsValues = wizardOptions.filter((option) => (option as IWizardOptions)?.value) as IWizardOptions[];

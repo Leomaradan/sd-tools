@@ -45280,7 +45280,7 @@ var getConfigAutoAdetailers = () => {
     }
     return text2;
   });
-  loggerInfo(`Auto Adetailers: ${displayList(list)}`);
+  loggerInfo(`Auto Add Detailers: ${displayList(list)}`);
 };
 var getConfigAutoControlnetPoses = () => {
   const autoControlnetPose = Config.get("autoControlnetPose");
@@ -47415,28 +47415,11 @@ ${page}${choiceDescription}${helpTipBottom}${import_ansi_escapes4.default.cursor
 });
 
 // src/config/wizard.ts
+var import_fs5 = require("fs");
 var command5 = "wizard";
 var describe4 = "wizard helping configuring values";
 var wizardOptions = [
-  {
-    callback: async () => {
-      const prompt = Config.get("endpoint");
-      const response = await esm_default7({
-        default: prompt,
-        message: "New Endpoint URL",
-        validate: (value) => {
-          if (value.startsWith("http://") || value.startsWith("https://")) {
-            return true;
-          }
-          return "Please enter a valid URL";
-        }
-      });
-      setConfigEndpoint(response);
-    },
-    description: "Set endpoint",
-    name: "Endpoint URL",
-    value: "endpoint"
-  },
+  new Separator("Basic options"),
   {
     callback: async () => {
       const prompt = Config.get("commonPositive");
@@ -47477,7 +47460,7 @@ var wizardOptions = [
     name: "Common Negative XL",
     value: "common-negative-xl"
   },
-  new Separator(),
+  new Separator("Select models"),
   {
     callback: async () => {
       const redrawModels = Config.get("redrawModels");
@@ -47539,17 +47522,26 @@ var wizardOptions = [
     name: "LCM Models",
     value: "lcm"
   },
+  new Separator("Execution options"),
   {
     callback: async () => {
-      const lcm = Config.get("lcm");
-      const response = await esm_default6({ default: lcm.auto, message: "Activate Auto-LCM ?" });
-      setConfigAutoLCM(response);
+      const prompt = Config.get("endpoint");
+      const response = await esm_default7({
+        default: prompt,
+        message: "New Endpoint URL",
+        validate: (value) => {
+          if (value.startsWith("http://") || value.startsWith("https://")) {
+            return true;
+          }
+          return "Please enter a valid URL";
+        }
+      });
+      setConfigEndpoint(response);
     },
-    description: "Enable or disable auto lcm",
-    name: "Auto LCM",
-    value: "auto-lcm"
+    description: "Set endpoint",
+    name: "Endpoint URL",
+    value: "endpoint"
   },
-  new Separator(),
   {
     callback: async () => {
       const scheduler = Config.get("scheduler");
@@ -47560,7 +47552,172 @@ var wizardOptions = [
     name: "Agent Scheduler",
     value: "scheduler"
   },
-  new Separator(),
+  new Separator("Automatic actions"),
+  {
+    callback: async () => {
+      const lcm = Config.get("lcm");
+      const response = await esm_default6({ default: lcm.auto, message: "Activate Auto-LCM ?" });
+      setConfigAutoLCM(response);
+    },
+    description: "Enable or disable auto lcm",
+    name: "Auto LCM",
+    value: "auto-lcm"
+  },
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a trigger", value: "add" },
+          { name: "Remove a trigger", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const adetailersModels = Config.get("adetailersModels");
+        const autoAdetailers = Config.get("autoAdetailers");
+        const triggerName = await esm_default7({
+          message: "Enter trigger",
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return "Trigger must be a string with only letters, numbers, dash and underscore";
+            }
+            const found = autoAdetailers.find((model) => model.trigger === value);
+            if (found) {
+              return "Trigger already exists";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const usableModels = adetailersModels.filter((model) => !autoAdetailers.some((autoModel) => autoModel.ad_model === model));
+        const triggerModel = await esm_default11({
+          choices: [{ name: "(Cancel)", value: "-" }, new Separator(), ...usableModels.map((model) => ({ value: model }))],
+          message: "Select model to trigger"
+        });
+        if (triggerName === "-") {
+          return;
+        }
+        const prompt = await esm_default7({ message: "Enter optional prompt. Leave empty to skip" });
+        const negativePrompt = await esm_default7({ message: "Enter optional negative prompt. Leave empty to skip" });
+        const denoisingStrength = await esm_default7({ message: "Enter optional denoising strength. Leave empty to skip" });
+        const newAutoAdetailers = {
+          ad_denoising_strength: denoisingStrength ? Number(denoisingStrength) : void 0,
+          ad_model: triggerModel,
+          ad_negative_prompt: negativePrompt !== "" ? negativePrompt : void 0,
+          ad_prompt: prompt !== "" ? prompt : void 0,
+          trigger: triggerName
+        };
+        Config.set("autoAdetailers", Array.from(/* @__PURE__ */ new Set([...autoAdetailers, newAutoAdetailers])));
+      } else {
+        const autoAdetailers = Config.get("autoAdetailers");
+        const triggerModel = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...autoAdetailers.map((model) => ({
+              description: `Prompt: "${model.ad_prompt ?? "N/A"}", Negative Prompt: "${model.ad_negative_prompt ?? "N/A"}", Denoising Strength: ${model.ad_denoising_strength ?? "N/A"}`,
+              name: `!ad:${model.trigger} (${model.ad_model})`,
+              value: model.ad_model
+            })),
+            new Separator()
+          ],
+          message: "Select trigger to remove"
+        });
+        if (triggerModel === "-") {
+          return;
+        }
+        const index = autoAdetailers.findIndex((model) => model.ad_model === triggerModel);
+        autoAdetailers.splice(index, 1);
+        Config.set("autoAdetailers", autoAdetailers);
+      }
+    },
+    description: "Set the Auto Add Detailers triggers",
+    name: "Auto Adetailers",
+    value: "auto-adetailers"
+  },
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a trigger", value: "add" },
+          { name: "Remove a trigger", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const autoControlnetPose = Config.get("autoControlnetPose");
+        const triggerName = await esm_default7({
+          message: "Enter trigger",
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return "Trigger must be a string with only letters, numbers, dash and underscore";
+            }
+            const found = autoControlnetPose.find((model) => model.trigger === value);
+            if (found) {
+              return "Trigger already exists";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const triggerPose = await esm_default7({
+          message: "Select the path to the pose image",
+          validate: (value) => {
+            const found = autoControlnetPose.find((model) => model.pose === value);
+            if (found) {
+              return "Pose is already used";
+            }
+            if (!(0, import_fs5.existsSync)(value)) {
+              return "Pose file does not exist";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const beforePrompt = await esm_default7({ message: "Enter optional prompt that will be APPEND to the query prompt. Leave empty to skip" });
+        const afterPrompt = await esm_default7({ message: "Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip" });
+        const newAutoControlNetPose = {
+          pose: triggerPose,
+          beforePrompt: beforePrompt !== "" ? beforePrompt : void 0,
+          afterPrompt: afterPrompt !== "" ? afterPrompt : void 0,
+          trigger: triggerName
+        };
+        Config.set("autoControlnetPose", Array.from(/* @__PURE__ */ new Set([...autoControlnetPose, newAutoControlNetPose])));
+      } else {
+        const autoControlnetPose = Config.get("autoControlnetPose");
+        const triggerModel = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...autoControlnetPose.map((model) => ({
+              description: `Before Prompt: "${model.beforePrompt ?? "N/A"}", After Prompt: ${model.afterPrompt ?? "N/A"}`,
+              name: `!ad:${model.trigger} (${model.pose})`,
+              value: model.pose
+            })),
+            new Separator()
+          ],
+          message: "Select trigger to remove"
+        });
+        if (triggerModel === "-") {
+          return;
+        }
+        const index = autoControlnetPose.findIndex((model) => model.pose === triggerModel);
+        autoControlnetPose.splice(index, 1);
+        Config.set("autoControlnetPose", autoControlnetPose);
+      }
+    },
+    description: "Set the Controlnet OpenPose triggers",
+    name: "Auto Controlnet OpenPose",
+    value: "auto-controlnet-pose"
+  },
   {
     callback: async () => {
       const cutoff = Config.get("cutoff");
@@ -47571,56 +47728,6 @@ var wizardOptions = [
     name: "Auto CutOff",
     value: "auto-cutoff"
   },
-  {
-    callback: async () => {
-      const actionType = await esm_default11({
-        choices: [
-          { name: "Add a token", value: "add" },
-          { name: "Remove a token", value: "remove" }
-        ],
-        message: "Select action type"
-      });
-      if (actionType === "add") {
-        const token = await esm_default7({ message: "Enter token to add" });
-        const cutoffTokens = Config.get("cutoffTokens");
-        cutoffTokens.push(token);
-        Config.set("cutoffTokens", Array.from(new Set(cutoffTokens)));
-      } else {
-        const token = await esm_default11({
-          choices: Config.get("cutoffTokens").map((token2) => ({ value: token2 })),
-          message: "Select token to remove"
-        });
-        const cutoffTokens = Config.get("cutoffTokens");
-        const index = cutoffTokens.indexOf(token);
-        cutoffTokens.splice(index, 1);
-        Config.set("cutoffTokens", cutoffTokens);
-      }
-    },
-    description: "Set cutoff tokens",
-    name: "CutOff Tokens",
-    value: "cutoff-tokens"
-  },
-  {
-    callback: async () => {
-      const prompt = Config.get("cutoffWeight");
-      const response = await esm_default7({
-        default: String(prompt),
-        message: "Cutoff weight",
-        validate: (value) => {
-          const pass = RegExp(/^\d+$/).exec(value);
-          if (!pass) {
-            return "Please enter a valid URL";
-          }
-          return true;
-        }
-      });
-      setConfigCutoffWeight(Number(response));
-    },
-    description: "Set cutoff weight",
-    name: "CutOff Weight",
-    value: "cutoff-weight"
-  },
-  new Separator(),
   {
     callback: async () => {
       const autoTiledDiffusion = Config.get("autoTiledDiffusion");
@@ -47653,7 +47760,67 @@ var wizardOptions = [
     name: "Auto TiledVAE",
     value: "auto-tiled-vae"
   },
-  new Separator()
+  new Separator("Cutoff Options"),
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a token", value: "add" },
+          { name: "Remove a token", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const token = await esm_default7({ message: "Enter token to add" });
+        if (!token) {
+          return;
+        }
+        const cutoffTokens = Config.get("cutoffTokens");
+        cutoffTokens.push(token);
+        Config.set("cutoffTokens", Array.from(new Set(cutoffTokens)));
+      } else {
+        const token = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...Config.get("cutoffTokens").map((token2) => ({ value: token2 })),
+            new Separator()
+          ],
+          message: "Select token to remove"
+        });
+        if (token === "-") {
+          return;
+        }
+        const cutoffTokens = Config.get("cutoffTokens");
+        const index = cutoffTokens.indexOf(token);
+        cutoffTokens.splice(index, 1);
+        Config.set("cutoffTokens", cutoffTokens);
+      }
+    },
+    description: "Set cutoff tokens",
+    name: "CutOff Tokens",
+    value: "cutoff-tokens"
+  },
+  {
+    callback: async () => {
+      const prompt = Config.get("cutoffWeight");
+      const response = await esm_default7({
+        default: String(prompt),
+        message: "Cutoff weight",
+        validate: (value) => {
+          const pass = RegExp(/^\d+$/).exec(value);
+          if (!pass) {
+            return "Please enter a valid URL";
+          }
+          return true;
+        }
+      });
+      setConfigCutoffWeight(Number(response));
+    },
+    description: "Set cutoff weight",
+    name: "CutOff Weight",
+    value: "cutoff-weight"
+  }
 ];
 var wizardOptionsValues = wizardOptions.filter((option) => option?.value);
 var selectedOption = void 0;

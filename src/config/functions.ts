@@ -9,8 +9,6 @@ import { BaseUpscalers, findCheckpoint, findLORA } from '../commons/models';
 
 export type ReadonlyOptions =
   | 'adetailers-models'
-  | 'auto-adetailers'
-  | 'auto-controlnet-pose'
   | 'config-version'
   | 'controlnet-models'
   | 'controlnet-modules'
@@ -24,6 +22,8 @@ export type ReadonlyOptions =
   | 'vae';
 
 export type EditableOptions =
+  | 'auto-adetailers'
+  | 'auto-controlnet-pose'
   | 'auto-cutoff'
   | 'auto-lcm'
   | 'auto-tiled-diffusion'
@@ -132,7 +132,7 @@ export const getConfigAutoAdetailers = () => {
     return text;
   });
 
-  loggerInfo(`Auto Adetailers: ${displayList(list)}`);
+  loggerInfo(`Auto Add Detailers: ${displayList(list)}`);
 };
 
 export const getConfigAutoControlnetPoses = () => {
