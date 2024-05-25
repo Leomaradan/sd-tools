@@ -10693,8 +10693,8 @@ var require_follow_redirects = __commonJS({
       }
       return parsed;
     }
-    function resolveUrl(relative2, base) {
-      return useNativeURL ? new URL2(relative2, base) : parseUrl(url2.resolve(base, relative2));
+    function resolveUrl(relative3, base) {
+      return useNativeURL ? new URL2(relative3, base) : parseUrl(url2.resolve(base, relative3));
     }
     function validateUrl(input) {
       if (/^\[/.test(input.hostname) && !/^\[[:0-9a-f]+\]$/i.test(input.hostname)) {
@@ -35743,13 +35743,13 @@ function usage(yargs10, shim3) {
   };
   self2.stringifiedValues = function stringifiedValues(values, separator) {
     let string = "";
-    const sep = separator || ", ";
+    const sep2 = separator || ", ";
     const array = [].concat(values);
     if (!values || !array.length)
       return string;
     array.forEach((value) => {
       if (string.length)
-        string += sep;
+        string += sep2;
       string += JSON.stringify(value);
     });
     return string;
@@ -43787,10 +43787,10 @@ function compareDocumentPosition(nodeA, nodeB) {
 function uniqueSort(nodes) {
   nodes = nodes.filter((node, i, arr) => !arr.includes(node, i + 1));
   nodes.sort((a, b) => {
-    const relative2 = compareDocumentPosition(a, b);
-    if (relative2 & DocumentPosition.PRECEDING) {
+    const relative3 = compareDocumentPosition(a, b);
+    if (relative3 & DocumentPosition.PRECEDING) {
       return -1;
-    } else if (relative2 & DocumentPosition.FOLLOWING) {
+    } else if (relative3 & DocumentPosition.FOLLOWING) {
       return 1;
     }
     return 0;
@@ -43981,6 +43981,36 @@ var writeLog = (data, force = false) => {
         2
       )
     );
+  }
+};
+
+// src/commons/extensions/controlNet.ts
+var normalizeControlNetResizes = (input) => {
+  switch (input) {
+    case "Resize and Fill" /* Envelope */:
+    case 2 /* Envelope */:
+      return "Resize and Fill" /* Envelope */;
+    case "Crop and Resize" /* ScaleToFit */:
+    case 1 /* ScaleToFit */:
+      return "Crop and Resize" /* ScaleToFit */;
+    case "Just Resize" /* Resize */:
+    case 0 /* Resize */:
+    default:
+      return "Just Resize" /* Resize */;
+  }
+};
+var normalizeControlNetMode = (input) => {
+  switch (input) {
+    case "ControlNet is more important" /* ControleNetImportant */:
+    case 2 /* ControleNetImportant */:
+      return "ControlNet is more important" /* ControleNetImportant */;
+    case "My prompt is more important" /* PromptImportant */:
+    case 1 /* PromptImportant */:
+      return "My prompt is more important" /* PromptImportant */;
+    case "Balanced" /* Balanced */:
+    case 0 /* Balanced */:
+    default:
+      return "Balanced" /* Balanced */;
   }
 };
 
@@ -44311,6 +44341,9 @@ var getMetadataCivitAiRest = async (actualCacheMetadata, url2) => {
   } catch (error) {
     if (error instanceof Error) {
       loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error.message}`);
+      if (error.message.includes("404")) {
+        return false;
+      }
     } else {
       loggerInfo(`Error while reading metadata for ${url2} with CivitAI Rest API : ${error}`);
     }
@@ -44332,6 +44365,14 @@ var getMetadata = async (url2) => {
       const [cacheMetadataNew, metadata] = metadataCivitAiRest;
       Cache.set("metadata", cacheMetadataNew);
       return metadata;
+    } else if (metadataCivitAiRest === false) {
+      const fakeMetadata = {
+        accelerator: "none",
+        keywords: [],
+        sdVersion: "unknown"
+      };
+      cacheMetadata[url2] = { ...fakeMetadata, timestamp: Date.now().toString() };
+      Cache.set("metadata", cacheMetadata);
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -44648,7 +44689,16 @@ var renderQuery = async (query, type) => {
   }
   if (controlNet) {
     const args = controlNet.map((controlNet2) => {
-      const params = { ...controlNet2 };
+      const params = {
+        control_mode: normalizeControlNetMode(controlNet2.control_mode),
+        enabled: true,
+        input_image: controlNet2.input_image,
+        lowvram: controlNet2.lowvram,
+        model: controlNet2.model,
+        module: controlNet2.module,
+        pixel_perfect: controlNet2.pixel_perfect,
+        resize_mode: normalizeControlNetResizes(controlNet2.resize_mode)
+      };
       if (params.lowvram === void 0) {
         params.lowvram = true;
       }
@@ -45073,7 +45123,7 @@ var handler = async (argv2) => {
 var { default: Configstore2 } = (init_configstore(), __toCommonJS(configstore_exports));
 var config = new Configstore2("sd-tools");
 var cache = new Configstore2("sd-tools-cache");
-var LATEST_CONFIG_VERSION = 2;
+var LATEST_CONFIG_VERSION = 3;
 var migrations = {
   0: () => {
     Config.set("configVersion", 1);
@@ -45085,6 +45135,10 @@ var migrations = {
   1: () => {
     config.delete("adetailersCustomModels");
     Config.set("adetailersModels", []);
+  },
+  2: () => {
+    Config.set("autoAdetailers", []);
+    Config.set("autoControlnetPose", []);
   }
 };
 var configMigration = async () => {
@@ -45195,6 +45249,54 @@ var getConfigRedrawModels = () => {
 - Realist (SDXL) : ${realistxl}`);
 };
 var getConfigScheduler = () => loggerInfo(`Scheduler: ${Config.get("scheduler") ? "enabled" : "disabled"}`);
+var getConfigAutoAdetailers = () => {
+  const autoAdetailers = Config.get("autoAdetailers");
+  const list = autoAdetailers.map((item) => {
+    const {
+      ad_denoising_strength,
+      ad_inpaint_height,
+      ad_inpaint_width,
+      ad_model,
+      ad_negative_prompt,
+      ad_prompt,
+      ad_use_inpaint_width_height,
+      trigger
+    } = item;
+    let text2 = `!ad:${trigger}: ${ad_model}`;
+    if (ad_prompt) {
+      text2 += ` | Prompt: ${ad_prompt}`;
+    }
+    if (ad_negative_prompt) {
+      text2 += ` | Negative Prompt: ${ad_negative_prompt}`;
+    }
+    if (ad_denoising_strength) {
+      text2 += ` | Denoising Strength: ${ad_denoising_strength}`;
+    }
+    if (ad_inpaint_height && ad_inpaint_width) {
+      text2 += ` | Inpaint Size: ${ad_inpaint_height}x${ad_inpaint_width}`;
+    }
+    if (ad_use_inpaint_width_height) {
+      text2 += ` | Use Inpaint Width/Height: ${ad_use_inpaint_width_height}`;
+    }
+    return text2;
+  });
+  loggerInfo(`Auto Add Detailers: ${displayList(list)}`);
+};
+var getConfigAutoControlnetPoses = () => {
+  const autoControlnetPose = Config.get("autoControlnetPose");
+  const list = autoControlnetPose.map((item) => {
+    const { afterPrompt, beforePrompt, pose, trigger } = item;
+    let text2 = `!pose:${trigger}: ${pose}`;
+    if (beforePrompt) {
+      text2 += ` | Before Prompt: "${beforePrompt}"`;
+    }
+    if (afterPrompt) {
+      text2 += ` | After Prompt: "${afterPrompt}"`;
+    }
+    return text2;
+  });
+  loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);
+};
 var setConfigAutoLCM = (value) => {
   const lcm = Config.get("lcm");
   lcm.auto = getParamBoolean(value);
@@ -45379,6 +45481,8 @@ var options = [
     option: "auto-tiled-diffusion"
   },
   { description: "If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled", option: "auto-tiled-vae" },
+  { description: "If the Add Details extension exists, it will allow to automatically add models", option: "auto-adetailers" },
+  { description: "If the ControlNet extension exists, it will allow to automatically set a pose", option: "auto-controlnet-pose" },
   { description: "Negative prompt to add on each queries using SD 1.5 (except queue query)", option: "common-negative" },
   { description: "Negative prompt to add on each queries using SD XL (except queue query)", option: "common-negative-xl" },
   { description: "Prompt to add on each queries using SD 1.5 (except queue query)", option: "common-positive" },
@@ -45439,6 +45543,9 @@ ${listOptions.join("\n")}`);
     case "controlnet-modules":
       getConfigControlnetModules();
       break;
+    case "auto-controlnet-pose":
+      getConfigAutoControlnetPoses();
+      break;
     case "embeddings":
       getConfigEmbeddings();
       break;
@@ -45465,6 +45572,9 @@ ${listOptions.join("\n")}`);
       break;
     case "adetailers-models":
       getConfigAddDetailerModels();
+      break;
+    case "auto-adetailers":
+      getConfigAutoAdetailers();
       break;
     case "auto-lcm":
       getConfigAutoLCM();
@@ -47305,28 +47415,11 @@ ${page}${choiceDescription}${helpTipBottom}${import_ansi_escapes4.default.cursor
 });
 
 // src/config/wizard.ts
+var import_fs5 = require("fs");
 var command5 = "wizard";
 var describe4 = "wizard helping configuring values";
 var wizardOptions = [
-  {
-    callback: async () => {
-      const prompt = Config.get("endpoint");
-      const response = await esm_default7({
-        default: prompt,
-        message: "New Endpoint URL",
-        validate: (value) => {
-          if (value.startsWith("http://") || value.startsWith("https://")) {
-            return true;
-          }
-          return "Please enter a valid URL";
-        }
-      });
-      setConfigEndpoint(response);
-    },
-    description: "Set endpoint",
-    name: "Endpoint URL",
-    value: "endpoint"
-  },
+  new Separator("Basic options"),
   {
     callback: async () => {
       const prompt = Config.get("commonPositive");
@@ -47367,7 +47460,7 @@ var wizardOptions = [
     name: "Common Negative XL",
     value: "common-negative-xl"
   },
-  new Separator(),
+  new Separator("Select models"),
   {
     callback: async () => {
       const redrawModels = Config.get("redrawModels");
@@ -47429,17 +47522,26 @@ var wizardOptions = [
     name: "LCM Models",
     value: "lcm"
   },
+  new Separator("Execution options"),
   {
     callback: async () => {
-      const lcm = Config.get("lcm");
-      const response = await esm_default6({ default: lcm.auto, message: "Activate Auto-LCM ?" });
-      setConfigAutoLCM(response);
+      const prompt = Config.get("endpoint");
+      const response = await esm_default7({
+        default: prompt,
+        message: "New Endpoint URL",
+        validate: (value) => {
+          if (value.startsWith("http://") || value.startsWith("https://")) {
+            return true;
+          }
+          return "Please enter a valid URL";
+        }
+      });
+      setConfigEndpoint(response);
     },
-    description: "Enable or disable auto lcm",
-    name: "Auto LCM",
-    value: "auto-lcm"
+    description: "Set endpoint",
+    name: "Endpoint URL",
+    value: "endpoint"
   },
-  new Separator(),
   {
     callback: async () => {
       const scheduler = Config.get("scheduler");
@@ -47450,7 +47552,172 @@ var wizardOptions = [
     name: "Agent Scheduler",
     value: "scheduler"
   },
-  new Separator(),
+  new Separator("Automatic actions"),
+  {
+    callback: async () => {
+      const lcm = Config.get("lcm");
+      const response = await esm_default6({ default: lcm.auto, message: "Activate Auto-LCM ?" });
+      setConfigAutoLCM(response);
+    },
+    description: "Enable or disable auto lcm",
+    name: "Auto LCM",
+    value: "auto-lcm"
+  },
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a trigger", value: "add" },
+          { name: "Remove a trigger", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const adetailersModels = Config.get("adetailersModels");
+        const autoAdetailers = Config.get("autoAdetailers");
+        const triggerName = await esm_default7({
+          message: "Enter trigger",
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return "Trigger must be a string with only letters, numbers, dash and underscore";
+            }
+            const found = autoAdetailers.find((model) => model.trigger === value);
+            if (found) {
+              return "Trigger already exists";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const usableModels = adetailersModels.filter((model) => !autoAdetailers.some((autoModel) => autoModel.ad_model === model));
+        const triggerModel = await esm_default11({
+          choices: [{ name: "(Cancel)", value: "-" }, new Separator(), ...usableModels.map((model) => ({ value: model }))],
+          message: "Select model to trigger"
+        });
+        if (triggerName === "-") {
+          return;
+        }
+        const prompt = await esm_default7({ message: "Enter optional prompt. Leave empty to skip" });
+        const negativePrompt = await esm_default7({ message: "Enter optional negative prompt. Leave empty to skip" });
+        const denoisingStrength = await esm_default7({ message: "Enter optional denoising strength. Leave empty to skip" });
+        const newAutoAdetailers = {
+          ad_denoising_strength: denoisingStrength ? Number(denoisingStrength) : void 0,
+          ad_model: triggerModel,
+          ad_negative_prompt: negativePrompt !== "" ? negativePrompt : void 0,
+          ad_prompt: prompt !== "" ? prompt : void 0,
+          trigger: triggerName
+        };
+        Config.set("autoAdetailers", Array.from(/* @__PURE__ */ new Set([...autoAdetailers, newAutoAdetailers])));
+      } else {
+        const autoAdetailers = Config.get("autoAdetailers");
+        const triggerModel = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...autoAdetailers.map((model) => ({
+              description: `Prompt: "${model.ad_prompt ?? "N/A"}", Negative Prompt: "${model.ad_negative_prompt ?? "N/A"}", Denoising Strength: ${model.ad_denoising_strength ?? "N/A"}`,
+              name: `!pose:${model.trigger} (${model.ad_model})`,
+              value: model.ad_model
+            })),
+            new Separator()
+          ],
+          message: "Select trigger to remove"
+        });
+        if (triggerModel === "-") {
+          return;
+        }
+        const index = autoAdetailers.findIndex((model) => model.ad_model === triggerModel);
+        autoAdetailers.splice(index, 1);
+        Config.set("autoAdetailers", autoAdetailers);
+      }
+    },
+    description: "Set the Auto Add Detailers triggers",
+    name: "Auto Adetailers",
+    value: "auto-adetailers"
+  },
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a trigger", value: "add" },
+          { name: "Remove a trigger", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const autoControlnetPose = Config.get("autoControlnetPose");
+        const triggerName = await esm_default7({
+          message: "Enter trigger",
+          validate: (value) => {
+            const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+            if (!pass) {
+              return "Trigger must be a string with only letters, numbers, dash and underscore";
+            }
+            const found = autoControlnetPose.find((model) => model.trigger === value);
+            if (found) {
+              return "Trigger already exists";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const triggerPose = await esm_default7({
+          message: "Select the path to the pose image",
+          validate: (value) => {
+            const found = autoControlnetPose.find((model) => model.pose === value);
+            if (found) {
+              return "Pose is already used";
+            }
+            if (!(0, import_fs5.existsSync)(value)) {
+              return "Pose file does not exist";
+            }
+            return true;
+          }
+        });
+        if (!triggerName) {
+          return;
+        }
+        const beforePrompt = await esm_default7({ message: "Enter optional prompt that will be APPEND to the query prompt. Leave empty to skip" });
+        const afterPrompt = await esm_default7({ message: "Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip" });
+        const newAutoControlNetPose = {
+          afterPrompt: afterPrompt !== "" ? afterPrompt : void 0,
+          beforePrompt: beforePrompt !== "" ? beforePrompt : void 0,
+          pose: triggerPose,
+          trigger: triggerName
+        };
+        Config.set("autoControlnetPose", Array.from(/* @__PURE__ */ new Set([...autoControlnetPose, newAutoControlNetPose])));
+      } else {
+        const autoControlnetPose = Config.get("autoControlnetPose");
+        const triggerModel = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...autoControlnetPose.map((model) => ({
+              description: `Before Prompt: "${model.beforePrompt ?? "N/A"}", After Prompt: ${model.afterPrompt ?? "N/A"}`,
+              name: `!ad:${model.trigger} (${model.pose})`,
+              value: model.pose
+            })),
+            new Separator()
+          ],
+          message: "Select trigger to remove"
+        });
+        if (triggerModel === "-") {
+          return;
+        }
+        const index = autoControlnetPose.findIndex((model) => model.pose === triggerModel);
+        autoControlnetPose.splice(index, 1);
+        Config.set("autoControlnetPose", autoControlnetPose);
+      }
+    },
+    description: "Set the Controlnet OpenPose triggers",
+    name: "Auto Controlnet OpenPose",
+    value: "auto-controlnet-pose"
+  },
   {
     callback: async () => {
       const cutoff = Config.get("cutoff");
@@ -47461,56 +47728,6 @@ var wizardOptions = [
     name: "Auto CutOff",
     value: "auto-cutoff"
   },
-  {
-    callback: async () => {
-      const actionType = await esm_default11({
-        choices: [
-          { name: "Add a token", value: "add" },
-          { name: "Remove a token", value: "remove" }
-        ],
-        message: "Select action type"
-      });
-      if (actionType === "add") {
-        const token = await esm_default7({ message: "Enter token to add" });
-        const cutoffTokens = Config.get("cutoffTokens");
-        cutoffTokens.push(token);
-        Config.set("cutoffTokens", Array.from(new Set(cutoffTokens)));
-      } else {
-        const token = await esm_default11({
-          choices: Config.get("cutoffTokens").map((token2) => ({ value: token2 })),
-          message: "Select token to remove"
-        });
-        const cutoffTokens = Config.get("cutoffTokens");
-        const index = cutoffTokens.indexOf(token);
-        cutoffTokens.splice(index, 1);
-        Config.set("cutoffTokens", cutoffTokens);
-      }
-    },
-    description: "Set cutoff tokens",
-    name: "CutOff Tokens",
-    value: "cutoff-tokens"
-  },
-  {
-    callback: async () => {
-      const prompt = Config.get("cutoffWeight");
-      const response = await esm_default7({
-        default: String(prompt),
-        message: "Cutoff weight",
-        validate: (value) => {
-          const pass = RegExp(/^\d+$/).exec(value);
-          if (!pass) {
-            return "Please enter a valid URL";
-          }
-          return true;
-        }
-      });
-      setConfigCutoffWeight(Number(response));
-    },
-    description: "Set cutoff weight",
-    name: "CutOff Weight",
-    value: "cutoff-weight"
-  },
-  new Separator(),
   {
     callback: async () => {
       const autoTiledDiffusion = Config.get("autoTiledDiffusion");
@@ -47542,6 +47759,67 @@ var wizardOptions = [
     description: "Enable or disable auto tiled vae",
     name: "Auto TiledVAE",
     value: "auto-tiled-vae"
+  },
+  new Separator("Cutoff Options"),
+  {
+    callback: async () => {
+      const actionType = await esm_default11({
+        choices: [
+          { name: "Add a token", value: "add" },
+          { name: "Remove a token", value: "remove" }
+        ],
+        message: "Select action type"
+      });
+      if (actionType === "add") {
+        const token = await esm_default7({ message: "Enter token to add" });
+        if (!token) {
+          return;
+        }
+        const cutoffTokens = Config.get("cutoffTokens");
+        cutoffTokens.push(token);
+        Config.set("cutoffTokens", Array.from(new Set(cutoffTokens)));
+      } else {
+        const token = await esm_default11({
+          choices: [
+            { name: "(Cancel)", value: "-" },
+            new Separator(),
+            ...Config.get("cutoffTokens").map((token2) => ({ value: token2 })),
+            new Separator()
+          ],
+          message: "Select token to remove"
+        });
+        if (token === "-") {
+          return;
+        }
+        const cutoffTokens = Config.get("cutoffTokens");
+        const index = cutoffTokens.indexOf(token);
+        cutoffTokens.splice(index, 1);
+        Config.set("cutoffTokens", cutoffTokens);
+      }
+    },
+    description: "Set cutoff tokens",
+    name: "CutOff Tokens",
+    value: "cutoff-tokens"
+  },
+  {
+    callback: async () => {
+      const prompt = Config.get("cutoffWeight");
+      const response = await esm_default7({
+        default: String(prompt),
+        message: "Cutoff weight",
+        validate: (value) => {
+          const pass = RegExp(/^\d+$/).exec(value);
+          if (!pass) {
+            return "Please enter a valid URL";
+          }
+          return true;
+        }
+      });
+      setConfigCutoffWeight(Number(response));
+    },
+    description: "Set cutoff weight",
+    name: "CutOff Weight",
+    value: "cutoff-weight"
   }
 ];
 var wizardOptionsValues = wizardOptions.filter((option) => option?.value);
@@ -48334,7 +48612,9 @@ var getArraysControlNet = (value) => {
     return [controlNetArray];
   }
   const initImagesArray = [];
+  let initImageBase = (0, import_node_path6.dirname)(controlNetImage);
   if ((0, import_node_fs5.statSync)(controlNetImage).isDirectory()) {
+    initImageBase = (0, import_node_path6.resolve)(controlNetImage, "..");
     const files = (0, import_node_fs5.readdirSync)(controlNetImage);
     initImagesArray.push(...files.map((file) => (0, import_node_path6.resolve)(controlNetImage, file)));
   } else {
@@ -48342,7 +48622,7 @@ var getArraysControlNet = (value) => {
   }
   return initImagesArray.map((initImage) => {
     const [first, ...rest] = controlNetArray;
-    return [{ ...first, input_image: initImage }, ...rest];
+    return [{ ...first, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage }, ...rest];
   });
 };
 var getArraysTiledVAE = (value) => {
@@ -48470,6 +48750,8 @@ var validateTemplate = (template) => {
 var preparePrompts = (config2) => {
   const queries = [];
   const queriesArray = prepareQueries(config2);
+  const autoAdetailers = Config.get("autoAdetailers");
+  const autoControlnetPose = Config.get("autoControlnetPose");
   queriesArray.forEach((singleQuery) => {
     const {
       adetailer,
@@ -48545,14 +48827,47 @@ var preparePrompts = (config2) => {
           loggerInfo(`Invalid ControlNet model ${controlNetPrompt.model}`);
           process.exit(47 /* PROMPT_INVALID_CONTROLNET_MODEL */);
         }
-        query.controlNet?.push({
-          control_mode: controlNetPrompt.control_mode ?? 0 /* Balanced */,
+        if (!query.controlNet) {
+          query.controlNet = [];
+        }
+        query.controlNet.push({
+          control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? "Balanced" /* Balanced */),
+          image_name: controlNetPrompt.image_name ?? controlNetPrompt.input_image,
           input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : void 0,
           model: controlNetModel.name,
           module: controlNetModule,
-          resize_mode: controlNetPrompt.resize_mode ?? 2 /* Envelope */
+          resize_mode: normalizeControlNetResizes(controlNetPrompt.resize_mode ?? "Resize and Fill" /* Envelope */)
         });
       });
+    }
+    const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
+    if (findPose.length > 1) {
+      loggerInfo(`Multiple controlnet poses found in prompt`);
+      process.exit(54 /* PROMPT_INVALID_CONTROLNET_POSE */);
+    }
+    if (findPose.length === 1) {
+      const pose = findPose[0];
+      query.prompt = query.prompt.replace(`!pose:${pose.trigger}`, "");
+      if (query.controlNet === void 0) {
+        query.controlNet = [];
+      }
+      const findExistingPose = query.controlNet.find((controlNet2) => controlNet2.model.includes("openpose"));
+      if (!findExistingPose) {
+        const model = (checkpoint?.version === "sdxl" ? findControlnetModel("xl_openpose", "xl_dw_openpose") : findControlnetModel("sd15_openpose"))?.name;
+        if (model && (0, import_node_fs5.existsSync)(pose.pose)) {
+          if (pose.beforePrompt || pose.afterPrompt) {
+            query.prompt = `${pose.beforePrompt ?? ""},${query.prompt},${pose.afterPrompt ?? ""}`;
+          }
+          query.controlNet.push({
+            control_mode: "Balanced" /* Balanced */,
+            image_name: pose.pose,
+            input_image: getBase64Image(pose.pose),
+            model,
+            module: "none",
+            resize_mode: "Resize and Fill" /* Envelope */
+          });
+        }
+      }
     }
     if (vae) {
       const foundVAE = findVAE(vae);
@@ -48629,6 +48944,24 @@ var preparePrompts = (config2) => {
         }
       });
     }
+    const allAdTriggers = query.prompt.match(/!ad:([a-z0-9]+)/gi) ?? [];
+    const globalAdTriggers = query.prompt.match(/!ad( |,|$)/gi);
+    if (allAdTriggers.length > 0 || globalAdTriggers) {
+      query.prompt = query.prompt.replace(/!ad:([a-z0-9]+)/gi, "");
+      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, "");
+      autoAdetailers.forEach((autoAdetailer) => {
+        const trigger = `!ad:${autoAdetailer.trigger}`;
+        if (allAdTriggers.includes(trigger) || globalAdTriggers) {
+          if (query.adetailer === void 0) {
+            query.adetailer = [];
+          }
+          const existing = query.adetailer.find((adetailer2) => adetailer2.ad_model === autoAdetailer.ad_model);
+          if (!existing) {
+            query.adetailer.push(autoAdetailer);
+          }
+        }
+      });
+    }
     if (checkpoints && typeof checkpoints === "string") {
       const modelCheckpoint = findCheckpoint(checkpoints);
       if (modelCheckpoint) {
@@ -48657,7 +48990,8 @@ var preparePrompts = (config2) => {
         "tiling",
         "upscaler",
         "vae",
-        "width"
+        "width",
+        "pose"
       ];
       const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
       if (matches) {
@@ -48674,6 +49008,7 @@ var preparePrompts = (config2) => {
         }
         updateFilename(query, "filename", filename);
       }
+      const findExistingPose = query.controlNet?.find((controlNet2) => controlNet2.model.includes("openpose"));
       updateFilename(query, "cfg", "[cfg]");
       updateFilename(query, "checkpoint", "[model_name]");
       updateFilename(query, "clipSkip", "[clip_skip]");
@@ -48684,6 +49019,7 @@ var preparePrompts = (config2) => {
       updateFilename(query, "cutOff", autoCutOff !== void 0 ? autoCutOff.toString() : "");
       updateFilename(query, "denoising", denoising?.toFixed(2) ?? "");
       updateFilename(query, "enableHighRes", enableHighRes !== void 0 ? enableHighRes.toString() : "");
+      updateFilename(query, "pose", findExistingPose?.image_name ? findExistingPose.image_name.toString() : "");
       updateFilename(query, "restoreFaces", restoreFaces !== void 0 ? restoreFaces.toString() : "");
       updateFilename(query, "sampler", sampler !== void 0 ? sampler.toString() : "");
       updateFilename(query, "scaleFactor", scaleFactor?.toFixed(0) ?? "");
@@ -48765,23 +49101,60 @@ var queue_default = {
     }
   ],
   definitions: {
-    ControlNetMode: {
-      enum: [
-        0,
-        2,
-        1
+    ControlNetSchema: {
+      additionalProperties: false,
+      properties: {
+        control_mode: {
+          enum: [
+            0,
+            1,
+            2,
+            "Balanced",
+            "ControlNet is more important",
+            "My prompt is more important"
+          ],
+          title: "control_mode"
+        },
+        input_image: {
+          title: "input_image",
+          type: "string"
+        },
+        lowvram: {
+          title: "lowvram",
+          type: "boolean"
+        },
+        model: {
+          title: "model",
+          type: "string"
+        },
+        module: {
+          title: "module",
+          type: "string"
+        },
+        pixel_perfect: {
+          title: "pixel_perfect",
+          type: "boolean"
+        },
+        resize_mode: {
+          enum: [
+            0,
+            1,
+            2,
+            "Crop and Resize",
+            "Just Resize",
+            "Resize and Fill"
+          ],
+          title: "resize_mode"
+        }
+      },
+      required: [
+        "control_mode",
+        "model",
+        "module",
+        "resize_mode"
       ],
-      title: "ControlNetMode",
-      type: "number"
-    },
-    ControlNetResizes: {
-      enum: [
-        2,
-        0,
-        1
-      ],
-      title: "ControlNetResizes",
-      type: "number"
+      title: "ControlNetSchema",
+      type: "object"
     },
     IAdetailerPrompt: {
       additionalProperties: false,
@@ -48857,47 +49230,6 @@ var queue_default = {
         "checkpoint"
       ],
       title: "ICheckpointWithVAE",
-      type: "object"
-    },
-    IControlNet: {
-      additionalProperties: false,
-      properties: {
-        control_mode: {
-          $ref: "#/definitions/ControlNetMode",
-          title: "control_mode"
-        },
-        input_image: {
-          title: "input_image",
-          type: "string"
-        },
-        lowvram: {
-          title: "lowvram",
-          type: "boolean"
-        },
-        model: {
-          title: "model",
-          type: "string"
-        },
-        module: {
-          title: "module",
-          type: "string"
-        },
-        pixel_perfect: {
-          title: "pixel_perfect",
-          type: "boolean"
-        },
-        resize_mode: {
-          $ref: "#/definitions/ControlNetResizes",
-          title: "resize_mode"
-        }
-      },
-      required: [
-        "control_mode",
-        "model",
-        "module",
-        "resize_mode"
-      ],
-      title: "IControlNet",
       type: "object"
     },
     IPrompt: {
@@ -48977,11 +49309,11 @@ var queue_default = {
         controlNet: {
           anyOf: [
             {
-              $ref: "#/definitions/IControlNet"
+              $ref: "#/definitions/ControlNetSchema"
             },
             {
               items: {
-                $ref: "#/definitions/IControlNet"
+                $ref: "#/definitions/ControlNetSchema"
               },
               type: "array"
             }
@@ -49342,7 +49674,7 @@ var queue_default = {
           type: "array"
         },
         overwrite: {
-          $ref: "#/definitions/Partial<IPromptSingle>",
+          $ref: "#/definitions/Partial<IPromptSingleSchema>",
           title: "overwrite"
         },
         promptReplace: {
@@ -49681,11 +50013,11 @@ var queue_default = {
         controlNet: {
           anyOf: [
             {
-              $ref: "#/definitions/IControlNet"
+              $ref: "#/definitions/ControlNetSchema"
             },
             {
               items: {
-                $ref: "#/definitions/IControlNet"
+                $ref: "#/definitions/ControlNetSchema"
               },
               type: "array"
             }
@@ -50008,7 +50340,7 @@ var queue_default = {
       title: "Partial<IPrompt>",
       type: "object"
     },
-    "Partial<IPromptSingle>": {
+    "Partial<IPromptSingleSchema>": {
       additionalProperties: false,
       properties: {
         adetailer: {
@@ -50040,7 +50372,7 @@ var queue_default = {
         },
         controlNet: {
           items: {
-            $ref: "#/definitions/IControlNet"
+            $ref: "#/definitions/ControlNetSchema"
           },
           title: "controlNet",
           type: "array"
@@ -50149,7 +50481,7 @@ var queue_default = {
           type: "number"
         }
       },
-      title: "Partial<IPromptSingle>",
+      title: "Partial<IPromptSingleSchema>",
       type: "object"
     },
     TiledDiffusionMethods: {
@@ -50359,10 +50691,10 @@ var getControlNetLineart = (sdxl, style) => {
   const controlnetModule = style === "anime" ? findControlnetModule("lineart_anime", "lineart") : findControlnetModule("lineart_realistic", "lineart");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 2 /* ControleNetImportant */,
+      control_mode: "ControlNet is more important" /* ControleNetImportant */,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -50385,11 +50717,11 @@ var getControlNetOpenPose = (sdxl, style, input_image) => {
   const controlnetModule = sdxl ? findControlnetModule("dw_openpose_full") : findControlnetModule("openpose_full", "openpose");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 1 /* PromptImportant */,
+      control_mode: "My prompt is more important" /* PromptImportant */,
       input_image: input_image ? getBase64Image(input_image.filename) : void 0,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -50404,11 +50736,11 @@ var getControlNetIPAdapter = (sdxl, file) => {
   const controlnetModule = sdxl ? findControlnetModule("ip-adapter_clip_sdxl_plus_vith", "adapter_clip_sdxl") : findControlnetModule("ip-adapter_clip_sd15");
   if (controlnetModel !== void 0 && controlnetModule !== void 0) {
     return {
-      control_mode: 2 /* ControleNetImportant */,
+      control_mode: "ControlNet is more important" /* ControleNetImportant */,
       input_image: getBase64Image(file.filename),
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: 0 /* Resize */
+      resize_mode: "Just Resize" /* Resize */
     };
   }
 };
@@ -51073,10 +51405,10 @@ var upscaleTiles = async (source, { checkpoint, denoising: denoisingArray, recur
       query.ultimateSdUpscale = true;
       query.controlNet = [
         {
-          control_mode: 2 /* ControleNetImportant */,
+          control_mode: "ControlNet is more important" /* ControleNetImportant */,
           model: findControlnetModel("tile")?.name,
           module: findControlnetModule("tile_resample"),
-          resize_mode: 0 /* Resize */
+          resize_mode: "Just Resize" /* Resize */
         }
       ];
       query.width = file.width;

@@ -22,6 +22,8 @@ export type ReadonlyOptions =
   | 'vae';
 
 export type EditableOptions =
+  | 'auto-adetailers'
+  | 'auto-controlnet-pose'
   | 'auto-cutoff'
   | 'auto-lcm'
   | 'auto-tiled-diffusion'
@@ -95,6 +97,64 @@ export const getConfigRedrawModels = () => {
 - Realist (SDXL) : ${realistxl}`);
 };
 export const getConfigScheduler = () => loggerInfo(`Scheduler: ${Config.get('scheduler') ? 'enabled' : 'disabled'}`);
+
+export const getConfigAutoAdetailers = () => {
+  const autoAdetailers = Config.get('autoAdetailers');
+
+  const list = autoAdetailers.map((item) => {
+    const {
+      ad_denoising_strength,
+      ad_inpaint_height,
+      ad_inpaint_width,
+      ad_model,
+      ad_negative_prompt,
+      ad_prompt,
+      ad_use_inpaint_width_height,
+      trigger
+    } = item;
+    let text = `!ad:${trigger}: ${ad_model}`;
+    if (ad_prompt) {
+      text += ` | Prompt: ${ad_prompt}`;
+    }
+    if (ad_negative_prompt) {
+      text += ` | Negative Prompt: ${ad_negative_prompt}`;
+    }
+    if (ad_denoising_strength) {
+      text += ` | Denoising Strength: ${ad_denoising_strength}`;
+    }
+    if (ad_inpaint_height && ad_inpaint_width) {
+      text += ` | Inpaint Size: ${ad_inpaint_height}x${ad_inpaint_width}`;
+    }
+    if (ad_use_inpaint_width_height) {
+      text += ` | Use Inpaint Width/Height: ${ad_use_inpaint_width_height}`;
+    }
+
+    return text;
+  });
+
+  loggerInfo(`Auto Add Detailers: ${displayList(list)}`);
+};
+
+export const getConfigAutoControlnetPoses = () => {
+  const autoControlnetPose = Config.get('autoControlnetPose');
+
+  const list = autoControlnetPose.map((item) => {
+    const { afterPrompt, beforePrompt, pose, trigger } = item;
+    let text = `!pose:${trigger}: ${pose}`;
+
+    if (beforePrompt) {
+      text += ` | Before Prompt: "${beforePrompt}"`;
+    }
+
+    if (afterPrompt) {
+      text += ` | After Prompt: "${afterPrompt}"`;
+    }
+
+    return text;
+  });
+
+  loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);
+};
 
 export const setConfigAutoLCM = (value: boolean) => {
   const lcm = Config.get('lcm');

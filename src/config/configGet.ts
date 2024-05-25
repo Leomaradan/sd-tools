@@ -5,6 +5,8 @@ import { ExitCodes,  loggerInfo } from '../commons/logger';
 import {
   type Options,
   getConfigAddDetailerModels,
+  getConfigAutoAdetailers,
+  getConfigAutoControlnetPoses,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,
@@ -40,6 +42,8 @@ export const options: { description: string; option: Options }[] = [
     option: 'auto-tiled-diffusion'
   },
   { description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled', option: 'auto-tiled-vae' },
+  { description: 'If the Add Details extension exists, it will allow to automatically add models', option: 'auto-adetailers' },
+  { description: 'If the ControlNet extension exists, it will allow to automatically set a pose', option: 'auto-controlnet-pose' },
   { description: 'Negative prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-negative' },
   { description: 'Negative prompt to add on each queries using SD XL (except queue query)', option: 'common-negative-xl' },
   { description: 'Prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-positive' },
@@ -107,6 +111,9 @@ export const handler = (argv: { config?: string }) => {
     case 'controlnet-modules':
       getConfigControlnetModules();
       break;
+    case 'auto-controlnet-pose':
+      getConfigAutoControlnetPoses();
+      break;
     case 'embeddings':
       getConfigEmbeddings();
       break;
@@ -134,6 +141,9 @@ export const handler = (argv: { config?: string }) => {
 
     case 'adetailers-models':
       getConfigAddDetailerModels();
+      break;
+    case 'auto-adetailers':
+      getConfigAutoAdetailers();
       break;
     case 'auto-lcm':
       getConfigAutoLCM();

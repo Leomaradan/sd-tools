@@ -9,12 +9,15 @@ import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
   type IBaseQuery,
+  type IControlNetQuery,
   type IImg2ImgQuery,
   type IInterrogateResponse,
   type IModel,
   type ITxt2ImgQuery,
   RedrawMode,
-  TargetSizeType
+  TargetSizeType,
+  normalizeControlNetMode,
+  normalizeControlNetResizes
 } from './types';
 
 const headerRequest = {
@@ -102,7 +105,16 @@ export const renderQuery: Query = async (query, type) => {
 
   if (controlNet) {
     const args = controlNet.map((controlNet) => {
-      const params = { ...controlNet };
+      const params: IControlNetQuery = {
+        control_mode: normalizeControlNetMode(controlNet.control_mode),
+        enabled: true,
+        input_image: controlNet.input_image,
+        lowvram: controlNet.lowvram,
+        model: controlNet.model,
+        module: controlNet.module,
+        pixel_perfect: controlNet.pixel_perfect,
+        resize_mode: normalizeControlNetResizes(controlNet.resize_mode)
+      };
 
       if (params.lowvram === undefined) {
         params.lowvram = true;

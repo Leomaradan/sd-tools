@@ -441,7 +441,7 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
 export const getMetadataCivitAiRest = async (
   actualCacheMetadata: CacheMetadata,
   url: string
-): Promise<[CacheMetadata, IMetadata] | undefined> => {
+): Promise<[CacheMetadata, IMetadata] | false | undefined> => {
   if (!fs.existsSync(url)) {
     loggerInfo(`File does not exists : ${url}`);
     return;
@@ -484,6 +484,9 @@ export const getMetadataCivitAiRest = async (
   } catch (error: unknown) {
     if (error instanceof Error) {
       loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error.message}`);
+      if(error.message.includes('404')) {
+        return false;
+      }
     } else {
       loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error}`);
     }
@@ -521,6 +524,15 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
       Cache.set('metadata', cacheMetadataNew);
 
       return metadata;
+    } else if(metadataCivitAiRest === false) {
+      // Store fake metadata to ensure we don't try to get it again
+      const fakeMetadata: IMetadata = {
+        accelerator: 'none',
+        keywords: [],
+        sdVersion: 'unknown'
+      };
+      cacheMetadata[url] = { ...fakeMetadata, timestamp: Date.now().toString() };
+      Cache.set('metadata', cacheMetadata);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
