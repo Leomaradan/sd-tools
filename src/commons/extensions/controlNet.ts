@@ -1042,6 +1042,7 @@ export const normalizeControlNetMode = (input: ControlNetMode | ControlNetModeLe
 
 export interface IControlNet {
   control_mode: ControlNetMode | ControlNetModeLegacy;
+  image_name?: string;
   input_image?: string;
   lowvram?: boolean;
   model: string;

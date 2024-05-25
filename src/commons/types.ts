@@ -294,6 +294,8 @@ export interface ICheckpointWithVAE {
   vae?: string;
 }
 
+type ControlNetSchema = Omit<IControlNet, 'image_name'>;
+
 export interface IPrompt {
   adetailer?: IAdetailerPrompt[];
   autoCutOff?: 'both' | boolean;
@@ -301,7 +303,7 @@ export interface IPrompt {
   cfg?: number | number[];
   checkpoints?: ICheckpointWithVAE[] | string | string[];
   clipSkip?: number | number[];
-  controlNet?: IControlNet | IControlNet[];
+  controlNet?: ControlNetSchema | ControlNetSchema[];
   count?: number;
   denoising?: number | number[];
   enableHighRes?: 'both' | boolean;
@@ -376,6 +378,9 @@ export interface IPromptSingle {
   width?: number;
 }
 
+export interface IPromptSingleSchema extends Omit<IPromptSingle, 'controlNet'> {
+  controlNet?: ControlNetSchema[];
+}
 interface IPromptReplace {
   from: string;
   to: string;
@@ -389,7 +394,7 @@ export interface IPromptPermutations {
   beforeNegativePrompt?: string;
   beforePrompt?: string;
   filenameReplace?: IPromptReplace[];
-  overwrite?: Partial<IPromptSingle>;
+  overwrite?: Partial<IPromptSingleSchema>;
   promptReplace?: IPromptReplace[];
 }
 

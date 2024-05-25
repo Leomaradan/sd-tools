@@ -10693,8 +10693,8 @@ var require_follow_redirects = __commonJS({
       }
       return parsed;
     }
-    function resolveUrl(relative2, base) {
-      return useNativeURL ? new URL2(relative2, base) : parseUrl(url2.resolve(base, relative2));
+    function resolveUrl(relative3, base) {
+      return useNativeURL ? new URL2(relative3, base) : parseUrl(url2.resolve(base, relative3));
     }
     function validateUrl(input) {
       if (/^\[/.test(input.hostname) && !/^\[[:0-9a-f]+\]$/i.test(input.hostname)) {
@@ -35743,13 +35743,13 @@ function usage(yargs10, shim3) {
   };
   self2.stringifiedValues = function stringifiedValues(values, separator) {
     let string = "";
-    const sep = separator || ", ";
+    const sep2 = separator || ", ";
     const array = [].concat(values);
     if (!values || !array.length)
       return string;
     array.forEach((value) => {
       if (string.length)
-        string += sep;
+        string += sep2;
       string += JSON.stringify(value);
     });
     return string;
@@ -43787,10 +43787,10 @@ function compareDocumentPosition(nodeA, nodeB) {
 function uniqueSort(nodes) {
   nodes = nodes.filter((node, i, arr) => !arr.includes(node, i + 1));
   nodes.sort((a, b) => {
-    const relative2 = compareDocumentPosition(a, b);
-    if (relative2 & DocumentPosition.PRECEDING) {
+    const relative3 = compareDocumentPosition(a, b);
+    if (relative3 & DocumentPosition.PRECEDING) {
       return -1;
-    } else if (relative2 & DocumentPosition.FOLLOWING) {
+    } else if (relative3 & DocumentPosition.FOLLOWING) {
       return 1;
     }
     return 0;
@@ -47619,7 +47619,7 @@ var wizardOptions = [
             new Separator(),
             ...autoAdetailers.map((model) => ({
               description: `Prompt: "${model.ad_prompt ?? "N/A"}", Negative Prompt: "${model.ad_negative_prompt ?? "N/A"}", Denoising Strength: ${model.ad_denoising_strength ?? "N/A"}`,
-              name: `!ad:${model.trigger} (${model.ad_model})`,
+              name: `!pose:${model.trigger} (${model.ad_model})`,
               value: model.ad_model
             })),
             new Separator()
@@ -47685,9 +47685,9 @@ var wizardOptions = [
         const beforePrompt = await esm_default7({ message: "Enter optional prompt that will be APPEND to the query prompt. Leave empty to skip" });
         const afterPrompt = await esm_default7({ message: "Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip" });
         const newAutoControlNetPose = {
-          pose: triggerPose,
-          beforePrompt: beforePrompt !== "" ? beforePrompt : void 0,
           afterPrompt: afterPrompt !== "" ? afterPrompt : void 0,
+          beforePrompt: beforePrompt !== "" ? beforePrompt : void 0,
+          pose: triggerPose,
           trigger: triggerName
         };
         Config.set("autoControlnetPose", Array.from(/* @__PURE__ */ new Set([...autoControlnetPose, newAutoControlNetPose])));
@@ -48612,7 +48612,9 @@ var getArraysControlNet = (value) => {
     return [controlNetArray];
   }
   const initImagesArray = [];
+  let initImageBase = (0, import_node_path6.dirname)(controlNetImage);
   if ((0, import_node_fs5.statSync)(controlNetImage).isDirectory()) {
+    initImageBase = (0, import_node_path6.resolve)(controlNetImage, "..");
     const files = (0, import_node_fs5.readdirSync)(controlNetImage);
     initImagesArray.push(...files.map((file) => (0, import_node_path6.resolve)(controlNetImage, file)));
   } else {
@@ -48620,7 +48622,7 @@ var getArraysControlNet = (value) => {
   }
   return initImagesArray.map((initImage) => {
     const [first, ...rest] = controlNetArray;
-    return [{ ...first, input_image: initImage }, ...rest];
+    return [{ ...first, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage }, ...rest];
   });
 };
 var getArraysTiledVAE = (value) => {
@@ -48830,6 +48832,7 @@ var preparePrompts = (config2) => {
         }
         query.controlNet.push({
           control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? "Balanced" /* Balanced */),
+          image_name: controlNetPrompt.image_name ?? controlNetPrompt.input_image,
           input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : void 0,
           model: controlNetModel.name,
           module: controlNetModule,
@@ -48851,12 +48854,13 @@ var preparePrompts = (config2) => {
       const findExistingPose = query.controlNet.find((controlNet2) => controlNet2.model.includes("openpose"));
       if (!findExistingPose) {
         const model = (checkpoint?.version === "sdxl" ? findControlnetModel("xl_openpose", "xl_dw_openpose") : findControlnetModel("sd15_openpose"))?.name;
-        if (model) {
+        if (model && (0, import_node_fs5.existsSync)(pose.pose)) {
           if (pose.beforePrompt || pose.afterPrompt) {
             query.prompt = `${pose.beforePrompt ?? ""},${query.prompt},${pose.afterPrompt ?? ""}`;
           }
           query.controlNet.push({
             control_mode: "Balanced" /* Balanced */,
+            image_name: pose.pose,
             input_image: getBase64Image(pose.pose),
             model,
             module: "none",
@@ -48986,7 +48990,8 @@ var preparePrompts = (config2) => {
         "tiling",
         "upscaler",
         "vae",
-        "width"
+        "width",
+        "pose"
       ];
       const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
       if (matches) {
@@ -49003,6 +49008,7 @@ var preparePrompts = (config2) => {
         }
         updateFilename(query, "filename", filename);
       }
+      const findExistingPose = query.controlNet?.find((controlNet2) => controlNet2.model.includes("openpose"));
       updateFilename(query, "cfg", "[cfg]");
       updateFilename(query, "checkpoint", "[model_name]");
       updateFilename(query, "clipSkip", "[clip_skip]");
@@ -49013,6 +49019,7 @@ var preparePrompts = (config2) => {
       updateFilename(query, "cutOff", autoCutOff !== void 0 ? autoCutOff.toString() : "");
       updateFilename(query, "denoising", denoising?.toFixed(2) ?? "");
       updateFilename(query, "enableHighRes", enableHighRes !== void 0 ? enableHighRes.toString() : "");
+      updateFilename(query, "pose", findExistingPose?.image_name ? findExistingPose.image_name.toString() : "");
       updateFilename(query, "restoreFaces", restoreFaces !== void 0 ? restoreFaces.toString() : "");
       updateFilename(query, "sampler", sampler !== void 0 ? sampler.toString() : "");
       updateFilename(query, "scaleFactor", scaleFactor?.toFixed(0) ?? "");
@@ -49094,6 +49101,61 @@ var queue_default = {
     }
   ],
   definitions: {
+    ControlNetSchema: {
+      additionalProperties: false,
+      properties: {
+        control_mode: {
+          enum: [
+            0,
+            1,
+            2,
+            "Balanced",
+            "ControlNet is more important",
+            "My prompt is more important"
+          ],
+          title: "control_mode"
+        },
+        input_image: {
+          title: "input_image",
+          type: "string"
+        },
+        lowvram: {
+          title: "lowvram",
+          type: "boolean"
+        },
+        model: {
+          title: "model",
+          type: "string"
+        },
+        module: {
+          title: "module",
+          type: "string"
+        },
+        pixel_perfect: {
+          title: "pixel_perfect",
+          type: "boolean"
+        },
+        resize_mode: {
+          enum: [
+            0,
+            1,
+            2,
+            "Crop and Resize",
+            "Just Resize",
+            "Resize and Fill"
+          ],
+          title: "resize_mode"
+        }
+      },
+      required: [
+        "control_mode",
+        "model",
+        "module",
+        "resize_mode"
+      ],
+      title: "ControlNetSchema",
+      type: "object"
+    },
     IAdetailerPrompt: {
       additionalProperties: false,
       properties: {
@@ -49168,61 +49230,6 @@ var queue_default = {
         "checkpoint"
       ],
       title: "ICheckpointWithVAE",
-      type: "object"
-    },
-    IControlNet: {
-      additionalProperties: false,
-      properties: {
-        control_mode: {
-          enum: [
-            0,
-            1,
-            2,
-            "Balanced",
-            "ControlNet is more important",
-            "My prompt is more important"
-          ],
-          title: "control_mode"
-        },
-        input_image: {
-          title: "input_image",
-          type: "string"
-        },
-        lowvram: {
-          title: "lowvram",
-          type: "boolean"
-        },
-        model: {
-          title: "model",
-          type: "string"
-        },
-        module: {
-          title: "module",
-          type: "string"
-        },
-        pixel_perfect: {
-          title: "pixel_perfect",
-          type: "boolean"
-        },
-        resize_mode: {
-          enum: [
-            0,
-            1,
-            2,
-            "Crop and Resize",
-            "Just Resize",
-            "Resize and Fill"
-          ],
-          title: "resize_mode"
-        }
-      },
-      required: [
-        "control_mode",
-        "model",
-        "module",
-        "resize_mode"
-      ],
-      title: "IControlNet",
       type: "object"
     },
     IPrompt: {
@@ -49302,11 +49309,11 @@ var queue_default = {
         controlNet: {
           anyOf: [
             {
-              $ref: "#/definitions/IControlNet"
+              $ref: "#/definitions/ControlNetSchema"
             },
             {
               items: {
-                $ref: "#/definitions/IControlNet"
+                $ref: "#/definitions/ControlNetSchema"
               },
               type: "array"
             }
@@ -49667,7 +49674,7 @@ var queue_default = {
           type: "array"
         },
         overwrite: {
-          $ref: "#/definitions/Partial<IPromptSingle>",
+          $ref: "#/definitions/Partial<IPromptSingleSchema>",
           title: "overwrite"
         },
         promptReplace: {
@@ -50006,11 +50013,11 @@ var queue_default = {
         controlNet: {
           anyOf: [
             {
-              $ref: "#/definitions/IControlNet"
+              $ref: "#/definitions/ControlNetSchema"
             },
             {
               items: {
-                $ref: "#/definitions/IControlNet"
+                $ref: "#/definitions/ControlNetSchema"
               },
               type: "array"
             }
@@ -50333,7 +50340,7 @@ var queue_default = {
       title: "Partial<IPrompt>",
       type: "object"
     },
-    "Partial<IPromptSingle>": {
+    "Partial<IPromptSingleSchema>": {
       additionalProperties: false,
       properties: {
         adetailer: {
@@ -50365,7 +50372,7 @@ var queue_default = {
         },
         controlNet: {
           items: {
-            $ref: "#/definitions/IControlNet"
+            $ref: "#/definitions/ControlNetSchema"
           },
           title: "controlNet",
           type: "array"
@@ -50474,7 +50481,7 @@ var queue_default = {
           type: "number"
         }
       },
-      title: "Partial<IPromptSingle>",
+      title: "Partial<IPromptSingleSchema>",
       type: "object"
     },
     TiledDiffusionMethods: {

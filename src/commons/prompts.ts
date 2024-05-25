@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readdirSync, statSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
 
 import { Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
@@ -13,8 +13,6 @@ import { isTxt2ImgQuery, renderQuery } from './query';
 import {
   ControlNetMode,
   ControlNetResizes,
-  normalizeControlNetMode,
-  normalizeControlNetResizes,
   type ICheckpointWithVAE,
   type IControlNet,
   type IImg2ImgQuery,
@@ -23,7 +21,9 @@ import {
   type IPromptPermutations,
   type IPromptSingle,
   type IPromptsResolved,
-  type ITxt2ImgQuery
+  type ITxt2ImgQuery,
+  normalizeControlNetMode,
+  normalizeControlNetResizes
 } from './types';
 
 interface IPrepareSingleQuery {
@@ -612,8 +612,10 @@ const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Ar
   }
 
   const initImagesArray: string[] = [];
+  let initImageBase = dirname(controlNetImage);
 
   if (statSync(controlNetImage).isDirectory()) {
+    initImageBase = resolve(controlNetImage, '..');
     const files = readdirSync(controlNetImage);
     initImagesArray.push(...files.map((file) => resolve(controlNetImage, file)));
     //initImagesArray.push(...readFiles(initImageOrFolder, initImageOrFolder)) :
@@ -624,7 +626,7 @@ const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Ar
   return initImagesArray.map((initImage) => {
     const [first, ...rest] = controlNetArray;
 
-    return [{ ...first, input_image: initImage }, ...rest];
+    return [{ ...first, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage }, ...rest];
   });
 };
 
@@ -873,6 +875,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
         query.controlNet.push({
           control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? ControlNetMode.Balanced),
+          image_name: controlNetPrompt.image_name ?? controlNetPrompt.input_image,
           input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : undefined,
           model: controlNetModel.name,
           module: controlNetModule,
@@ -903,13 +906,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           checkpoint?.version === 'sdxl' ? findControlnetModel('xl_openpose', 'xl_dw_openpose') : findControlnetModel('sd15_openpose')
         )?.name;
 
-        if (model) {
+        if (model && existsSync(pose.pose)) {
           if (pose.beforePrompt || pose.afterPrompt) {
             query.prompt = `${pose.beforePrompt ?? ''},${query.prompt},${pose.afterPrompt ?? ''}`;
           }
 
           query.controlNet.push({
             control_mode: ControlNetMode.Balanced,
+            image_name: pose.pose,
             input_image: getBase64Image(pose.pose),
             model,
             module: 'none',
@@ -1059,7 +1063,8 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         'tiling',
         'upscaler',
         'vae',
-        'width'
+        'width',
+        'pose'
       ];
 
       const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
@@ -1081,8 +1086,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         updateFilename(query, 'filename', filename);
       }
 
-      // Alias to official tokens
+      const findExistingPose = query.controlNet?.find((controlNet) => controlNet.model.includes('openpose'));
 
+      // Alias to official tokens
       updateFilename(query, 'cfg', '[cfg]');
       updateFilename(query, 'checkpoint', '[model_name]');
       updateFilename(query, 'clipSkip', '[clip_skip]');
@@ -1094,6 +1100,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       updateFilename(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
       updateFilename(query, 'denoising', denoising?.toFixed(2) ?? '');
       updateFilename(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateFilename(query, 'pose', findExistingPose?.image_name ? findExistingPose.image_name.toString() : '');
       updateFilename(query, 'restoreFaces', restoreFaces !== undefined ? restoreFaces.toString() : '');
       updateFilename(query, 'sampler', sampler !== undefined ? sampler.toString() : '');
       updateFilename(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
