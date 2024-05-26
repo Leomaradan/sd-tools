@@ -1,10 +1,18 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /// <reference types="jest" />
 
-import { preparePrompts } from './prompts';
+import path from 'node:path';
+
+import { getArraysControlNet, preparePrompts } from './prompts';
 import { type IPrompts } from './types';
 
-describe('queue test', () => {
+const root = path.resolve(__dirname, '..', '..');
+
+const imageSingle = path.resolve(root, 'test', 'images', 'close-front.pose.png');
+const imageSingle2 = path.resolve(root, 'test', 'images', 'instruct', 'close-front.png');
+const imageFolder = path.resolve(root, 'test', 'images', 'multi');
+
+describe('prompt test', () => {
   it('should generate the query from single config', () => {
     const config: IPrompts = {
       prompts: [
@@ -172,6 +180,281 @@ describe('queue test', () => {
       seed: undefined,
       steps: undefined,
       width: 512
+    });
+  });
+  describe('controlNet resolver', () => {
+    it('should return one permutation with no images', () => {
+      //getArraysControlNet
+      const resultUndefined = getArraysControlNet(undefined);
+      const resultEmpty = getArraysControlNet([]);
+      const resultNoImage = getArraysControlNet({ control_mode: 0, model: '', module: '', resize_mode: 0 });
+      const resultNoImages = getArraysControlNet([{ control_mode: 0, model: '', module: '', resize_mode: 0 }]);
+
+      expect(resultUndefined).toStrictEqual([undefined]);
+      expect(resultEmpty).toStrictEqual([[]]);
+      expect(resultNoImage).toStrictEqual([[{ control_mode: 0, model: '', module: '', resize_mode: 0 }]]);
+      expect(resultNoImages).toStrictEqual([[{ control_mode: 0, model: '', module: '', resize_mode: 0 }]]);
+    });
+
+    it('should return one permutation with simple images', () => {
+      const resultOneImage = getArraysControlNet({
+        control_mode: 0,
+        input_image: imageSingle,
+        model: 'model1',
+        module: 'module1',
+        resize_mode: 0
+      });
+
+      const resultOneImageArray = getArraysControlNet([
+        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
+      ]);
+
+      const resultTwoImages = getArraysControlNet([
+        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, input_image: imageSingle2, model: 'model2', module: 'module2', resize_mode: 1 }
+      ]);
+
+      expect(resultOneImage).toMatchObject([
+        [{ control_mode: 0, image_name: 'close-front.pose.png', model: 'model1', module: 'module1', resize_mode: 0 }]
+      ]);
+
+      expect(resultOneImageArray).toMatchObject([
+        [
+          { control_mode: 0, image_name: 'close-front.pose.png', model: 'model1', module: 'module1', resize_mode: 0 },
+          { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
+        ]
+      ]);
+
+      expect(resultTwoImages).toMatchObject([
+        [
+          { control_mode: 0, image_name: 'close-front.pose.png', model: 'model1', module: 'module1', resize_mode: 0 },
+          { control_mode: 1, image_name: 'close-front.png', model: 'model2', module: 'module2', resize_mode: 1 }
+        ]
+      ]);
+    });
+
+    it('should return multiple permutations', () => {
+      const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
+      const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
+
+      const resultOneImage = getArraysControlNet({
+        control_mode: 0,
+        input_image: imageFolder,
+        model: 'model1',
+        module: 'module1',
+        resize_mode: 0
+      });
+
+      const resultOneImageArray = getArraysControlNet([
+        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
+      ]);
+
+      const resultTwoImages = getArraysControlNet([
+        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+      ]);
+
+      const resultFourImages = getArraysControlNet([
+        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+      ]);
+
+      expect(resultOneImage).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          }
+        ]
+      ]);
+
+      expect(resultOneImageArray).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          { control_mode: 1, image_name: undefined, input_image: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          { control_mode: 1, image_name: undefined, input_image: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
+        ]
+      ]);
+
+      expect(resultTwoImages).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: 'close-front.pose.png',
+            input_image: imageSingle,
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: 'close-front.pose.png',
+            input_image: imageSingle,
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ]
+      ]);
+
+      expect(resultFourImages).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ],
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ]
+      ]);
+    });
+
+    it('should return one permutation with regex pattern', () => {
+      const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
+      const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
+
+
+      const result = getArraysControlNet([
+        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', regex: 'depth', resize_mode: 0 },
+        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', regex: '.pose', resize_mode: 1 }
+      ]);
+
+      expect(result).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: `multi-${image1}`,
+            input_image: path.resolve(imageFolder, image1),
+            model: 'model1',
+            module: 'module1',
+            resize_mode: 0
+          },
+          {
+            control_mode: 1,
+            image_name: `multi-${image2}`,
+            input_image: path.resolve(imageFolder, image2),
+            model: 'model2',
+            module: 'module2',
+            resize_mode: 1
+          }
+        ]
+      ]);
+
     });
   });
 });

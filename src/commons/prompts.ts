@@ -599,34 +599,106 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
+type SeriesItem = Omit<IControlNet, 'input_image'> & { input_image?: string[] };
+
+function permuteSeries(series: SeriesItem[]): IControlNet[][] {
+  // Helper function to compute the cartesian product of arrays
+  function cartesianProduct<T>(...arrays: T[][]): T[][] {
+    return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
+  }
+
+  // Extract all image arrays
+  const imageArrays = series.map((item) => item.input_image as string[]);
+
+  // Generate the cartesian product of all image arrays
+  const combinations = cartesianProduct(...imageArrays);
+
+  // Map each combination back to the series structure
+  return combinations.map((combination) =>
+    combination.map((image, index) => ({
+      ...series[index],
+      image_name: relative(series[index].image_name ?? '', image).replace(sep, '-'),
+      input_image: image
+    }))
+  );
+}
+
+export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
   if (value === undefined) {
     return [undefined];
   }
 
   const controlNetArray = Array.isArray(value) ? value : [value];
-  const controlNetImage = controlNetArray[0].input_image;
+  //const controlNetImage = controlNetArray[0].input_image;
 
-  if (!controlNetImage) {
+  const noImages = controlNetArray.every((controlNet) => !controlNet.input_image);
+
+  if (noImages) {
     return [controlNetArray];
   }
 
-  const initImagesArray: string[] = [];
-  let initImageBase = dirname(controlNetImage);
+  const noDirectories = controlNetArray.every((controlNet) => !controlNet.input_image || !statSync(controlNet.input_image).isDirectory());
 
-  if (statSync(controlNetImage).isDirectory()) {
-    initImageBase = resolve(controlNetImage, '..');
-    const files = readdirSync(controlNetImage);
-    initImagesArray.push(...files.map((file) => resolve(controlNetImage, file)));
-    //initImagesArray.push(...readFiles(initImageOrFolder, initImageOrFolder)) :
-  } else {
-    initImagesArray.push(controlNetImage);
+  if (noDirectories) {
+    return [
+      controlNetArray.map((controlNet) => {
+        if (!controlNet.input_image) {
+          return controlNet;
+        }
+
+        const initImage = controlNet.input_image as string;
+        const initImageBase = dirname(initImage);
+
+        return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage };
+      })
+    ];
   }
 
-  return initImagesArray.map((initImage) => {
-    const [first, ...rest] = controlNetArray;
+  const temporaryControlNetArray: Array<Omit<IControlNet, 'input_image'> & { input_image?: string[] }> = [];
 
-    return [{ ...first, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage }, ...rest];
+  controlNetArray.forEach((controlNet) => {
+    const controlNetImage = controlNet.input_image;
+
+    if (!controlNetImage) {
+      temporaryControlNetArray.push({ ...controlNet, input_image: [''] });
+      return;
+    }
+
+    // const initImagesArray: string[] = [];
+    let initImageBase = dirname(controlNetImage);
+
+    if (statSync(controlNetImage).isDirectory()) {
+      initImageBase = resolve(controlNetImage, '..');
+      let files = readdirSync(controlNetImage);
+
+      if (controlNet.regex) {
+        files = files.filter((file) => new RegExp(controlNet.regex as string).test(file));
+
+        if (files.length === 0) {
+          files = [''];
+        }
+      }
+
+      temporaryControlNetArray.push({
+        ...controlNet,
+        image_name: initImageBase,
+        input_image: files.map((file) => resolve(controlNetImage, file))
+      });
+    } else {
+      temporaryControlNetArray.push({ ...controlNet, image_name: initImageBase, input_image: [controlNetImage] });
+    }
+  });
+
+  const result = permuteSeries(temporaryControlNetArray);
+
+  return result.map((current) => {
+    return current.map((controlNet) => {
+      return {
+        ...controlNet,
+        image_name: controlNet.image_name ? controlNet.image_name : undefined,
+        input_image: controlNet.input_image ? controlNet.input_image : undefined
+      };
+    });
   });
 };
 
