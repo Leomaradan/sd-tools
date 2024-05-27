@@ -601,11 +601,12 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
 
 type SeriesItem = Omit<IControlNet, 'input_image'> & { input_image?: string[] };
 
-function permuteSeries(series: SeriesItem[]): IControlNet[][] {
+const cartesianProduct = <T>(...arrays: T[][]): T[][] => {
+  return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
+};
+
+const permuteSeries = (series: SeriesItem[]): IControlNet[][] => {
   // Helper function to compute the cartesian product of arrays
-  function cartesianProduct<T>(...arrays: T[][]): T[][] {
-    return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
-  }
 
   // Extract all image arrays
   const imageArrays = series.map((item) => item.input_image as string[]);
@@ -621,7 +622,7 @@ function permuteSeries(series: SeriesItem[]): IControlNet[][] {
       input_image: image
     }))
   );
-}
+};
 
 export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
   if (value === undefined) {
@@ -629,7 +630,6 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
   }
 
   const controlNetArray = Array.isArray(value) ? value : [value];
-  //const controlNetImage = controlNetArray[0].input_image;
 
   const noImages = controlNetArray.every((controlNet) => !controlNet.input_image);
 
@@ -646,7 +646,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
           return controlNet;
         }
 
-        const initImage = controlNet.input_image as string;
+        const initImage = controlNet.input_image;
         const initImageBase = dirname(initImage);
         const promptFile = resolve(initImageBase, `${parse(initImage).name}.txt`);
         let prompt: string | undefined;
@@ -670,7 +670,6 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
       return;
     }
 
-    // const initImagesArray: string[] = [];
     let initImageBase = dirname(controlNetImage);
 
     if (statSync(controlNetImage).isDirectory()) {
@@ -963,8 +962,8 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           query.controlNet = [];
         }
 
-        if(controlNetPrompt.prompt) {
-          if(controlNetPrompt.prompt.includes('{prompt}')) {
+        if (controlNetPrompt.prompt) {
+          if (controlNetPrompt.prompt.includes('{prompt}')) {
             query.prompt = controlNetPrompt.prompt.replace('{prompt}', query.prompt);
           } else {
             query.prompt += `, ${controlNetPrompt.prompt}`;
