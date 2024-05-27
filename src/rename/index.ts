@@ -27,7 +27,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       })
       .positional('target', {
         demandOption: true,
-        describe: 'source directory',
+        describe: 'target directory',
         type: 'string'
       })
       //.config()

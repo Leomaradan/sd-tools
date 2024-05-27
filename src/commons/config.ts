@@ -47,7 +47,7 @@ const configMigration = async () => {
     // Manually manage the flags here
     mode.verbose = process.argv.includes('--verbose');
     mode.info = !process.argv.includes('--silent');
-    mode.log = !process.argv.includes('--noLog');
+    mode.log = !process.argv.includes('--no-log');
 
     loggerVerbose('Config has changed, refreshing models...');
     await init({ force: true });

@@ -16,6 +16,7 @@ const argv = process.argv.slice(2);
 
 Config.migrate().then(() => {
   yargs(argv)
+    .scriptName("sd-tools")
     .command(init)
     .command(wizard)
     .command(configSet)
@@ -28,6 +29,7 @@ Config.migrate().then(() => {
     .command(stats)
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
+    .version('1.1.0')
     .strict()
     .parse();
 });
