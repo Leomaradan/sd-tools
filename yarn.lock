@@ -5847,7 +5847,7 @@ __metadata:
     typescript-json-schema: "npm:^0.62.0"
     yargs: "npm:^17.7.2"
   bin:
-    sd-tools: ./sd-tools.cjs
+    sd-tools: sd-tools.cjs
   languageName: unknown
   linkType: soft
 
