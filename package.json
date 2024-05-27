@@ -1,5 +1,5 @@
 {
-  "name": "sd-tools",
+  "name": "@leomaradan/sd-tools",
   "version": "1.1.0",
   "repository": {
     "type": "git",
@@ -42,22 +42,22 @@
     "typescript-json-schema": "^0.62.0"
   },
   "bin": {
-    "sd-tools": "sd-tools.cjs"
+    "sd-tools": "bin.cjs"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "exports": {
     "./package.json": "./package.json",
     "./schema/queue.json": "./schema/queue.json",
     "./schema/rename.json": "./schema/rename.json",
     ".": {
       "require": {
-        "default": "./dist/index.js"
+        "default": "./dist/index.cjs"
       }
     }
   },
   "files": [
-    "dist/index.js",
-    "sd-tools.cjs"
+    "dist/index.cjs",
+    "bin.cjs"
   ],
   "type": "module",
   "packageManager": "yarn@4.2.2",
