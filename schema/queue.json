@@ -46,6 +46,14 @@
                     "title": "pixel_perfect",
                     "type": "boolean"
                 },
+                "prompt": {
+                    "title": "prompt",
+                    "type": "string"
+                },
+                "regex": {
+                    "title": "regex",
+                    "type": "string"
+                },
                 "resize_mode": {
                     "enum": [
                         0,

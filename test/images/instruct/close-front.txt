@@ -1,1 +1,1 @@
-test prompt {prompt}
+test prompt instruct, {prompt}

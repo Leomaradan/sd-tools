@@ -48602,27 +48602,77 @@ var getArraysInitImage = (value, defaultValue = void 0) => {
   });
   return initImagesArray;
 };
+function permuteSeries(series) {
+  function cartesianProduct(...arrays) {
+    return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]]);
+  }
+  const imageArrays = series.map((item) => item.input_image);
+  const combinations = cartesianProduct(...imageArrays);
+  return combinations.map(
+    (combination) => combination.map((image, index) => ({
+      ...series[index],
+      image_name: (0, import_node_path6.relative)(series[index].image_name ?? "", image).replace(import_node_path6.sep, "-"),
+      input_image: image
+    }))
+  );
+}
 var getArraysControlNet = (value) => {
   if (value === void 0) {
     return [void 0];
   }
   const controlNetArray = Array.isArray(value) ? value : [value];
-  const controlNetImage = controlNetArray[0].input_image;
-  if (!controlNetImage) {
+  const noImages = controlNetArray.every((controlNet) => !controlNet.input_image);
+  if (noImages) {
     return [controlNetArray];
   }
-  const initImagesArray = [];
-  let initImageBase = (0, import_node_path6.dirname)(controlNetImage);
-  if ((0, import_node_fs5.statSync)(controlNetImage).isDirectory()) {
-    initImageBase = (0, import_node_path6.resolve)(controlNetImage, "..");
-    const files = (0, import_node_fs5.readdirSync)(controlNetImage);
-    initImagesArray.push(...files.map((file) => (0, import_node_path6.resolve)(controlNetImage, file)));
-  } else {
-    initImagesArray.push(controlNetImage);
+  const noDirectories = controlNetArray.every((controlNet) => !controlNet.input_image || !(0, import_node_fs5.statSync)(controlNet.input_image).isDirectory());
+  if (noDirectories) {
+    return [
+      controlNetArray.map((controlNet) => {
+        if (!controlNet.input_image) {
+          return controlNet;
+        }
+        const initImage = controlNet.input_image;
+        const initImageBase = (0, import_node_path6.dirname)(initImage);
+        return { ...controlNet, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage };
+      })
+    ];
   }
-  return initImagesArray.map((initImage) => {
-    const [first, ...rest] = controlNetArray;
-    return [{ ...first, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage }, ...rest];
+  const temporaryControlNetArray = [];
+  controlNetArray.forEach((controlNet) => {
+    const controlNetImage = controlNet.input_image;
+    if (!controlNetImage) {
+      temporaryControlNetArray.push({ ...controlNet, input_image: [""] });
+      return;
+    }
+    let initImageBase = (0, import_node_path6.dirname)(controlNetImage);
+    if ((0, import_node_fs5.statSync)(controlNetImage).isDirectory()) {
+      initImageBase = (0, import_node_path6.resolve)(controlNetImage, "..");
+      let files = (0, import_node_fs5.readdirSync)(controlNetImage);
+      if (controlNet.regex) {
+        files = files.filter((file) => new RegExp(controlNet.regex).test(file));
+        if (files.length === 0) {
+          files = [""];
+        }
+      }
+      temporaryControlNetArray.push({
+        ...controlNet,
+        image_name: initImageBase,
+        input_image: files.map((file) => (0, import_node_path6.resolve)(controlNetImage, file))
+      });
+    } else {
+      temporaryControlNetArray.push({ ...controlNet, image_name: initImageBase, input_image: [controlNetImage] });
+    }
+  });
+  const result = permuteSeries(temporaryControlNetArray);
+  return result.map((current) => {
+    return current.map((controlNet) => {
+      return {
+        ...controlNet,
+        image_name: controlNet.image_name ? controlNet.image_name : void 0,
+        input_image: controlNet.input_image ? controlNet.input_image : void 0
+      };
+    });
   });
 };
 var getArraysTiledVAE = (value) => {
@@ -49134,6 +49184,14 @@ var queue_default = {
         pixel_perfect: {
           title: "pixel_perfect",
           type: "boolean"
+        },
+        prompt: {
+          title: "prompt",
+          type: "string"
+        },
+        regex: {
+          title: "regex",
+          type: "string"
         },
         resize_mode: {
           enum: [

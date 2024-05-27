@@ -9,8 +9,10 @@ import { type IPrompts } from './types';
 const root = path.resolve(__dirname, '..', '..');
 
 const imageSingle = path.resolve(root, 'test', 'images', 'close-front.pose.png');
-const imageSingle2 = path.resolve(root, 'test', 'images', 'instruct', 'close-front.png');
-const imageFolder = path.resolve(root, 'test', 'images', 'multi');
+const imageSingle2 = path.resolve(root, 'test', 'images', 'single2', 'close-front.png');
+const imageMultiFolder = path.resolve(root, 'test', 'images', 'multi');
+const imageInstructFolder = path.resolve(root, 'test', 'images', 'instruct');
+const imageInstruct = path.resolve(imageInstructFolder, 'close-front.png');
 
 describe('prompt test', () => {
   it('should generate the query from single config', () => {
@@ -240,25 +242,25 @@ describe('prompt test', () => {
 
       const resultOneImage = getArraysControlNet({
         control_mode: 0,
-        input_image: imageFolder,
+        input_image: imageMultiFolder,
         model: 'model1',
         module: 'module1',
         resize_mode: 0
       });
 
       const resultOneImageArray = getArraysControlNet([
-        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
         { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       const resultTwoImages = getArraysControlNet([
         { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
-        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       const resultFourImages = getArraysControlNet([
-        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', resize_mode: 0 },
-        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       expect(resultOneImage).toMatchObject([
@@ -266,7 +268,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -276,7 +278,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -289,7 +291,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -300,7 +302,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -322,7 +324,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -340,7 +342,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -353,7 +355,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -361,7 +363,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -371,7 +373,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -379,7 +381,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -389,7 +391,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -397,7 +399,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -407,7 +409,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -415,7 +417,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -428,10 +430,9 @@ describe('prompt test', () => {
       const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
       const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
 
-
       const result = getArraysControlNet([
-        { control_mode: 0, input_image: imageFolder, model: 'model1', module: 'module1', regex: 'depth', resize_mode: 0 },
-        { control_mode: 1, input_image: imageFolder, model: 'model2', module: 'module2', regex: '.pose', resize_mode: 1 }
+        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', regex: 'depth', resize_mode: 0 },
+        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', regex: '.pose', resize_mode: 1 }
       ]);
 
       expect(result).toMatchObject([
@@ -439,7 +440,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageFolder, image1),
+            input_image: path.resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -447,14 +448,78 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageFolder, image2),
+            input_image: path.resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
           }
         ]
       ]);
+    });
 
+    it('should add the optional prompts', () => {
+      const resultImage = getArraysControlNet({
+        control_mode: 0,
+        input_image: imageInstruct,
+        model: 'model1',
+        module: 'module1',
+        resize_mode: 0
+      });
+
+      const resultFolder = getArraysControlNet({
+        control_mode: 0,
+        input_image: imageInstructFolder,
+        model: 'model1',
+        module: 'module1',
+        resize_mode: 0
+      });
+
+      const resultFullRequest = preparePrompts({
+        prompts: [
+          {
+            controlNet: {
+              control_mode: 0,
+              input_image: imageInstruct,
+              model: 'model1',
+              module: 'module1',
+              resize_mode: 0
+            },
+            prompt: 'base prompt'
+          }
+        ]
+      });
+
+      expect(resultImage).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: 'close-front.png',
+            input_image: imageInstruct,
+            model: 'model1',
+            module: 'module1',
+            prompt: 'test prompt instruct, {prompt}',
+            resize_mode: 0
+          }
+        ]
+      ]);
+
+      expect(resultFolder).toMatchObject([
+        [
+          {
+            control_mode: 0,
+            image_name: 'instruct-close-front.png',
+            input_image: imageInstruct,
+            model: 'model1',
+            module: 'module1',
+            prompt: 'test prompt instruct, {prompt}',
+            resize_mode: 0
+          }
+        ]
+      ]);
+
+      expect(resultFullRequest).toMatchObject([{
+        prompt: 'test prompt instruct, base prompt',
+      }]);
     });
   });
 });

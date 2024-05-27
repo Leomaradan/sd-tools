@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { dirname, relative, resolve, sep } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, parse, relative, resolve, sep } from 'node:path';
 
 import { Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
@@ -648,8 +648,14 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
         const initImage = controlNet.input_image as string;
         const initImageBase = dirname(initImage);
+        const promptFile = resolve(initImageBase, `${parse(initImage).name}.txt`);
+        let prompt: string | undefined;
 
-        return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage };
+        if (existsSync(promptFile)) {
+          prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+        }
+
+        return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage, prompt };
       })
     ];
   }
@@ -673,10 +679,12 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
       if (controlNet.regex) {
         files = files.filter((file) => new RegExp(controlNet.regex as string).test(file));
+      }
 
-        if (files.length === 0) {
-          files = [''];
-        }
+      files = files.filter((file) => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+
+      if (files.length === 0) {
+        files = [''];
       }
 
       temporaryControlNetArray.push({
@@ -693,11 +701,21 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
   return result.map((current) => {
     return current.map((controlNet) => {
-      return {
+      const controlNetNormalized = {
         ...controlNet,
         image_name: controlNet.image_name ? controlNet.image_name : undefined,
         input_image: controlNet.input_image ? controlNet.input_image : undefined
       };
+
+      if (controlNetNormalized.input_image) {
+        const promptFile = resolve(dirname(controlNetNormalized.input_image), `${parse(controlNetNormalized.input_image).name}.txt`);
+
+        if (existsSync(promptFile)) {
+          controlNetNormalized.prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+        }
+      }
+
+      return controlNetNormalized;
     });
   });
 };
@@ -943,6 +961,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
         if (!query.controlNet) {
           query.controlNet = [];
+        }
+
+        if(controlNetPrompt.prompt) {
+          if(controlNetPrompt.prompt.includes('{prompt}')) {
+            query.prompt = controlNetPrompt.prompt.replace('{prompt}', query.prompt);
+          } else {
+            query.prompt += `, ${controlNetPrompt.prompt}`;
+          }
         }
 
         query.controlNet.push({
