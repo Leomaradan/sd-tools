@@ -15,7 +15,7 @@ const OPTION_TILED_DIFFUSION = 'tiled-diffusion';
 export const command = 'upscale <source> [method]';
 export const describe = 'upscale image';
 export const builder = (builder: yargs.Argv<object>) => {
-  return addBaseCommandOptions(builder)
+  return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
       describe: 'source directory',

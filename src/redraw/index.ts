@@ -23,7 +23,7 @@ interface IRedrawArgsOptions {
 export const command = 'redraw <source> <style> <method>';
 export const describe = 'redraw image in specific style';
 export const builder = (builder: yargs.Argv<object>) => {
-  return addBaseCommandOptions(builder)
+  return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
       describe: 'source directory',
