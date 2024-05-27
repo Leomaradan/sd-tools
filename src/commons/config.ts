@@ -2,13 +2,13 @@
 const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
-import { logger } from './logger';
+import { loggerVerbose, mode } from './logger';
 import { type ICache, type IConfig } from './types';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
 
-const LATEST_CONFIG_VERSION = 2;
+const LATEST_CONFIG_VERSION = 3;
 
 const migrations: Record<number, () => void> = {
   0: () => {
@@ -21,6 +21,10 @@ const migrations: Record<number, () => void> = {
   1: () => {
     config.delete('adetailersCustomModels');
     Config.set('adetailersModels', []);
+  },
+  2: () => {
+    Config.set('autoAdetailers', []);
+    Config.set('autoControlnetPose', []);
   }
 };
 
@@ -39,7 +43,13 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-    logger('Config has changed, refreshing models...');
+
+    // Manually manage the flags here
+    mode.verbose = process.argv.includes('--verbose');
+    mode.info = !process.argv.includes('--silent');
+    mode.log = !process.argv.includes('--noLog');
+
+    loggerVerbose('Config has changed, refreshing models...');
     await init({ force: true });
     Config.set('configVersion', LATEST_CONFIG_VERSION);
   }

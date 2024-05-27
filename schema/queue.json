@@ -12,23 +12,68 @@
         }
     ],
     "definitions": {
-        "ControlNetMode": {
-            "enum": [
-                0,
-                2,
-                1
+        "ControlNetSchema": {
+            "additionalProperties": false,
+            "properties": {
+                "control_mode": {
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        "Balanced",
+                        "ControlNet is more important",
+                        "My prompt is more important"
+                    ],
+                    "title": "control_mode"
+                },
+                "input_image": {
+                    "title": "input_image",
+                    "type": "string"
+                },
+                "lowvram": {
+                    "title": "lowvram",
+                    "type": "boolean"
+                },
+                "model": {
+                    "title": "model",
+                    "type": "string"
+                },
+                "module": {
+                    "title": "module",
+                    "type": "string"
+                },
+                "pixel_perfect": {
+                    "title": "pixel_perfect",
+                    "type": "boolean"
+                },
+                "prompt": {
+                    "title": "prompt",
+                    "type": "string"
+                },
+                "regex": {
+                    "title": "regex",
+                    "type": "string"
+                },
+                "resize_mode": {
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        "Crop and Resize",
+                        "Just Resize",
+                        "Resize and Fill"
+                    ],
+                    "title": "resize_mode"
+                }
+            },
+            "required": [
+                "control_mode",
+                "model",
+                "module",
+                "resize_mode"
             ],
-            "title": "ControlNetMode",
-            "type": "number"
-        },
-        "ControlNetResizes": {
-            "enum": [
-                2,
-                0,
-                1
-            ],
-            "title": "ControlNetResizes",
-            "type": "number"
+            "title": "ControlNetSchema",
+            "type": "object"
         },
         "IAdetailerPrompt": {
             "additionalProperties": false,
@@ -104,47 +149,6 @@
                 "checkpoint"
             ],
             "title": "ICheckpointWithVAE",
-            "type": "object"
-        },
-        "IControlNet": {
-            "additionalProperties": false,
-            "properties": {
-                "control_mode": {
-                    "$ref": "#/definitions/ControlNetMode",
-                    "title": "control_mode"
-                },
-                "input_image": {
-                    "title": "input_image",
-                    "type": "string"
-                },
-                "lowvram": {
-                    "title": "lowvram",
-                    "type": "boolean"
-                },
-                "model": {
-                    "title": "model",
-                    "type": "string"
-                },
-                "module": {
-                    "title": "module",
-                    "type": "string"
-                },
-                "pixel_perfect": {
-                    "title": "pixel_perfect",
-                    "type": "boolean"
-                },
-                "resize_mode": {
-                    "$ref": "#/definitions/ControlNetResizes",
-                    "title": "resize_mode"
-                }
-            },
-            "required": [
-                "control_mode",
-                "model",
-                "module",
-                "resize_mode"
-            ],
-            "title": "IControlNet",
             "type": "object"
         },
         "IPrompt": {
@@ -224,11 +228,11 @@
                 "controlNet": {
                     "anyOf": [
                         {
-                            "$ref": "#/definitions/IControlNet"
+                            "$ref": "#/definitions/ControlNetSchema"
                         },
                         {
                             "items": {
-                                "$ref": "#/definitions/IControlNet"
+                                "$ref": "#/definitions/ControlNetSchema"
                             },
                             "type": "array"
                         }
@@ -491,6 +495,34 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingNegativePrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingNegativePrompt"
+                },
+                "upscalingPrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingPrompt"
+                },
                 "vae": {
                     "anyOf": [
                         {
@@ -561,7 +593,7 @@
                     "type": "array"
                 },
                 "overwrite": {
-                    "$ref": "#/definitions/Partial<IPromptSingle>",
+                    "$ref": "#/definitions/Partial<IPromptSingleSchema>",
                     "title": "overwrite"
                 },
                 "promptReplace": {
@@ -900,11 +932,11 @@
                 "controlNet": {
                     "anyOf": [
                         {
-                            "$ref": "#/definitions/IControlNet"
+                            "$ref": "#/definitions/ControlNetSchema"
                         },
                         {
                             "items": {
-                                "$ref": "#/definitions/IControlNet"
+                                "$ref": "#/definitions/ControlNetSchema"
                             },
                             "type": "array"
                         }
@@ -1167,6 +1199,34 @@
                     ],
                     "title": "upscaler"
                 },
+                "upscalingNegativePrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingNegativePrompt"
+                },
+                "upscalingPrompt": {
+                    "anyOf": [
+                        {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "upscalingPrompt"
+                },
                 "vae": {
                     "anyOf": [
                         {
@@ -1199,7 +1259,7 @@
             "title": "Partial<IPrompt>",
             "type": "object"
         },
-        "Partial<IPromptSingle>": {
+        "Partial<IPromptSingleSchema>": {
             "additionalProperties": false,
             "properties": {
                 "adetailer": {
@@ -1231,7 +1291,7 @@
                 },
                 "controlNet": {
                     "items": {
-                        "$ref": "#/definitions/IControlNet"
+                        "$ref": "#/definitions/ControlNetSchema"
                     },
                     "title": "controlNet",
                     "type": "array"
@@ -1323,6 +1383,14 @@
                     "title": "upscaler",
                     "type": "string"
                 },
+                "upscalingNegativePrompt": {
+                    "title": "upscalingNegativePrompt",
+                    "type": "string"
+                },
+                "upscalingPrompt": {
+                    "title": "upscalingPrompt",
+                    "type": "string"
+                },
                 "vae": {
                     "title": "vae",
                     "type": "string"
@@ -1332,7 +1400,7 @@
                     "type": "number"
                 }
             },
-            "title": "Partial<IPromptSingle>",
+            "title": "Partial<IPromptSingleSchema>",
             "type": "object"
         },
         "TiledDiffusionMethods": {

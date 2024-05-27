@@ -1,50 +1,73 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const logger = (message: string) => {
-  // eslint-disable-next-line no-console
-  console.log(message);
+export const mode = { info: true, log: true, simulate: false, verbose: false };
+
+export const loggerInfo = (message: string) => {
+  if (mode.info) {
+    // eslint-disable-next-line no-console
+    console.log(message);
+  }
 };
 
-export const writeLog = (...data: unknown[]) => {
-  const logPath = path.resolve(__dirname, '..', 'logs');
-  const logFile = path.resolve(logPath, `log-${new Date().toISOString().substring(0, 10)}.txt`);
-  if (!fs.existsSync(logPath)) {
-    fs.mkdirSync(logPath);
+export const loggerVerbose = (message: string) => {
+  if (mode.verbose) {
+    // eslint-disable-next-line no-console
+    console.log(message);
   }
+};
 
-  if (!fs.existsSync(logFile)) {
-    fs.writeFileSync(logFile, '');
-  }
+export const writeLog = (data: object, force = false) => {
+  if (mode.log || force) {
+    const logPath = path.resolve(__dirname, '..', 'logs');
+    const logFile = path.resolve(logPath, `log-${new Date().toISOString().substring(0, 10)}.json`);
+    if (!fs.existsSync(logPath)) {
+      fs.mkdirSync(logPath);
+    }
 
-  fs.appendFileSync(
-    logFile,
-    `${Date.now()} ${JSON.stringify(data, (key, value) => {
-      if (['init_images', 'input_image'].includes(key)) {
-        if (!value) {
+    if (!fs.existsSync(logFile)) {
+      fs.writeFileSync(logFile, '[]');
+    }
+
+    const dataWithDate = { timestamp: Date.now(), ...data };
+
+    const content = JSON.parse(fs.readFileSync(logFile, { encoding: 'utf8' }));
+
+    content.push(dataWithDate);
+
+    fs.writeFileSync(
+      logFile,
+      JSON.stringify(
+        content,
+        (key, value) => {
+          if (['init_images', 'input_image'].includes(key)) {
+            if (!value) {
+              return value;
+            }
+
+            if (Array.isArray(value)) {
+              return (value as string[]).map((item) => item.substring(0, 100));
+            }
+
+            return value?.substring(0, 100) ?? value;
+          }
+
           return value;
-        }
-
-        if (Array.isArray(value)) {
-          return (value as string[]).map((item) => item.substring(0, 100));
-        }
-
-        return value?.substring(0, 100) ?? value;
-      }
-
-      return value;
-    })}\n`
-  );
+        },
+        2
+      )
+    );
+  }
 };
 
 export enum ExitCodes {
-  CONFIG_GET_INVALID_OPTIONS  = 3,
+  CONFIG_GET_INVALID_OPTIONS = 3,
   CONFIG_GET_NO_OPTIONS = 5,
   CONFIG_NOT_INITIALIZED = 4,
   CONFIG_SET_CUTOFF_INVALID_TOKEN = 10,
   CONFIG_SET_CUTOFF_INVALID_WEIGHT = 11,
   CONFIG_SET_INVALID_MULTIDIFFUSION = 8,
-  CONFIG_SET_INVALID_OPTIONS  =6,
+  CONFIG_SET_INVALID_OPTIONS = 6,
   CONFIG_SET_LCM_INVALID_TOKEN = 12,
   CONFIG_SET_NO_AGENT_INSTALLED = 14,
   CONFIG_SET_NO_CUTOFF_INSTALLED = 9,
@@ -58,6 +81,7 @@ export enum ExitCodes {
   PROMPT_INVALID_CHECKPOINT = 51,
   PROMPT_INVALID_CONTROLNET_MODEL = 47,
   PROMPT_INVALID_CONTROLNET_MODULE = 46,
+  PROMPT_INVALID_CONTROLNET_POSE = 54,
   PROMPT_INVALID_PATTERN_TOKEN = 52,
   PROMPT_INVALID_SAMPLER = 45,
   PROMPT_INVALID_STRING_TOKEN = 44,
@@ -90,5 +114,5 @@ export enum ExitCodes {
   UPSCALE_NO_CONTROLNET = 38,
   UPSCALE_NO_CONTROLNET_TILES = 39,
   UPSCALE_NO_TILED_DIFFUSION = 40,
-  UPSCALE_TILES_NO_SOURCE = 42,
+  UPSCALE_TILES_NO_SOURCE = 42
 }

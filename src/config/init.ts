@@ -4,7 +4,7 @@ import yargs from 'yargs';
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
-import { ExitCodes, logger } from '../commons/logger';
+import { ExitCodes,  loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
   getAdModelQuery,
@@ -80,7 +80,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     !embeddingsQuery ||
     !stylesQuery
   ) {
-    logger('Error: Cannot initialize config : Error in SD API');
+    loggerInfo('Error: Cannot initialize config : Error in SD API');
     process.exit(ExitCodes.INIT_NO_SD_API);
   }
 
@@ -217,7 +217,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     const controlnetModulesQuery = await getControlnetModulesQuery();
 
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
-      logger('Error: Cannot initialize config : Error in ControlNet');
+      loggerInfo('Error: Cannot initialize config : Error in ControlNet');
       process.exit(ExitCodes.INIT_NO_CONTROLNET);
     }
 
@@ -253,7 +253,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
   }
 
   if (!initialized || force) {
-    logger('Refresh models');
+    loggerVerbose('Refresh models');
     Config.set('initialized', true);
     Config.set('cutoff', extensions.has('cutoff'));
     Config.set('cutoffTokens', [

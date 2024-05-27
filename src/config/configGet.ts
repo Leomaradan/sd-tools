@@ -1,10 +1,12 @@
 import yargs from 'yargs';
 
-import { Config } from '../commons/config.js';
-import { ExitCodes, logger } from '../commons/logger.js';
+import { Config } from '../commons/config';
+import { ExitCodes,  loggerInfo } from '../commons/logger';
 import {
   type Options,
   getConfigAddDetailerModels,
+  getConfigAutoAdetailers,
+  getConfigAutoControlnetPoses,
   getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,
@@ -29,7 +31,7 @@ import {
   getConfigUpscalers,
   getConfigVAE,
   getConfigVersion
-} from './functions.js';
+} from './functions';
 
 export const options: { description: string; option: Options }[] = [
   { description: 'List of Add Details models, if existing', option: 'adetailers-models' },
@@ -40,6 +42,8 @@ export const options: { description: string; option: Options }[] = [
     option: 'auto-tiled-diffusion'
   },
   { description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled', option: 'auto-tiled-vae' },
+  { description: 'If the Add Details extension exists, it will allow to automatically add models', option: 'auto-adetailers' },
+  { description: 'If the ControlNet extension exists, it will allow to automatically set a pose', option: 'auto-controlnet-pose' },
   { description: 'Negative prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-negative' },
   { description: 'Negative prompt to add on each queries using SD XL (except queue query)', option: 'common-negative-xl' },
   { description: 'Prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-positive' },
@@ -76,7 +80,7 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'string'
     })
     .fail((msg) => {
-      logger(msg);
+      loggerInfo(msg);
       process.exit(ExitCodes.CONFIG_GET_INVALID_OPTIONS);
     });
 };
@@ -87,13 +91,13 @@ export const handler = (argv: { config?: string }) => {
   const initialized = Config.get('initialized');
 
   if (!initialized) {
-    logger('Config must be initialized first');
+    loggerInfo('Config must be initialized first');
     process.exit(ExitCodes.CONFIG_NOT_INITIALIZED);
   }
 
   if (!config) {
     const listOptions = [...options].sort((a, b) => a.option.localeCompare(b.option)).map((o) => `  - ${o.option} : ${o.description}`);
-    logger(`Available options: \n${listOptions.join('\n')}`);
+    loggerInfo(`Available options: \n${listOptions.join('\n')}`);
     process.exit(ExitCodes.CONFIG_GET_NO_OPTIONS);
   }
 
@@ -106,6 +110,9 @@ export const handler = (argv: { config?: string }) => {
       break;
     case 'controlnet-modules':
       getConfigControlnetModules();
+      break;
+    case 'auto-controlnet-pose':
+      getConfigAutoControlnetPoses();
       break;
     case 'embeddings':
       getConfigEmbeddings();
@@ -134,6 +141,9 @@ export const handler = (argv: { config?: string }) => {
 
     case 'adetailers-models':
       getConfigAddDetailerModels();
+      break;
+    case 'auto-adetailers':
+      getConfigAutoAdetailers();
       break;
     case 'auto-lcm':
       getConfigAutoLCM();

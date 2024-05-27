@@ -1,5 +1,5 @@
 import { type IAdetailer } from './extensions/adetailer';
-import { type IControlNet } from './extensions/controlNet';
+import { type IControlNet, type IControlNetQuery } from './extensions/controlNet';
 import { type ICutOff } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
@@ -7,7 +7,7 @@ import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extension
 export * from './extensions/controlNet';
 export * from './extensions/ultimateSdUpscale';
 
-export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNet[] };
+export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNetQuery[] };
 
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
@@ -217,8 +217,21 @@ export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
 export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
 export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
+export interface IAutoAdetailer extends IAdetailer {
+  trigger: string;
+}
+
+export interface IAutoControlnetPose {
+  afterPrompt?: string;
+  beforePrompt?: string;
+  pose: string;
+  trigger: string;
+}
+
 export interface IConfig {
   adetailersModels: string[];
+  autoAdetailers: IAutoAdetailer[];
+  autoControlnetPose: IAutoControlnetPose[];
   autoTiledDiffusion: TiledDiffusionMethods | false;
   autoTiledVAE: boolean;
   commonNegative?: string;
@@ -281,6 +294,8 @@ export interface ICheckpointWithVAE {
   vae?: string;
 }
 
+type ControlNetSchema = Omit<IControlNet, 'image_name'>;
+
 export interface IPrompt {
   adetailer?: IAdetailerPrompt[];
   autoCutOff?: 'both' | boolean;
@@ -288,7 +303,7 @@ export interface IPrompt {
   cfg?: number | number[];
   checkpoints?: ICheckpointWithVAE[] | string | string[];
   clipSkip?: number | number[];
-  controlNet?: IControlNet | IControlNet[];
+  controlNet?: ControlNetSchema | ControlNetSchema[];
   count?: number;
   denoising?: number | number[];
   enableHighRes?: 'both' | boolean;
@@ -317,6 +332,8 @@ export interface IPrompt {
   tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
+  upscalingNegativePrompt?: string | string[];
+  upscalingPrompt?: string | string[];
   vae?: string | string[];
   width?: number | number[];
 }
@@ -355,10 +372,15 @@ export interface IPromptSingle {
   tiling?: boolean;
   ultimateSdUpscale?: IUltimateSDUpscale;
   upscaler?: string;
+  upscalingNegativePrompt?: string;
+  upscalingPrompt?: string;
   vae?: string;
   width?: number;
 }
 
+export interface IPromptSingleSchema extends Omit<IPromptSingle, 'controlNet'> {
+  controlNet?: ControlNetSchema[];
+}
 interface IPromptReplace {
   from: string;
   to: string;
@@ -372,7 +394,7 @@ export interface IPromptPermutations {
   beforeNegativePrompt?: string;
   beforePrompt?: string;
   filenameReplace?: IPromptReplace[];
-  overwrite?: Partial<IPromptSingle>;
+  overwrite?: Partial<IPromptSingleSchema>;
   promptReplace?: IPromptReplace[];
 }
 
