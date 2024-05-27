@@ -8,6 +8,9 @@ on:
   release:
     types: [published] 
 
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -22,13 +25,9 @@ jobs:
       - run: corepack enable
 
       - run: yarn --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: yarn build:prod
 
       - run: yarn test
 
       - run: yarn npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
