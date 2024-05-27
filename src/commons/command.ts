@@ -2,8 +2,8 @@ import type yargs from 'yargs';
 
 import { mode } from './logger';
 
-export const addBaseCommandOptions = (builder: yargs.Argv<object>) => {
-  return builder
+export const addBaseCommandOptions = (builder: yargs.Argv<object>, simulate?: boolean) => {
+  const config = builder
     .options({
       silent: {
         describe: 'If set, nothing will be displayed in the command line',
@@ -23,18 +23,23 @@ export const addBaseCommandOptions = (builder: yargs.Argv<object>) => {
         type: 'boolean'
       }
     })
-    .options({
+    .conflicts('silent', 'verbose');
+
+  if (simulate) {
+    config.options({
       simulate: {
         default: false,
         describe: 'If set, the generation request will not be sent',
         type: 'boolean'
       }
-    })
-    .conflicts('silent', 'verbose');
+    });
+  }
+
+  return config;
 };
 
 export const resolveBaseOptions = (argv: unknown) => {
-  const options = argv as { noLog: boolean; silent?: boolean; simulate: boolean, verbose?: boolean };
+  const options = argv as { noLog: boolean; silent?: boolean; simulate: boolean; verbose?: boolean };
 
   const silent = options.silent ?? false;
   const verbose = options.verbose ?? false;

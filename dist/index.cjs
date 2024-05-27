@@ -9537,7 +9537,7 @@ var require_ms = __commonJS({
       options3 = options3 || {};
       var type = typeof val;
       if (type === "string" && val.length > 0) {
-        return parse(val);
+        return parse2(val);
       } else if (type === "number" && isFinite(val)) {
         return options3.long ? fmtLong(val) : fmtShort(val);
       }
@@ -9545,7 +9545,7 @@ var require_ms = __commonJS({
         "val is not a non-empty string or a valid number. val=" + JSON.stringify(val)
       );
     };
-    function parse(str) {
+    function parse2(str) {
       str = String(str);
       if (str.length > 100) {
         return;
@@ -12020,7 +12020,7 @@ var require_dist = __commonJS({
         await handle.close();
       }
     }
-    function readFileSync4(filepath) {
+    function readFileSync5(filepath) {
       const descriptor = fs12.openSync(filepath, "r");
       try {
         const { size } = fs12.fstatSync(descriptor);
@@ -12048,7 +12048,7 @@ var require_dist = __commonJS({
       if (typeof callback === "function") {
         queue.push(() => readFileAsync(filepath).then((input2) => process.nextTick(callback, null, lookup(input2, filepath))).catch(callback));
       } else {
-        const input2 = readFileSync4(filepath);
+        const input2 = readFileSync5(filepath);
         return lookup(input2, filepath);
       }
     }
@@ -36968,9 +36968,9 @@ var YargsInstance = class {
     __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
     if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
       if (!this.parsed) {
-        const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
-        if (isPromise(parse)) {
-          return parse.then(() => {
+        const parse2 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+        if (isPromise(parse2)) {
+          return parse2.then(() => {
             return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
           });
         }
@@ -37314,9 +37314,9 @@ var YargsInstance = class {
     __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
     if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
       if (!this.parsed) {
-        const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
-        if (isPromise(parse)) {
-          parse.then(() => {
+        const parse2 = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), void 0, void 0, 0, true);
+        if (isPromise(parse2)) {
+          parse2.then(() => {
             __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
           });
           return this;
@@ -47858,8 +47858,8 @@ __export(extract_exports, {
 var import_node_path5 = __toESM(require("node:path"), 1);
 
 // src/commons/command.ts
-var addBaseCommandOptions = (builder10) => {
-  return builder10.options({
+var addBaseCommandOptions = (builder10, simulate) => {
+  const config2 = builder10.options({
     silent: {
       describe: "If set, nothing will be displayed in the command line",
       type: "boolean"
@@ -47875,13 +47875,17 @@ var addBaseCommandOptions = (builder10) => {
       describe: "If set, more informations will be displayed in the console",
       type: "boolean"
     }
-  }).options({
-    simulate: {
-      default: false,
-      describe: "If set, the generation request will not be sent",
-      type: "boolean"
-    }
   }).conflicts("silent", "verbose");
+  if (simulate) {
+    config2.options({
+      simulate: {
+        default: false,
+        describe: "If set, the generation request will not be sent",
+        type: "boolean"
+      }
+    });
+  }
+  return config2;
 };
 var resolveBaseOptions = (argv2) => {
   const options3 = argv2;
@@ -48602,10 +48606,10 @@ var getArraysInitImage = (value, defaultValue = void 0) => {
   });
   return initImagesArray;
 };
-function permuteSeries(series) {
-  function cartesianProduct(...arrays) {
-    return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]]);
-  }
+var cartesianProduct = (...arrays) => {
+  return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]]);
+};
+var permuteSeries = (series) => {
   const imageArrays = series.map((item) => item.input_image);
   const combinations = cartesianProduct(...imageArrays);
   return combinations.map(
@@ -48615,7 +48619,7 @@ function permuteSeries(series) {
       input_image: image
     }))
   );
-}
+};
 var getArraysControlNet = (value) => {
   if (value === void 0) {
     return [void 0];
@@ -48634,7 +48638,12 @@ var getArraysControlNet = (value) => {
         }
         const initImage = controlNet.input_image;
         const initImageBase = (0, import_node_path6.dirname)(initImage);
-        return { ...controlNet, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage };
+        const promptFile = (0, import_node_path6.resolve)(initImageBase, `${(0, import_node_path6.parse)(initImage).name}.txt`);
+        let prompt;
+        if ((0, import_node_fs5.existsSync)(promptFile)) {
+          prompt = (0, import_node_fs5.readFileSync)(promptFile, "utf-8").replace(/\n/g, "").trim();
+        }
+        return { ...controlNet, image_name: (0, import_node_path6.relative)(initImageBase, initImage).replace(import_node_path6.sep, "-"), input_image: initImage, prompt };
       })
     ];
   }
@@ -48651,9 +48660,10 @@ var getArraysControlNet = (value) => {
       let files = (0, import_node_fs5.readdirSync)(controlNetImage);
       if (controlNet.regex) {
         files = files.filter((file) => new RegExp(controlNet.regex).test(file));
-        if (files.length === 0) {
-          files = [""];
-        }
+      }
+      files = files.filter((file) => file.endsWith(".png") || file.endsWith(".jpg") || file.endsWith(".jpeg"));
+      if (files.length === 0) {
+        files = [""];
       }
       temporaryControlNetArray.push({
         ...controlNet,
@@ -48667,11 +48677,18 @@ var getArraysControlNet = (value) => {
   const result = permuteSeries(temporaryControlNetArray);
   return result.map((current) => {
     return current.map((controlNet) => {
-      return {
+      const controlNetNormalized = {
         ...controlNet,
         image_name: controlNet.image_name ? controlNet.image_name : void 0,
         input_image: controlNet.input_image ? controlNet.input_image : void 0
       };
+      if (controlNetNormalized.input_image) {
+        const promptFile = (0, import_node_path6.resolve)((0, import_node_path6.dirname)(controlNetNormalized.input_image), `${(0, import_node_path6.parse)(controlNetNormalized.input_image).name}.txt`);
+        if ((0, import_node_fs5.existsSync)(promptFile)) {
+          controlNetNormalized.prompt = (0, import_node_fs5.readFileSync)(promptFile, "utf-8").replace(/\n/g, "").trim();
+        }
+      }
+      return controlNetNormalized;
     });
   });
 };
@@ -48879,6 +48896,13 @@ var preparePrompts = (config2) => {
         }
         if (!query.controlNet) {
           query.controlNet = [];
+        }
+        if (controlNetPrompt.prompt) {
+          if (controlNetPrompt.prompt.includes("{prompt}")) {
+            query.prompt = controlNetPrompt.prompt.replace("{prompt}", query.prompt);
+          } else {
+            query.prompt += `, ${controlNetPrompt.prompt}`;
+          }
         }
         query.controlNet.push({
           control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? "Balanced" /* Balanced */),
@@ -50641,7 +50665,7 @@ var queueFromFile = async (source, validateOnly) => {
 var command7 = "queue <source>";
 var describe6 = "queue image using a json file";
 var builder5 = (builder10) => {
-  return addBaseCommandOptions(builder10).positional("source", {
+  return addBaseCommandOptions(builder10, true).positional("source", {
     demandOption: true,
     describe: "source json",
     type: "string"
@@ -50944,7 +50968,7 @@ var redraw = async (source, { addToPrompt, denoising: denoisingArray, method, re
 var command8 = "redraw <source> <style> <method>";
 var describe7 = "redraw image in specific style";
 var builder6 = (builder10) => {
-  return addBaseCommandOptions(builder10).positional("source", {
+  return addBaseCommandOptions(builder10, true).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"
@@ -51493,7 +51517,7 @@ var OPTION_TILED_DIFFUSION = "tiled-diffusion";
 var command11 = "upscale <source> [method]";
 var describe10 = "upscale image";
 var builder9 = (builder10) => {
-  return addBaseCommandOptions(builder10).positional("source", {
+  return addBaseCommandOptions(builder10, true).positional("source", {
     demandOption: true,
     describe: "source directory",
     type: "string"

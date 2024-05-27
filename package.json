@@ -1,6 +1,10 @@
 {
   "name": "sd-tools",
   "version": "1.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Leomaradan/sd-tools.git"
+  },
   "dependencies": {
     "@inquirer/prompts": "^5.0.4",
     "axios": "^1.6.2",
@@ -37,7 +41,7 @@
     "typescript": "^5.2.2",
     "typescript-json-schema": "^0.62.0"
   },
-  "bin": "./sd-tools.js",
+  "bin": "./sd-tools",
   "main": "./dist/index.js",
   "exports": {
     "./package.json": "./package.json",
@@ -51,7 +55,8 @@
   },
   "files": [
     "dist/index.js",
-    "sd-tools.js"
+    "sd-tools",
+    "sd-tools.bat"
   ],
   "type": "module",
   "packageManager": "yarn@4.2.2",

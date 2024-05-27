@@ -14,7 +14,7 @@ interface IQueueArgsOptions {
 export const command = 'queue <source>';
 export const describe = 'queue image using a json file';
 export const builder = (builder: yargs.Argv<object>) => {
-  return addBaseCommandOptions(builder)
+  return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
       describe: 'source json',
