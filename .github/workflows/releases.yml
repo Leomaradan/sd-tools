@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 jobs:
-  pre-release:
+  release:
     runs-on: "ubuntu-latest"
 
     steps:
@@ -27,3 +27,5 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
