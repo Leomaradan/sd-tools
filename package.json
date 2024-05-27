@@ -59,7 +59,7 @@
     "build": "yarn schema && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs",
     "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs --watch",
     "start": "node dist/index.cjs",
-    "test": "jest",
+    "test": "jest --coverage",
     "schema": "yarn schema:queue && yarn schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
     "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword"
