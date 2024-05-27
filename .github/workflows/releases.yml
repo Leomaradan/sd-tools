@@ -3,7 +3,7 @@ name: Create release
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
 
 jobs:
   pre-release:
@@ -25,11 +25,5 @@ jobs:
 
       - run: yarn test
 
-      - uses: "diillson/auto-release@latest"
-        with:
-            repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            prerelease: false
-            files: |
-              LICENSE
-              dist/*.js
-              sd-tools.cjs
+      - name: Release
+        uses: softprops/action-gh-release@v2
