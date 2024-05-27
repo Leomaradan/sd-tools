@@ -1,8 +1,8 @@
-# Stable Diffusion CLI Tool
+# SD Tools
 
 ## "Here's looking at you, kid." - **Casablanca**
 
-Welcome to the SD Tool, your all-in-one command line interface for interacting with the [AUTOMATIC1111's Stable Diffusion Web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). This tool brings a robust queue system and a variety of commands to streamline your workflow with Stable Diffusion.
+Welcome to the SD Tools, your all-in-one command line interface for interacting with the [AUTOMATIC1111's Stable Diffusion Web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). This tool brings a robust queue system and a variety of commands to streamline your workflow with Stable Diffusion.
 
 ## "May the Force be with you." - **Star Wars**
 
@@ -88,7 +88,7 @@ Our tool offers several powerful commands to enhance your workflow:
   Allowed parameters:
 
   - **--silent**: Do not display anything in the terminal
-  - **--noLog**: Don't log the queries output to a file
+  - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
   - **--simulate**: Run the whole process but don't send the queries to the API
   - **-v, --validate**: Only validate the prompts file
@@ -102,7 +102,7 @@ Our tool offers several powerful commands to enhance your workflow:
   Allowed parameters:
 
   - **--silent**: Do not display anything in the terminal
-  - **--noLog**: Don't log the queries output to a file
+  - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
   - **-c, --config**: Configuration file for renaming images.
   - **-k, --keys**: keys to search for. Allowed formats: "key:value" or "key:value1;value2"
@@ -118,7 +118,7 @@ Our tool offers several powerful commands to enhance your workflow:
   Allowed parameters:
 
   - **--silent**: Do not display anything in the terminal
-  - **--noLog**: Don't log the queries output to a file
+  - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
   - **-a, --add-before**: Add a string before the extracted text. Use `|` to add multiple texts and generate multiple outputs
   - **-o, --output**: Optional output file. If not provided, the output will be displayed in the terminal
@@ -133,7 +133,7 @@ Our tool offers several powerful commands to enhance your workflow:
   Allowed parameters:
 
   - **--silent**: Do not display anything in the terminal
-  - **--noLog**: Don't log the queries output to a file
+  - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
   - **--simulate**: Run the whole process but don't send the queries to the API
   - **-c, --checkpoint**: Force a specific checkpoint
@@ -144,13 +144,13 @@ Our tool offers several powerful commands to enhance your workflow:
 - **Redraw Command:**
 
   ```bash
-  sd-tools redraw --dir your_images_directory --style new_style
+  sd-tools redraw <source> <style = realism | anime | both> <method = classical | ip-adapter | both>
   ```
 
   Allowed parameters:
 
   - **--silent**: Do not display anything in the terminal
-  - **--noLog**: Don't log the queries output to a file
+  - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
   - **--simulate**: Run the whole process but don't send the queries to the API
 

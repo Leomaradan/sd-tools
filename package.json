@@ -41,7 +41,7 @@
     "typescript": "^5.2.2",
     "typescript-json-schema": "^0.62.0"
   },
-  "bin": "./sd-tools",
+  "bin": "./sd-tools.cjs",
   "main": "./dist/index.js",
   "exports": {
     "./package.json": "./package.json",
@@ -55,15 +55,15 @@
   },
   "files": [
     "dist/index.js",
-    "sd-tools",
-    "sd-tools.bat"
+    "sd-tools.cjs"
   ],
   "type": "module",
   "packageManager": "yarn@4.2.2",
   "scripts": {
-    "build": "yarn schema && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs",
-    "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.cjs --watch",
-    "start": "node dist/index.cjs",
+    "build": "yarn schema && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=build/index.cjs",
+    "build:prod": "esbuild --define:process.env.NODE_ENV=\\\"production\\\" src/index.ts --bundle --platform=node --target=node20  --minify --outfile=dist/index.cjs",
+    "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=build/index.cjs --watch",
+    "start": "node build/index.cjs",
     "test": "jest --coverage",
     "schema": "yarn schema:queue && yarn schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
