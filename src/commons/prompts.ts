@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { dirname, relative, resolve, sep } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, parse, relative, resolve, sep } from 'node:path';
 
 import { Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
@@ -599,34 +599,123 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
+type SeriesItem = Omit<IControlNet, 'input_image'> & { input_image?: string[] };
+
+const cartesianProduct = <T>(...arrays: T[][]): T[][] => {
+  return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
+};
+
+const permuteSeries = (series: SeriesItem[]): IControlNet[][] => {
+  // Helper function to compute the cartesian product of arrays
+
+  // Extract all image arrays
+  const imageArrays = series.map((item) => item.input_image as string[]);
+
+  // Generate the cartesian product of all image arrays
+  const combinations = cartesianProduct(...imageArrays);
+
+  // Map each combination back to the series structure
+  return combinations.map((combination) =>
+    combination.map((image, index) => ({
+      ...series[index],
+      image_name: relative(series[index].image_name ?? '', image).replace(sep, '-'),
+      input_image: image
+    }))
+  );
+};
+
+export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefined): Array<IControlNet[] | undefined> => {
   if (value === undefined) {
     return [undefined];
   }
 
   const controlNetArray = Array.isArray(value) ? value : [value];
-  const controlNetImage = controlNetArray[0].input_image;
 
-  if (!controlNetImage) {
+  const noImages = controlNetArray.every((controlNet) => !controlNet.input_image);
+
+  if (noImages) {
     return [controlNetArray];
   }
 
-  const initImagesArray: string[] = [];
-  let initImageBase = dirname(controlNetImage);
+  const noDirectories = controlNetArray.every((controlNet) => !controlNet.input_image || !statSync(controlNet.input_image).isDirectory());
 
-  if (statSync(controlNetImage).isDirectory()) {
-    initImageBase = resolve(controlNetImage, '..');
-    const files = readdirSync(controlNetImage);
-    initImagesArray.push(...files.map((file) => resolve(controlNetImage, file)));
-    //initImagesArray.push(...readFiles(initImageOrFolder, initImageOrFolder)) :
-  } else {
-    initImagesArray.push(controlNetImage);
+  if (noDirectories) {
+    return [
+      controlNetArray.map((controlNet) => {
+        if (!controlNet.input_image) {
+          return controlNet;
+        }
+
+        const initImage = controlNet.input_image;
+        const initImageBase = dirname(initImage);
+        const promptFile = resolve(initImageBase, `${parse(initImage).name}.txt`);
+        let prompt: string | undefined;
+
+        if (existsSync(promptFile)) {
+          prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+        }
+
+        return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage, prompt };
+      })
+    ];
   }
 
-  return initImagesArray.map((initImage) => {
-    const [first, ...rest] = controlNetArray;
+  const temporaryControlNetArray: Array<Omit<IControlNet, 'input_image'> & { input_image?: string[] }> = [];
 
-    return [{ ...first, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage }, ...rest];
+  controlNetArray.forEach((controlNet) => {
+    const controlNetImage = controlNet.input_image;
+
+    if (!controlNetImage) {
+      temporaryControlNetArray.push({ ...controlNet, input_image: [''] });
+      return;
+    }
+
+    let initImageBase = dirname(controlNetImage);
+
+    if (statSync(controlNetImage).isDirectory()) {
+      initImageBase = resolve(controlNetImage, '..');
+      let files = readdirSync(controlNetImage);
+
+      if (controlNet.regex) {
+        files = files.filter((file) => new RegExp(controlNet.regex as string).test(file));
+      }
+
+      files = files.filter((file) => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+
+      if (files.length === 0) {
+        files = [''];
+      }
+
+      temporaryControlNetArray.push({
+        ...controlNet,
+        image_name: initImageBase,
+        input_image: files.map((file) => resolve(controlNetImage, file))
+      });
+    } else {
+      temporaryControlNetArray.push({ ...controlNet, image_name: initImageBase, input_image: [controlNetImage] });
+    }
+  });
+
+  const result = permuteSeries(temporaryControlNetArray);
+
+  return result.map((current) => {
+    return current.map((controlNet) => {
+      const controlNetNormalized = {
+        ...controlNet,
+        image_name: controlNet.image_name ? controlNet.image_name : undefined,
+        input_image: controlNet.input_image ? controlNet.input_image : undefined
+      };
+
+      if (controlNetNormalized.input_image) {
+        const promptFile = resolve(dirname(controlNetNormalized.input_image), `${parse(controlNetNormalized.input_image).name}.txt`);
+
+        if (existsSync(promptFile)) {
+          controlNetNormalized.prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+        }
+      }
+
+      return controlNetNormalized;
+    });
   });
 };
 
@@ -871,6 +960,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
         if (!query.controlNet) {
           query.controlNet = [];
+        }
+
+        if (controlNetPrompt.prompt) {
+          if (controlNetPrompt.prompt.includes('{prompt}')) {
+            query.prompt = controlNetPrompt.prompt.replace('{prompt}', query.prompt);
+          } else {
+            query.prompt += `, ${controlNetPrompt.prompt}`;
+          }
         }
 
         query.controlNet.push({

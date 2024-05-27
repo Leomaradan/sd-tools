@@ -1048,6 +1048,8 @@ export interface IControlNet {
   model: string;
   module: string;
   pixel_perfect?: boolean;
+  prompt?: string;
+  regex?: string
   resize_mode: ControlNetResizes | ControlNetResizesLegacy;
 }
 
