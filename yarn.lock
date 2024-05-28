@@ -2114,7 +2114,7 @@ __metadata:
     "@inquirer/prompts": "npm:^5.0.4"
     "@types/configstore": "npm:^6.0.2"
     "@types/jest": "npm:^29.5.11"
-    "@types/node": "npm:^20.9.0"
+    "@types/node": "npm:^20.12.12"
     "@types/png-chunk-text": "npm:^1.0.3"
     "@types/png-chunks-extract": "npm:^1.0.2"
     "@types/yargs": "npm:^17.0.31"
@@ -2364,7 +2364,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^20.9.0":
+"@types/node@npm:*":
   version: 20.11.25
   resolution: "@types/node@npm:20.11.25"
   dependencies:
