@@ -1,5 +1,5 @@
 {
-  "$schema": "../../src/commons/schema/queue.json",
+  "$schema": "../../schema/queue.json",
   "basePrompt": {
     "checkpoints": "fake-checkpoint C",
     "height": 640,

@@ -17,6 +17,24 @@ export const loggerVerbose = (message: string) => {
   }
 };
 
+const purgePathInLog = (key: string, value: unknown) => {
+  if (['init_images', 'input_image'].includes(key)) {
+    if (!value) {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return (value as string[]).map((item) => item.substring(0, 100));
+    }
+
+    if (typeof value === 'string') {
+      return value?.substring(0, 100) ?? value;
+    }
+  }
+
+  return value;
+};
+
 export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
     const logPath = path.resolve(__dirname, '..', 'logs');
@@ -35,28 +53,7 @@ export const writeLog = (data: object, force = false) => {
 
     content.push(dataWithDate);
 
-    fs.writeFileSync(
-      logFile,
-      JSON.stringify(
-        content,
-        (key, value) => {
-          if (['init_images', 'input_image'].includes(key)) {
-            if (!value) {
-              return value;
-            }
-
-            if (Array.isArray(value)) {
-              return (value as string[]).map((item) => item.substring(0, 100));
-            }
-
-            return value?.substring(0, 100) ?? value;
-          }
-
-          return value;
-        },
-        2
-      )
-    );
+    fs.writeFileSync(logFile, JSON.stringify(content, purgePathInLog, 2));
   }
 };
 

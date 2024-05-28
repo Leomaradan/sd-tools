@@ -36,13 +36,22 @@
     "eslint-plugin-only-warn": "^1.1.0",
     "eslint-plugin-perfectionist": "^2.4.0",
     "eslint-plugin-sonarjs": "^0.23.0",
+    "husky": "^8.0.0",
     "jest": "^29.7.0",
+    "lint-staged": "^15.2.5",
     "prettier": "^3.1.0",
     "typescript": "^5.2.2",
     "typescript-json-schema": "^0.62.0"
   },
-  "bin": {
-    "sd-tools": "bin.cjs"
+  "bin": "sd-tools.cjs",
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --quiet --fix",
+      "prettier --write --ignore-unknown"
+    ],
+    "*.{json}": [
+      "prettier --write --ignore-unknown"
+    ]
   },
   "main": "./dist/index.cjs",
   "exports": {
@@ -57,7 +66,7 @@
   },
   "files": [
     "dist/index.cjs",
-    "bin.cjs"
+    "sd-tools.cjs"
   ],
   "type": "module",
   "packageManager": "yarn@4.2.2",
@@ -67,8 +76,10 @@
     "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=build/index.cjs --watch",
     "start": "node build/index.cjs",
     "test": "jest --coverage",
+    "lint": "eslint --report-unused-disable-directives ./src --ext .ts",
     "schema": "yarn schema:queue && yarn schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
-    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword"
+    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword",
+    "prepare": "husky install"
   }
 }

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 /// <reference types="jest" />
 
 import path from 'node:path';
@@ -517,9 +516,11 @@ describe('prompt test', () => {
         ]
       ]);
 
-      expect(resultFullRequest).toMatchObject([{
-        prompt: 'test prompt instruct, base prompt',
-      }]);
+      expect(resultFullRequest).toMatchObject([
+        {
+          prompt: 'test prompt instruct, base prompt'
+        }
+      ]);
     });
   });
 });

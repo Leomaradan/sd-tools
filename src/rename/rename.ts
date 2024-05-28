@@ -3,11 +3,31 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import renameSchema from '../../schema/rename.json';
-import { getFiles } from '../commons/file';
+import { type IFile, getFiles } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { type IRenameConfig, executeConfig } from './config';
 
 const validator = new Validator();
+
+const executeOnFile = (file: IFile, config: IRenameConfig, target: string, test: boolean) => {
+  if (file.data) {
+    const param = executeConfig(config, file.filename, file.data);
+
+    if (param && param[0] !== '') {
+      const [targetFile, scene] = param;
+
+      loggerVerbose(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
+
+      if (!test && scene && !fs.existsSync(path.join(target, scene))) {
+        fs.mkdirSync(path.join(target, scene));
+      }
+
+      if (!test) {
+        fs.renameSync(file.filename, path.join(target, targetFile));
+      }
+    }
+  }
+};
 
 export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
   if (!fs.existsSync(source)) {
@@ -29,23 +49,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
   const filesList = getFiles(source);
 
   filesList.forEach((file) => {
-    if (file.data) {
-      const param = executeConfig(config, file.filename, file.data);
-
-      if (param && param[0] !== '') {
-        const [targetFile, scene] = param;
-
-        loggerVerbose(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
-
-        if (!test && scene && !fs.existsSync(path.join(target, scene))) {
-          fs.mkdirSync(path.join(target, scene));
-        }
-
-        if (!test) {
-          fs.renameSync(file.filename, path.join(target, targetFile));
-        }
-      }
-    }
+    executeOnFile(file, config, target, test);
   });
 };
 

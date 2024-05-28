@@ -3,12 +3,13 @@ import { basename } from 'node:path';
 
 import type { IUpscaleOptions } from './types';
 
+import { ControlNetMode, ControlNetResizes } from '../commons/extensions/controlNet';
 import { extractFromFile } from '../commons/extract';
 import { getFiles } from '../commons/file';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule } from '../commons/models';
 import { prompts } from '../commons/prompts';
-import { ControlNetMode, ControlNetResizes, type IPrompt } from '../commons/types';
+import { type IPrompt } from '../commons/types';
 
 export const upscaleTiles = async (
   source: string,

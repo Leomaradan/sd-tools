@@ -1,5 +1,5 @@
 {
-  "$schema": "../../src/commons/schema/queue.json",
+  "$schema": "../../schema/queue.json",
   "prompts": [
     {
       "cfg": 11.5,

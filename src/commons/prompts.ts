@@ -4,6 +4,13 @@ import { dirname, parse, relative, resolve, sep } from 'node:path';
 import { Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type IAdetailer } from './extensions/adetailer';
+import {
+  ControlNetMode,
+  ControlNetResizes,
+  type IControlNet,
+  normalizeControlNetMode,
+  normalizeControlNetResizes
+} from './extensions/controlNet';
 import { getCutOffTokens } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
@@ -11,19 +18,14 @@ import { ExitCodes, loggerInfo, writeLog } from './logger';
 import { findADetailersModel, findCheckpoint, findControlnetModel, findControlnetModule, findStyle, findUpscaler, findVAE } from './models';
 import { isTxt2ImgQuery, renderQuery } from './query';
 import {
-  ControlNetMode,
-  ControlNetResizes,
   type ICheckpointWithVAE,
-  type IControlNet,
   type IImg2ImgQuery,
   type IModel,
   type IPrompt,
   type IPromptPermutations,
   type IPromptSingle,
   type IPromptsResolved,
-  type ITxt2ImgQuery,
-  normalizeControlNetMode,
-  normalizeControlNetResizes
+  type ITxt2ImgQuery
 } from './types';
 
 interface IPrepareSingleQuery {

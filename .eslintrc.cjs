@@ -10,6 +10,13 @@ module.exports = {
     {
       env: { node: true },
       files: ['*.cjs']
+    },
+    {
+      files: ['*.test.ts'],
+      rules: {
+
+        'sonarjs/no-duplicate-string': 'off'
+      }
     }
   ],
   parser: '@typescript-eslint/parser',
@@ -21,7 +28,6 @@ module.exports = {
       'warn',
       { argsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_', ignoreRestSiblings: true }
     ],
-    'no-console': 'warn',
-    'sonarjs/cognitive-complexity': 'off'
+    'no-console': 'warn'
   }
 };

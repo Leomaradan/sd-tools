@@ -1,4 +1,7 @@
-import type { IConfig } from '../commons/types';
+import { Separator, input, select } from '@inquirer/prompts';
+import { existsSync } from 'node:fs';
+
+import type { IAutoAdetailer, IAutoControlnetPose, IConfig } from '../commons/types';
 
 import { Config, getParamBoolean } from '../commons/config';
 import { CUTOFF_URL } from '../commons/extensions/cutoff';
@@ -363,7 +366,7 @@ export const setConfigRedrawModelsCommandLine = (value: string[]) => {
 export const setConfigRedrawModels = (redrawModels: IConfig['redrawModels']) => {
   Config.set('redrawModels', redrawModels);
   getConfigRedrawModels();
-}
+};
 
 export const setConfigScheduler = (value: boolean) => {
   if (!Config.get('extensions').includes('scheduler')) {
@@ -374,4 +377,197 @@ export const setConfigScheduler = (value: boolean) => {
 
   Config.set('scheduler', getParamBoolean(value));
   getConfigScheduler();
+};
+
+export const setInquirerAdetailerTriggers = async () => {
+  const actionType = await select({
+    choices: [
+      { name: 'Add a trigger', value: 'add' },
+      { name: 'Remove a trigger', value: 'remove' }
+    ],
+    message: 'Select action type'
+  });
+
+  if (actionType === 'add') {
+    await setInquirerAdetailerTriggersAdd();
+  } else {
+    await setInquirerAdetailerTriggersRemove();
+  }
+};
+
+const setInquirerAdetailerTriggersAdd = async () => {
+  const adetailersModels = Config.get('adetailersModels');
+  const autoAdetailers = Config.get('autoAdetailers');
+
+  const triggerName = await input({
+    message: 'Enter trigger',
+    validate: (value) => {
+      const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+      if (!pass) {
+        return 'Trigger must be a string with only letters, numbers, dash and underscore';
+      }
+
+      const found = autoAdetailers.find((model) => model.trigger === value);
+
+      if (found) {
+        return 'Trigger already exists';
+      }
+
+      return true;
+    }
+  });
+
+  if (!triggerName) {
+    return;
+  }
+
+  const usableModels = adetailersModels.filter((model) => !autoAdetailers.some((autoModel) => autoModel.ad_model === model));
+
+  const triggerModel = await select({
+    choices: [{ name: '(Cancel)', value: '-' }, new Separator(), ...usableModels.map((model) => ({ value: model }))],
+    message: 'Select model to trigger'
+  });
+
+  if (triggerName === '-') {
+    return;
+  }
+
+  const prompt = await input({ message: 'Enter optional prompt. Leave empty to skip' });
+  const negativePrompt = await input({ message: 'Enter optional negative prompt. Leave empty to skip' });
+  const denoisingStrength = await input({ message: 'Enter optional denoising strength. Leave empty to skip' });
+
+  const newAutoAdetailers: IAutoAdetailer = {
+    ad_denoising_strength: denoisingStrength ? Number(denoisingStrength) : undefined,
+    ad_model: triggerModel,
+    ad_negative_prompt: negativePrompt !== '' ? negativePrompt : undefined,
+    ad_prompt: prompt !== '' ? prompt : undefined,
+    trigger: triggerName
+  };
+
+  Config.set('autoAdetailers', Array.from(new Set([...autoAdetailers, newAutoAdetailers])));
+};
+
+const setInquirerAdetailerTriggersRemove = async () => {
+  const autoAdetailers = Config.get('autoAdetailers');
+
+  const triggerModel = await select({
+    choices: [
+      { name: '(Cancel)', value: '-' },
+      new Separator(),
+      ...autoAdetailers.map((model) => ({
+        description: `Prompt: "${model.ad_prompt ?? 'N/A'}", Negative Prompt: "${model.ad_negative_prompt ?? 'N/A'}", Denoising Strength: ${model.ad_denoising_strength ?? 'N/A'}`,
+        name: `!pose:${model.trigger} (${model.ad_model})`,
+        value: model.ad_model
+      })),
+      new Separator()
+    ],
+    message: 'Select trigger to remove'
+  });
+  if (triggerModel === '-') {
+    return;
+  }
+
+  const index = autoAdetailers.findIndex((model) => model.ad_model === triggerModel);
+  autoAdetailers.splice(index, 1);
+  Config.set('autoAdetailers', autoAdetailers);
+};
+
+export const setInquirerControlNetPoseTriggers = async () => {
+  const actionType = await select({
+    choices: [
+      { name: 'Add a trigger', value: 'add' },
+      { name: 'Remove a trigger', value: 'remove' }
+    ],
+    message: 'Select action type'
+  });
+
+  if (actionType === 'add') {
+    await setInquirerControlNetPoseTriggersAdd();
+  } else {
+    await setInquirerControlNetPoseTriggersRemove();
+  }
+};
+
+const setInquirerControlNetPoseTriggersAdd = async () => {
+  const autoControlnetPose = Config.get('autoControlnetPose');
+
+  const triggerName = await input({
+    message: 'Enter trigger',
+    validate: (value) => {
+      const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+      if (!pass) {
+        return 'Trigger must be a string with only letters, numbers, dash and underscore';
+      }
+
+      const found = autoControlnetPose.find((model) => model.trigger === value);
+
+      if (found) {
+        return 'Trigger already exists';
+      }
+
+      return true;
+    }
+  });
+
+  if (!triggerName) {
+    return;
+  }
+
+  const triggerPose = await input({
+    message: 'Select the path to the pose image',
+    validate: (value) => {
+      const found = autoControlnetPose.find((model) => model.pose === value);
+
+      if (found) {
+        return 'Pose is already used';
+      }
+
+      if (!existsSync(value)) {
+        return 'Pose file does not exist';
+      }
+
+      return true;
+    }
+  });
+
+  if (!triggerName) {
+    return;
+  }
+
+  const beforePrompt = await input({ message: 'Enter optional prompt that will be APPEND to the query prompt. Leave empty to skip' });
+  const afterPrompt = await input({ message: 'Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip' });
+
+  const newAutoControlNetPose: IAutoControlnetPose = {
+    afterPrompt: afterPrompt !== '' ? afterPrompt : undefined,
+    beforePrompt: beforePrompt !== '' ? beforePrompt : undefined,
+    pose: triggerPose,
+    trigger: triggerName
+  };
+
+  Config.set('autoControlnetPose', Array.from(new Set([...autoControlnetPose, newAutoControlNetPose])));
+};
+
+const setInquirerControlNetPoseTriggersRemove = async () => {
+  const autoControlnetPose = Config.get('autoControlnetPose');
+
+  const triggerModel = await select({
+    choices: [
+      { name: '(Cancel)', value: '-' },
+      new Separator(),
+      ...autoControlnetPose.map((model) => ({
+        description: `Before Prompt: "${model.beforePrompt ?? 'N/A'}", After Prompt: ${model.afterPrompt ?? 'N/A'}`,
+        name: `!ad:${model.trigger} (${model.pose})`,
+        value: model.pose
+      })),
+      new Separator()
+    ],
+    message: 'Select trigger to remove'
+  });
+  if (triggerModel === '-') {
+    return;
+  }
+
+  const index = autoControlnetPose.findIndex((model) => model.pose === triggerModel);
+  autoControlnetPose.splice(index, 1);
+  Config.set('autoControlnetPose', autoControlnetPose);
 };

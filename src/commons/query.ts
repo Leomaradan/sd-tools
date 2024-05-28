@@ -1,23 +1,30 @@
 import axios from 'axios';
 import fs from 'node:fs';
 
+import type { IAdetailer } from './extensions/adetailer';
+import type { ICutOff } from './extensions/cutoff';
+
 import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
-import { type ITiledVAE, defaultTiledDiffusionOptions, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
+import { type IControlNet, type IControlNetQuery, normalizeControlNetMode, normalizeControlNetResizes } from './extensions/controlNet';
+import {
+  type ITiledDiffusion,
+  type ITiledVAE,
+  defaultTiledDiffusionOptions,
+  defaultTiledVAEnOptions
+} from './extensions/multidiffusionUpscaler';
+import { type IUltimateSDUpscale, RedrawMode, TargetSizeType } from './extensions/ultimateSdUpscale';
 import { getBase64Image } from './file';
 import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
+  AlwaysOnScriptsNames,
   type IBaseQuery,
-  type IControlNetQuery,
   type IImg2ImgQuery,
   type IInterrogateResponse,
   type IModel,
   type ITxt2ImgQuery,
-  RedrawMode,
-  TargetSizeType,
-  normalizeControlNetMode,
-  normalizeControlNetResizes
+  type IUpscaler
 } from './types';
 
 const headerRequest = {
@@ -40,69 +47,35 @@ export const isImg2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery
   return (query as unknown as IImg2ImgQuery).init_images !== undefined;
 };
 
-export const renderQuery: Query = async (query, type) => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
-
-  const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
-    ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
-    : ({ version: 'unknown' } as IModel);
-
-  /*const baseQuery = {
-    ...getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none'),
-    ...baseQueryRaw
-  } as IBaseQuery & { forcedSampler?: string };*/
-
-  const baseQuery = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
-    forcedSampler?: string;
-  };
+const prepareBaseQuery = (baseQuery: Partial<IBaseQuery>, baseQueryRaw: IImg2ImgQuery) => {
+  const updatedQuery = { ...baseQuery };
 
   Object.keys(baseQueryRaw).forEach((key) => {
     const value = baseQueryRaw[key as keyof typeof baseQueryRaw];
 
     if (value !== undefined) {
       if (typeof value === 'object') {
-        if (baseQuery[key as keyof typeof baseQuery] === undefined) {
-          (baseQuery as unknown as Record<string, unknown>)[key] = {};
+        if (updatedQuery[key as keyof typeof updatedQuery] === undefined) {
+          (updatedQuery as unknown as Record<string, unknown>)[key] = {};
         }
 
         Object.keys(value).forEach((subKey) => {
           const subValue = value[subKey as keyof typeof value];
           if (subValue !== undefined) {
-            (baseQuery as unknown as Record<string, Record<string, unknown>>)[key][subKey] = subValue;
+            (updatedQuery as unknown as Record<string, Record<string, unknown>>)[key][subKey] = subValue;
           }
         });
       } else {
-        (baseQuery as unknown as Record<string, unknown>)[key] = value;
+        (updatedQuery as unknown as Record<string, unknown>)[key] = value;
       }
     }
   });
 
-  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
-    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
-    process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
-  }
+  return updatedQuery;
+};
 
-  let script = false;
-
-  const isSDXL = checkpoint?.version === 'sdxl';
-
-  const defaultUpscaler = findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)');
-
-  if (
-    isTxt2ImgQuery(baseQuery) &&
-    ((baseQuery as ITxt2ImgQuery).hr_upscaler ||
-      (baseQuery as ITxt2ImgQuery).hr_scale ||
-      (baseQuery as ITxt2ImgQuery).enable_hr ||
-      (baseQuery as ITxt2ImgQuery).hr_negative_prompt ||
-      (baseQuery as ITxt2ImgQuery).hr_prompt)
-  ) {
-    (baseQuery as ITxt2ImgQuery).enable_hr = true;
-    (baseQuery as ITxt2ImgQuery).hr_upscaler = (baseQuery as ITxt2ImgQuery).hr_upscaler ?? (defaultUpscaler?.name as string);
-    (baseQuery as ITxt2ImgQuery).hr_scale = (baseQuery as ITxt2ImgQuery).hr_scale ?? 2;
-    (baseQuery as ITxt2ImgQuery).hr_negative_prompt = (baseQuery as ITxt2ImgQuery).hr_negative_prompt ?? '';
-    (baseQuery as ITxt2ImgQuery).hr_prompt = (baseQuery as ITxt2ImgQuery).hr_prompt ?? '';
-  }
-
+const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | undefined) => {
+  const updatedQuery = { ...baseQuery };
   if (controlNet) {
     const args = controlNet.map((controlNet) => {
       const params: IControlNetQuery = {
@@ -127,12 +100,22 @@ export const renderQuery: Query = async (query, type) => {
       return params;
     });
 
-    baseQuery.alwayson_scripts['controlnet'] = { args };
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.ControlNet] = { args };
+  }
+  return updatedQuery;
+};
+
+const prepareAdetailer = (baseQuery: IBaseQuery, adetailer: IAdetailer[] | undefined) => {
+  const updatedQuery = { ...baseQuery };
+  if (adetailer) {
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.ADetailer] = { args: adetailer };
   }
 
-  if (adetailer) {
-    baseQuery.alwayson_scripts['ADetailer'] = { args: adetailer };
-  }
+  return updatedQuery;
+};
+
+const prepareTiledVAE = (baseQuery: IBaseQuery, tiledVAE: ITiledVAE | undefined, isSDXL: boolean) => {
+  const updatedQuery = { ...baseQuery };
 
   if (Config.get('autoTiledVAE') || tiledVAE) {
     const tiledVAEConfig = { ...defaultTiledVAEnOptions, ...(Config.get('autoTiledVAE') ? {} : tiledVAE) } as Required<ITiledVAE>;
@@ -142,7 +125,7 @@ export const renderQuery: Query = async (query, type) => {
       tiledVAEConfig.fastDecoder = false;
     }
 
-    baseQuery.alwayson_scripts['Tiled VAE'] = {
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledVAE] = {
       args: [
         'True',
         tiledVAEConfig.encoderTileSize,
@@ -154,38 +137,62 @@ export const renderQuery: Query = async (query, type) => {
       ]
     };
   }
+  return updatedQuery;
+};
 
-  // TiledDiffusion cannot be use with SDXL
-  if (Config.get('autoTiledDiffusion') !== false && isSDXL === false) {
-    baseQuery.alwayson_scripts['Tiled Diffusion'] = { args: ['True', Config.get('autoTiledDiffusion')] };
+const prepareTiledDiffusion = (
+  baseQuery: IBaseQuery,
+  tiledDiffusion: ITiledDiffusion | undefined,
+  defaultUpscaler: IUpscaler | undefined,
+  isSDXL: boolean
+) => {
+  const updatedQuery = { ...baseQuery };
+
+  if (isSDXL === false) {
+    if (tiledDiffusion) {
+      updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = {
+        args: [
+          true,
+          tiledDiffusion.method,
+          true,
+          false,
+          updatedQuery.width ?? 1024,
+          updatedQuery.height ?? 1024,
+          tiledDiffusion.tileWidth ?? defaultTiledDiffusionOptions.tileWidth,
+          tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
+          tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
+          tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
+          defaultUpscaler?.name as string,
+          tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
+        ]
+      };
+    } else if (Config.get('autoTiledDiffusion') !== false) {
+      updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = { args: ['True', Config.get('autoTiledDiffusion')] };
+    }
+  }
+  // Ensure that Tiled Diffusion is not used with SDXL
+  else if (updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion]) {
+    delete updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion];
   }
 
-  // TiledDiffusion cannot be use with SDXL
-  if (tiledDiffusion && isSDXL === false) {
-    baseQuery.alwayson_scripts['Tiled Diffusion'] = {
-      args: [
-        true,
-        tiledDiffusion.method,
-        true,
-        false,
-        baseQuery.width ?? 1024,
-        baseQuery.height ?? 1024,
-        tiledDiffusion.tileWidth ?? defaultTiledDiffusionOptions.tileWidth,
-        tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
-        tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
-        tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
-        defaultUpscaler?.name as string,
-        tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
-      ]
-    };
-  }
+  return updatedQuery;
+};
+
+const prepareCutOff = (baseQuery: IBaseQuery, cutOff: ICutOff | undefined) => {
+  const updatedQuery = { ...baseQuery };
 
   const autoCutOff = Config.get('cutoff');
   if (cutOff || autoCutOff) {
     const tokens = Array.from(new Set([...(cutOff?.tokens ?? []), ...(autoCutOff ? Array.from(Config.get('cutoffTokens')) : [])]));
     const weight = cutOff?.weight ?? Config.get('cutoffWeight');
-    baseQuery.alwayson_scripts['Cutoff'] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Cutoff] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
   }
+
+  return updatedQuery;
+};
+
+const prepareLCM = (baseQuery: IBaseQuery, lcm: boolean | undefined, checkpoint: IModel | undefined, isSDXL: boolean) => {
+  const updatedQuery = { ...baseQuery };
 
   const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
   const accelarator = checkpoint?.accelarator ?? 'none';
@@ -195,17 +202,28 @@ export const renderQuery: Query = async (query, type) => {
     if (lcmModel) {
       const defaultValues = getDefaultQuery(isSDXL ? 'sdxl' : 'sd15', 'lcm');
 
-      baseQuery.prompt = `<lora:${lcmModel}:1> ${baseQuery.prompt}`;
-      baseQuery.cfg_scale = defaultValues.cfg_scale;
-      baseQuery.steps = defaultValues.steps;
-      baseQuery.sampler_name = defaultValues.sampler_name;
+      updatedQuery.prompt = `<lora:${lcmModel}:1> ${updatedQuery.prompt}`;
+      updatedQuery.cfg_scale = defaultValues.cfg_scale;
+      updatedQuery.steps = defaultValues.steps;
+      updatedQuery.sampler_name = defaultValues.sampler_name;
     }
   }
 
+  return updatedQuery;
+};
+
+const prepareScriptUltimateSDUpscale = (
+  script: boolean,
+  baseQuery: IBaseQuery,
+  ultimateSdUpscale: IUltimateSDUpscale | undefined,
+  type: 'img2img' | 'txt2img'
+): [boolean, IBaseQuery] => {
+  const updatedQuery = { ...baseQuery };
+
   if (!script && ultimateSdUpscale && type === 'img2img') {
     script = true;
-    baseQuery.script_name = 'Ultimate SD upscale';
-    baseQuery.script_args = [
+    updatedQuery.script_name = 'Ultimate SD upscale';
+    updatedQuery.script_args = [
       null, // _ (not used)
       ultimateSdUpscale.tileWidth ?? 512, // tile_width
       ultimateSdUpscale.tileHeight ?? 512, // tile_height
@@ -227,9 +245,77 @@ export const renderQuery: Query = async (query, type) => {
     ];
   }
 
+  return [script, updatedQuery];
+};
+
+export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: 'img2img' | 'txt2img') => {
+  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+
+  const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
+    ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
+    : ({ version: 'unknown' } as IModel);
+
+  // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
+  let baseQuery = JSON.parse(
+    JSON.stringify({
+      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
+        forcedSampler?: string;
+      })
+    })
+  );
+
+  baseQuery = prepareBaseQuery(baseQuery, baseQueryRaw as IImg2ImgQuery);
+
+  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
+    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+    process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
+  }
+
+  let script = false;
+
+  const isSDXL = checkpoint?.version === 'sdxl';
+
+  const defaultUpscaler = findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)');
+
+  if (
+    isTxt2ImgQuery(baseQuery) &&
+    (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt)
+  ) {
+    baseQuery.enable_hr = true;
+    baseQuery.hr_upscaler = baseQuery.hr_upscaler ?? (defaultUpscaler?.name as string);
+    baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
+    baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? '';
+    baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
+  }
+
+  baseQuery = prepareControlNet(baseQuery, controlNet);
+  baseQuery = prepareAdetailer(baseQuery, adetailer);
+  baseQuery = prepareTiledVAE(baseQuery, tiledVAE, isSDXL);
+  baseQuery = prepareTiledDiffusion(baseQuery, tiledDiffusion, defaultUpscaler, isSDXL);
+  baseQuery = prepareCutOff(baseQuery, cutOff);
+  baseQuery = prepareLCM(baseQuery, lcm, checkpoint, isSDXL);
+
+  [script, baseQuery] = prepareScriptUltimateSDUpscale(script, baseQuery, ultimateSdUpscale, type);
+
+  // Remove artifacts from the temporary query
+  delete (baseQuery as ITxt2ImgQuery).adetailer;
+  delete (baseQuery as ITxt2ImgQuery).controlNet;
+  delete (baseQuery as ITxt2ImgQuery).enable_hr;
+  delete (baseQuery as ITxt2ImgQuery).cutOff;
+  delete (baseQuery as ITxt2ImgQuery).lcm;
+  delete (baseQuery as ITxt2ImgQuery).tiledDiffusion;
+  delete (baseQuery as ITxt2ImgQuery).tiledVAE;
+
+  return baseQuery;
+};
+
+export const renderQuery: Query = async (query, type) => {
   const useScheduler = Config.get('scheduler');
+
   const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
   loggerVerbose(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
+
+  const baseQuery = prepareRenderQuery(query, type);
 
   writeLog({ baseQuery, endpoint });
 
