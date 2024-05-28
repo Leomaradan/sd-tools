@@ -124,13 +124,13 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
         message: 'Select model type'
       });
 
-      const listModels = Config.get('models');
-      const listModelsFiltered = listModels.filter((model) => model.version === actionType && model.accelarator === 'lcm');
-      const selectedModels = lcm[actionType] as string;
+      const listLoras = Config.get('loras');
+      const listLorasFiltered = listLoras.filter((loras) => loras.version === actionType);
+      const selectedLoras = lcm[actionType] as string;
 
       const model = await select({
-        choices: [{ name: 'None', value: 'none' }, ...listModelsFiltered.map((model) => ({ value: model.name }))],
-        default: selectedModels,
+        choices: [{ name: 'None', value: 'none' }, ...listLorasFiltered.map((model) => ({ value: model.name }))],
+        default: selectedLoras,
         message: 'Select the model'
       });
 
