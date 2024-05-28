@@ -8,7 +8,7 @@ import { prepareRenderQuery } from './query';
 
 describe('query tests', () => {
   beforeEach(() => {
-    //jest.spyOn(console, 'log').mockImplementation();
+    jest.spyOn(console, 'log').mockImplementation();
   });
 
   it('should send a basic query for txt2img', () => {
