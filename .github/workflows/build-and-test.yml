@@ -2,13 +2,16 @@ name: Build and Test
 
 on:
   push:
-    branches:    
+    branches:
       - master
       - 'releases/**'
   pull_request:
     branches:
       - master
       - 'releases/**'
+
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   build:
