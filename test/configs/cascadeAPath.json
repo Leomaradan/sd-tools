@@ -1,6 +1,6 @@
 {
   "$schema": "../../schema/queue.json",
-  "extends": "./cascadeB.json",
+  "extends": "cascadeB.json",
   "prompts": [
     {
       "cfg": 11.5,

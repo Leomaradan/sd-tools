@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { prompts } from '../commons/prompts';
 import { applyBaseConfig, mergeConfigs } from './functions';
 
@@ -11,7 +11,8 @@ export const queueFromFile = async (source: string, validateOnly: boolean) => {
   }
 
   const config = mergeConfigs(source);
-  if (config) {
+
+  if (config && Object.keys(config).length > 0) {
     const promptsResolved = applyBaseConfig(config);
     if (promptsResolved.prompts.length === 0) {
       loggerInfo(`Merged config from ${source} has no prompts`);

@@ -1,5 +1,5 @@
 import { Config } from './config';
-import { type ILora, type IModel, type ISampler, type IStyle, type IUpscaler } from './types';
+import { type ILora, type IModel, type IModelWithHash, type ISampler, type IStyle, type IUpscaler } from './types';
 
 export const BaseUpscalers: IUpscaler[] = [
   { name: 'Latent' },
@@ -101,10 +101,10 @@ export const findUpscalerUltimateSDUpscaler = (...upscaleName: string[]): IUpsca
   });
 };
 
-export const findCheckpoint = (...modelsName: string[]): IModel | undefined => {
+export const findCheckpoint = (...modelsName: string[]): IModelWithHash | undefined => {
   const AllModels = Config.get('models');
 
-  return findModel<IModel>(modelsName, AllModels, {
+  return findModel<IModelWithHash>(modelsName, AllModels, {
     findExact: findExactStringProperties(['name', 'hash']),
     findPartial: findPartialStringProperties(['name', 'hash'])
   });

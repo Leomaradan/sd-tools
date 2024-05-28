@@ -4,10 +4,15 @@ import { type ICutOff } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
-export * from './extensions/controlNet';
-export * from './extensions/ultimateSdUpscale';
-
 export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNetQuery[] };
+
+export enum AlwaysOnScriptsNames {
+  ADetailer = 'ADetailer',
+  ControlNet = 'controlnet',
+  Cutoff = 'Cutoff',
+  TiledDiffusion = 'Tiled Diffusion',
+  TiledVAE = 'Tiled VAE'
+}
 
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 
@@ -22,7 +27,7 @@ export interface IOverrideSettings {
 }
 
 export interface IBaseQuery {
-  alwayson_scripts: Record<string, AlwaysOnScripts>;
+  alwayson_scripts: Partial<Record<AlwaysOnScriptsNames, AlwaysOnScripts>>;
   batch_size?: number;
   cfg_scale?: number;
   denoising_strength?: number;
@@ -168,7 +173,7 @@ export interface IModelWithHash extends IModel {
 }
 
 export interface ILora {
-  alias: string;
+  alias?: string;
   keywords: string[];
   name: string;
   version: MetadataVersionKey;

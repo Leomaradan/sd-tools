@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
+import { ControlNetMode, ControlNetResizes, type IControlNet } from '../commons/extensions/controlNet';
 import { type IFile, getBase64Image, getFiles } from '../commons/file';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
-import { ControlNetMode, ControlNetResizes, type IControlNet, type IPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { type IPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
@@ -317,23 +318,20 @@ const getCombination = (filesList: IFile[], styles: IRedrawStyle, methods: IRedr
   return combinations;
 };
 
-export const redraw = async (
-  source: string,
-  { addToPrompt, denoising: denoisingArray, method, recursive, sdxl, style, upscaler, upscales: upscalingArray }: IRedrawOptions
+export interface IRedrawOptionsCompleted extends IRedrawOptions {
+  denoising: number[];
+  upscales: number[];
+}
+
+const prepareQueries = async (
+  combinations: {
+    file: IFile;
+    method: 'classical' | 'ip-adapter';
+    style: 'anime' | 'realism';
+  }[],
+  { addToPrompt, denoising, sdxl, upscaler, upscales }: IRedrawOptionsCompleted
 ) => {
-  if (!fs.existsSync(source)) {
-    loggerInfo(`Source directory ${source} does not exist`);
-    process.exit(ExitCodes.REDRAW_NO_SOURCE);
-  }
-
   const queries: IPrompt[] = [];
-
-  const filesList = getFiles(source, recursive);
-
-  const denoising = denoisingArray ?? [0.55];
-  const upscaling = upscalingArray ?? [1];
-
-  const combinations = getCombination(filesList, style, method);
 
   for await (const combination of combinations) {
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
@@ -353,7 +351,7 @@ export const redraw = async (
           : query.negativePrompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       }
 
-      query.scaleFactor = upscaling;
+      query.scaleFactor = upscales;
 
       query.upscaler = upscaler;
 
@@ -361,21 +359,27 @@ export const redraw = async (
     }
   }
 
-  //checkpoint: "481d75ae9d",
+  return queries;
+};
+
+export const redraw = async (source: string, options: IRedrawOptions) => {
+  if (!fs.existsSync(source)) {
+    loggerInfo(`Source directory ${source} does not exist`);
+    process.exit(ExitCodes.REDRAW_NO_SOURCE);
+  }
+
+  const { denoising: denoisingArray, method, recursive, style, upscales: upscalingArray } = options;
+
+  const filesList = getFiles(source, recursive);
+
+  const combinations = getCombination(filesList, style, method);
+
+  const denoising = denoisingArray ?? [0.55];
+  const upscales = upscalingArray ?? [1];
+
+  const queries = await prepareQueries(combinations, { ...options, denoising, upscales });
 
   queries.sort((a, b) => (a.checkpoints as string).localeCompare(b.checkpoints as string));
 
-  /*queriesImg2Img.sort((a, b) =>
-    (a.override_settings.sd_model_checkpoint as string).localeCompare(b.override_settings.sd_model_checkpoint as string)
-  );*/
-
   prompts({ prompts: queries }, false);
-
-  /*for await (const queryParams of queriesTxt2Img) {
-    await renderQuery(queryParams, 'txt2img');
-  }
-
-  for await (const queryParams of queriesImg2Img) {
-    await renderQuery(queryParams, 'img2img');
-  }*/
 };

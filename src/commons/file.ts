@@ -8,10 +8,10 @@ import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
 import { Cache } from './config';
-import {  loggerInfo, loggerVerbose } from './logger';
+import { loggerInfo, loggerVerbose } from './logger';
 import { type CacheMetadata, type ICivitAIInfoFile, type IMetadata, type IMetadataCheckpoint, type IMetadataLora, Version } from './types';
 
-const CIVITAI_FILE = '.civitai.info'
+const CIVITAI_FILE = '.civitai.info';
 
 const readFile = (path: string, noCache?: boolean): string[] | undefined => {
   let data = undefined;
@@ -227,10 +227,9 @@ export const getBase64Image = (url: string) => {
     return imageCache[url].data;
   }
 
-  if(fs.statSync(url).isDirectory()) {
+  if (fs.statSync(url).isDirectory()) {
     return;
   }
-  
 
   const buffer = fs.readFileSync(url);
   const data = buffer.toString('base64');
@@ -250,7 +249,7 @@ export const getImageSize = (url: string) => {
     return { height: imageCache[url].height, width: imageCache[url].width };
   }
 
-  if(fs.statSync(url).isDirectory()) {
+  if (fs.statSync(url).isDirectory()) {
     return { height: -1, width: -1 };
   }
 
@@ -325,7 +324,7 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
   try {
     const result: IMetadata = {
       accelerator: 'none',
-      keywords: metadata.trainedWords,
+      keywords: metadata.trainedWords ?? [],
       sdVersion: Version.Unknown //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
     };
 
@@ -484,7 +483,7 @@ export const getMetadataCivitAiRest = async (
   } catch (error: unknown) {
     if (error instanceof Error) {
       loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error.message}`);
-      if(error.message.includes('404')) {
+      if (error.message.includes('404')) {
         return false;
       }
     } else {
@@ -524,7 +523,7 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
       Cache.set('metadata', cacheMetadataNew);
 
       return metadata;
-    } else if(metadataCivitAiRest === false) {
+    } else if (metadataCivitAiRest === false) {
       // Store fake metadata to ensure we don't try to get it again
       const fakeMetadata: IMetadata = {
         accelerator: 'none',

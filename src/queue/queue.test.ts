@@ -11,6 +11,7 @@ import { queueFromFile } from './queue';
 describe('queue loader test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, 'log').mockImplementation();
   });
 
   describe('simple config', () => {
@@ -50,6 +51,29 @@ describe('queue loader test', () => {
             height: 640,
             pattern: '[seed]-[datetime]',
             prompt: 'dynamic prompt',
+            width: 1024
+          }
+        ]
+      };
+
+      const called = (prompts as jest.Mock).mock.calls[0][0];
+
+      expect(prompts).toHaveBeenCalledTimes(1);
+      expect(called).toMatchObject(expectedConfig);
+    });
+
+    it('should load simple config from cjs', () => {
+      queueFromFile(path.resolve(__dirname, '../../test/configs/simple.cjs'), true);
+
+      const expectedConfig = {
+        prompts: [
+          {
+            cfg: 7,
+            checkpoints: ['check1', 'check2'],
+            count: 4,
+            height: 640,
+            pattern: '[seed]-[datetime]',
+            prompt: 'dynamic prompt CJS',
             width: 1024
           }
         ]
@@ -144,16 +168,95 @@ describe('queue loader test', () => {
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
     });
+
+    it('should load cascading config from json with absolute path marker', () => {
+      queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeAPath.json'), true);
+
+      const expectedConfig = {
+        permutations: [
+          {
+            afterFilename: 'image afterFilename B',
+            afterPrompt: 'image afterPrompt B'
+          }
+        ],
+        prompts: [
+          {
+            checkpoints: 'fake-checkpoint C',
+            height: 640,
+            pattern: 'test-[seed]-[datetime]',
+            prompt: 'image prompt B',
+            width: 640
+          },
+          {
+            cfg: 11.5,
+            checkpoints: 'fake-checkpoint',
+            count: 4,
+            height: 640,
+            pattern: '[styles]-[seed]-[datetime]',
+            prompt: 'image prompt',
+            stylesSets: [['Digital Art'], ['Isometric Style']],
+            width: 1024
+          }
+        ]
+      };
+
+      const called = (prompts as jest.Mock).mock.calls[0][0];
+
+      expect(prompts).toHaveBeenCalledTimes(1);
+      expect(called).toMatchObject(expectedConfig);
+    });
   });
 
   describe('invalid config', () => {
-    it('should load exit if no prompts is found', () => {
+    beforeEach(() => {
+      //
+    });
+    it('should exit if no prompts is found', () => {
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeC.json'), true);
 
-      expect(prompts).toHaveBeenCalledTimes(1);
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_NO_RESULTING_PROMPTS);
+    });
+
+    it('should exit if corrupted file is provided', () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation();
+
+      queueFromFile(path.resolve(__dirname, '../../test/configs/corrupted.json'), true);
+
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_CORRUPTED_JSON);
+    });
+
+    it('should exit if the file is not found', () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation();
+
+      queueFromFile(path.resolve(__dirname, '../../test/configs/not-found.json'), true);
+
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_NO_SOURCE_INTERNAL);
+    });
+
+    it('should exit if invalid JSON file is provided', () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation();
+
+      queueFromFile(path.resolve(__dirname, '../../test/configs/invalid.json'), true);
+
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_JSON);
+    });
+
+    it('should exit if invalid JS file is provided', () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation();
+
+      queueFromFile(path.resolve(__dirname, '../../test/configs/invalid.js'), true);
+
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_JS);
+    });
+
+    it('should exit if invalid file type is provided', () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation();
+
+      queueFromFile(path.resolve(__dirname, '../../test/images/instruct/close-front.txt'), true);
+
+      expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_FILE);
     });
   });
 });
