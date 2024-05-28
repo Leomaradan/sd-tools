@@ -29,7 +29,7 @@ Config.migrate().then(() => {
     .command(stats)
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
-    .version('1.1.0')
+    .version('1.1')
     .strict()
     .parse();
 });

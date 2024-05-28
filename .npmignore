@@ -1,0 +1,25 @@
+# Logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules
+
+# SonarQube scan elements
+.scannerwork
+
+# Yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+.env
+temp
+logs
+coverage
+build
+src
