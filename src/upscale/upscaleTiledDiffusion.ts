@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { basename } from 'node:path';
 
-import type { IPrompt } from '../commons/types';
+import type { IClassicPrompt } from '../commons/types';
 import type { IUpscaleOptions } from './types';
 
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
@@ -19,7 +19,7 @@ export const upscaleTiledDiffusion = async (
     process.exit(ExitCodes.UPSCALE_MULTIDIFFUSION_NO_SOURCE);
   }
 
-  const queries: IPrompt[] = [];
+  const queries: IClassicPrompt[] = [];
 
   const filesList = getFiles(source, recursive);
 
@@ -27,7 +27,7 @@ export const upscaleTiledDiffusion = async (
   const upscaling = upscalingArray ?? [2];
 
   for await (const file of filesList) {
-    const query = (await extractFromFile(file, 'json', true)) as IPrompt;
+    const query = (await extractFromFile(file, 'json', true)) as IClassicPrompt;
 
     if (query) {
       query.tiledDiffusion = {
