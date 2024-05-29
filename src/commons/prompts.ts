@@ -19,12 +19,14 @@ import { findADetailersModel, findCheckpoint, findControlnetModel, findControlne
 import { isTxt2ImgQuery, renderQuery } from './query';
 import {
   type ICheckpointWithVAE,
+  type IClassicPrompt,
   type IImg2ImgQuery,
   type IModel,
   type IPrompt,
   type IPromptPermutations,
   type IPromptSingle,
   type IPromptsResolved,
+  type IStyleSubjectPrompt,
   type ITxt2ImgQuery
 } from './types';
 
@@ -40,7 +42,11 @@ interface IPrepareSingleQuery {
   height: number | undefined;
   initImage: string | undefined;
   negativePrompt: string | undefined;
-  prompt: string;
+  negativePromptStyle: string | undefined;
+  negativePromptSubject: string | undefined;
+  prompt: string | undefined;
+  promptStyle: string | undefined;
+  promptSubject: string | undefined;
   restoreFaces: boolean;
   sampler: string | undefined;
   scaleFactor: number | undefined;
@@ -71,8 +77,12 @@ interface IPrepareSingleQueryFromArray {
   heightArray: (number | undefined)[];
   initImageArray: (string | undefined)[];
   negativePromptArray: (string | undefined)[];
+  negativePromptStyleArray: (string | undefined)[];
+  negativePromptSubjectArray: (string | undefined)[];
   permutations?: IPromptPermutations[];
   promptArray: string[];
+  promptStyleArray: string[];
+  promptSubjectArray: string[];
   restoreFacesArray: boolean[];
   samplerArray: (string | undefined)[];
   scaleFactorsArray: (number | undefined)[];
@@ -90,11 +100,34 @@ interface IPrepareSingleQueryFromArray {
   widthArray: (number | undefined)[];
 }
 
+const PROMPT_REGEX = /\{prompt\}/i;
+
+const removePromptToken = (input: string) => {
+  return input.replace(/\{prompt\}/gi, '').trim();
+}
+
 const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
   query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern as string).replace(
     `{${token}}`,
     value
   );
+};
+
+const resolveStyleSubjectPrompt = (promptStyle: string, promptSubject: string): string => {
+  const styleHasPrompt = PROMPT_REGEX.test(promptStyle);
+  const subjectHasPrompt = PROMPT_REGEX.test(promptSubject);
+
+  let mergedPrompt = `${promptSubject} BREAK ${promptStyle}`;
+
+  if (styleHasPrompt) {
+    mergedPrompt = promptStyle.replace(PROMPT_REGEX, promptSubject);
+  } else if (subjectHasPrompt) {
+    mergedPrompt = promptSubject.replace(PROMPT_REGEX, promptStyle);
+  }
+
+  mergedPrompt = removePromptToken(mergedPrompt);
+
+  return mergedPrompt;
 };
 
 const prepareSingleQuery = (
@@ -114,7 +147,11 @@ const prepareSingleQuery = (
     height,
     initImage,
     negativePrompt,
+    negativePromptStyle,
+    negativePromptSubject,
     prompt: promptOption,
+    promptStyle,
+    promptSubject,
     restoreFaces,
     sampler,
     scaleFactor,
@@ -134,6 +171,27 @@ const prepareSingleQuery = (
 
   const prompts: [string, IPromptSingle][] = [];
 
+  let resolvedPrompt = promptOption ?? '';
+  let resolvedNegativePrompt = negativePrompt;
+  let resolvedUpscalingPrompt = upscalingPrompt;
+  let resolvedUpscalingNegativePrompt = upscalingNegativePrompt;
+
+  if (promptStyle !== undefined && promptSubject !== undefined) {
+    resolvedPrompt = resolveStyleSubjectPrompt(promptStyle, promptSubject);
+
+    resolvedUpscalingPrompt = removePromptToken(promptSubject);
+
+    // Force removing negative prompt to ensure only "new" style+subject negative prompt is used
+    resolvedNegativePrompt = undefined;
+
+  }
+
+  if (negativePromptStyle !== undefined && negativePromptSubject !== undefined) {
+    resolvedNegativePrompt = resolveStyleSubjectPrompt(negativePromptStyle, negativePromptSubject);
+
+    resolvedUpscalingNegativePrompt = removePromptToken(negativePromptSubject);
+  }
+
   const count = basePrompt.count ?? 1;
 
   for (let i = 0; i < count; i++) {
@@ -143,8 +201,8 @@ const prepareSingleQuery = (
     let vae = vaeOption;
     let checkpoints;
 
-    let promptText = promptOption;
-    let negativePromptText = negativePrompt;
+    let promptText = resolvedPrompt;
+    let negativePromptText = resolvedNegativePrompt;
 
     if (checkpointsOption) {
       if (typeof checkpointsOption === 'string') {
@@ -201,8 +259,8 @@ const prepareSingleQuery = (
       tiledVAE,
       tiling,
       upscaler,
-      upscalingNegativePrompt,
-      upscalingPrompt,
+      upscalingNegativePrompt: resolvedUpscalingNegativePrompt,
+      upscalingPrompt: resolvedUpscalingPrompt,
       vae,
       width
     };
@@ -350,8 +408,12 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
     heightArray,
     initImageArray,
     negativePromptArray,
+    negativePromptStyleArray,
+    negativePromptSubjectArray,
     permutations,
     promptArray,
+    promptStyleArray,
+    promptSubjectArray,
     restoreFacesArray,
     samplerArray,
     scaleFactorsArray,
@@ -372,6 +434,13 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   // Initial value NEED to be not empty
   let permutationsArray: Partial<IPrepareSingleQuery>[] = promptArray.map((prompt) => ({ prompt }));
 
+  // If there is no prompt, we are on the style-subject prompt format
+  if (permutationsArray.length === 0) {
+    permutationsArray = promptStyleArray.map((prompt) => ({ prompt }));
+  } else {
+    permutationsArray = getPermutations(permutationsArray, promptStyleArray, 'promptStyle');
+  }
+
   permutationsArray = getPermutations(permutationsArray, autoCutOffArray, 'autoCutOff');
   permutationsArray = getPermutations(permutationsArray, autoLCMArray, 'autoLCM');
   permutationsArray = getPermutations(permutationsArray, cfgArray, 'cfg');
@@ -382,6 +451,9 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   permutationsArray = getPermutations(permutationsArray, heightArray, 'height');
   permutationsArray = getPermutations(permutationsArray, initImageArray, 'initImage');
   permutationsArray = getPermutations(permutationsArray, negativePromptArray, 'negativePrompt');
+  permutationsArray = getPermutations(permutationsArray, negativePromptStyleArray, 'negativePromptStyle');
+  permutationsArray = getPermutations(permutationsArray, negativePromptSubjectArray, 'negativePromptSubject');
+  permutationsArray = getPermutations(permutationsArray, promptSubjectArray, 'promptSubject');
   permutationsArray = getPermutations(permutationsArray, restoreFacesArray, 'restoreFaces');
   permutationsArray = getPermutations(permutationsArray, samplerArray, 'sampler');
   permutationsArray = getPermutations(permutationsArray, scaleFactorsArray, 'scaleFactor');
@@ -415,7 +487,11 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
         height: permutationItem.height,
         initImage: permutationItem.initImage,
         negativePrompt: permutationItem.negativePrompt,
+        negativePromptStyle: permutationItem.negativePromptStyle,
+        negativePromptSubject: permutationItem.negativePromptSubject,
         prompt: permutationItem.prompt,
+        promptStyle: permutationItem.promptStyle,
+        promptSubject: permutationItem.promptSubject,
         restoreFaces: permutationItem.restoreFaces,
         sampler: permutationItem.sampler,
         scaleFactor: permutationItem.scaleFactor,
@@ -453,8 +529,12 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     heightArray,
     initImageArray,
     negativePromptArray,
+    negativePromptStyleArray,
+    negativePromptSubjectArray,
     permutations,
     promptArray,
+    promptStyleArray,
+    promptSubjectArray,
     restoreFacesArray,
     samplerArray,
     scaleFactorsArray,
@@ -499,6 +579,10 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
   const controlNet = pickRandomItem(controlNetArray);
   const upscalingPrompt = pickRandomItem(upscalingPromptArray);
   const upscalingNegativePrompt = pickRandomItem(upscalingNegativePromptArray);
+  const negativePromptStyle = pickRandomItem(negativePromptStyleArray);
+  const negativePromptSubject = pickRandomItem(negativePromptSubjectArray);
+  const promptStyle = pickRandomItem(promptStyleArray);
+  const promptSubject = pickRandomItem(promptSubjectArray);
 
   return prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
@@ -512,7 +596,11 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     height,
     initImage,
     negativePrompt,
+    negativePromptStyle,
+    negativePromptSubject,
     prompt,
+    promptStyle,
+    promptSubject,
     restoreFaces,
     sampler,
     scaleFactor,
@@ -527,7 +615,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     upscalingNegativePrompt,
     upscalingPrompt,
     vaeOption,
-    width
+    width,
   });
 };
 
@@ -751,10 +839,17 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
     const tiledVAEArray = getArraysTiledVAE(basePrompt.tiledVAE);
     const ultimateSdUpscaleArray = getArraysBoolean(basePrompt.ultimateSdUpscale);
 
-    const promptArray = Array.isArray(basePrompt.prompt) ? basePrompt.prompt : [basePrompt.prompt];
-    const negativePromptArray = Array.isArray(basePrompt.negativePrompt)
-      ? basePrompt.negativePrompt
-      : [basePrompt.negativePrompt ?? undefined];
+    const promptArray = getArrays((basePrompt as IClassicPrompt).prompt);
+    const negativePromptArray = getArrays((basePrompt as IClassicPrompt).negativePrompt);
+    const upscalingPromptArray = getArrays((basePrompt as IClassicPrompt).upscalingPrompt);
+    const upscalingNegativePromptArray = getArrays((basePrompt as IClassicPrompt).upscalingNegativePrompt);
+
+    const promptStyleArray = getArrays((basePrompt as IStyleSubjectPrompt).promptStyle);
+    const promptSubjectArray = getArrays((basePrompt as IStyleSubjectPrompt).promptSubject);
+    const negativePromptStyleArray = getArrays((basePrompt as IStyleSubjectPrompt).negativePromptStyle);
+    const negativePromptSubjectArray = getArrays((basePrompt as IStyleSubjectPrompt).negativePromptSubject);
+
+    // const negativePromptArray = getArrays(basePrompt.negativePrompt)
 
     const cfgArray = getArrays(basePrompt.cfg);
     const denoisingArray = getArrays(basePrompt.denoising);
@@ -770,8 +865,6 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
     const clipSkipArray = getArrays(basePrompt.clipSkip);
     const stylesSetsArray = getArrays(basePrompt.stylesSets, [undefined]);
     const controlNetArray = getArraysControlNet(basePrompt.controlNet);
-    const upscalingPromptArray = getArrays(basePrompt.upscalingPrompt);
-    const upscalingNegativePromptArray = getArrays(basePrompt.upscalingNegativePrompt);
 
     const checkpointsArray = Array.isArray(basePrompt.checkpoints) ? basePrompt.checkpoints : [basePrompt.checkpoints ?? undefined];
 
@@ -791,8 +884,12 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
       heightArray,
       initImageArray,
       negativePromptArray,
+      negativePromptStyleArray,
+      negativePromptSubjectArray,
       permutations: basePrompts.permutations,
       promptArray,
+      promptStyleArray,
+      promptSubjectArray,
       restoreFacesArray,
       samplerArray,
       scaleFactorsArray,
@@ -965,8 +1062,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         }
 
         if (controlNetPrompt.prompt) {
-          if (controlNetPrompt.prompt.includes('{prompt}')) {
-            query.prompt = controlNetPrompt.prompt.replace('{prompt}', query.prompt);
+          if (PROMPT_REGEX.test(controlNetPrompt.prompt)) {
+            query.prompt = controlNetPrompt.prompt.replace(PROMPT_REGEX, query.prompt);
+            query.prompt = removePromptToken(query.prompt);
           } else {
             query.prompt += `, ${controlNetPrompt.prompt}`;
           }
@@ -1227,16 +1325,18 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           query.styles.push(foundStyle.name);
 
           if (foundStyle.prompt) {
-            if (foundStyle.prompt.includes('{prompt}')) {
-              query.prompt = foundStyle.prompt.replace('{prompt}', query.prompt);
+            if (PROMPT_REGEX.test(foundStyle.prompt)) {
+              query.prompt = foundStyle.prompt.replace(PROMPT_REGEX, query.prompt);
+              query.prompt = removePromptToken(query.prompt);
             } else {
               query.prompt = `${query.prompt}, ${foundStyle.prompt}`;
             }
           }
 
           if (foundStyle.negativePrompt) {
-            if (foundStyle.negativePrompt.includes('{prompt}')) {
-              query.negative_prompt = foundStyle.negativePrompt.replace('{prompt}', query.negative_prompt ?? '');
+            if (PROMPT_REGEX.test(foundStyle.negativePrompt)) {
+              query.negative_prompt = foundStyle.negativePrompt.replace(PROMPT_REGEX, query.negative_prompt ?? '');
+              query.negative_prompt = removePromptToken(query.negative_prompt ?? '');
             } else {
               query.negative_prompt = `${query.negative_prompt ?? ''}, ${foundStyle.negativePrompt}`;
             }
