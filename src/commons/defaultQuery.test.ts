@@ -1,4 +1,4 @@
-/// <reference types="jest" />
+import { describe, expect, it } from '@jest/globals';
 
 import { getDefaultQuery, getDefaultQuery15, getDefaultQuery20, getDefaultQueryXL } from './defaultQuery';
 
@@ -43,6 +43,7 @@ describe('get default query for version 1.5', () => {
   };
 
   it('should get base query for version 1.5', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQuery15();
     const resultFull = getDefaultQuery('sd15', 'none');
 
@@ -51,6 +52,7 @@ describe('get default query for version 1.5', () => {
   });
 
   it('should get base query for version 1.5 with LCM acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQuery15('lcm');
     const resultFull = getDefaultQuery('sd15', 'lcm');
 
@@ -59,6 +61,7 @@ describe('get default query for version 1.5', () => {
   });
 
   it('should get base query for version 1.5 with non-LCM acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQuery15('distilled');
     const resultFull = getDefaultQuery('sd15', 'lightning');
 
@@ -107,6 +110,7 @@ describe('get default query for version 2.x', () => {
   };
 
   it('should get base query for version 2.x', () => {
+    expect.assertions(3);
     const resultDirect = getDefaultQuery20(false);
     const result20 = getDefaultQuery('sd20', 'lcm');
     const result21 = getDefaultQuery('sd21', 'lightning');
@@ -117,6 +121,7 @@ describe('get default query for version 2.x', () => {
   });
 
   it('should get base query for version 2.x in full size', () => {
+    expect.assertions(3);
     const resultDirect = getDefaultQuery20(true);
     const result20 = getDefaultQuery('sd20-768', 'none');
     const result21 = getDefaultQuery('sd21-768', 'turbo');
@@ -208,6 +213,7 @@ describe('get default query for version XL', () => {
   };
 
   it('should get base query for version XL', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQueryXL();
     const resultFull = getDefaultQuery('sdxl', 'none');
 
@@ -216,6 +222,7 @@ describe('get default query for version XL', () => {
   });
 
   it('should get base query for version XL with LCM acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQueryXL('lcm');
     const resultFull = getDefaultQuery('sdxl', 'lcm');
 
@@ -224,6 +231,7 @@ describe('get default query for version XL', () => {
   });
 
   it('should get base query for version XL with Lightning acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQueryXL('lightning');
     const resultFull = getDefaultQuery('sdxl', 'lightning');
 
@@ -232,6 +240,7 @@ describe('get default query for version XL', () => {
   });
 
   it('should get base query for version XL with Turbo acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQueryXL('turbo');
     const resultFull = getDefaultQuery('sdxl', 'turbo');
 
@@ -240,6 +249,7 @@ describe('get default query for version XL', () => {
   });
 
   it('should get base query for version XL with Distilled acceleration', () => {
+    expect.assertions(2);
     const resultDirect = getDefaultQueryXL('distilled');
     const resultFull = getDefaultQuery('sdxl', 'distilled');
 
@@ -249,34 +259,33 @@ describe('get default query for version XL', () => {
 });
 
 describe('get default query for other versions', () => {
-    const baseUnknown = {
-      alwayson_scripts: {},
-      cfg_scale: 7,
-      enable_hr: false,
-      height: 512,
-      negative_prompt: '',
-      override_settings: {},
-      override_settings_restore_afterwards: true,
-      prompt: '',
-      restore_faces: false,
-      sampler_name: 'DPM++ 2M',
-      save_images: true,
-      seed: -1,
-      send_images: false,
-      steps: 20,
-      styles: [],
-      width: 512
-    };
-    
-    it('should get base query for other versions', () => {
-      const result14 = getDefaultQuery('sd14', 'lcm');
-      const resultUnknown = getDefaultQuery('unknown', 'lightning');
-      const resultDefaultCase = getDefaultQuery('jest' as 'sd14', 'lightning');
-  
-      expect(result14).toMatchObject(baseUnknown);
-      expect(resultUnknown).toMatchObject(baseUnknown);
-      expect(resultDefaultCase).toMatchObject(baseUnknown);
-    });
-  
+  const baseUnknown = {
+    alwayson_scripts: {},
+    cfg_scale: 7,
+    enable_hr: false,
+    height: 512,
+    negative_prompt: '',
+    override_settings: {},
+    override_settings_restore_afterwards: true,
+    prompt: '',
+    restore_faces: false,
+    sampler_name: 'DPM++ 2M',
+    save_images: true,
+    seed: -1,
+    send_images: false,
+    steps: 20,
+    styles: [],
+    width: 512
+  };
+
+  it('should get base query for other versions', () => {
+    expect.assertions(3);
+    const result14 = getDefaultQuery('sd14', 'lcm');
+    const resultUnknown = getDefaultQuery('unknown', 'lightning');
+    const resultDefaultCase = getDefaultQuery('jest' as 'sd14', 'lightning');
+
+    expect(result14).toMatchObject(baseUnknown);
+    expect(resultUnknown).toMatchObject(baseUnknown);
+    expect(resultDefaultCase).toMatchObject(baseUnknown);
   });
-  
+});

@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
 import { ControlNetMode, ControlNetResizes } from './extensions/controlNet';
@@ -7,11 +5,8 @@ import { TiledDiffusionMethods, defaultTiledVAEnOptions } from './extensions/mul
 import { prepareRenderQuery } from './query';
 
 describe('query tests', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation();
-  });
-
   it('should send a basic query for txt2img', () => {
+    expect.assertions(1);
     const config = {
       cfg_scale: 7,
       enable_hr: false,
@@ -30,20 +25,7 @@ describe('query tests', () => {
     const result = prepareRenderQuery(config, 'txt2img');
 
     const expectedResponse: IBaseQuery = {
-      alwayson_scripts: {
-        /*'Tiled VAE': {
-          args: [
-            'True',
-            defaultTiledVAEnOptions.encoderTileSize,
-            defaultTiledVAEnOptions.decoderTileSize,
-            defaultTiledVAEnOptions.vaeToGPU,
-            defaultTiledVAEnOptions.fastDecoder,
-            defaultTiledVAEnOptions.fastEncoder,
-            defaultTiledVAEnOptions.colorFix
-          ]
-        },*/
-        //controlnet: { args: [] }
-      },
+      alwayson_scripts: {},
       cfg_scale: 7,
       height: 512,
       negative_prompt: 'test negative prompt 1',
@@ -65,6 +47,7 @@ describe('query tests', () => {
   });
 
   it('should send the correct query to the API for txt2img', () => {
+    expect.assertions(1);
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }],
       cfg_scale: 5,
@@ -168,6 +151,7 @@ describe('query tests', () => {
   });
 
   it('should send the correct query to the API for txt2img for SDXL', async () => {
+    expect.assertions(1);
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }],
       cfg_scale: 5,
@@ -268,20 +252,10 @@ describe('query tests', () => {
   });
 
   it('should send a minimal query for txt2img', () => {
+    expect.assertions(1);
     const config = {
-      //cfg_scale: 7,
-      //enable_hr: false,
-      //height: 512,
-      //lcm: false,
-      //negative_prompt: 'test negative prompt 1',
       override_settings: {},
       prompt: 'test prompt 1'
-      //restore_faces: false,
-      //sampler_name: 'DPM++ 2M',
-      //steps: 20,
-      // tiledVAE: {},
-      //tiling: false,
-      //width: 512
     };
 
     const result = prepareRenderQuery(config, 'txt2img');

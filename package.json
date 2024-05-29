@@ -33,6 +33,7 @@
     "esbuild": "^0.19.5",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-jest": "^28.5.0",
     "eslint-plugin-only-warn": "^1.1.0",
     "eslint-plugin-perfectionist": "^2.4.0",
     "eslint-plugin-sonarjs": "^0.23.0",

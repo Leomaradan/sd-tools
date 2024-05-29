@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 import path from 'node:path';
 
 import { getArraysControlNet, preparePrompts } from './prompts';
@@ -15,6 +13,7 @@ const imageInstruct = path.resolve(imageInstructFolder, 'close-front.png');
 
 describe('prompt test', () => {
   it('should generate the query from single config', () => {
+    expect.assertions(2);
     const config: IPrompts = {
       prompts: [
         {
@@ -31,10 +30,11 @@ describe('prompt test', () => {
 
     const result = preparePrompts(config);
 
-    expect(result.length).toBe(1);
+    expect(result).toHaveLength(1);
     expect(result[0].prompt).toBe('test prompt 1');
   });
   it('should generate all the queries from config', () => {
+    expect.assertions(3);
     const config: IPrompts = {
       prompts: [
         {
@@ -80,8 +80,8 @@ describe('prompt test', () => {
 
     const filtered = result.filter((r) => r.prompt === 'before, test prompt 2' && r.height === 768 && r.cfg_scale === 8);
 
-    expect(result.length).toBe(20);
-    expect(filtered.length).toBe(1);
+    expect(result).toHaveLength(20);
+    expect(filtered).toHaveLength(1);
     expect(filtered[0]).toMatchObject({
       cfg_scale: 8,
       denoising_strength: undefined,
@@ -101,7 +101,9 @@ describe('prompt test', () => {
       width: 512
     });
   });
+
   it('should generate all the queries from config with additional permutations', () => {
+    expect.assertions(3);
     const config: IPrompts = {
       permutations: [
         { afterFilename: ' Permut 1', beforePrompt: 'permut prompt, ' },
@@ -162,8 +164,8 @@ describe('prompt test', () => {
         r.cfg_scale === 8
     );
 
-    expect(result.length).toBe(60);
-    expect(filtered.length).toBe(1);
+    expect(result).toHaveLength(60);
+    expect(filtered).toHaveLength(1);
     expect(filtered[0]).toMatchObject({
       cfg_scale: 8,
       denoising_strength: undefined,
@@ -185,6 +187,7 @@ describe('prompt test', () => {
   });
   describe('controlNet resolver', () => {
     it('should return one permutation with no images', () => {
+      expect.assertions(4);
       //getArraysControlNet
       const resultUndefined = getArraysControlNet(undefined);
       const resultEmpty = getArraysControlNet([]);
@@ -198,6 +201,7 @@ describe('prompt test', () => {
     });
 
     it('should return one permutation with simple images', () => {
+      expect.assertions(3);
       const resultOneImage = getArraysControlNet({
         control_mode: 0,
         input_image: imageSingle,
@@ -236,6 +240,7 @@ describe('prompt test', () => {
     });
 
     it('should return multiple permutations', () => {
+      expect.assertions(4);
       const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
       const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
 
@@ -426,6 +431,7 @@ describe('prompt test', () => {
     });
 
     it('should return one permutation with regex pattern', () => {
+      expect.assertions(1);
       const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
       const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
 
@@ -457,6 +463,7 @@ describe('prompt test', () => {
     });
 
     it('should add the optional prompts', () => {
+      expect.assertions(3);
       const resultImage = getArraysControlNet({
         control_mode: 0,
         input_image: imageInstruct,
