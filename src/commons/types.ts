@@ -301,7 +301,7 @@ export interface ICheckpointWithVAE {
 
 type ControlNetSchema = Omit<IControlNet, 'image_name'>;
 
-export interface IPrompt {
+export interface BaseIPrompt {
   adetailer?: IAdetailerPrompt[];
   autoCutOff?: 'both' | boolean;
   autoLCM?: 'both' | boolean;
@@ -321,10 +321,10 @@ export interface IPrompt {
     beforePrompt?: string;
   };
   initImageOrFolder?: string | string[];
-  negativePrompt?: string | string[];
+  // negativePrompt?: string | string[];
   outDir?: string;
   pattern?: string;
-  prompt: string | string[];
+  // prompt: string | string[];
   restoreFaces?: 'both' | boolean;
   sampler?: string | string[];
   scaleFactor?: number | number[];
@@ -337,11 +337,27 @@ export interface IPrompt {
   tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
-  upscalingNegativePrompt?: string | string[];
-  upscalingPrompt?: string | string[];
+  // upscalingNegativePrompt?: string | string[];
+  // upscalingPrompt?: string | string[];
   vae?: string | string[];
   width?: number | number[];
 }
+
+export interface IClassicPrompt extends BaseIPrompt {
+  negativePrompt?: string | string[];
+  prompt: string | string[];
+  upscalingNegativePrompt?: string | string[];
+  upscalingPrompt?: string | string[];
+}
+
+export interface IStyleSubjectPrompt extends BaseIPrompt {
+  negativePromptStyle?: string | string[];
+  negativePromptSubject?: string | string[];
+  promptStyle: string | string[];
+  promptSubject: string | string[];
+}
+
+export type IPrompt = IClassicPrompt | IStyleSubjectPrompt;
 
 export interface IPromptSingle {
   adetailer?: IAdetailerPrompt[];

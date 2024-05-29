@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { getArraysControlNet, preparePrompts } from './prompts';
-import { type IPrompts } from './types';
+import { type IPrompts, type ITxt2ImgQuery } from './types';
 
 const root = path.resolve(__dirname, '..', '..');
 
@@ -528,6 +528,212 @@ describe('prompt test', () => {
           prompt: 'test prompt instruct, base prompt'
         }
       ]);
+    });
+  });
+
+  describe('Style and Subject prompt', () => {
+    it('should override the classic prompt if we use style ans subject prompt', () => {
+      const config1: IPrompts = {
+        prompts: [
+          {
+            cfg: 1,
+            height: 512,
+            prompt: 'test prompt 1',
+            promptStyle: 'style prompt 1',
+            promptSubject: 'subject prompt 1',
+            sampler: 'DPM++ 2M',
+            steps: 20,
+            width: 512
+          },
+          {
+            cfg: 2,
+            height: 1024,
+            negativePrompt: 'test negative prompt 2',
+            negativePromptStyle: 'negative style prompt 2',
+            negativePromptSubject: 'negative subject prompt 2',
+            prompt: 'test prompt 2',
+            promptStyle: 'style prompt 2',
+            promptSubject: 'subject prompt 2',
+            sampler: 'Euler a',
+            steps: 30,
+            width: 1024
+          },
+          {
+            cfg: 3,
+            height: 768,
+            negativePrompt: 'test negative prompt 3',
+            prompt: 'test prompt 3',
+            promptStyle: 'style prompt 3',
+            promptSubject: 'subject prompt 3',
+            sampler: 'Euler a',
+            steps: 25,
+            width: 768
+          }
+        ]
+      };
+
+      const result = preparePrompts(config1);
+
+      expect(result.length).toBe(3);
+
+      const index1 = result.findIndex((r) => r.cfg_scale === 1);
+      const index2 = result.findIndex((r) => r.cfg_scale === 2);
+      const index3 = result.findIndex((r) => r.cfg_scale === 3);
+
+      expect(result[index1].prompt).toBe('subject prompt 1 BREAK style prompt 1');
+      expect(result[index1].negative_prompt).toBeUndefined();
+      expect(result[index2].prompt).toBe('subject prompt 2 BREAK style prompt 2');
+      expect(result[index2].negative_prompt).toBe('negative subject prompt 2 BREAK negative style prompt 2');
+      expect(result[index3].prompt).toBe('subject prompt 3 BREAK style prompt 3');
+      expect(result[index3].negative_prompt).toBeUndefined();
+    });
+
+    it('should generate correct prompts with promptStyle and promptSubject without hiRes prompt', () => {
+      const config1: IPrompts = {
+        prompts: [
+          {
+            cfg: 4,
+            height: 512,
+            negativePromptStyle: 'negative style prompt 1 {prompt}',
+            negativePromptSubject: 'negative subject prompt 1',
+            promptStyle: 'style prompt 1 {prompt}',
+            promptSubject: 'subject prompt 1',
+            sampler: 'DPM++ 2M',
+            steps: 20,
+            width: 512
+          },
+          {
+            cfg: 5,
+            height: 1024,
+            negativePromptStyle: 'negative style prompt 2',
+            negativePromptSubject: 'negative subject prompt 2 {prompt}',
+            promptStyle: 'style prompt 2',
+            promptSubject: 'subject prompt 2 {prompt}',
+            sampler: 'Euler a',
+            steps: 30,
+            width: 1024
+          },
+          {
+            cfg: 6,
+            height: 768,
+            negativePromptStyle: 'negative style prompt 3 {prompt}',
+            negativePromptSubject: 'negative subject prompt 3 {prompt}',
+            promptStyle: 'style prompt 3 {prompt}',
+            promptSubject: 'subject prompt 3 {prompt}',
+            sampler: 'Euler a',
+            steps: 25,
+            width: 768
+          }
+        ]
+      };
+
+      const result = preparePrompts(config1) as ITxt2ImgQuery[];
+
+      expect(result.length).toBe(3);
+
+      const index1 = result.findIndex((r) => r.cfg_scale === 4);
+      const index2 = result.findIndex((r) => r.cfg_scale === 5);
+      const index3 = result.findIndex((r) => r.cfg_scale === 6);
+
+      expect(result[index1].prompt).toBe('style prompt 1 subject prompt 1');
+      expect(result[index1].negative_prompt).toBe('negative style prompt 1 negative subject prompt 1');
+      expect(result[index1].hr_prompt).toBeUndefined();
+      expect(result[index2].prompt).toBe('subject prompt 2 style prompt 2');
+      expect(result[index2].negative_prompt).toBe('negative subject prompt 2 negative style prompt 2');
+      expect(result[index2].hr_prompt).toBeUndefined();
+      expect(result[index3].prompt).toBe('style prompt 3 subject prompt 3');
+      expect(result[index3].negative_prompt).toBe('negative style prompt 3 negative subject prompt 3');
+      expect(result[index3].hr_prompt).toBeUndefined();
+    });
+
+    it('should generate correct prompts with promptStyle and promptSubject with hiRes prompt', () => {
+      const config1: IPrompts = {
+        prompts: [
+          {
+            cfg: 7,
+            enableHighRes: true,
+            height: 512,
+            negativePromptStyle: 'negative style prompt 1 {prompt}',
+            negativePromptSubject: 'negative subject prompt 1',
+            promptStyle: 'style prompt 1 {prompt}',
+            promptSubject: 'subject prompt 1',
+            sampler: 'DPM++ 2M',
+            steps: 20,
+            width: 512
+          },
+          {
+            cfg: 8,
+            enableHighRes: true,
+            height: 1024,
+            negativePromptStyle: 'negative style prompt 2',
+            negativePromptSubject: 'negative subject prompt 2 {prompt}',
+            promptStyle: 'style prompt 2',
+            promptSubject: 'subject prompt 2 {prompt}',
+            sampler: 'Euler a',
+            steps: 30,
+            width: 1024
+          },
+          {
+            cfg: 9,
+            enableHighRes: true,
+            height: 768,
+            negativePromptStyle: 'negative style prompt 3 {prompt}',
+            negativePromptSubject: 'negative subject prompt 3 {prompt}',
+            promptStyle: 'style prompt 3 {prompt}',
+            promptSubject: 'subject prompt 3 {prompt}',
+            sampler: 'Euler a',
+            steps: 25,
+            width: 768
+          }
+        ]
+      };
+
+      const result = preparePrompts(config1) as ITxt2ImgQuery[];
+
+      expect(result.length).toBe(3);
+
+      const index1 = result.findIndex((r) => r.cfg_scale === 7);
+      const index2 = result.findIndex((r) => r.cfg_scale === 8);
+      const index3 = result.findIndex((r) => r.cfg_scale === 9);
+
+      expect(result[index1].prompt).toBe('style prompt 1 subject prompt 1');
+      expect(result[index1].negative_prompt).toBe('negative style prompt 1 negative subject prompt 1');
+      expect(result[index1].hr_prompt).toBe('subject prompt 1');
+      expect(result[index2].prompt).toBe('subject prompt 2 style prompt 2');
+      expect(result[index2].negative_prompt).toBe('negative subject prompt 2 negative style prompt 2');
+      expect(result[index2].hr_prompt).toBe('subject prompt 2');
+      expect(result[index3].prompt).toBe('style prompt 3 subject prompt 3');
+      expect(result[index3].negative_prompt).toBe('negative style prompt 3 negative subject prompt 3');
+      expect(result[index3].hr_prompt).toBe('subject prompt 3');
+    });
+
+    it('should correctly manage permutations for promptStyle and promptSubject', () => {
+      const config1: IPrompts = {
+        prompts: [
+          {
+            cfg: 10,
+            height: 512,
+            prompt: 'test prompt 1',
+            promptStyle: ['style prompt 1', 'style prompt 2', 'style prompt 3'],
+            promptSubject: ['subject prompt 1', 'subject prompt 2'],
+            sampler: 'DPM++ 2M',
+            steps: 20,
+            width: 512
+          }
+        ]
+      };
+
+      const result = preparePrompts(config1);
+
+      expect(result.length).toBe(6);
+
+      expect(result[0].prompt).toBe('subject prompt 1 BREAK style prompt 1');
+      expect(result[1].prompt).toBe('subject prompt 1 BREAK style prompt 2');
+      expect(result[2].prompt).toBe('subject prompt 1 BREAK style prompt 3');
+      expect(result[3].prompt).toBe('subject prompt 2 BREAK style prompt 1');
+      expect(result[4].prompt).toBe('subject prompt 2 BREAK style prompt 2');
+      expect(result[5].prompt).toBe('subject prompt 2 BREAK style prompt 3');
+
     });
   });
 });
