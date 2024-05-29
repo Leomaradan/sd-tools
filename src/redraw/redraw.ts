@@ -8,7 +8,7 @@ import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
-import { IRedrawMethod, type IRedrawOptions, IRedrawStyle, type IClassicPrompt } from '../commons/types';
+import { type IClassicPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';

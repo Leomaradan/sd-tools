@@ -76,7 +76,7 @@
     "build:prod": "esbuild --define:process.env.NODE_ENV=\\\"production\\\" src/index.ts --bundle --platform=node --target=node20  --minify --outfile=dist/index.cjs",
     "watch": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=build/index.cjs --watch",
     "start": "node build/index.cjs",
-    "test": "jest --coverage",
+    "test": "jest --coverage --detectOpenHandles",
     "lint": "eslint --report-unused-disable-directives ./src --ext .ts",
     "schema": "yarn schema:queue && yarn schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",

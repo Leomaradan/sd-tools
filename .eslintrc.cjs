@@ -26,7 +26,6 @@ module.exports = {
       plugins: ['jest'],
       rules: {
         'jest/no-conditional-in-test': 'off',
-        //'jest/no-hooks': 'off',
         'jest/prefer-importing-jest-globals': 'off',
         'sonarjs/no-duplicate-string': 'off'
       }
