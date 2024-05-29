@@ -9,7 +9,7 @@ import { getFiles } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule } from '../commons/models';
 import { prompts } from '../commons/prompts';
-import { type IPrompt } from '../commons/types';
+import { type IClassicPrompt } from '../commons/types';
 
 export const upscaleTiles = async (
   source: string,
@@ -20,7 +20,7 @@ export const upscaleTiles = async (
     process.exit(ExitCodes.UPSCALE_TILES_NO_SOURCE);
   }
 
-  const queries: IPrompt[] = [];
+  const queries: IClassicPrompt[] = [];
 
   const filesList = getFiles(source, recursive);
 
@@ -28,7 +28,7 @@ export const upscaleTiles = async (
   const upscaling = upscalingArray ?? [2];
 
   for await (const file of filesList) {
-    const query = (await extractFromFile(file, 'json', true)) as IPrompt;
+    const query = (await extractFromFile(file, 'json', true)) as IClassicPrompt;
 
     if (query) {
       query.ultimateSdUpscale = true;

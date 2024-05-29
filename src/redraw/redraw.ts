@@ -8,13 +8,13 @@ import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
-import { type IPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { IRedrawMethod, type IRedrawOptions, IRedrawStyle, type IClassicPrompt } from '../commons/types';
 
 const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
 const HED = 'hed';
 
-const prepareQueryData = (baseParamsProps: IPrompt & { sdxl: boolean }, file: IFile) => {
+const prepareQueryData = (baseParamsProps: IClassicPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
@@ -182,7 +182,7 @@ const prepareQueryClassical = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: IPrompt & { sdxl: boolean } = {
+  let baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -248,7 +248,7 @@ const prepareQueryIpAdapter = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: IPrompt & { sdxl: boolean } = {
+  let baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -331,7 +331,7 @@ const prepareQueries = async (
   }[],
   { addToPrompt, denoising, sdxl, upscaler, upscales }: IRedrawOptionsCompleted
 ) => {
-  const queries: IPrompt[] = [];
+  const queries: IClassicPrompt[] = [];
 
   for await (const combination of combinations) {
     const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
