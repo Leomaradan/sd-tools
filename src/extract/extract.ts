@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { existsSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { type IExtractOptions, extractFromFile } from '../commons/extract';
 import { type IFile, getFiles } from '../commons/file';
@@ -42,7 +42,7 @@ const executeOnFiles = async (filesList: IFile[], format: 'json' | 'textbox', ad
 };
 
 export const extract = async (source: string, { addBefore, format, output, recursive }: IExtractOptions) => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.EXTRACT_NO_SOURCE);
   }
@@ -53,8 +53,8 @@ export const extract = async (source: string, { addBefore, format, output, recur
 
   const result = format === 'json' ? JSON.stringify({ prompts }) : prompts.join('\n');
 
-  const outputFile = output ?? path.resolve(source, `prompts.${format === 'json' ? 'json' : 'txt'}`);
+  const outputFile = output ?? resolve(source, `prompts.${format === 'json' ? 'json' : 'txt'}`);
 
   loggerInfo(`Extracted prompts to ${outputFile}`);
-  fs.writeFileSync(outputFile, result);
+  writeFileSync(outputFile, result);
 };

@@ -2,8 +2,8 @@ import axios from 'axios';
 import crypto from 'crypto';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
-import fs from 'node:fs';
-import path from 'node:path';
+import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
@@ -18,14 +18,14 @@ const readFile = (path: string, noCache?: boolean): string[] | undefined => {
   const cacheImageData = noCache ? {} : Cache.get('imageData');
   try {
     if (cacheImageData[path] !== undefined) {
-      if (cacheImageData[path].timestamp === fs.statSync(path).mtimeMs.toString()) {
+      if (cacheImageData[path].timestamp === statSync(path).mtimeMs.toString()) {
         return cacheImageData[path].data;
       }
 
       delete cacheImageData[path];
     }
 
-    const buffer = fs.readFileSync(path);
+    const buffer = readFileSync(path);
 
     const chunks = extract(buffer);
 
@@ -47,7 +47,7 @@ const readFile = (path: string, noCache?: boolean): string[] | undefined => {
 
       cacheImageData[path] = {
         data,
-        timestamp: fs.statSync(path).mtimeMs.toString()
+        timestamp: statSync(path).mtimeMs.toString()
       };
     }
   } catch (error) {
@@ -72,29 +72,29 @@ export interface IFile {
 }
 
 export const readFiles = (sourcepath: string, root: string, recursive?: boolean, noCache?: boolean): IFile[] => {
-  const files = fs.readdirSync(sourcepath);
+  const files = readdirSync(sourcepath);
   const result: IFile[] = [];
 
   files.forEach((file) => {
-    if (recursive && fs.lstatSync(path.resolve(sourcepath, file)).isDirectory()) {
-      result.push(...readFiles(path.resolve(sourcepath, file), root, recursive));
+    if (recursive && lstatSync(resolve(sourcepath, file)).isDirectory()) {
+      result.push(...readFiles(resolve(sourcepath, file), root, recursive));
     }
 
-    const prefix = recursive ? path.relative(root, sourcepath).split(path.sep).join(', ') : undefined;
+    const prefix = recursive ? relative(root, sourcepath).split(sep).join(', ') : undefined;
 
     if (file.endsWith('.png')) {
       loggerVerbose(`Read ${file}`);
-      const filename = path.resolve(sourcepath, file);
+      const filename = resolve(sourcepath, file);
       const data = readFile(filename, noCache);
       const sizes = sizeOf(filename);
-      const date = fs.statSync(filename).birthtime.toISOString();
+      const date = statSync(filename).birthtime.toISOString();
 
       result.push({
         data,
         date,
         file,
         filename,
-        fullpath: path.resolve(sourcepath, file),
+        fullpath: resolve(sourcepath, file),
         height: sizes.height ?? -1,
         prefix,
         width: sizes.width ?? -1
@@ -103,16 +103,16 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
 
     if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
       loggerVerbose(`Read ${file}`);
-      const filename = path.resolve(sourcepath, file);
+      const filename = resolve(sourcepath, file);
       const sizes = sizeOf(filename);
-      const date = fs.statSync(filename).birthtime.toISOString();
+      const date = statSync(filename).birthtime.toISOString();
 
       result.push({
         data: undefined,
         date,
         file,
         filename,
-        fullpath: path.resolve(sourcepath, file),
+        fullpath: resolve(sourcepath, file),
         height: sizes.height ?? -1,
         prefix,
         width: sizes.width ?? -1
@@ -129,7 +129,7 @@ const getHash = (url: string) => {
   return new Promise((resolve, reject) => {
     const hashBuilder = crypto.createHash('sha256');
     hashBuilder.setEncoding('hex');
-    const stream = fs.createReadStream(url);
+    const stream = createReadStream(url);
 
     stream.on('end', function () {
       hashBuilder.end();
@@ -227,11 +227,11 @@ export const getBase64Image = (url: string) => {
     return imageCache[url].data;
   }
 
-  if (fs.statSync(url).isDirectory()) {
+  if (statSync(url).isDirectory()) {
     return;
   }
 
-  const buffer = fs.readFileSync(url);
+  const buffer = readFileSync(url);
   const data = buffer.toString('base64');
 
   const sizes = sizeOf(url);
@@ -249,11 +249,11 @@ export const getImageSize = (url: string) => {
     return { height: imageCache[url].height, width: imageCache[url].width };
   }
 
-  if (fs.statSync(url).isDirectory()) {
+  if (statSync(url).isDirectory()) {
     return { height: -1, width: -1 };
   }
 
-  const buffer = fs.readFileSync(url);
+  const buffer = readFileSync(url);
   const data = buffer.toString('base64');
 
   const sizes = sizeOf(url);
@@ -271,7 +271,7 @@ export const getImageSize = (url: string) => {
     loggerInfo(`Invalid metadata file : ${url}`);
   }
 
-  if (!fs.existsSync(url)) {
+  if (!existsSync(url)) {
     loggerInfo(`File does not exists : ${url}`);
     return;
   }
@@ -280,14 +280,14 @@ export const getImageSize = (url: string) => {
 
   try {
     if (cacheMetadata[url] !== undefined) {
-      if (cacheMetadata[url].timestamp === fs.statSync(url).mtimeMs.toString()) {
+      if (cacheMetadata[url].timestamp === statSync(url).mtimeMs.toString()) {
         return [cacheMetadata, cacheMetadata[url]];
       }
 
       delete actualCacheMetadata[url];
     }
 
-    const content = fs.readFileSync(url, 'utf8');
+    const content = readFileSync(url, 'utf8');
     const metadata = JSON.parse(content);
 
     const result: IMetadata = {
@@ -306,7 +306,7 @@ export const getImageSize = (url: string) => {
       result.sdVersion = Version.SD15;
     }
 
-    cacheMetadata[url] = { ...result, timestamp: fs.statSync(url).mtimeMs.toString() };
+    cacheMetadata[url] = { ...result, timestamp: statSync(url).mtimeMs.toString() };
 
     return [cacheMetadata, result];
   } catch (error: unknown) {
@@ -398,7 +398,7 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
     loggerInfo(`Invalid metadata file : ${url}`);
   }
 
-  if (!fs.existsSync(url)) {
+  if (!existsSync(url)) {
     loggerInfo(`File does not exists : ${url}`);
     return;
   }
@@ -407,14 +407,14 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
 
   try {
     if (cacheMetadata[url] !== undefined) {
-      if (cacheMetadata[url].timestamp === fs.statSync(url).mtimeMs.toString()) {
+      if (cacheMetadata[url].timestamp === statSync(url).mtimeMs.toString()) {
         return [cacheMetadata, cacheMetadata[url]];
       }
 
       delete actualCacheMetadata[url];
     }
 
-    const content = fs.readFileSync(url, 'utf8');
+    const content = readFileSync(url, 'utf8');
     const metadata = JSON.parse(content) as ICivitAIInfoFile;
 
     const result = getMetadataFromCivitAi(metadata);
@@ -423,7 +423,7 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
       return;
     }
 
-    cacheMetadata[url] = { ...result, timestamp: fs.statSync(url).mtimeMs.toString() };
+    cacheMetadata[url] = { ...result, timestamp: statSync(url).mtimeMs.toString() };
 
     return [cacheMetadata, result];
   } catch (error: unknown) {
@@ -441,7 +441,7 @@ export const getMetadataCivitAiRest = async (
   actualCacheMetadata: CacheMetadata,
   url: string
 ): Promise<[CacheMetadata, IMetadata] | false | undefined> => {
-  if (!fs.existsSync(url)) {
+  if (!existsSync(url)) {
     loggerInfo(`File does not exists : ${url}`);
     return;
   }
@@ -469,7 +469,7 @@ export const getMetadataCivitAiRest = async (
 
     const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
 
-    fs.writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
+    writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
 
     const result = getMetadataFromCivitAi(metadata);
 

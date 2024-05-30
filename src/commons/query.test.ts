@@ -1,5 +1,7 @@
+import type { ICutOff } from './extensions/cutoff';
 import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
+import { Config } from './config';
 import { ControlNetMode, ControlNetResizes } from './extensions/controlNet';
 import { TiledDiffusionMethods, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { prepareRenderQuery } from './query';
@@ -47,7 +49,7 @@ describe('query tests', () => {
   });
 
   it('should send the correct query to the API for txt2img', () => {
-    expect.assertions(1);
+    expect.assertions(2);
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }],
       cfg_scale: 5,
@@ -56,7 +58,7 @@ describe('query tests', () => {
         { control_mode: ControlNetMode.Balanced, model: 'cn-model', module: 'cn-module', resize_mode: ControlNetResizes.Envelope }
       ],
 
-      cutOff: { tokens: ['blue'] },
+      cutOff: {} as ICutOff,
       denoising_strength: 0.5,
 
       height: 768,
@@ -90,22 +92,11 @@ describe('query tests', () => {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
         },
-        Cutoff: {
+        /*Cutoff: {
           args: [true, 'blue', 1, false, false, '', 'Lerp']
-        },
+        },*/
         'Tiled Diffusion': {
           args: [true, 'Mixture of Diffusers', true, false, 500, 768, 96, 96, 48, 4, '4x-UltraSharp', 2]
-        },
-        'Tiled VAE': {
-          args: [
-            'True',
-            defaultTiledVAEnOptions.encoderTileSize,
-            defaultTiledVAEnOptions.decoderTileSize,
-            defaultTiledVAEnOptions.vaeToGPU,
-            defaultTiledVAEnOptions.fastDecoder,
-            defaultTiledVAEnOptions.fastEncoder,
-            defaultTiledVAEnOptions.colorFix
-          ]
         },
         controlnet: {
           args: [
@@ -148,6 +139,31 @@ describe('query tests', () => {
     };
 
     expect(result).toStrictEqual(expectedResponse);
+
+    Config.set('cutoff', true);
+    Config.set('autoTiledVAE', true);
+
+    const result2 = prepareRenderQuery(input, 'txt2img');
+
+    Config.set('cutoff', false);
+    Config.set('autoTiledVAE', false);
+
+    expectedResponse.alwayson_scripts['Cutoff'] = {
+      args: [true, 'blue, red, green', 1, false, false, '', 'Lerp']
+    };
+    expectedResponse.alwayson_scripts['Tiled VAE'] = {
+      args: [
+        'True',
+        defaultTiledVAEnOptions.encoderTileSize,
+        defaultTiledVAEnOptions.decoderTileSize,
+        defaultTiledVAEnOptions.vaeToGPU,
+        defaultTiledVAEnOptions.fastDecoder,
+        defaultTiledVAEnOptions.fastEncoder,
+        defaultTiledVAEnOptions.colorFix
+      ]
+    };
+
+    expect(result2).toStrictEqual(expectedResponse);
   });
 
   it('should send the correct query to the API for txt2img for SDXL', async () => {
@@ -196,17 +212,6 @@ describe('query tests', () => {
         },
         Cutoff: {
           args: [true, 'red', 0.8, false, false, '', 'Lerp']
-        },
-        'Tiled VAE': {
-          args: [
-            'True',
-            defaultTiledVAEnOptions.encoderTileSize,
-            defaultTiledVAEnOptions.decoderTileSize,
-            defaultTiledVAEnOptions.vaeToGPU,
-            false,
-            defaultTiledVAEnOptions.fastEncoder,
-            defaultTiledVAEnOptions.colorFix
-          ]
         },
         controlnet: {
           args: [

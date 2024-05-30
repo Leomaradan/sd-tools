@@ -1,9 +1,9 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 import yargs from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { type IExtractOptions, type IExtractOptionsFull } from '../commons/extract';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { extract } from './extract';
 
 export const command = 'extract <source> <format>';
@@ -45,7 +45,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 };
 
 export const handler = (argv: IExtractOptionsFull) => {
-  const source = path.resolve(argv.source);
+  const source = resolve(argv.source);
 
   resolveBaseOptions(argv);
 

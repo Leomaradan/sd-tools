@@ -1,9 +1,9 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 import yargs from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { renameConfigFromCFile, renameKeyPattern } from './rename';
 
 interface IRenameOptions {
@@ -78,8 +78,8 @@ export const builder = (builder: yargs.Argv<object>) => {
 };
 
 export const handler = (argv: IRenameOptions) => {
-  const source = path.resolve(argv.source);
-  const target = path.resolve(argv.target);
+  const source = resolve(argv.source);
+  const target = resolve(argv.target);
 
   resolveBaseOptions(argv);
 

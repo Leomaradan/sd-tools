@@ -1,7 +1,18 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+
+import { xdgState } from './xdgBaseDir';
 
 export const mode = { info: true, log: true, simulate: false, verbose: false };
+
+let session: string | undefined = undefined;
+
+const isProd = process.env.NODE_ENV === 'production';
+
+const devLogPath = resolve(__dirname, '..', 'logs');
+
+const oldLogs = isProd ? new Date().getTime() - 7 * 24 * 60 * 60 * 1000 : new Date().getTime() - 30 * 24 * 60 * 60 * 1000;
 
 export const loggerInfo = (message: string) => {
   if (mode.info) {
@@ -35,25 +46,53 @@ const purgePathInLog = (key: string, value: unknown) => {
   return value;
 };
 
+const clearOldLogs = (source: string) => {
+  const files = readdirSync(source);
+
+  files.forEach((file) => {
+    const date = new Date(file.replace('log-', '').replace('.json', ''));
+    if (date.getTime() < oldLogs) {
+      rmSync(resolve(source, file));
+    }
+  });
+};
+
 export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
-    const logPath = path.resolve(__dirname, '..', 'logs');
-    const logFile = path.resolve(logPath, `log-${new Date().toISOString().substring(0, 10)}.json`);
-    if (!fs.existsSync(logPath)) {
-      fs.mkdirSync(logPath);
+    if (session === undefined) {
+      session = new Date().toISOString();
     }
 
-    if (!fs.existsSync(logFile)) {
-      fs.writeFileSync(logFile, '[]');
+    let logPath = resolve(__dirname, '..', 'logs');
+
+    if (isProd) {
+      if (existsSync(devLogPath)) {
+        clearOldLogs(devLogPath);
+      }
+
+      const rootDir = xdgState ?? join(tmpdir());
+      logPath = resolve(rootDir, 'sd-tools');
+    }
+
+    const logFile = resolve(logPath, `log-${session}.json`);
+    if (!existsSync(logPath)) {
+      mkdirSync(logPath, { mode: 0o0700, recursive: true });
+    }
+
+    if (!existsSync(logFile)) {
+      writeFileSync(logFile, '[]');
     }
 
     const dataWithDate = { timestamp: Date.now(), ...data };
 
-    const content = JSON.parse(fs.readFileSync(logFile, { encoding: 'utf8' }));
+    const content = JSON.parse(readFileSync(logFile, { encoding: 'utf8' }));
 
     content.push(dataWithDate);
 
-    fs.writeFileSync(logFile, JSON.stringify(content, purgePathInLog, 2));
+    writeFileSync(logFile, JSON.stringify(content, purgePathInLog, 2));
+
+    // Get all the files from the old folder
+    clearOldLogs(logPath);
   }
 };
 

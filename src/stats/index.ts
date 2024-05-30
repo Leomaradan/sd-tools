@@ -1,7 +1,7 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 import yargs from 'yargs';
 
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { getStats } from './stats';
 
 export const command = 'stats <source>';
@@ -20,7 +20,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 };
 
 export const handler = (argv: { source: string }) => {
-  const source = path.resolve(argv.source);
+  const source = resolve(argv.source);
 
   getStats(source);
 };

@@ -104,7 +104,7 @@ const PROMPT_REGEX = /\{prompt\}/i;
 
 const removePromptToken = (input: string) => {
   return input.replace(/\{prompt\}/gi, '').trim();
-}
+};
 
 const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
   query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern as string).replace(
@@ -183,7 +183,6 @@ const prepareSingleQuery = (
 
     // Force removing negative prompt to ensure only "new" style+subject negative prompt is used
     resolvedNegativePrompt = undefined;
-
   }
 
   if (negativePromptStyle !== undefined && negativePromptSubject !== undefined) {
@@ -615,7 +614,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
     upscalingNegativePrompt,
     upscalingPrompt,
     vaeOption,
-    width,
+    width
   });
 };
 
@@ -1190,6 +1189,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         const foundModel = findADetailersModel(adetailer.model);
         if (foundModel) {
           const adetailerQuery: IAdetailer = {
+            ad_confidence: adetailer.confidence,
             ad_denoising_strength: adetailer.strength,
             ad_model: foundModel,
             ad_negative_prompt: adetailer.negative,
