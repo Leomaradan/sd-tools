@@ -280,6 +280,7 @@ export interface ICache {
 }
 
 export interface IAdetailerPrompt {
+  confidence?: number;
   height?: number;
   model: string;
   negative?: string;

@@ -117,7 +117,7 @@ const prepareAdetailer = (baseQuery: IBaseQuery, adetailer: IAdetailer[] | undef
 const prepareTiledVAE = (baseQuery: IBaseQuery, tiledVAE: ITiledVAE | undefined, isSDXL: boolean) => {
   const updatedQuery = { ...baseQuery };
 
-  if (Config.get('autoTiledVAE') || tiledVAE) {
+  if (Config.get('autoTiledVAE') || (tiledVAE && Object.keys(tiledVAE).length > 0)) {
     const tiledVAEConfig = { ...defaultTiledVAEnOptions, ...(Config.get('autoTiledVAE') ? {} : tiledVAE) } as Required<ITiledVAE>;
 
     if (isSDXL) {
@@ -182,7 +182,7 @@ const prepareCutOff = (baseQuery: IBaseQuery, cutOff: ICutOff | undefined) => {
   const updatedQuery = { ...baseQuery };
 
   const autoCutOff = Config.get('cutoff');
-  if (cutOff || autoCutOff) {
+  if (autoCutOff || (cutOff && Object.keys(cutOff).length > 0)) {
     const tokens = Array.from(new Set([...(cutOff?.tokens ?? []), ...(autoCutOff ? Array.from(Config.get('cutoffTokens')) : [])]));
     const weight = cutOff?.weight ?? Config.get('cutoffWeight');
     updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Cutoff] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
