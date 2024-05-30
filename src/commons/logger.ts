@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { xdgState } from 'xdg-basedir';
+
+import { xdgState } from './xdgBaseDir';
 
 export const mode = { info: true, log: true, simulate: false, verbose: false };
 

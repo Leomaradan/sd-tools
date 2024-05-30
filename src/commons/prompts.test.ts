@@ -35,6 +35,7 @@ describe('prompt test', () => {
   });
 
   it('should manage adetailers params', () => {
+    expect.assertions(4);
     const config: IPrompts = {
       prompts: [
         {

@@ -49,7 +49,7 @@ describe('query tests', () => {
   });
 
   it('should send the correct query to the API for txt2img', () => {
-    expect.assertions(1);
+    expect.assertions(2);
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }],
       cfg_scale: 5,
