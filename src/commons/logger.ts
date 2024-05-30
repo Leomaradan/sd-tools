@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, rmdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { xdgState } from 'xdg-basedir';
@@ -45,6 +45,17 @@ const purgePathInLog = (key: string, value: unknown) => {
   return value;
 };
 
+const clearOldLogs = (source: string) => {
+  const files = readdirSync(source);
+
+  files.forEach((file) => {
+    const date = new Date(file.replace('log-', '').replace('.json', ''));
+    if (date.getTime() < oldLogs) {
+      rmSync(resolve(source, file));
+    }
+  });
+};
+
 export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
     if (session === undefined) {
@@ -54,9 +65,9 @@ export const writeLog = (data: object, force = false) => {
     let logPath = resolve(__dirname, '..', 'logs');
 
     if (isProd) {
-      /*if (existsSync(devLogPath)) {
-        rmdirSync(devLogPath);
-      }*/
+      if (existsSync(devLogPath)) {
+        clearOldLogs(devLogPath);
+      }
 
       const rootDir = xdgState || join(tmpdir());
       logPath = resolve(rootDir, 'sd-tools');
@@ -80,14 +91,7 @@ export const writeLog = (data: object, force = false) => {
     writeFileSync(logFile, JSON.stringify(content, purgePathInLog, 2));
 
     // Get all the files from the old folder
-    const files = readdirSync(logPath);
-
-    files.forEach((file) => {
-      const date = new Date(file.replace('log-', '').replace('.json', ''));
-      if (date.getTime() < oldLogs) {
-        rmSync(resolve(logPath, file));
-      }
-    });
+    clearOldLogs(logPath);
   }
 };
 
