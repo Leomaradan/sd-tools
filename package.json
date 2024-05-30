@@ -14,7 +14,7 @@
     "jsonschema": "^1.4.1",
     "png-chunk-text": "^1.0.0",
     "png-chunks-extract": "^1.0.0",
-    "table": "^6.8.1",
+    "table": "^6.8.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
