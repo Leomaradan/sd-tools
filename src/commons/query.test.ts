@@ -1,10 +1,10 @@
+import type { ICutOff } from './extensions/cutoff';
 import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
 import { Config } from './config';
 import { ControlNetMode, ControlNetResizes } from './extensions/controlNet';
 import { TiledDiffusionMethods, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
 import { prepareRenderQuery } from './query';
-import type { ICutOff } from './extensions/cutoff';
 
 describe('query tests', () => {
   it('should send a basic query for txt2img', () => {

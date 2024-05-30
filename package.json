@@ -15,6 +15,7 @@
     "png-chunk-text": "^1.0.0",
     "png-chunks-extract": "^1.0.0",
     "table": "^6.8.1",
+    "xdg-basedir": "^5.1.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

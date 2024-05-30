@@ -1,6 +1,6 @@
 jest.mock('../commons/prompts');
 
-import path from 'node:path';
+import { resolve } from 'node:path';
 
 import { ExitCodes } from '../commons/logger';
 import { prompts } from '../commons/prompts';
@@ -10,7 +10,7 @@ describe('queue loader test', () => {
   describe('simple config', () => {
     it('should load simple config from json', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/simple.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/simple.json'), true);
 
       const expectedConfig = {
         prompts: [
@@ -35,7 +35,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from js', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/simple.js'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/simple.js'), true);
 
       const expectedConfig = {
         prompts: [
@@ -59,7 +59,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from cjs', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/simple.cjs'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/simple.cjs'), true);
 
       const expectedConfig = {
         prompts: [
@@ -83,7 +83,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from json with basePrompts', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/basePrompts.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/basePrompts.json'), true);
 
       const expectedConfig = {
         prompts: [
@@ -131,7 +131,7 @@ describe('queue loader test', () => {
   describe('extended config', () => {
     it('should load cascading config from json', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeA.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/cascadeA.json'), true);
 
       const expectedConfig = {
         permutations: [
@@ -169,7 +169,7 @@ describe('queue loader test', () => {
 
     it('should load cascading config from json with absolute path marker', () => {
       expect.assertions(2);
-      queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeAPath.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/cascadeAPath.json'), true);
 
       const expectedConfig = {
         permutations: [
@@ -211,7 +211,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/configs/cascadeC.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/cascadeC.json'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_NO_RESULTING_PROMPTS);
     });
@@ -220,7 +220,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/configs/corrupted.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/corrupted.json'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_CORRUPTED_JSON);
     });
@@ -229,7 +229,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/configs/not-found.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/not-found.json'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_NO_SOURCE_INTERNAL);
     });
@@ -238,7 +238,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/configs/invalid.json'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/invalid.json'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_JSON);
     });
@@ -247,7 +247,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/configs/invalid.js'), true);
+      queueFromFile(resolve(__dirname, '../../test/configs/invalid.js'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_JS);
     });
@@ -256,7 +256,7 @@ describe('queue loader test', () => {
       expect.assertions(1);
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
-      queueFromFile(path.resolve(__dirname, '../../test/images/instruct/close-front.txt'), true);
+      queueFromFile(resolve(__dirname, '../../test/images/instruct/close-front.txt'), true);
 
       expect(mockExit).toHaveBeenCalledWith(ExitCodes.QUEUE_INVALID_FILE);
     });

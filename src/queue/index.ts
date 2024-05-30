@@ -1,9 +1,9 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 import yargs from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { queueFromFile } from './queue';
 
 interface IQueueArgsOptions {
@@ -35,7 +35,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 };
 
 export const handler = (argv: IQueueArgsOptions) => {
-  const source = path.resolve(argv.source);
+  const source = resolve(argv.source);
 
   resolveBaseOptions(argv);
 

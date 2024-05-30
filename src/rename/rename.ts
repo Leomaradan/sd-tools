@@ -1,6 +1,6 @@
 import { Validator } from 'jsonschema';
-import fs from 'node:fs';
-import path from 'node:path';
+import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
+import { join } from 'node:path';
 
 import renameSchema from '../../schema/rename.json';
 import { type IFile, getFiles } from '../commons/file';
@@ -18,25 +18,25 @@ const executeOnFile = (file: IFile, config: IRenameConfig, target: string, test:
 
       loggerVerbose(`Renaming ${file.filename} to "${targetFile}" with "${scene}"`);
 
-      if (!test && scene && !fs.existsSync(path.join(target, scene))) {
-        fs.mkdirSync(path.join(target, scene));
+      if (!test && scene && !existsSync(join(target, scene))) {
+        mkdirSync(join(target, scene));
       }
 
       if (!test) {
-        fs.renameSync(file.filename, path.join(target, targetFile));
+        renameSync(file.filename, join(target, targetFile));
       }
     }
   }
 };
 
 export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.RENAME_NO_SOURCE_INTERNAL);
   }
 
-  if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
+  if (!existsSync(target)) {
+    mkdirSync(target, { recursive: true });
   }
 
   const validation = validator.validate(config, renameSchema);
@@ -54,18 +54,18 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
 };
 
 export const renameConfigFromCFile = (source: string, target: string, config: string, test: boolean) => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.RENAME_NO_CONFIG_FILE);
   }
 
-  if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
+  if (!existsSync(target)) {
+    mkdirSync(target, { recursive: true });
   }
 
   let jsonContent: IRenameConfig = { keys: [], pattern: '' };
   try {
-    const data = fs.readFileSync(config, 'utf8');
+    const data = readFileSync(config, 'utf8');
     jsonContent = JSON.parse(data);
   } catch (err) {
     loggerInfo(`Unable to parse JSON in ${config} (${err})`);

@@ -1,5 +1,5 @@
 import { Validator } from 'jsonschema';
-import fs from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import queueSchema from '../../schema/queue.json';
@@ -9,7 +9,7 @@ import { type IPrompts, type IPromptsResolved } from '../commons/types';
 const validator = new Validator();
 
 export const getConfigs = (source: string): IPrompts | undefined => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source file ${source} does not exist`);
     process.exit(ExitCodes.QUEUE_NO_SOURCE_INTERNAL);
   }
@@ -17,7 +17,7 @@ export const getConfigs = (source: string): IPrompts | undefined => {
   if (source.endsWith('.json')) {
     let jsonContent: IPrompts = { prompts: [] };
     try {
-      const data = fs.readFileSync(source, 'utf8');
+      const data = readFileSync(source, 'utf8');
       jsonContent = JSON.parse(data);
     } catch (err) {
       loggerInfo(`Unable to parse JSON in ${source}`);

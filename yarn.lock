@@ -2143,6 +2143,7 @@ __metadata:
     table: "npm:^6.8.1"
     typescript: "npm:^5.2.2"
     typescript-json-schema: "npm:^0.62.0"
+    xdg-basedir: "npm:^5.1.0"
     yargs: "npm:^17.7.2"
   bin:
     sd-tools: sd-tools.cjs
@@ -6980,7 +6981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xdg-basedir@npm:^5.0.1":
+"xdg-basedir@npm:^5.0.1, xdg-basedir@npm:^5.1.0":
   version: 5.1.0
   resolution: "xdg-basedir@npm:5.1.0"
   checksum: 10c0/c88efabc71ffd996ba9ad8923a8cc1c7c020a03e2c59f0ffa72e06be9e724ad2a0fccef488757bc6ed3d8849d753dd25082d1035d95cb179e79eae4d034d0b80

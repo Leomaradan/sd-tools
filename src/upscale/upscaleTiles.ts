@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import type { IUpscaleOptions } from './types';
@@ -15,7 +15,7 @@ export const upscaleTiles = async (
   source: string,
   { checkpoint, denoising: denoisingArray, recursive, upscaling: upscalingArray }: IUpscaleOptions
 ) => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.UPSCALE_TILES_NO_SOURCE);
   }

@@ -1,15 +1,15 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 
 import { getArraysControlNet, preparePrompts } from './prompts';
 import { type IPrompts, type ITxt2ImgQuery } from './types';
 
-const root = path.resolve(__dirname, '..', '..');
+const root = resolve(__dirname, '..', '..');
 
-const imageSingle = path.resolve(root, 'test', 'images', 'close-front.pose.png');
-const imageSingle2 = path.resolve(root, 'test', 'images', 'single2', 'close-front.png');
-const imageMultiFolder = path.resolve(root, 'test', 'images', 'multi');
-const imageInstructFolder = path.resolve(root, 'test', 'images', 'instruct');
-const imageInstruct = path.resolve(imageInstructFolder, 'close-front.png');
+const imageSingle = resolve(root, 'test', 'images', 'close-front.pose.png');
+const imageSingle2 = resolve(root, 'test', 'images', 'single2', 'close-front.png');
+const imageMultiFolder = resolve(root, 'test', 'images', 'multi');
+const imageInstructFolder = resolve(root, 'test', 'images', 'instruct');
+const imageInstruct = resolve(imageInstructFolder, 'close-front.png');
 
 describe('prompt test', () => {
   it('should generate the query from single config', () => {
@@ -65,7 +65,7 @@ describe('prompt test', () => {
 
     const result = preparePrompts(config);
 
-    expect(result.length).toBe(1);
+    expect(result).toHaveLength(1);
     expect(result[0].prompt).toBe('test prompt 1');
     expect(result[0].adetailer?.[0]).toStrictEqual({
       ad_confidence: undefined,
@@ -325,7 +325,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -335,7 +335,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -348,7 +348,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -359,7 +359,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -381,7 +381,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -399,7 +399,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -412,7 +412,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -420,7 +420,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -430,7 +430,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -438,7 +438,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -448,7 +448,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -456,7 +456,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -466,7 +466,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -474,7 +474,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -498,7 +498,7 @@ describe('prompt test', () => {
           {
             control_mode: 0,
             image_name: `multi-${image1}`,
-            input_image: path.resolve(imageMultiFolder, image1),
+            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -506,7 +506,7 @@ describe('prompt test', () => {
           {
             control_mode: 1,
             image_name: `multi-${image2}`,
-            input_image: path.resolve(imageMultiFolder, image2),
+            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1

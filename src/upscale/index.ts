@@ -1,9 +1,9 @@
-import path from 'node:path';
+import { resolve } from 'node:path';
 import yargs from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findCheckpoint, findControlnetModel } from '../commons/models';
 import { type IUpscaleOptions, type IUpscaleOptionsFull } from './types';
 import { upscaleTiledDiffusion } from './upscaleTiledDiffusion';
@@ -104,7 +104,7 @@ export const builder = (builder: yargs.Argv<object>) => {
 };
 
 export const handler = (argv: IUpscaleOptionsFull) => {
-  const source = path.resolve(argv.source);
+  const source = resolve(argv.source);
   const { method } = argv;
 
   resolveBaseOptions(argv);

@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
@@ -363,7 +363,7 @@ const prepareQueries = async (
 };
 
 export const redraw = async (source: string, options: IRedrawOptions) => {
-  if (!fs.existsSync(source)) {
+  if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.REDRAW_NO_SOURCE);
   }

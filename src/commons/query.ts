@@ -1,5 +1,5 @@
 import axios from 'axios';
-import fs from 'node:fs';
+import { statSync } from 'node:fs';
 
 import type { IAdetailer } from './extensions/adetailer';
 import type { ICutOff } from './extensions/cutoff';
@@ -331,7 +331,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
   const interrogatorCache = Cache.get('interrogator');
 
   if (interrogatorCache[imagePath]) {
-    if (interrogatorCache[imagePath].timestamp === fs.statSync(imagePath).mtimeMs.toString()) {
+    if (interrogatorCache[imagePath].timestamp === statSync(imagePath).mtimeMs.toString()) {
       return interrogatorCache[imagePath];
     }
 
@@ -360,7 +360,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
   if (response) {
     interrogatorCache[imagePath] = {
       ...response,
-      timestamp: fs.statSync(imagePath).mtimeMs.toString()
+      timestamp: statSync(imagePath).mtimeMs.toString()
     };
   }
 
