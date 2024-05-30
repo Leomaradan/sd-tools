@@ -1,1416 +1,1311 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "anyOf": [
-        {
-            "$ref": "#/definitions/IPromptsWithPrompt"
-        },
-        {
-            "$ref": "#/definitions/IPromptsWithBasePrompt"
-        },
-        {
-            "$ref": "#/definitions/IPromptsWithExtends"
-        }
-    ],
-    "definitions": {
-        "ControlNetSchema": {
-            "additionalProperties": false,
-            "properties": {
-                "control_mode": {
-                    "enum": [
-                        0,
-                        1,
-                        2,
-                        "Balanced",
-                        "ControlNet is more important",
-                        "My prompt is more important"
-                    ],
-                    "title": "control_mode"
-                },
-                "input_image": {
-                    "title": "input_image",
-                    "type": "string"
-                },
-                "lowvram": {
-                    "title": "lowvram",
-                    "type": "boolean"
-                },
-                "model": {
-                    "title": "model",
-                    "type": "string"
-                },
-                "module": {
-                    "title": "module",
-                    "type": "string"
-                },
-                "pixel_perfect": {
-                    "title": "pixel_perfect",
-                    "type": "boolean"
-                },
-                "prompt": {
-                    "title": "prompt",
-                    "type": "string"
-                },
-                "regex": {
-                    "title": "regex",
-                    "type": "string"
-                },
-                "resize_mode": {
-                    "enum": [
-                        0,
-                        1,
-                        2,
-                        "Crop and Resize",
-                        "Just Resize",
-                        "Resize and Fill"
-                    ],
-                    "title": "resize_mode"
-                }
-            },
-            "required": [
-                "control_mode",
-                "model",
-                "module",
-                "resize_mode"
-            ],
-            "title": "ControlNetSchema",
-            "type": "object"
-        },
-        "IAdetailerPrompt": {
-            "additionalProperties": false,
-            "properties": {
-                "height": {
-                    "title": "height",
-                    "type": "number"
-                },
-                "model": {
-                    "title": "model",
-                    "type": "string"
-                },
-                "negative": {
-                    "title": "negative",
-                    "type": "string"
-                },
-                "prompt": {
-                    "title": "prompt",
-                    "type": "string"
-                },
-                "strength": {
-                    "title": "strength",
-                    "type": "number"
-                },
-                "width": {
-                    "title": "width",
-                    "type": "number"
-                }
-            },
-            "required": [
-                "model"
-            ],
-            "title": "IAdetailerPrompt",
-            "type": "object"
-        },
-        "ICheckpointWithVAE": {
-            "additionalProperties": false,
-            "properties": {
-                "addAfterFilename": {
-                    "title": "addAfterFilename",
-                    "type": "string"
-                },
-                "addAfterNegativePrompt": {
-                    "title": "addAfterNegativePrompt",
-                    "type": "string"
-                },
-                "addAfterPrompt": {
-                    "title": "addAfterPrompt",
-                    "type": "string"
-                },
-                "addBeforeFilename": {
-                    "title": "addBeforeFilename",
-                    "type": "string"
-                },
-                "addBeforeNegativePrompt": {
-                    "title": "addBeforeNegativePrompt",
-                    "type": "string"
-                },
-                "addBeforePrompt": {
-                    "title": "addBeforePrompt",
-                    "type": "string"
-                },
-                "checkpoint": {
-                    "title": "checkpoint",
-                    "type": "string"
-                },
-                "vae": {
-                    "title": "vae",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "checkpoint"
-            ],
-            "title": "ICheckpointWithVAE",
-            "type": "object"
-        },
-        "IPrompt": {
-            "additionalProperties": false,
-            "properties": {
-                "adetailer": {
-                    "items": {
-                        "$ref": "#/definitions/IAdetailerPrompt"
-                    },
-                    "title": "adetailer",
-                    "type": "array"
-                },
-                "autoCutOff": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "autoCutOff"
-                },
-                "autoLCM": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "autoLCM"
-                },
-                "cfg": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "cfg"
-                },
-                "checkpoints": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ICheckpointWithVAE"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "checkpoints"
-                },
-                "clipSkip": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "clipSkip"
-                },
-                "controlNet": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ControlNetSchema"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ControlNetSchema"
-                            },
-                            "type": "array"
-                        }
-                    ],
-                    "title": "controlNet"
-                },
-                "count": {
-                    "title": "count",
-                    "type": "number"
-                },
-                "denoising": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "denoising"
-                },
-                "enableHighRes": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "enableHighRes"
-                },
-                "filename": {
-                    "title": "filename",
-                    "type": "string"
-                },
-                "height": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "height"
-                },
-                "highRes": {
-                    "title": "highRes",
-                    "typeof": "function"
-                },
-                "initImageOrFolder": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "initImageOrFolder"
-                },
-                "negativePrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "negativePrompt"
-                },
-                "outDir": {
-                    "title": "outDir",
-                    "type": "string"
-                },
-                "pattern": {
-                    "title": "pattern",
-                    "type": "string"
-                },
-                "prompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "prompt"
-                },
-                "restoreFaces": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "restoreFaces"
-                },
-                "sampler": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "sampler"
-                },
-                "scaleFactor": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "scaleFactor"
-                },
-                "seed": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "pattern": "^[0-9]*-[0-9]*$",
-                            "type": "string"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "seed"
-                },
-                "steps": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "steps"
-                },
-                "styles": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "styles"
-                },
-                "stylesSets": {
-                    "items": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "string"
-                            }
-                        ]
-                    },
-                    "title": "stylesSets",
-                    "type": "array"
-                },
-                "tiledDiffusion": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ITiledDiffusion"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ITiledDiffusion"
-                            },
-                            "type": "array"
-                        }
-                    ],
-                    "title": "tiledDiffusion"
-                },
-                "tiledVAE": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ITiledVAE"
-                        },
-                        {
-                            "enum": [
-                                "both",
-                                false,
-                                true
-                            ]
-                        }
-                    ],
-                    "title": "tiledVAE"
-                },
-                "tiling": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "tiling"
-                },
-                "ultimateSdUpscale": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "ultimateSdUpscale"
-                },
-                "upscaler": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscaler"
-                },
-                "upscalingNegativePrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscalingNegativePrompt"
-                },
-                "upscalingPrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscalingPrompt"
-                },
-                "vae": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "vae"
-                },
-                "width": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "width"
-                }
-            },
-            "required": [
-                "prompt"
-            ],
-            "title": "IPrompt",
-            "type": "object"
-        },
-        "IPromptPermutations": {
-            "additionalProperties": false,
-            "properties": {
-                "afterFilename": {
-                    "title": "afterFilename",
-                    "type": "string"
-                },
-                "afterNegativePrompt": {
-                    "title": "afterNegativePrompt",
-                    "type": "string"
-                },
-                "afterPrompt": {
-                    "title": "afterPrompt",
-                    "type": "string"
-                },
-                "beforeFilename": {
-                    "title": "beforeFilename",
-                    "type": "string"
-                },
-                "beforeNegativePrompt": {
-                    "title": "beforeNegativePrompt",
-                    "type": "string"
-                },
-                "beforePrompt": {
-                    "title": "beforePrompt",
-                    "type": "string"
-                },
-                "filenameReplace": {
-                    "items": {
-                        "$ref": "#/definitions/IPromptReplace"
-                    },
-                    "title": "filenameReplace",
-                    "type": "array"
-                },
-                "overwrite": {
-                    "$ref": "#/definitions/Partial<IPromptSingleSchema>",
-                    "title": "overwrite"
-                },
-                "promptReplace": {
-                    "items": {
-                        "$ref": "#/definitions/IPromptReplace"
-                    },
-                    "title": "promptReplace",
-                    "type": "array"
-                }
-            },
-            "title": "IPromptPermutations",
-            "type": "object"
-        },
-        "IPromptReplace": {
-            "additionalProperties": false,
-            "properties": {
-                "from": {
-                    "title": "from",
-                    "type": "string"
-                },
-                "to": {
-                    "title": "to",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "from",
-                "to"
-            ],
-            "title": "IPromptReplace",
-            "type": "object"
-        },
-        "IPromptsWithBasePrompt": {
-            "additionalProperties": false,
-            "properties": {
-                "$schema": {
-                    "title": "$schema",
-                    "type": "string"
-                },
-                "basePrompt": {
-                    "$ref": "#/definitions/Partial<IPrompt>",
-                    "title": "basePrompt"
-                },
-                "extends": {
-                    "title": "extends",
-                    "type": "string"
-                },
-                "multiValueMethod": {
-                    "enum": [
-                        "permutation",
-                        "random-selection"
-                    ],
-                    "title": "multiValueMethod",
-                    "type": "string"
-                },
-                "permutations": {
-                    "items": {
-                        "$ref": "#/definitions/IPromptPermutations"
-                    },
-                    "title": "permutations",
-                    "type": "array"
-                },
-                "prompts": {
-                    "items": {
-                        "$ref": "#/definitions/IPrompt"
-                    },
-                    "title": "prompts",
-                    "type": "array"
-                }
-            },
-            "required": [
-                "basePrompt"
-            ],
-            "title": "IPromptsWithBasePrompt",
-            "type": "object"
-        },
-        "IPromptsWithExtends": {
-            "additionalProperties": false,
-            "properties": {
-                "$schema": {
-                    "title": "$schema",
-                    "type": "string"
-                },
-                "basePrompt": {
-                    "$ref": "#/definitions/Partial<IPrompt>",
-                    "title": "basePrompt"
-                },
-                "extends": {
-                    "title": "extends",
-                    "type": "string"
-                },
-                "multiValueMethod": {
-                    "enum": [
-                        "permutation",
-                        "random-selection"
-                    ],
-                    "title": "multiValueMethod",
-                    "type": "string"
-                },
-                "permutations": {
-                    "items": {
-                        "$ref": "#/definitions/IPromptPermutations"
-                    },
-                    "title": "permutations",
-                    "type": "array"
-                },
-                "prompts": {
-                    "items": {
-                        "$ref": "#/definitions/IPrompt"
-                    },
-                    "title": "prompts",
-                    "type": "array"
-                }
-            },
-            "required": [
-                "extends"
-            ],
-            "title": "IPromptsWithExtends",
-            "type": "object"
-        },
-        "IPromptsWithPrompt": {
-            "additionalProperties": false,
-            "properties": {
-                "$schema": {
-                    "title": "$schema",
-                    "type": "string"
-                },
-                "basePrompt": {
-                    "$ref": "#/definitions/Partial<IPrompt>",
-                    "title": "basePrompt"
-                },
-                "extends": {
-                    "title": "extends",
-                    "type": "string"
-                },
-                "multiValueMethod": {
-                    "enum": [
-                        "permutation",
-                        "random-selection"
-                    ],
-                    "title": "multiValueMethod",
-                    "type": "string"
-                },
-                "permutations": {
-                    "items": {
-                        "$ref": "#/definitions/IPromptPermutations"
-                    },
-                    "title": "permutations",
-                    "type": "array"
-                },
-                "prompts": {
-                    "items": {
-                        "$ref": "#/definitions/IPrompt"
-                    },
-                    "title": "prompts",
-                    "type": "array"
-                }
-            },
-            "required": [
-                "prompts"
-            ],
-            "title": "IPromptsWithPrompt",
-            "type": "object"
-        },
-        "ITiledDiffusion": {
-            "additionalProperties": false,
-            "properties": {
-                "method": {
-                    "$ref": "#/definitions/TiledDiffusionMethods",
-                    "title": "method"
-                },
-                "scaleFactor": {
-                    "title": "scaleFactor",
-                    "type": "number"
-                },
-                "tileBatchSize": {
-                    "title": "tileBatchSize",
-                    "type": "number"
-                },
-                "tileHeight": {
-                    "title": "tileHeight",
-                    "type": "number"
-                },
-                "tileOverlap": {
-                    "title": "tileOverlap",
-                    "type": "number"
-                },
-                "tileWidth": {
-                    "title": "tileWidth",
-                    "type": "number"
-                }
-            },
-            "required": [
-                "method"
-            ],
-            "title": "ITiledDiffusion",
-            "type": "object"
-        },
-        "ITiledVAE": {
-            "additionalProperties": false,
-            "properties": {
-                "colorFix": {
-                    "title": "colorFix",
-                    "type": "boolean"
-                },
-                "decoderTileSize": {
-                    "title": "decoderTileSize",
-                    "type": "number"
-                },
-                "encoderTileSize": {
-                    "title": "encoderTileSize",
-                    "type": "number"
-                },
-                "fastDecoder": {
-                    "title": "fastDecoder",
-                    "type": "boolean"
-                },
-                "fastEncoder": {
-                    "title": "fastEncoder",
-                    "type": "boolean"
-                },
-                "vaeToGPU": {
-                    "title": "vaeToGPU",
-                    "type": "boolean"
-                }
-            },
-            "title": "ITiledVAE",
-            "type": "object"
-        },
-        "IUltimateSDUpscale": {
-            "additionalProperties": false,
-            "properties": {
-                "height": {
-                    "title": "height",
-                    "type": "number"
-                },
-                "scale": {
-                    "title": "scale",
-                    "type": "number"
-                },
-                "tileHeight": {
-                    "title": "tileHeight",
-                    "type": "number"
-                },
-                "tileWidth": {
-                    "title": "tileWidth",
-                    "type": "number"
-                },
-                "width": {
-                    "title": "width",
-                    "type": "number"
-                }
-            },
-            "required": [
-                "height",
-                "scale",
-                "width"
-            ],
-            "title": "IUltimateSDUpscale",
-            "type": "object"
-        },
-        "Partial<IPrompt>": {
-            "additionalProperties": false,
-            "properties": {
-                "adetailer": {
-                    "items": {
-                        "$ref": "#/definitions/IAdetailerPrompt"
-                    },
-                    "title": "adetailer",
-                    "type": "array"
-                },
-                "autoCutOff": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "autoCutOff"
-                },
-                "autoLCM": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "autoLCM"
-                },
-                "cfg": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "cfg"
-                },
-                "checkpoints": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ICheckpointWithVAE"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "checkpoints"
-                },
-                "clipSkip": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "clipSkip"
-                },
-                "controlNet": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ControlNetSchema"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ControlNetSchema"
-                            },
-                            "type": "array"
-                        }
-                    ],
-                    "title": "controlNet"
-                },
-                "count": {
-                    "title": "count",
-                    "type": "number"
-                },
-                "denoising": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "denoising"
-                },
-                "enableHighRes": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "enableHighRes"
-                },
-                "filename": {
-                    "title": "filename",
-                    "type": "string"
-                },
-                "height": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "height"
-                },
-                "highRes": {
-                    "title": "highRes",
-                    "typeof": "function"
-                },
-                "initImageOrFolder": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "initImageOrFolder"
-                },
-                "negativePrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "negativePrompt"
-                },
-                "outDir": {
-                    "title": "outDir",
-                    "type": "string"
-                },
-                "pattern": {
-                    "title": "pattern",
-                    "type": "string"
-                },
-                "prompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "prompt"
-                },
-                "restoreFaces": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "restoreFaces"
-                },
-                "sampler": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "sampler"
-                },
-                "scaleFactor": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "scaleFactor"
-                },
-                "seed": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "pattern": "^[0-9]*-[0-9]*$",
-                            "type": "string"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "seed"
-                },
-                "steps": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "steps"
-                },
-                "styles": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "styles"
-                },
-                "stylesSets": {
-                    "items": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "string"
-                            }
-                        ]
-                    },
-                    "title": "stylesSets",
-                    "type": "array"
-                },
-                "tiledDiffusion": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ITiledDiffusion"
-                        },
-                        {
-                            "items": {
-                                "$ref": "#/definitions/ITiledDiffusion"
-                            },
-                            "type": "array"
-                        }
-                    ],
-                    "title": "tiledDiffusion"
-                },
-                "tiledVAE": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/ITiledVAE"
-                        },
-                        {
-                            "enum": [
-                                "both",
-                                false,
-                                true
-                            ]
-                        }
-                    ],
-                    "title": "tiledVAE"
-                },
-                "tiling": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "tiling"
-                },
-                "ultimateSdUpscale": {
-                    "enum": [
-                        "both",
-                        false,
-                        true
-                    ],
-                    "title": "ultimateSdUpscale"
-                },
-                "upscaler": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscaler"
-                },
-                "upscalingNegativePrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscalingNegativePrompt"
-                },
-                "upscalingPrompt": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "upscalingPrompt"
-                },
-                "vae": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "title": "vae"
-                },
-                "width": {
-                    "anyOf": [
-                        {
-                            "items": {
-                                "type": "number"
-                            },
-                            "type": "array"
-                        },
-                        {
-                            "type": "number"
-                        }
-                    ],
-                    "title": "width"
-                }
-            },
-            "title": "Partial<IPrompt>",
-            "type": "object"
-        },
-        "Partial<IPromptSingleSchema>": {
-            "additionalProperties": false,
-            "properties": {
-                "adetailer": {
-                    "items": {
-                        "$ref": "#/definitions/IAdetailerPrompt"
-                    },
-                    "title": "adetailer",
-                    "type": "array"
-                },
-                "autoCutOff": {
-                    "title": "autoCutOff",
-                    "type": "boolean"
-                },
-                "autoLCM": {
-                    "title": "autoLCM",
-                    "type": "boolean"
-                },
-                "cfg": {
-                    "title": "cfg",
-                    "type": "number"
-                },
-                "checkpoints": {
-                    "title": "checkpoints",
-                    "type": "string"
-                },
-                "clipSkip": {
-                    "title": "clipSkip",
-                    "type": "number"
-                },
-                "controlNet": {
-                    "items": {
-                        "$ref": "#/definitions/ControlNetSchema"
-                    },
-                    "title": "controlNet",
-                    "type": "array"
-                },
-                "denoising": {
-                    "title": "denoising",
-                    "type": "number"
-                },
-                "enableHighRes": {
-                    "title": "enableHighRes",
-                    "type": "boolean"
-                },
-                "filename": {
-                    "title": "filename",
-                    "type": "string"
-                },
-                "height": {
-                    "title": "height",
-                    "type": "number"
-                },
-                "highRes": {
-                    "title": "highRes",
-                    "typeof": "function"
-                },
-                "initImage": {
-                    "title": "initImage",
-                    "type": "string"
-                },
-                "negativePrompt": {
-                    "title": "negativePrompt",
-                    "type": "string"
-                },
-                "outDir": {
-                    "title": "outDir",
-                    "type": "string"
-                },
-                "pattern": {
-                    "title": "pattern",
-                    "type": "string"
-                },
-                "prompt": {
-                    "title": "prompt",
-                    "type": "string"
-                },
-                "restoreFaces": {
-                    "title": "restoreFaces",
-                    "type": "boolean"
-                },
-                "sampler": {
-                    "title": "sampler",
-                    "type": "string"
-                },
-                "scaleFactor": {
-                    "title": "scaleFactor",
-                    "type": "number"
-                },
-                "seed": {
-                    "title": "seed",
-                    "type": "number"
-                },
-                "steps": {
-                    "title": "steps",
-                    "type": "number"
-                },
-                "styles": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "title": "styles",
-                    "type": "array"
-                },
-                "tiledDiffusion": {
-                    "$ref": "#/definitions/ITiledDiffusion",
-                    "title": "tiledDiffusion"
-                },
-                "tiledVAE": {
-                    "$ref": "#/definitions/ITiledVAE",
-                    "title": "tiledVAE"
-                },
-                "tiling": {
-                    "title": "tiling",
-                    "type": "boolean"
-                },
-                "ultimateSdUpscale": {
-                    "$ref": "#/definitions/IUltimateSDUpscale",
-                    "title": "ultimateSdUpscale"
-                },
-                "upscaler": {
-                    "title": "upscaler",
-                    "type": "string"
-                },
-                "upscalingNegativePrompt": {
-                    "title": "upscalingNegativePrompt",
-                    "type": "string"
-                },
-                "upscalingPrompt": {
-                    "title": "upscalingPrompt",
-                    "type": "string"
-                },
-                "vae": {
-                    "title": "vae",
-                    "type": "string"
-                },
-                "width": {
-                    "title": "width",
-                    "type": "number"
-                }
-            },
-            "title": "Partial<IPromptSingleSchema>",
-            "type": "object"
-        },
-        "TiledDiffusionMethods": {
-            "enum": [
-                "Mixture of Diffusers",
-                "MultiDiffusion"
-            ],
-            "title": "TiledDiffusionMethods",
-            "type": "string"
-        }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "anyOf": [
+    {
+      "$ref": "#/definitions/IPromptsWithPrompt"
+    },
+    {
+      "$ref": "#/definitions/IPromptsWithBasePrompt"
+    },
+    {
+      "$ref": "#/definitions/IPromptsWithExtends"
     }
+  ],
+  "definitions": {
+    "ControlNetSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "control_mode": {
+          "enum": [0, 1, 2, "Balanced", "ControlNet is more important", "My prompt is more important"],
+          "title": "control_mode"
+        },
+        "input_image": {
+          "title": "input_image",
+          "type": "string"
+        },
+        "lowvram": {
+          "title": "lowvram",
+          "type": "boolean"
+        },
+        "model": {
+          "title": "model",
+          "type": "string"
+        },
+        "module": {
+          "title": "module",
+          "type": "string"
+        },
+        "pixel_perfect": {
+          "title": "pixel_perfect",
+          "type": "boolean"
+        },
+        "prompt": {
+          "title": "prompt",
+          "type": "string"
+        },
+        "regex": {
+          "title": "regex",
+          "type": "string"
+        },
+        "resize_mode": {
+          "enum": [0, 1, 2, "Crop and Resize", "Just Resize", "Resize and Fill"],
+          "title": "resize_mode"
+        }
+      },
+      "required": ["control_mode", "model", "module", "resize_mode"],
+      "title": "ControlNetSchema",
+      "type": "object"
+    },
+    "IAdetailerPrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "title": "confidence",
+          "type": "number"
+        },
+        "height": {
+          "title": "height",
+          "type": "number"
+        },
+        "model": {
+          "title": "model",
+          "type": "string"
+        },
+        "negative": {
+          "title": "negative",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "prompt",
+          "type": "string"
+        },
+        "strength": {
+          "title": "strength",
+          "type": "number"
+        },
+        "width": {
+          "title": "width",
+          "type": "number"
+        }
+      },
+      "required": ["model"],
+      "title": "IAdetailerPrompt",
+      "type": "object"
+    },
+    "ICheckpointWithVAE": {
+      "additionalProperties": false,
+      "properties": {
+        "addAfterFilename": {
+          "title": "addAfterFilename",
+          "type": "string"
+        },
+        "addAfterNegativePrompt": {
+          "title": "addAfterNegativePrompt",
+          "type": "string"
+        },
+        "addAfterPrompt": {
+          "title": "addAfterPrompt",
+          "type": "string"
+        },
+        "addBeforeFilename": {
+          "title": "addBeforeFilename",
+          "type": "string"
+        },
+        "addBeforeNegativePrompt": {
+          "title": "addBeforeNegativePrompt",
+          "type": "string"
+        },
+        "addBeforePrompt": {
+          "title": "addBeforePrompt",
+          "type": "string"
+        },
+        "checkpoint": {
+          "title": "checkpoint",
+          "type": "string"
+        },
+        "vae": {
+          "title": "vae",
+          "type": "string"
+        }
+      },
+      "required": ["checkpoint"],
+      "title": "ICheckpointWithVAE",
+      "type": "object"
+    },
+    "IPrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "adetailer": {
+          "items": {
+            "$ref": "#/definitions/IAdetailerPrompt"
+          },
+          "title": "adetailer",
+          "type": "array"
+        },
+        "autoCutOff": {
+          "enum": ["both", false, true],
+          "title": "autoCutOff"
+        },
+        "autoLCM": {
+          "enum": ["both", false, true],
+          "title": "autoLCM"
+        },
+        "cfg": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "cfg"
+        },
+        "checkpoints": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ICheckpointWithVAE"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "checkpoints"
+        },
+        "clipSkip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "clipSkip"
+        },
+        "controlNet": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ControlNetSchema"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ControlNetSchema"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "controlNet"
+        },
+        "count": {
+          "title": "count",
+          "type": "number"
+        },
+        "denoising": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "denoising"
+        },
+        "enableHighRes": {
+          "enum": ["both", false, true],
+          "title": "enableHighRes"
+        },
+        "filename": {
+          "title": "filename",
+          "type": "string"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "height"
+        },
+        "highRes": {
+          "title": "highRes",
+          "typeof": "function"
+        },
+        "initImageOrFolder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "initImageOrFolder"
+        },
+        "negativePrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePrompt"
+        },
+        "outDir": {
+          "title": "outDir",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "pattern",
+          "type": "string"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "prompt"
+        },
+        "restoreFaces": {
+          "enum": ["both", false, true],
+          "title": "restoreFaces"
+        },
+        "sampler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "sampler"
+        },
+        "scaleFactor": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "scaleFactor"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "pattern": "^[0-9]*-[0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "seed"
+        },
+        "steps": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "steps"
+        },
+        "styles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "styles"
+        },
+        "stylesSets": {
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "stylesSets",
+          "type": "array"
+        },
+        "tiledDiffusion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledDiffusion"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ITiledDiffusion"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "tiledDiffusion"
+        },
+        "tiledVAE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledVAE"
+            },
+            {
+              "enum": ["both", false, true]
+            }
+          ],
+          "title": "tiledVAE"
+        },
+        "tiling": {
+          "enum": ["both", false, true],
+          "title": "tiling"
+        },
+        "ultimateSdUpscale": {
+          "enum": ["both", false, true],
+          "title": "ultimateSdUpscale"
+        },
+        "upscaler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscaler"
+        },
+        "upscalingNegativePrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscalingNegativePrompt"
+        },
+        "upscalingPrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscalingPrompt"
+        },
+        "vae": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "vae"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "width"
+        }
+      },
+      "required": ["prompt"],
+      "title": "IPrompt",
+      "type": "object"
+    },
+    "IPromptPermutations": {
+      "additionalProperties": false,
+      "properties": {
+        "afterFilename": {
+          "title": "afterFilename",
+          "type": "string"
+        },
+        "afterNegativePrompt": {
+          "title": "afterNegativePrompt",
+          "type": "string"
+        },
+        "afterPrompt": {
+          "title": "afterPrompt",
+          "type": "string"
+        },
+        "beforeFilename": {
+          "title": "beforeFilename",
+          "type": "string"
+        },
+        "beforeNegativePrompt": {
+          "title": "beforeNegativePrompt",
+          "type": "string"
+        },
+        "beforePrompt": {
+          "title": "beforePrompt",
+          "type": "string"
+        },
+        "filenameReplace": {
+          "items": {
+            "$ref": "#/definitions/IPromptReplace"
+          },
+          "title": "filenameReplace",
+          "type": "array"
+        },
+        "overwrite": {
+          "$ref": "#/definitions/Partial<IPromptSingleSchema>",
+          "title": "overwrite"
+        },
+        "promptReplace": {
+          "items": {
+            "$ref": "#/definitions/IPromptReplace"
+          },
+          "title": "promptReplace",
+          "type": "array"
+        }
+      },
+      "title": "IPromptPermutations",
+      "type": "object"
+    },
+    "IPromptReplace": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "title": "from",
+          "type": "string"
+        },
+        "to": {
+          "title": "to",
+          "type": "string"
+        }
+      },
+      "required": ["from", "to"],
+      "title": "IPromptReplace",
+      "type": "object"
+    },
+    "IPromptsWithBasePrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "title": "$schema",
+          "type": "string"
+        },
+        "basePrompt": {
+          "$ref": "#/definitions/Partial<IPrompt>",
+          "title": "basePrompt"
+        },
+        "extends": {
+          "title": "extends",
+          "type": "string"
+        },
+        "multiValueMethod": {
+          "enum": ["permutation", "random-selection"],
+          "title": "multiValueMethod",
+          "type": "string"
+        },
+        "permutations": {
+          "items": {
+            "$ref": "#/definitions/IPromptPermutations"
+          },
+          "title": "permutations",
+          "type": "array"
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/definitions/IPrompt"
+          },
+          "title": "prompts",
+          "type": "array"
+        }
+      },
+      "required": ["basePrompt"],
+      "title": "IPromptsWithBasePrompt",
+      "type": "object"
+    },
+    "IPromptsWithExtends": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "title": "$schema",
+          "type": "string"
+        },
+        "basePrompt": {
+          "$ref": "#/definitions/Partial<IPrompt>",
+          "title": "basePrompt"
+        },
+        "extends": {
+          "title": "extends",
+          "type": "string"
+        },
+        "multiValueMethod": {
+          "enum": ["permutation", "random-selection"],
+          "title": "multiValueMethod",
+          "type": "string"
+        },
+        "permutations": {
+          "items": {
+            "$ref": "#/definitions/IPromptPermutations"
+          },
+          "title": "permutations",
+          "type": "array"
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/definitions/IPrompt"
+          },
+          "title": "prompts",
+          "type": "array"
+        }
+      },
+      "required": ["extends"],
+      "title": "IPromptsWithExtends",
+      "type": "object"
+    },
+    "IPromptsWithPrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "title": "$schema",
+          "type": "string"
+        },
+        "basePrompt": {
+          "$ref": "#/definitions/Partial<IPrompt>",
+          "title": "basePrompt"
+        },
+        "extends": {
+          "title": "extends",
+          "type": "string"
+        },
+        "multiValueMethod": {
+          "enum": ["permutation", "random-selection"],
+          "title": "multiValueMethod",
+          "type": "string"
+        },
+        "permutations": {
+          "items": {
+            "$ref": "#/definitions/IPromptPermutations"
+          },
+          "title": "permutations",
+          "type": "array"
+        },
+        "prompts": {
+          "items": {
+            "$ref": "#/definitions/IPrompt"
+          },
+          "title": "prompts",
+          "type": "array"
+        }
+      },
+      "required": ["prompts"],
+      "title": "IPromptsWithPrompt",
+      "type": "object"
+    },
+    "ITiledDiffusion": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "$ref": "#/definitions/TiledDiffusionMethods",
+          "title": "method"
+        },
+        "scaleFactor": {
+          "title": "scaleFactor",
+          "type": "number"
+        },
+        "tileBatchSize": {
+          "title": "tileBatchSize",
+          "type": "number"
+        },
+        "tileHeight": {
+          "title": "tileHeight",
+          "type": "number"
+        },
+        "tileOverlap": {
+          "title": "tileOverlap",
+          "type": "number"
+        },
+        "tileWidth": {
+          "title": "tileWidth",
+          "type": "number"
+        }
+      },
+      "required": ["method"],
+      "title": "ITiledDiffusion",
+      "type": "object"
+    },
+    "ITiledVAE": {
+      "additionalProperties": false,
+      "properties": {
+        "colorFix": {
+          "title": "colorFix",
+          "type": "boolean"
+        },
+        "decoderTileSize": {
+          "title": "decoderTileSize",
+          "type": "number"
+        },
+        "encoderTileSize": {
+          "title": "encoderTileSize",
+          "type": "number"
+        },
+        "fastDecoder": {
+          "title": "fastDecoder",
+          "type": "boolean"
+        },
+        "fastEncoder": {
+          "title": "fastEncoder",
+          "type": "boolean"
+        },
+        "vaeToGPU": {
+          "title": "vaeToGPU",
+          "type": "boolean"
+        }
+      },
+      "title": "ITiledVAE",
+      "type": "object"
+    },
+    "IUltimateSDUpscale": {
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "title": "height",
+          "type": "number"
+        },
+        "scale": {
+          "title": "scale",
+          "type": "number"
+        },
+        "tileHeight": {
+          "title": "tileHeight",
+          "type": "number"
+        },
+        "tileWidth": {
+          "title": "tileWidth",
+          "type": "number"
+        },
+        "width": {
+          "title": "width",
+          "type": "number"
+        }
+      },
+      "required": ["height", "scale", "width"],
+      "title": "IUltimateSDUpscale",
+      "type": "object"
+    },
+    "Partial<IPrompt>": {
+      "additionalProperties": false,
+      "properties": {
+        "adetailer": {
+          "items": {
+            "$ref": "#/definitions/IAdetailerPrompt"
+          },
+          "title": "adetailer",
+          "type": "array"
+        },
+        "autoCutOff": {
+          "enum": ["both", false, true],
+          "title": "autoCutOff"
+        },
+        "autoLCM": {
+          "enum": ["both", false, true],
+          "title": "autoLCM"
+        },
+        "cfg": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "cfg"
+        },
+        "checkpoints": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ICheckpointWithVAE"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "checkpoints"
+        },
+        "clipSkip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "clipSkip"
+        },
+        "controlNet": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ControlNetSchema"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ControlNetSchema"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "controlNet"
+        },
+        "count": {
+          "title": "count",
+          "type": "number"
+        },
+        "denoising": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "denoising"
+        },
+        "enableHighRes": {
+          "enum": ["both", false, true],
+          "title": "enableHighRes"
+        },
+        "filename": {
+          "title": "filename",
+          "type": "string"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "height"
+        },
+        "highRes": {
+          "title": "highRes",
+          "typeof": "function"
+        },
+        "initImageOrFolder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "initImageOrFolder"
+        },
+        "negativePrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePrompt"
+        },
+        "outDir": {
+          "title": "outDir",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "pattern",
+          "type": "string"
+        },
+        "prompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "prompt"
+        },
+        "restoreFaces": {
+          "enum": ["both", false, true],
+          "title": "restoreFaces"
+        },
+        "sampler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "sampler"
+        },
+        "scaleFactor": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "scaleFactor"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "pattern": "^[0-9]*-[0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "seed"
+        },
+        "steps": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "steps"
+        },
+        "styles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "styles"
+        },
+        "stylesSets": {
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "stylesSets",
+          "type": "array"
+        },
+        "tiledDiffusion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledDiffusion"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ITiledDiffusion"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "tiledDiffusion"
+        },
+        "tiledVAE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledVAE"
+            },
+            {
+              "enum": ["both", false, true]
+            }
+          ],
+          "title": "tiledVAE"
+        },
+        "tiling": {
+          "enum": ["both", false, true],
+          "title": "tiling"
+        },
+        "ultimateSdUpscale": {
+          "enum": ["both", false, true],
+          "title": "ultimateSdUpscale"
+        },
+        "upscaler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscaler"
+        },
+        "upscalingNegativePrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscalingNegativePrompt"
+        },
+        "upscalingPrompt": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscalingPrompt"
+        },
+        "vae": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "vae"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "width"
+        }
+      },
+      "title": "Partial<IPrompt>",
+      "type": "object"
+    },
+    "Partial<IPromptSingleSchema>": {
+      "additionalProperties": false,
+      "properties": {
+        "adetailer": {
+          "items": {
+            "$ref": "#/definitions/IAdetailerPrompt"
+          },
+          "title": "adetailer",
+          "type": "array"
+        },
+        "autoCutOff": {
+          "title": "autoCutOff",
+          "type": "boolean"
+        },
+        "autoLCM": {
+          "title": "autoLCM",
+          "type": "boolean"
+        },
+        "cfg": {
+          "title": "cfg",
+          "type": "number"
+        },
+        "checkpoints": {
+          "title": "checkpoints",
+          "type": "string"
+        },
+        "clipSkip": {
+          "title": "clipSkip",
+          "type": "number"
+        },
+        "controlNet": {
+          "items": {
+            "$ref": "#/definitions/ControlNetSchema"
+          },
+          "title": "controlNet",
+          "type": "array"
+        },
+        "denoising": {
+          "title": "denoising",
+          "type": "number"
+        },
+        "enableHighRes": {
+          "title": "enableHighRes",
+          "type": "boolean"
+        },
+        "filename": {
+          "title": "filename",
+          "type": "string"
+        },
+        "height": {
+          "title": "height",
+          "type": "number"
+        },
+        "highRes": {
+          "title": "highRes",
+          "typeof": "function"
+        },
+        "initImage": {
+          "title": "initImage",
+          "type": "string"
+        },
+        "negativePrompt": {
+          "title": "negativePrompt",
+          "type": "string"
+        },
+        "outDir": {
+          "title": "outDir",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "pattern",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "prompt",
+          "type": "string"
+        },
+        "restoreFaces": {
+          "title": "restoreFaces",
+          "type": "boolean"
+        },
+        "sampler": {
+          "title": "sampler",
+          "type": "string"
+        },
+        "scaleFactor": {
+          "title": "scaleFactor",
+          "type": "number"
+        },
+        "seed": {
+          "title": "seed",
+          "type": "number"
+        },
+        "steps": {
+          "title": "steps",
+          "type": "number"
+        },
+        "styles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "styles",
+          "type": "array"
+        },
+        "tiledDiffusion": {
+          "$ref": "#/definitions/ITiledDiffusion",
+          "title": "tiledDiffusion"
+        },
+        "tiledVAE": {
+          "$ref": "#/definitions/ITiledVAE",
+          "title": "tiledVAE"
+        },
+        "tiling": {
+          "title": "tiling",
+          "type": "boolean"
+        },
+        "ultimateSdUpscale": {
+          "$ref": "#/definitions/IUltimateSDUpscale",
+          "title": "ultimateSdUpscale"
+        },
+        "upscaler": {
+          "title": "upscaler",
+          "type": "string"
+        },
+        "upscalingNegativePrompt": {
+          "title": "upscalingNegativePrompt",
+          "type": "string"
+        },
+        "upscalingPrompt": {
+          "title": "upscalingPrompt",
+          "type": "string"
+        },
+        "vae": {
+          "title": "vae",
+          "type": "string"
+        },
+        "width": {
+          "title": "width",
+          "type": "number"
+        }
+      },
+      "title": "Partial<IPromptSingleSchema>",
+      "type": "object"
+    },
+    "TiledDiffusionMethods": {
+      "enum": ["Mixture of Diffusers", "MultiDiffusion"],
+      "title": "TiledDiffusionMethods",
+      "type": "string"
+    }
+  }
 }
-

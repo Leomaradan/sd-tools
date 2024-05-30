@@ -1,4 +1,5 @@
 export interface IAdetailer {
+  ad_confidence?: number;
   ad_denoising_strength?: number;
   ad_inpaint_height?: number;
   ad_inpaint_width?: number;
