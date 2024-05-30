@@ -23,7 +23,7 @@
     "@babel/preset-typescript": "^7.23.3",
     "@types/configstore": "^6.0.2",
     "@types/jest": "^29.5.11",
-    "@types/node": "^20.9.0",
+    "@types/node": "^20.12.13",
     "@types/png-chunk-text": "^1.0.3",
     "@types/png-chunks-extract": "^1.0.2",
     "@types/yargs": "^17.0.31",
