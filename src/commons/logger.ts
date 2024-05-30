@@ -70,7 +70,7 @@ export const writeLog = (data: object, force = false) => {
         clearOldLogs(devLogPath);
       }
 
-      const rootDir = xdgState || join(tmpdir());
+      const rootDir = xdgState ?? join(tmpdir());
       logPath = resolve(rootDir, 'sd-tools');
     }
 
