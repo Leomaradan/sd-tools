@@ -1092,6 +1092,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         const foundModel = findADetailersModel(adetailer.model);
         if (foundModel) {
           const adetailerQuery: IAdetailer = {
+            ad_confidence: adetailer.confidence,
             ad_denoising_strength: adetailer.strength,
             ad_model: foundModel,
             ad_negative_prompt: adetailer.negative,

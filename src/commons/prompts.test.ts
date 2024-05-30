@@ -34,6 +34,59 @@ describe('prompt test', () => {
     expect(result.length).toBe(1);
     expect(result[0].prompt).toBe('test prompt 1');
   });
+
+  it('should manage adetailers params', () => {
+    const config: IPrompts = {
+      prompts: [
+        {
+          adetailer: [
+            {
+              model: 'adetailers1'
+            },
+            {
+              confidence: 0.8,
+              height: 155,
+              model: 'adetailers2',
+              negative: 'ad negative prompt',
+              prompt: 'ad prompt',
+              strength: 0.7,
+              width: 515
+            }
+          ],
+          cfg: 7,
+          height: 512,
+          negativePrompt: 'test negative prompt 1',
+          prompt: 'test prompt 1',
+          sampler: 'DPM++ 2M',
+          steps: 20,
+          width: 512
+        }
+      ]
+    };
+
+    const result = preparePrompts(config);
+
+    expect(result.length).toBe(1);
+    expect(result[0].prompt).toBe('test prompt 1');
+    expect(result[0].adetailer?.[0]).toStrictEqual({
+      ad_confidence: undefined,
+      ad_denoising_strength: undefined,
+      ad_model: 'adetailers1',
+      ad_negative_prompt: undefined,
+      ad_prompt: undefined
+    });
+    expect(result[0].adetailer?.[1]).toStrictEqual({
+      ad_confidence: 0.8,
+      ad_denoising_strength: 0.7,
+      ad_inpaint_height: 155,
+      ad_inpaint_width: 515,
+      ad_model: 'adetailers2',
+      ad_negative_prompt: 'ad negative prompt',
+      ad_prompt: 'ad prompt',
+      ad_use_inpaint_width_height: true
+    });
+  });
+
   it('should generate all the queries from config', () => {
     const config: IPrompts = {
       prompts: [
