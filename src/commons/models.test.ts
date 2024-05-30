@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 import type { ILora, IModel, IModelWithHash, ISampler, IStyle, IUpscaler } from './types';
 
 import {
@@ -49,24 +47,28 @@ describe('models search', () => {
   ];
 
   it('should find the correct exact models in a string array', () => {
+    expect.assertions(1);
     const modelNames = ['lineart_realistic', 'lineart_coarse', 'lineart'];
 
     expect(findModel(modelNames, dataString)).toBe('lineart_coarse');
   });
 
   it('should find the correct partial models in a string array', () => {
+    expect.assertions(1);
     const modelNames = ['realistic', 'coarse', 'lineart'];
 
     expect(findModel(modelNames, dataString)).toBe('lineart_coarse');
   });
 
   it('should not find model in a string array', () => {
+    expect.assertions(1);
     const modelNames = ['openpose', 'depths'];
 
     expect(findModel(modelNames, dataString)).toBeUndefined();
   });
 
   it('should find the correct exact models in a object array', () => {
+    expect.assertions(2);
     const modelNames = ['lineart_realistic', 'lineart_coarse', 'lineart'];
 
     expect(
@@ -84,6 +86,7 @@ describe('models search', () => {
   });
 
   it('should find the correct partial models in a object array', () => {
+    expect.assertions(2);
     const modelNames = ['realistic', 'coarse', 'lineart'];
 
     expect(
@@ -98,10 +101,11 @@ describe('models search', () => {
         findPartial: findPartialStringProperties(['name', 'hash'])
       })
     ).toStrictEqual({ hash: '12', name: 'invert' });
-    //
+    
   });
 
   it('should not find model in a object array', () => {
+    expect.assertions(1);
     const modelNames = ['openpose', 'depths'];
 
     expect(
@@ -113,6 +117,7 @@ describe('models search', () => {
   });
 
   it('should not fail if a property does not exists in a object array', () => {
+    expect.assertions(1);
     const modelNames = ['openpose', 'depths'];
 
     expect(
@@ -126,6 +131,7 @@ describe('models search', () => {
 
 describe('models specific resources', () => {
   it('should find the upscaler', () => {
+    expect.assertions(4);
     const foundFirst = findUpscaler('UltraSharp', 'model3');
     const foundSecond = findUpscaler('model3', 'UltraSharp');
     const foundBase = findUpscaler('model3', 'Latent (nearest)');
@@ -138,6 +144,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the upscaler for Ultimate SD Upscaler', () => {
+    expect.assertions(4);
     const foundFirst = findUpscalerUltimateSDUpscaler('UltraSharp', 'model3');
     const foundSecond = findUpscalerUltimateSDUpscaler('model3', 'UltraSharp');
     const foundBase = findUpscalerUltimateSDUpscaler('model3', 'Latent (nearest)');
@@ -150,6 +157,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the checkpoint', () => {
+    expect.assertions(4);
     const foundFirst = findCheckpoint('cyberrealistic_v40', 'CounterfeitV30_v30');
     const foundSecond = findCheckpoint('model3', 'cyberrealistic');
     const foundHash = findCheckpoint('model3', '481d75ae9d');
@@ -162,6 +170,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the vae', () => {
+    expect.assertions(3);
     const foundFirst = findVAE('orangemix.vae', 'vae3');
     const foundSecond = findVAE('vae3', '840000');
     const notFound = findVAE('vae3', 'vae4');
@@ -172,6 +181,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the sampler', () => {
+    expect.assertions(5);
     const foundFirst = findSampler('DPM++ 2M', 'DDIM');
     const foundSecond = findSampler('DDIM', 'DPM');
     const foundAlias = findSampler('model3', 'Euler a');
@@ -186,6 +196,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the Adetailer model', () => {
+    expect.assertions(3);
     const foundFirst = findADetailersModel('adetailers1', 'adetailers3');
     const foundSecond = findADetailersModel('adetailers3', 'adetailers1');
     const notFound = findADetailersModel('adetailers3', 'adetailers4');
@@ -196,6 +207,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the ControlNet model', () => {
+    expect.assertions(3);
     const foundFirst = findControlnetModel('model1', 'model3');
     const foundSecond = findControlnetModel('module3', 'model1');
     const notFound = findControlnetModel('model3', 'model4');
@@ -206,6 +218,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the ControlNet module', () => {
+    expect.assertions(3);
     const foundFirst = findControlnetModule('module1', 'module3');
     const foundSecond = findControlnetModule('module3', 'module1');
     const notFound = findControlnetModule('module3', 'module4');
@@ -216,6 +229,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the lora', () => {
+    expect.assertions(4);
     const foundFirst = findLORA('loras1', 'loras3');
     const foundSecond = findLORA('loras3', 'loras1');
     const foundAlias = findLORA('loras3', 'alias2');
@@ -228,6 +242,7 @@ describe('models specific resources', () => {
   });
 
   it('should find the style', () => {
+    expect.assertions(3);
     const foundFirst = findStyle('style1', 'style3');
     const foundSecond = findStyle('style3', 'style1');
     const notFound = findStyle('style3', 'style4');
