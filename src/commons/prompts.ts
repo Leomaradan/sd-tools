@@ -1299,8 +1299,6 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         });
       }
 
-      //console.log(query.prompt, { filename, pattern, sampler, querySampler: query.sampler_name });
-
       if (filename && !query.override_settings.samples_filename_pattern.includes('{filename}')) {
         query.override_settings.samples_filename_pattern = '{filename}-' + query.override_settings.samples_filename_pattern;
       }
