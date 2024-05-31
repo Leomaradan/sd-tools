@@ -185,15 +185,6 @@ const resolvePermutations = (permutation: IPromptPermutations, prompt: IPromptSi
   }
 
   return permutedPrompt;
-
-  /* prompts.push([
-    (permutedPrompt.checkpoints ?? '') +
-      (permutedPrompt.vae ?? '') +
-      (permutedPrompt.upscaler ?? '') +
-      JSON.stringify(permutedPrompt) +
-      i,
-    permutedPrompt
-  ]);*/
 };
 
 const prepareSingleQuery = (
