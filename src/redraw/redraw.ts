@@ -14,7 +14,7 @@ const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
 const HED = 'hed';
 
-const prepareQueryData = (baseParamsProps: IClassicPrompt & { sdxl: boolean }, file: IFile) => {
+const prepareQueryData = (baseParamsProps: { sdxl: boolean } & IClassicPrompt, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
@@ -182,7 +182,7 @@ const prepareQueryClassical = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: IClassicPrompt & { sdxl: boolean } = {
+  let baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -248,7 +248,7 @@ const prepareQueryIpAdapter = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: IClassicPrompt & { sdxl: boolean } = {
+  let baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,

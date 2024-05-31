@@ -1,9 +1,9 @@
 import { findSampler } from './models';
-import {type  IBaseQuery, type MetadataAccelerator, type  MetadataVersionKey } from './types';
+import { type IBaseQuery, type MetadataAccelerator, type MetadataVersionKey } from './types';
 
-const DEFAULT_SAMPLERS = ['DPM++ 2M', 'Euler a']
+const DEFAULT_SAMPLERS = ['DPM++ 2M', 'Euler a'];
 
-const baseParamsAll: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } = {
+const baseParamsAll: { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> = {
   alwayson_scripts: {},
   //cfg_scale: 7,
   enable_hr: false,
@@ -24,7 +24,7 @@ const baseParamsAll: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?:
 
 export const getDefaultQuery15 = (
   accelarator?: MetadataAccelerator
-): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
+): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
   const baseParams = { ...baseParamsAll, height: 512, width: 512 };
 
   if (accelarator === 'lcm') {
@@ -46,12 +46,8 @@ export const getDefaultQuery15 = (
   };
 };
 
-export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
-  const baseParams = { ...baseParamsAll, 
-    cfg_scale: 7,
-    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
-    steps: 20 
-  };
+export const getDefaultQuery20 = (sizeFull: boolean): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
+  const baseParams = { ...baseParamsAll, cfg_scale: 7, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string, steps: 20 };
   if (sizeFull) {
     // Other accelerator than LCM are not supported
     return {
@@ -70,7 +66,7 @@ export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { en
 
 export const getDefaultQueryXL = (
   accelarator?: MetadataAccelerator
-): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
+): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
   const baseParams = { ...baseParamsAll, height: 1024, width: 1024 };
   switch (accelarator) {
     case 'lcm':
@@ -112,7 +108,7 @@ export const getDefaultQueryXL = (
 export const getDefaultQuery = (
   version: MetadataVersionKey,
   accelarator?: MetadataAccelerator
-): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
+): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
   switch (version) {
     case 'sd20':
     case 'sd21':

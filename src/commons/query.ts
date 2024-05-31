@@ -37,7 +37,7 @@ const headerRequest = {
 type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
 type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
 
-type Query = Txt2ImgQuery & Img2ImgQuery;
+type Query = Img2ImgQuery & Txt2ImgQuery;
 
 export const isTxt2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is ITxt2ImgQuery => {
   return (query as unknown as IImg2ImgQuery).init_images === undefined;
@@ -258,9 +258,9 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
   let baseQuery = JSON.parse(
     JSON.stringify({
-      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
+      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as {
         forcedSampler?: string;
-      })
+      } & IBaseQuery)
     })
   );
 

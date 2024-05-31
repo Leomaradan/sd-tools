@@ -4,7 +4,7 @@ import yargs from 'yargs';
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
-import { ExitCodes,  loggerInfo, loggerVerbose } from '../commons/logger';
+import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
   getAdModelQuery,
@@ -43,6 +43,240 @@ export const builder = (builder: yargs.Argv<object>) => {
       type: 'boolean'
     }
   });
+};
+
+const setModels = async (
+  modelsQuery: {
+    filename: string;
+    model_name: string;
+    title: string;
+  }[]
+) => {
+  const modelsQueryResolved: IModelWithHash[] = [];
+
+  for await (const modelQuery of modelsQuery) {
+    const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
+    const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
+    const metadata = await getMetadataCheckpoint(modelQuery.filename);
+
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.accelarator = metadata.accelerator;
+    }
+
+    if (hash) {
+      item.hash = hash[0];
+      item.name = modelQuery.title.replace(`[${hash}]`, '').trim();
+    }
+
+    modelsQueryResolved.push(item);
+  }
+
+  Config.set('models', Array.from(new Set(modelsQueryResolved)));
+};
+
+const setLoras = async (
+  lorasQuery: {
+    alias: string;
+    name: string;
+    path: string;
+  }[]
+) => {
+  const lorasQueryResolved: ILora[] = [];
+
+  for await (const loraQuery of lorasQuery) {
+    const item: ILora = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
+
+    const metadata = await getMetadataLora(loraQuery.path);
+
+    if (metadata) {
+      item.version = metadata.sdVersion;
+      item.keywords = metadata.keywords;
+    }
+
+    lorasQueryResolved.push(item);
+  }
+
+  Config.set('loras', Array.from(new Set(lorasQueryResolved)));
+};
+
+const setVAE = (
+  vaeQuery: {
+    model_name: string;
+  }[]
+) => {
+  Config.set(
+    'vae',
+    Array.from(
+      new Set(
+        vaeQuery.map((vae) => {
+          return vae.model_name;
+        })
+      )
+    )
+  );
+};
+
+const setSamplers = (
+  samplersQuery: {
+    aliases: string[];
+    name: string;
+  }[]
+) => {
+  Config.set(
+    'samplers',
+    Array.from(new Set(samplersQuery.map((samplerQuery) => ({ aliases: samplerQuery.aliases, name: samplerQuery.name }))))
+  );
+};
+
+const setUpscalers = (
+  upscalersQuery: {
+    model_path: null | string;
+    name: string;
+  }[]
+) => {
+  Config.set(
+    'upscalers',
+    Array.from(
+      new Set(
+        upscalersQuery.map((upscalerQuery, index) => ({
+          filename: upscalerQuery.model_path ? basename(upscalerQuery.model_path) : undefined,
+          index,
+          name: upscalerQuery.name
+        }))
+      )
+    )
+  );
+};
+
+const setEmbedding = (embeddingsQuery: { loaded: Record<string, unknown>; skipped: Record<string, unknown> }) => {
+  Config.set('embeddings', Array.from(new Set([...Object.keys(embeddingsQuery.loaded), ...Object.keys(embeddingsQuery.skipped)])));
+};
+
+const setStyles = (
+  stylesQuery: {
+    name: string;
+    negative_prompt: string;
+    prompt: string;
+  }[]
+) => {
+  Config.set(
+    'styles',
+    Array.from(
+      new Set(
+        stylesQuery
+          .map((styleQuery) => {
+            const style: IStyle = { name: styleQuery.name, negativePrompt: '', prompt: '' };
+
+            if (styleQuery.prompt) {
+              style.prompt = styleQuery.prompt;
+            }
+
+            if (styleQuery.negative_prompt) {
+              style.negativePrompt = styleQuery.negative_prompt;
+            }
+
+            if (!styleQuery.prompt && !styleQuery.negative_prompt) {
+              return;
+            }
+
+            return style;
+          })
+          .filter((style) => style !== undefined) as IStyle[]
+      )
+    )
+  );
+};
+
+const setExtensions = (
+  extensionsQuery: {
+    img2img: string[];
+  },
+  schedulerQuery: {
+    tasks: string[];
+  } | void
+) => {
+  const extensions = new Set<Extensions>();
+
+  extensionsQuery.img2img.forEach((extensionQuery) => {
+    switch (extensionQuery) {
+      case 'adetailer':
+        extensions.add('adetailer');
+        break;
+      case 'controlnet':
+        extensions.add('controlnet');
+        break;
+      case 'cutoff':
+        extensions.add('cutoff');
+        break;
+      case 'ultimate-sd-upscale':
+        extensions.add('ultimate-sd-upscale');
+        break;
+      case 'tiled diffusion':
+        extensions.add('tiled diffusion');
+        break;
+      case 'tiled vae':
+        extensions.add('tiled vae');
+        break;
+    }
+  });
+
+  if (schedulerQuery) {
+    extensions.add('scheduler');
+  }
+
+  Config.set('extensions', Array.from(extensions));
+
+  return extensions;
+};
+
+const setControlnet = async (extensions: Set<Extensions>) => {
+  if (extensions.has('controlnet')) {
+    const controlnetModelsQuery = await getControlnetModelsQuery();
+    const controlnetModulesQuery = await getControlnetModulesQuery();
+
+    if (!controlnetModelsQuery || !controlnetModulesQuery) {
+      loggerInfo('Error: Cannot initialize config : Error in ControlNet');
+      process.exit(ExitCodes.INIT_NO_CONTROLNET);
+    }
+
+    Config.set(
+      'controlnetModels',
+      Array.from(
+        new Set(
+          controlnetModelsQuery.model_list.map((modelQuery) => {
+            const item: IModel = { name: modelQuery, version: Version.Unknown };
+
+            if (item.name.includes('sd15')) {
+              item.version = Version.SD15;
+            } else if (item.name.includes('_xl')) {
+              item.version = Version.SDXL;
+            }
+
+            return item;
+          })
+        )
+      )
+    );
+
+    Config.set('controlnetModules', Array.from(new Set(controlnetModulesQuery.module_list)));
+  } else {
+    Config.set('controlnetModels', []);
+    Config.set('controlnetModules', []);
+  }
+};
+
+const setAdetailer = async (
+  extensions: Set<Extensions>,
+  adModelsQuery: {
+    ad_model: string[];
+  } | void
+) => {
+  if (extensions.has('adetailer') && adModelsQuery) {
+    Config.set('adetailersModels', Array.from(adModelsQuery.ad_model));
+  } else {
+    Config.set('adetailersModels', []);
+  }
 };
 
 export const handler = async (argv: { endpoint?: string; force?: boolean; ['purge-cache']?: boolean }) => {
@@ -84,173 +318,25 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     process.exit(ExitCodes.INIT_NO_SD_API);
   }
 
-  const modelsQueryResolved = [];
+  await setModels(modelsQuery);
 
-  for await (const modelQuery of modelsQuery) {
-    const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
-    const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
-    const metadata = await getMetadataCheckpoint(modelQuery.filename);
+  setVAE(vaeQuery);
 
-    if (metadata) {
-      item.version = metadata.sdVersion;
-      item.accelarator = metadata.accelerator;
-    }
+  setSamplers(samplersQuery);
 
-    if (hash) {
-      item.hash = hash[0];
-      item.name = modelQuery.title.replace(`[${hash}]`, '').trim();
-    }
+  setUpscalers(upscalersQuery);
 
-    modelsQueryResolved.push(item);
-  }
+  setEmbedding(embeddingsQuery);
 
-  Config.set('models', Array.from(new Set(modelsQueryResolved)));
+  setStyles(stylesQuery);
 
-  Config.set(
-    'vae',
-    Array.from(
-      new Set(
-        vaeQuery.map((vae) => {
-          return vae.model_name;
-        })
-      )
-    )
-  );
+  await setLoras(lorasQuery);
 
-  Config.set(
-    'samplers',
-    Array.from(new Set(samplersQuery.map((samplerQuery) => ({ aliases: samplerQuery.aliases, name: samplerQuery.name }))))
-  );
+  const extensions = setExtensions(extensionsQuery, schedulerQuery);
 
-  Config.set(
-    'upscalers',
-    Array.from(
-      new Set(
-        upscalersQuery.map((upscalerQuery, index) => ({
-          filename: upscalerQuery.model_path ? basename(upscalerQuery.model_path) : undefined,
-          index,
-          name: upscalerQuery.name
-        }))
-      )
-    )
-  );
+  setControlnet(extensions);
 
-  Config.set('embeddings', Array.from(new Set([...Object.keys(embeddingsQuery.loaded), ...Object.keys(embeddingsQuery.skipped)])));
-
-  Config.set(
-    'styles',
-    Array.from(
-      new Set(
-        stylesQuery
-          .map((styleQuery) => {
-            const style: IStyle = { name: styleQuery.name, negativePrompt: '', prompt: '' };
-
-            if (styleQuery.prompt) {
-              style.prompt = styleQuery.prompt;
-            }
-
-            if (styleQuery.negative_prompt) {
-              style.negativePrompt = styleQuery.negative_prompt;
-            }
-
-            if (!styleQuery.prompt && !styleQuery.negative_prompt) {
-              return;
-            }
-
-            return style;
-          })
-          .filter((style) => style !== undefined) as IStyle[]
-      )
-    )
-  );
-
-  const lorasQueryResolved = [];
-
-  for await (const loraQuery of lorasQuery) {
-    const item: ILora = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
-
-    const metadata = await getMetadataLora(loraQuery.path);
-
-    if (metadata) {
-      item.version = metadata.sdVersion;
-      item.keywords = metadata.keywords;
-    }
-
-    lorasQueryResolved.push(item);
-  }
-
-  Config.set('loras', Array.from(new Set(lorasQueryResolved)));
-
-  const extensions = new Set<Extensions>();
-
-  extensionsQuery.img2img.forEach((extensionQuery) => {
-    switch (extensionQuery) {
-      case 'adetailer':
-        extensions.add('adetailer');
-        break;
-      case 'controlnet':
-        extensions.add('controlnet');
-        break;
-      case 'cutoff':
-        extensions.add('cutoff');
-        break;
-      case 'ultimate-sd-upscale':
-        extensions.add('ultimate-sd-upscale');
-        break;
-      case 'tiled diffusion':
-        extensions.add('tiled diffusion');
-        break;
-      case 'tiled vae':
-        extensions.add('tiled vae');
-        break;
-    }
-  });
-
-  if (schedulerQuery) {
-    extensions.add('scheduler');
-  }
-
-  Config.set('extensions', Array.from(extensions));
-
-  if (extensions.has('controlnet')) {
-    const controlnetModelsQuery = await getControlnetModelsQuery();
-    const controlnetModulesQuery = await getControlnetModulesQuery();
-
-    if (!controlnetModelsQuery || !controlnetModulesQuery) {
-      loggerInfo('Error: Cannot initialize config : Error in ControlNet');
-      process.exit(ExitCodes.INIT_NO_CONTROLNET);
-    }
-
-    Config.set(
-      'controlnetModels',
-      Array.from(
-        new Set(
-          controlnetModelsQuery.model_list.map((modelQuery) => {
-            const item: IModel = { name: modelQuery, version: Version.Unknown };
-
-            if (item.name.includes('sd15')) {
-              item.version = Version.SD15;
-            } else if (item.name.includes('_xl')) {
-              item.version = Version.SDXL;
-            }
-
-            return item;
-          })
-        )
-      )
-    );
-
-    Config.set('controlnetModules', Array.from(new Set(controlnetModulesQuery.module_list)));
-  } else {
-    Config.set('controlnetModels', []);
-    Config.set('controlnetModules', []);
-  }
-
-  if (extensions.has('adetailer') && adModelsQuery) {
-    Config.set('adetailersModels', Array.from(adModelsQuery.ad_model));
-  } else {
-    Config.set('adetailersModels', []);
-  }
+  setAdetailer(extensions, adModelsQuery);
 
   if (!initialized || force) {
     loggerVerbose('Refresh models');

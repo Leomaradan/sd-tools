@@ -208,9 +208,9 @@ export const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
 
 export const getBaseParams = (
   data: string[]
-): IBaseParams & {
+): {
   otherParams: string;
-} => {
+} & IBaseParams => {
   if (data.length <= 1) {
     return {
       basePrompt: data?.[0] ?? '',
