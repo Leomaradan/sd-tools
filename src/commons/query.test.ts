@@ -87,7 +87,7 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: IBaseQuery & { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } = {
+    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
@@ -205,7 +205,7 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: IBaseQuery & { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } = {
+    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }]

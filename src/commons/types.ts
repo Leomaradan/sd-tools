@@ -218,8 +218,8 @@ export interface ICivitAIInfoFile {
 export interface IInterrogateResponse {
   prompt: string;
 }
-export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
-export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
+export type CacheMetadata = Record<string, { timestamp: string } & IMetadata>;
+export type CacheInterrogator = Record<string, { timestamp: string } & IInterrogateResponse>;
 export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
 
 export interface IAutoAdetailer extends IAdetailer {

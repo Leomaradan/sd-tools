@@ -15,7 +15,8 @@ class Configstore {
       configVersion: 3,
       controlnetModels: [
         { name: 'model1', version: 'unknown' },
-        { name: 'model2', version: 'unknown' }
+        { name: 'model2', version: 'unknown' },
+        { name: 'openpose', version: 'unknown' }
       ],
       controlnetModules: ['module1', 'module2'],
       cutoff: false,
