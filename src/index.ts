@@ -29,7 +29,7 @@ Config.migrate().then(() => {
     .command(stats)
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
-    .version(process.env.VERSION || '0.0.0')
+    .version(process.env.VERSION ?? '0.0.0')
     .strict()
     .parse();
 });
