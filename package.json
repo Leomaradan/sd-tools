@@ -75,9 +75,9 @@
   "type": "module",
   "packageManager": "yarn@4.2.2",
   "scripts": {
-    "build": "node ./esbuild.mjs",
-    "build:prod": "NODE_ENV=production node ./esbuild.mjs",
-    "watch": "NODE_ENV=watch node ./esbuild.mjs",
+    "build": "yarn schema && node ./esbuild.mjs",
+    "build:prod": "yarn schema && NODE_ENV=production node ./esbuild.mjs",
+    "watch": "yarn schema && NODE_ENV=watch node ./esbuild.mjs",
     "start": "node build/index.cjs",
     "test": "jest --coverage --detectOpenHandles",
     "lint": "eslint --report-unused-disable-directives",

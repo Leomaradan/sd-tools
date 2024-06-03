@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 import type { ICutOff } from './extensions/cutoff';
 import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
