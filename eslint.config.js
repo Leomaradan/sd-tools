@@ -69,9 +69,12 @@ const config = [
     }
   },
   {
-    files: ['*.cjs'],
+    files: ['*.cjs', '*.mjs'],
     languageOptions: {
       globals: globals.node
+    },
+    rules: {
+      'no-console': 'off'
     }
   },
   {
