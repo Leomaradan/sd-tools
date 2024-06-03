@@ -1,5 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
+import DOMPurify from 'dompurify';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
 import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -9,7 +10,15 @@ import extract from 'png-chunks-extract';
 
 import { Cache } from './config';
 import { loggerInfo, loggerVerbose } from './logger';
-import { type CacheMetadata, type ICivitAIInfoFile, type IMetadata, type IMetadataCheckpoint, type IMetadataLora, Version } from './types';
+import {
+  type CacheMetadata,
+  type ICivitAIInfoFile,
+  type IMetadata,
+  type IMetadataCheckpoint,
+  type IMetadataLora,
+  Version,
+  type VersionKey
+} from './types';
 
 const CIVITAI_FILE = '.civitai.info';
 
@@ -469,9 +478,29 @@ export const getMetadataCivitAiRest = async (
 
     const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
 
-    writeFileSync(civitAiFile, JSON.stringify(metadata, null, 2));
+    const purgedMetadata: ICivitAIInfoFile = {
+      // Use forced
+      baseModel: 'SD 1.5', //metadata.baseModel,
+      description: '', //metadata.description,
+      model: {
+        description: '' //metadata.model?.description,
+      },
+      trainedWords: [] //metadata.trainedWords
+    };
 
-    const result = getMetadataFromCivitAi(metadata);
+    purgedMetadata.baseModel = DOMPurify.sanitize(metadata.baseModel) as VersionKey;
+    purgedMetadata.description = DOMPurify.sanitize(metadata.description);
+    if (metadata.model?.description) {
+      (purgedMetadata as Required<ICivitAIInfoFile>).model.description = DOMPurify.sanitize(metadata.model?.description);
+    }
+
+    if (metadata.trainedWords) {
+      (purgedMetadata as Required<ICivitAIInfoFile>).trainedWords = metadata.trainedWords.map((word) => DOMPurify.sanitize(word));
+    }
+
+    writeFileSync(civitAiFile, JSON.stringify(purgedMetadata, null, 2));
+
+    const result = getMetadataFromCivitAi(purgedMetadata);
 
     if (!result) {
       return;
