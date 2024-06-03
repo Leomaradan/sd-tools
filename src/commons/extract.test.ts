@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 import type { IAdetailerPrompt, IPromptSingle } from './types';
 
 import { type IBaseParams, getAdetailerParams, getBaseParams, getPromptJSON, getPromptTextBox, getPrompts } from './extract';
@@ -22,6 +20,7 @@ const promptNoExtra = [
 
 describe('extract prompts', () => {
   it('should return a textbox prompt', () => {
+    expect.assertions(3);
     const basicPrompt = getPromptTextBox({
       basePrompt: 'a prompt',
       cfg: 1,
@@ -63,6 +62,8 @@ describe('extract prompts', () => {
   });
 
   it('should return a json prompt', () => {
+    expect.assertions(2);
+
     const basicPrompt = getPromptJSON({
       adetailer: [{ model: 'a adetailer model', prompt: 'a adetailer prompt' }],
       basePrompt: 'a prompt',
@@ -121,12 +122,14 @@ describe('extract prompts', () => {
 
   describe('extract adetailer params', () => {
     it('should return an empty adetailer array if nothing is found', () => {
+      expect.assertions(1);
       const resultNoAdetailer = getAdetailerParams('a prompt');
 
       expect(resultNoAdetailer).toStrictEqual([]);
     });
 
     it('should return an adetailer config if one parameter is found', () => {
+      expect.assertions(1);
       const resultAdetailer = getAdetailerParams(
         'Steps: 20, Sampler: DPM++ 2M SDE, Schedule type: Exponential, CFG scale: 7.0, Seed: 3427271302, Size: 1024x1536, Model hash: 7ca4bba71f, Model: revAnimated_v2RebirthVAE, Denoising strength: 0.3, Clip skip: 2, ADetailer model: mediapipe_face_full, ADetailer prompt: "perfect face", ADetailer confidence: 0.3, ADetailer dilate erode: 4, ADetailer mask blur: 4, ADetailer denoising strength: 0.4, ADetailer inpaint only masked: True, ADetailer inpaint padding: 32, ADetailer version: 24.5.1, ControlNet 0: "Module: none, Model: control_v11p_sd15_openpose [cab727d4], Weight: 1.0, Resize Mode: Crop and Resize, Processor Res: 512, Threshold A: 0.5, Threshold B: 0.5, Guidance Start: 0.0, Guidance End: 1.0, Pixel Perfect: True, Control Mode: Balanced", Hires upscale: 2.0, Hires upscaler: 4x-UltraSharp'
       );
@@ -144,6 +147,7 @@ describe('extract prompts', () => {
     });
 
     it('should return a list of adetailer configs if multiple parameters are found', () => {
+      expect.assertions(1);
       const resultList = getAdetailerParams(
         'ADetailer model: mediapipe_face_full, ADetailer prompt: "complexe prompt, multiple tokens", ADetailer confidence: 0.3, ADetailer dilate erode: 4, ADetailer mask blur: 4, ADetailer inpaint only masked: True, ADetailer inpaint padding: 32, ADetailer model 2nd: hand_yolov8n.pt, ADetailer negative prompt 2nd: bad hands, ADetailer confidence 2nd: 0.3, ADetailer dilate erode 2nd: 4, ADetailer mask blur 2nd: 4, ADetailer denoising strength 2nd: 0.4, ADetailer inpaint only masked 2nd: True, ADetailer inpaint padding 2nd: 32, ADetailer model 3rd: Eyes.pt, ADetailer confidence 3rd: 0.3, ADetailer dilate erode 3rd: 4, ADetailer mask blur 3rd: 4, ADetailer denoising strength 3rd: 0.4, ADetailer inpaint only masked 3rd: True, ADetailer inpaint padding 3rd: 32, ADetailer inpaint width 3rd: 256, ADetailer inpaint height 3rd: 128, ADetailer version: 24.5.1'
       );
@@ -179,13 +183,14 @@ describe('extract prompts', () => {
 
   describe('extract base params', () => {
     it('should not fail is the prompt is empty', () => {
+      expect.assertions(2);
       const resultEmptyArray = getBaseParams([]);
       const resultOnlyString = getBaseParams(['test']);
 
       expect(resultEmptyArray).toStrictEqual<
-        IBaseParams & {
+        {
           otherParams: string;
-        }
+        } & IBaseParams
       >({
         basePrompt: '',
         cfg: NaN,
@@ -198,9 +203,9 @@ describe('extract prompts', () => {
       });
 
       expect(resultOnlyString).toStrictEqual<
-        IBaseParams & {
+        {
           otherParams: string;
-        }
+        } & IBaseParams
       >({
         basePrompt: 'test',
         cfg: NaN,
@@ -212,13 +217,15 @@ describe('extract prompts', () => {
         steps: NaN
       });
     });
+
     it('should return the prompt and base params', () => {
+      expect.assertions(1);
       const result = getBaseParams(promptNoNegative);
 
       expect(result).toStrictEqual<
-        IBaseParams & {
+        {
           otherParams: string;
-        }
+        } & IBaseParams
       >({
         basePrompt: promptNoNegative[0],
         cfg: 7,
@@ -231,12 +238,13 @@ describe('extract prompts', () => {
       });
     });
     it('should return the prompt and base params with negative prompt', () => {
+      expect.assertions(1);
       const result = getBaseParams(promptFull);
 
       expect(result).toStrictEqual<
-        IBaseParams & {
+        {
           otherParams: string;
-        }
+        } & IBaseParams
       >({
         basePrompt: promptFull[0],
         cfg: 7,
@@ -248,13 +256,15 @@ describe('extract prompts', () => {
         steps: 20
       });
     });
+
     it('should return the prompt with negative prompt only', () => {
+      expect.assertions(1);
       const result = getBaseParams(promptNoExtra);
 
       expect(result).toStrictEqual<
-        IBaseParams & {
+        {
           otherParams: string;
-        }
+        } & IBaseParams
       >({
         basePrompt: promptNoExtra[0],
         cfg: NaN,
@@ -270,6 +280,7 @@ describe('extract prompts', () => {
 
   describe('extract full prompt', () => {
     it('should return a JSON prompt result', () => {
+      expect.assertions(1);
       const result = getPrompts(promptFull, 'json');
 
       expect(result).toStrictEqual<IPromptSingle>({
@@ -291,6 +302,7 @@ describe('extract prompts', () => {
     });
 
     it('should return a textbox prompt result', () => {
+      expect.assertions(1);
       const result = getPrompts(promptFull, 'textbox');
 
       expect(result).toBe(

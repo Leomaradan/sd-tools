@@ -132,7 +132,7 @@
       "title": "ICheckpointWithVAE",
       "type": "object"
     },
-    "IPrompt": {
+    "IClassicPrompt": {
       "additionalProperties": false,
       "properties": {
         "adetailer": {
@@ -506,8 +506,19 @@
         }
       },
       "required": ["prompt"],
-      "title": "IPrompt",
+      "title": "IClassicPrompt",
       "type": "object"
+    },
+    "IPrompt": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IClassicPrompt"
+        },
+        {
+          "$ref": "#/definitions/IStyleSubjectPrompt"
+        }
+      ],
+      "title": "IPrompt"
     },
     "IPromptPermutations": {
       "additionalProperties": false,
@@ -621,7 +632,14 @@
           "type": "string"
         },
         "basePrompt": {
-          "$ref": "#/definitions/Partial<IPrompt>",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Partial<IClassicPrompt>"
+            },
+            {
+              "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
+            }
+          ],
           "title": "basePrompt"
         },
         "extends": {
@@ -660,7 +678,14 @@
           "type": "string"
         },
         "basePrompt": {
-          "$ref": "#/definitions/Partial<IPrompt>",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Partial<IClassicPrompt>"
+            },
+            {
+              "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
+            }
+          ],
           "title": "basePrompt"
         },
         "extends": {
@@ -689,6 +714,383 @@
       },
       "required": ["prompts"],
       "title": "IPromptsWithPrompt",
+      "type": "object"
+    },
+    "IStyleSubjectPrompt": {
+      "additionalProperties": false,
+      "properties": {
+        "adetailer": {
+          "items": {
+            "$ref": "#/definitions/IAdetailerPrompt"
+          },
+          "title": "adetailer",
+          "type": "array"
+        },
+        "autoCutOff": {
+          "enum": ["both", false, true],
+          "title": "autoCutOff"
+        },
+        "autoLCM": {
+          "enum": ["both", false, true],
+          "title": "autoLCM"
+        },
+        "cfg": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "cfg"
+        },
+        "checkpoints": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ICheckpointWithVAE"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "checkpoints"
+        },
+        "clipSkip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "clipSkip"
+        },
+        "controlNet": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ControlNetSchema"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ControlNetSchema"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "controlNet"
+        },
+        "count": {
+          "title": "count",
+          "type": "number"
+        },
+        "denoising": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "denoising"
+        },
+        "enableHighRes": {
+          "enum": ["both", false, true],
+          "title": "enableHighRes"
+        },
+        "filename": {
+          "title": "filename",
+          "type": "string"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "height"
+        },
+        "highRes": {
+          "title": "highRes",
+          "typeof": "function"
+        },
+        "initImageOrFolder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "initImageOrFolder"
+        },
+        "negativePromptStyle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePromptStyle"
+        },
+        "negativePromptSubject": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePromptSubject"
+        },
+        "outDir": {
+          "title": "outDir",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "pattern",
+          "type": "string"
+        },
+        "promptStyle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "promptStyle"
+        },
+        "promptSubject": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "promptSubject"
+        },
+        "restoreFaces": {
+          "enum": ["both", false, true],
+          "title": "restoreFaces"
+        },
+        "sampler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "sampler"
+        },
+        "scaleFactor": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "scaleFactor"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "pattern": "^[0-9]*-[0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "seed"
+        },
+        "steps": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "steps"
+        },
+        "styles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "styles"
+        },
+        "stylesSets": {
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "stylesSets",
+          "type": "array"
+        },
+        "tiledDiffusion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledDiffusion"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ITiledDiffusion"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "tiledDiffusion"
+        },
+        "tiledVAE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledVAE"
+            },
+            {
+              "enum": ["both", false, true]
+            }
+          ],
+          "title": "tiledVAE"
+        },
+        "tiling": {
+          "enum": ["both", false, true],
+          "title": "tiling"
+        },
+        "ultimateSdUpscale": {
+          "enum": ["both", false, true],
+          "title": "ultimateSdUpscale"
+        },
+        "upscaler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscaler"
+        },
+        "vae": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "vae"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "width"
+        }
+      },
+      "required": ["promptStyle", "promptSubject"],
+      "title": "IStyleSubjectPrompt",
       "type": "object"
     },
     "ITiledDiffusion": {
@@ -782,7 +1184,7 @@
       "title": "IUltimateSDUpscale",
       "type": "object"
     },
-    "Partial<IPrompt>": {
+    "Partial<IClassicPrompt>": {
       "additionalProperties": false,
       "properties": {
         "adetailer": {
@@ -1155,8 +1557,19 @@
           "title": "width"
         }
       },
-      "title": "Partial<IPrompt>",
+      "title": "Partial<IClassicPrompt>",
       "type": "object"
+    },
+    "Partial<IPrompt>": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Partial<IClassicPrompt>"
+        },
+        {
+          "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
+        }
+      ],
+      "title": "Partial<IPrompt>"
     },
     "Partial<IPromptSingleSchema>": {
       "additionalProperties": false,
@@ -1300,6 +1713,382 @@
         }
       },
       "title": "Partial<IPromptSingleSchema>",
+      "type": "object"
+    },
+    "Partial<IStyleSubjectPrompt>": {
+      "additionalProperties": false,
+      "properties": {
+        "adetailer": {
+          "items": {
+            "$ref": "#/definitions/IAdetailerPrompt"
+          },
+          "title": "adetailer",
+          "type": "array"
+        },
+        "autoCutOff": {
+          "enum": ["both", false, true],
+          "title": "autoCutOff"
+        },
+        "autoLCM": {
+          "enum": ["both", false, true],
+          "title": "autoLCM"
+        },
+        "cfg": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "cfg"
+        },
+        "checkpoints": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ICheckpointWithVAE"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "checkpoints"
+        },
+        "clipSkip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "clipSkip"
+        },
+        "controlNet": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ControlNetSchema"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ControlNetSchema"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "controlNet"
+        },
+        "count": {
+          "title": "count",
+          "type": "number"
+        },
+        "denoising": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "denoising"
+        },
+        "enableHighRes": {
+          "enum": ["both", false, true],
+          "title": "enableHighRes"
+        },
+        "filename": {
+          "title": "filename",
+          "type": "string"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "height"
+        },
+        "highRes": {
+          "title": "highRes",
+          "typeof": "function"
+        },
+        "initImageOrFolder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "initImageOrFolder"
+        },
+        "negativePromptStyle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePromptStyle"
+        },
+        "negativePromptSubject": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "negativePromptSubject"
+        },
+        "outDir": {
+          "title": "outDir",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "pattern",
+          "type": "string"
+        },
+        "promptStyle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "promptStyle"
+        },
+        "promptSubject": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "promptSubject"
+        },
+        "restoreFaces": {
+          "enum": ["both", false, true],
+          "title": "restoreFaces"
+        },
+        "sampler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "sampler"
+        },
+        "scaleFactor": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "scaleFactor"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "pattern": "^[0-9]*-[0-9]*$",
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "seed"
+        },
+        "steps": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "steps"
+        },
+        "styles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "styles"
+        },
+        "stylesSets": {
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "stylesSets",
+          "type": "array"
+        },
+        "tiledDiffusion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledDiffusion"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ITiledDiffusion"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "tiledDiffusion"
+        },
+        "tiledVAE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ITiledVAE"
+            },
+            {
+              "enum": ["both", false, true]
+            }
+          ],
+          "title": "tiledVAE"
+        },
+        "tiling": {
+          "enum": ["both", false, true],
+          "title": "tiling"
+        },
+        "ultimateSdUpscale": {
+          "enum": ["both", false, true],
+          "title": "ultimateSdUpscale"
+        },
+        "upscaler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "upscaler"
+        },
+        "vae": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "vae"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "width"
+        }
+      },
+      "title": "Partial<IStyleSubjectPrompt>",
       "type": "object"
     },
     "TiledDiffusionMethods": {
