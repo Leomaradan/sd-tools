@@ -1,20 +1,20 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, parse, relative, resolve, sep } from 'node:path';
 
-import { Config } from './config';
-import { getDefaultQuery } from './defaultQuery';
-import { type IAdetailer } from './extensions/adetailer';
+import { Config } from '../config';
+import { getDefaultQueryConfig, getForcedQueryConfig } from '../defaultQuery';
+import { type IAdetailer } from '../extensions/adetailer';
 import {
   ControlNetMode,
   ControlNetResizes,
   type IControlNet,
   normalizeControlNetMode,
   normalizeControlNetResizes
-} from './extensions/controlNet';
-import { getCutOffTokens } from './extensions/cutoff';
-import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
-import { getBase64Image, getImageSize } from './file';
-import { ExitCodes, loggerInfo, writeLog } from './logger';
+} from '../extensions/controlNet';
+import { getCutOffTokens } from '../extensions/cutoff';
+import { type ITiledVAE } from '../extensions/multidiffusionUpscaler';
+import { getBase64Image } from '../file';
+import { ExitCodes, loggerInfo } from '../logger';
 import {
   findADetailersModel,
   findCheckpoint,
@@ -24,93 +24,20 @@ import {
   findStyle,
   findUpscaler,
   findVAE
-} from './models';
-import { isTxt2ImgQuery, renderQuery } from './query';
+} from '../models';
+import { isTxt2ImgQuery } from '../query';
 import {
-  type ICheckpointWithVAE,
   type IClassicPrompt,
   type IImg2ImgQuery,
   type IModel,
-  type IPrompt,
-  type IPromptPermutations,
   type IPromptSingle,
   type IPromptsResolved,
   type IStyle,
   type IStyleSubjectPrompt,
   type ITxt2ImgQuery
-} from './types';
-
-interface IPrepareSingleQuery {
-  autoCutOff: boolean | undefined;
-  autoLCM: boolean | undefined;
-  cfg: number | undefined;
-  checkpointsOption: ICheckpointWithVAE | string | undefined;
-  clipSkip: number | undefined;
-  controlNet: IControlNet[] | undefined;
-  denoising: number | undefined;
-  enableHighRes: boolean | undefined;
-  height: number | undefined;
-  initImage: string | undefined;
-  negativePrompt: string | undefined;
-  negativePromptStyle: string | undefined;
-  negativePromptSubject: string | undefined;
-  prompt: string | undefined;
-  promptStyle: string | undefined;
-  promptSubject: string | undefined;
-  restoreFaces: boolean | undefined;
-  sampler: string | undefined;
-  scaleFactor: number | undefined;
-  seed: number | undefined;
-  steps: number | undefined;
-  stylesSets: string | string[] | undefined[];
-  tiledDiffusion: ITiledDiffusion | undefined;
-  tiledVAE: ITiledVAE | undefined;
-  tiling: boolean | undefined;
-  ultimateSdUpscale: boolean | undefined;
-  upscaler: string | undefined;
-  upscalingNegativePrompt: string | undefined;
-  upscalingPrompt: string | undefined;
-  vaeOption: string | undefined;
-  width: number | undefined;
-}
-
-interface IPrepareSingleQueryFromArray {
-  autoCutOffArray: Array<boolean | undefined>;
-  autoLCMArray: Array<boolean | undefined>;
-  cfgArray: (number | undefined)[];
-  checkpointsArray: Array<ICheckpointWithVAE | string | undefined>;
-  clipSkipArray: (number | undefined)[];
-  //controlNet?: IControlNet | IControlNet[];
-  controlNetArray: Array<IControlNet[] | undefined>;
-  denoisingArray: (number | undefined)[];
-  enableHighResArray: Array<boolean | undefined>;
-  heightArray: (number | undefined)[];
-  initImageArray: (string | undefined)[];
-  negativePromptArray: (string | undefined)[];
-  negativePromptStyleArray: (string | undefined)[];
-  negativePromptSubjectArray: (string | undefined)[];
-  permutations?: IPromptPermutations[];
-  promptArray: string[];
-  promptStyleArray: string[];
-  promptSubjectArray: string[];
-  restoreFacesArray: Array<boolean | undefined>;
-  samplerArray: (string | undefined)[];
-  scaleFactorsArray: (number | undefined)[];
-  seedArray: (number | undefined)[];
-  stepsArray: (number | undefined)[];
-  stylesSetsArray: Array<string | string[] | undefined[]>;
-  tiledDiffusionArray: (ITiledDiffusion | undefined)[];
-  tiledVAEArray: (ITiledVAE | undefined)[];
-  tilingArray: Array<boolean | undefined>;
-  ultimateSdUpscaleArray: Array<boolean | undefined>;
-  upscalerArray: (string | undefined)[];
-  upscalingNegativePromptArray: (string | undefined)[];
-  upscalingPromptArray: (string | undefined)[];
-  vaeArray: (string | undefined)[];
-  widthArray: (number | undefined)[];
-}
-
-const PROMPT_REGEX = /\{prompt\}/i;
+} from '../types';
+import { prepareSingleQueryPermutations, prepareSingleQueryRandomSelection } from './permutations';
+import { type IPrepareSingleQueryFromArray, PROMPT_REGEX } from './types';
 
 const removePromptToken = (input: string) => {
   return input.replace(/\{prompt\}/gi, '').trim();
@@ -121,511 +48,6 @@ const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, val
     `{${token}}`,
     value
   );
-};
-
-const resolveStyleSubjectPrompt = (promptStyle: string, promptSubject: string): string => {
-  const styleHasPrompt = PROMPT_REGEX.test(promptStyle);
-  const subjectHasPrompt = PROMPT_REGEX.test(promptSubject);
-
-  let mergedPrompt = `${promptSubject} BREAK ${promptStyle}`;
-
-  if (styleHasPrompt) {
-    mergedPrompt = promptStyle.replace(PROMPT_REGEX, promptSubject);
-  } else if (subjectHasPrompt) {
-    mergedPrompt = promptSubject.replace(PROMPT_REGEX, promptStyle);
-  }
-
-  mergedPrompt = removePromptToken(mergedPrompt);
-
-  return mergedPrompt;
-};
-
-const resolvePermutations = (permutation: IPromptPermutations, prompt: IPromptSingle, updatedPrompt: IPrompt) => {
-  const permutedPrompt = { ...prompt };
-
-  if (permutation.overwrite) {
-    Object.assign(permutedPrompt, permutation.overwrite);
-  }
-
-  if (permutation.promptReplace) {
-    permutation.promptReplace.forEach((promptReplace) => {
-      permutedPrompt.prompt = permutedPrompt.prompt.replace(promptReplace.from, promptReplace.to);
-      if (permutedPrompt.negativePrompt) {
-        permutedPrompt.negativePrompt = permutedPrompt.negativePrompt.replace(promptReplace.from, promptReplace.to);
-      }
-    });
-  }
-
-  if (permutation.afterFilename) {
-    permutedPrompt.filename = updatedPrompt.filename ? `${updatedPrompt.filename}${permutation.afterFilename}` : permutation.afterFilename;
-  }
-
-  if (permutation.beforeFilename) {
-    permutedPrompt.filename = updatedPrompt.filename
-      ? `${permutation.beforeFilename}${updatedPrompt.filename}`
-      : permutation.beforeFilename;
-  }
-
-  if (permutation.filenameReplace) {
-    permutation.filenameReplace.forEach((filenameReplace) => {
-      if (!permutedPrompt.filename) {
-        permutedPrompt.filename = filenameReplace.to;
-      } else {
-        permutedPrompt.filename = permutedPrompt.filename.replace(filenameReplace.from, filenameReplace.to);
-      }
-    });
-  }
-
-  if (permutation.afterPrompt) {
-    permutedPrompt.prompt = permutedPrompt.prompt ? `${permutedPrompt.prompt}, ${permutation.afterPrompt}` : permutation.afterPrompt;
-  }
-
-  if (permutation.beforePrompt) {
-    permutedPrompt.prompt = permutedPrompt.prompt ? `${permutation.beforePrompt}, ${permutedPrompt.prompt}` : permutation.beforePrompt;
-  }
-
-  return permutedPrompt;
-};
-
-const prepareSingleQuery = (
-  basePrompt: IPrompt,
-  permutations: IPromptPermutations[] | undefined,
-  options: IPrepareSingleQuery
-): [string, IPromptSingle][] => {
-  const {
-    autoCutOff,
-    autoLCM,
-    cfg,
-    checkpointsOption,
-    clipSkip,
-    controlNet,
-    denoising,
-    enableHighRes,
-    height,
-    initImage,
-    negativePrompt,
-    negativePromptStyle,
-    negativePromptSubject,
-    prompt: promptOption,
-    promptStyle,
-    promptSubject,
-    restoreFaces,
-    sampler,
-    scaleFactor,
-    seed,
-    steps,
-    stylesSets,
-    tiledDiffusion,
-    tiledVAE,
-    tiling,
-    ultimateSdUpscale,
-    upscaler,
-    upscalingNegativePrompt,
-    upscalingPrompt,
-    vaeOption,
-    width
-  } = options;
-
-  const updatedPrompt: IPrompt = { ...basePrompt };
-
-  const prompts: [string, IPromptSingle][] = [];
-
-  let resolvedPrompt = promptOption ?? '';
-  let resolvedNegativePrompt = negativePrompt;
-  let resolvedUpscalingPrompt = upscalingPrompt;
-  let resolvedUpscalingNegativePrompt = upscalingNegativePrompt;
-
-  if (promptStyle !== undefined && promptSubject !== undefined) {
-    resolvedPrompt = resolveStyleSubjectPrompt(promptStyle, promptSubject);
-
-    resolvedUpscalingPrompt = removePromptToken(promptSubject);
-
-    // Force removing negative prompt to ensure only "new" style+subject negative prompt is used
-    resolvedNegativePrompt = undefined;
-  }
-
-  if (negativePromptStyle !== undefined && negativePromptSubject !== undefined) {
-    resolvedNegativePrompt = resolveStyleSubjectPrompt(negativePromptStyle, negativePromptSubject);
-
-    resolvedUpscalingNegativePrompt = removePromptToken(negativePromptSubject);
-  }
-
-  const count = updatedPrompt.count ?? 1;
-
-  for (let i = 0; i < count; i++) {
-    const stylesSet = Array.isArray(stylesSets) ? stylesSets : [stylesSets];
-    const styles = Array.isArray(updatedPrompt.styles) ? updatedPrompt.styles : [updatedPrompt.styles ?? undefined];
-
-    let vae = vaeOption;
-    let checkpoints;
-
-    let promptText = resolvedPrompt;
-    let negativePromptText = resolvedNegativePrompt;
-
-    if (checkpointsOption) {
-      if (typeof checkpointsOption === 'string') {
-        checkpoints = checkpointsOption;
-      } else {
-        vae = checkpointsOption.vae ?? vae;
-        checkpoints = checkpointsOption.checkpoint;
-        promptText = checkpointsOption.addAfterPrompt ? `${promptText}, ${checkpointsOption.addAfterPrompt}` : promptText;
-        promptText = checkpointsOption.addBeforePrompt ? `${checkpointsOption.addBeforePrompt}, ${promptText}` : promptText;
-        if (!negativePromptText && (checkpointsOption.addBeforeNegativePrompt || checkpointsOption.addAfterNegativePrompt)) {
-          negativePromptText = '';
-        }
-        negativePromptText = checkpointsOption.addAfterNegativePrompt
-          ? `${negativePromptText}, ${checkpointsOption.addAfterNegativePrompt}`
-          : negativePromptText;
-        negativePromptText = checkpointsOption.addBeforeNegativePrompt
-          ? `${checkpointsOption.addBeforeNegativePrompt}, ${negativePromptText}`
-          : negativePromptText;
-
-        if (checkpointsOption.addAfterFilename) {
-          updatedPrompt.filename = updatedPrompt.filename
-            ? `${updatedPrompt.filename}${checkpointsOption.addAfterFilename}`
-            : checkpointsOption.addAfterFilename;
-        }
-
-        if (checkpointsOption.addBeforeFilename) {
-          updatedPrompt.filename = updatedPrompt.filename
-            ? `${checkpointsOption.addBeforeFilename}${updatedPrompt.filename}`
-            : checkpointsOption.addBeforeFilename;
-        }
-      }
-    }
-
-    const prompt: IPromptSingle = {
-      ...(updatedPrompt as IPromptSingle),
-      autoCutOff,
-      autoLCM,
-      cfg,
-      checkpoints,
-      clipSkip,
-      denoising,
-      enableHighRes,
-      height,
-      initImage,
-      negativePrompt: negativePromptText,
-      pattern: updatedPrompt.pattern,
-      prompt: promptText,
-      restoreFaces,
-      sampler,
-      scaleFactor,
-      seed: seed !== undefined && seed !== -1 ? seed + i : undefined,
-      steps,
-      styles: Array.from(new Set([...styles, ...stylesSet])).filter((style) => style !== undefined) as string[],
-      tiledVAE,
-      tiling,
-      upscaler,
-      upscalingNegativePrompt: resolvedUpscalingNegativePrompt,
-      upscalingPrompt: resolvedUpscalingPrompt,
-      vae,
-      width
-    };
-
-    if (prompt.initImage) {
-      const { height, width } = getImageSize(prompt.initImage);
-      prompt.width = !prompt.width && width != -1 ? width : undefined;
-      prompt.height = !prompt.height && height != -1 ? height : undefined;
-    }
-
-    if (controlNet) {
-      prompt.controlNet = controlNet;
-
-      if (prompt.controlNet.some((controlNet) => controlNet.input_image)) {
-        const firstImage = prompt.controlNet.find((controlNet) => controlNet.input_image)?.input_image;
-        if (firstImage) {
-          const { height, width } = getImageSize(firstImage);
-          prompt.width = !prompt.width && width != -1 ? width : undefined;
-          prompt.height = !prompt.height && height != -1 ? height : undefined;
-        }
-      }
-    }
-
-    if (prompt.pattern?.includes('{count}')) {
-      prompt.pattern = prompt.pattern.replace('{count}', String(i + 1));
-    }
-
-    if (ultimateSdUpscale) {
-      const scaleFactor = prompt.scaleFactor ?? 2;
-      prompt.ultimateSdUpscale = {
-        height: scaleFactor * (prompt.height ?? 512),
-        scale: scaleFactor,
-        width: scaleFactor * (prompt.width ?? 512)
-      };
-    }
-
-    if (tiledDiffusion) {
-      const scaleFactor = prompt.scaleFactor ?? 1;
-
-      prompt.tiledDiffusion = {
-        ...defaultTiledDiffusionOptions,
-        ...tiledDiffusion,
-        scaleFactor
-      };
-
-      prompt.width = scaleFactor * (prompt.width ?? 512);
-      prompt.height = scaleFactor * (prompt.height ?? 512);
-
-      if (prompt.pattern?.includes('{scaleFactor}')) {
-        prompt.pattern = prompt.pattern.replace('{scaleFactor}', String(prompt.scaleFactor));
-      }
-
-      delete prompt.scaleFactor;
-    }
-
-    prompts.push([(checkpoints ?? '') + (vae ?? '') + (upscaler ?? '') + JSON.stringify(prompt) + i, prompt]);
-
-    if (permutations) {
-      permutations.forEach((permutation) => {
-        const result = resolvePermutations(permutation, { ...prompt }, updatedPrompt);
-
-        prompts.push([(result.checkpoints ?? '') + (result.vae ?? '') + (result.upscaler ?? '') + JSON.stringify(result) + i, result]);
-      });
-    }
-  }
-
-  return prompts;
-};
-
-const getPermutations = (permutations: Partial<IPrepareSingleQuery>[], options: unknown[], property: keyof IPrepareSingleQuery) => {
-  return permutations.reduce((acc, current) => {
-    // current = ['a', undefined, undefined]
-
-    [...options].forEach((param) => {
-      // param2 = 1
-
-      acc.push({ ...current, [property]: param });
-      // ['a', 1, undefined]
-    });
-
-    return acc;
-  }, [] as Partial<IPrepareSingleQuery>[]);
-};
-
-const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSingleQueryFromArray): [string, IPromptSingle][] => {
-  let prompts: [string, IPromptSingle][] = [];
-  const {
-    autoCutOffArray,
-    autoLCMArray,
-    cfgArray,
-    checkpointsArray,
-    clipSkipArray,
-    controlNetArray,
-    denoisingArray,
-    enableHighResArray,
-    heightArray,
-    initImageArray,
-    negativePromptArray,
-    negativePromptStyleArray,
-    negativePromptSubjectArray,
-    permutations,
-    promptArray,
-    promptStyleArray,
-    promptSubjectArray,
-    restoreFacesArray,
-    samplerArray,
-    scaleFactorsArray,
-    seedArray,
-    stepsArray,
-    stylesSetsArray,
-    tiledDiffusionArray,
-    tiledVAEArray,
-    tilingArray,
-    ultimateSdUpscaleArray,
-    upscalerArray,
-    upscalingNegativePromptArray,
-    upscalingPromptArray,
-    vaeArray,
-    widthArray
-  } = options;
-
-  // Initial value NEED to be not empty
-  let permutationsArray: Partial<IPrepareSingleQuery>[] = promptArray.map((prompt) => ({ prompt }));
-
-  // If there is no prompt, we are on the style-subject prompt format
-  if (permutationsArray.length === 0) {
-    permutationsArray = promptStyleArray.map((prompt) => ({ prompt }));
-  } else {
-    permutationsArray = getPermutations(permutationsArray, promptStyleArray, 'promptStyle');
-  }
-
-  permutationsArray = getPermutations(permutationsArray, autoCutOffArray, 'autoCutOff');
-  permutationsArray = getPermutations(permutationsArray, autoLCMArray, 'autoLCM');
-  permutationsArray = getPermutations(permutationsArray, cfgArray, 'cfg');
-  permutationsArray = getPermutations(permutationsArray, checkpointsArray, 'checkpointsOption');
-  permutationsArray = getPermutations(permutationsArray, clipSkipArray, 'clipSkip');
-  permutationsArray = getPermutations(permutationsArray, denoisingArray, 'denoising');
-  permutationsArray = getPermutations(permutationsArray, enableHighResArray, 'enableHighRes');
-  permutationsArray = getPermutations(permutationsArray, heightArray, 'height');
-  permutationsArray = getPermutations(permutationsArray, initImageArray, 'initImage');
-  permutationsArray = getPermutations(permutationsArray, negativePromptArray, 'negativePrompt');
-  permutationsArray = getPermutations(permutationsArray, negativePromptStyleArray, 'negativePromptStyle');
-  permutationsArray = getPermutations(permutationsArray, negativePromptSubjectArray, 'negativePromptSubject');
-  permutationsArray = getPermutations(permutationsArray, promptSubjectArray, 'promptSubject');
-  permutationsArray = getPermutations(permutationsArray, restoreFacesArray, 'restoreFaces');
-  permutationsArray = getPermutations(permutationsArray, samplerArray, 'sampler');
-  permutationsArray = getPermutations(permutationsArray, scaleFactorsArray, 'scaleFactor');
-  permutationsArray = getPermutations(permutationsArray, seedArray, 'seed');
-  permutationsArray = getPermutations(permutationsArray, stepsArray, 'steps');
-  permutationsArray = getPermutations(permutationsArray, stylesSetsArray, 'stylesSets');
-  permutationsArray = getPermutations(permutationsArray, tiledDiffusionArray, 'tiledDiffusion');
-  permutationsArray = getPermutations(permutationsArray, tiledVAEArray, 'tiledVAE');
-  permutationsArray = getPermutations(permutationsArray, tilingArray, 'tiling');
-  permutationsArray = getPermutations(permutationsArray, ultimateSdUpscaleArray, 'ultimateSdUpscale');
-  permutationsArray = getPermutations(permutationsArray, upscalerArray, 'upscaler');
-  permutationsArray = getPermutations(permutationsArray, upscalingPromptArray, 'upscalingPrompt');
-  permutationsArray = getPermutations(permutationsArray, upscalingNegativePromptArray, 'upscalingNegativePrompt');
-  permutationsArray = getPermutations(permutationsArray, vaeArray, 'vaeOption');
-  permutationsArray = getPermutations(permutationsArray, widthArray, 'width');
-
-  permutationsArray = getPermutations(permutationsArray, controlNetArray, 'controlNet');
-
-  (permutationsArray as IPrepareSingleQuery[]).forEach((permutationItem) => {
-    prompts = [
-      ...prompts,
-      ...prepareSingleQuery(basePrompt, permutations, {
-        autoCutOff: permutationItem.autoCutOff,
-        autoLCM: permutationItem.autoLCM,
-        cfg: permutationItem.cfg,
-        checkpointsOption: permutationItem.checkpointsOption,
-        clipSkip: permutationItem.clipSkip,
-        controlNet: permutationItem.controlNet,
-        denoising: permutationItem.denoising,
-        enableHighRes: permutationItem.enableHighRes,
-        height: permutationItem.height,
-        initImage: permutationItem.initImage,
-        negativePrompt: permutationItem.negativePrompt,
-        negativePromptStyle: permutationItem.negativePromptStyle,
-        negativePromptSubject: permutationItem.negativePromptSubject,
-        prompt: permutationItem.prompt,
-        promptStyle: permutationItem.promptStyle,
-        promptSubject: permutationItem.promptSubject,
-        restoreFaces: permutationItem.restoreFaces,
-        sampler: permutationItem.sampler,
-        scaleFactor: permutationItem.scaleFactor,
-        seed: permutationItem.seed,
-        steps: permutationItem.steps,
-        stylesSets: permutationItem.stylesSets,
-        tiledDiffusion: permutationItem.tiledDiffusion,
-        tiledVAE: permutationItem.tiledVAE,
-        tiling: permutationItem.tiling,
-        ultimateSdUpscale: permutationItem.ultimateSdUpscale,
-        upscaler: permutationItem.upscaler,
-        upscalingNegativePrompt: permutationItem.upscalingNegativePrompt,
-        upscalingPrompt: permutationItem.upscalingPrompt,
-        vaeOption: permutationItem.vaeOption,
-        width: permutationItem.width
-      })
-    ];
-  });
-
-  return prompts;
-};
-
-const pickRandomItem = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
-
-const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepareSingleQueryFromArray): [string, IPromptSingle][] => {
-  const {
-    autoCutOffArray,
-    autoLCMArray,
-    cfgArray,
-    checkpointsArray,
-    clipSkipArray,
-    controlNetArray,
-    denoisingArray,
-    enableHighResArray,
-    heightArray,
-    initImageArray,
-    negativePromptArray,
-    negativePromptStyleArray,
-    negativePromptSubjectArray,
-    permutations,
-    promptArray,
-    promptStyleArray,
-    promptSubjectArray,
-    restoreFacesArray,
-    samplerArray,
-    scaleFactorsArray,
-    seedArray,
-    stepsArray,
-    stylesSetsArray,
-    tiledDiffusionArray,
-    tiledVAEArray,
-    tilingArray,
-    ultimateSdUpscaleArray,
-    upscalerArray,
-    upscalingNegativePromptArray,
-    upscalingPromptArray,
-    vaeArray,
-    widthArray
-  } = options;
-
-  const autoCutOff = pickRandomItem(autoCutOffArray);
-  const autoLCM = pickRandomItem(autoLCMArray);
-  const cfg = pickRandomItem(cfgArray);
-  const checkpointsOption = pickRandomItem(checkpointsArray);
-  const clipSkip = pickRandomItem(clipSkipArray);
-  const denoising = pickRandomItem(denoisingArray);
-  const enableHighRes = pickRandomItem(enableHighResArray);
-  const height = pickRandomItem(heightArray);
-  const initImage = pickRandomItem(initImageArray);
-  const negativePrompt = pickRandomItem(negativePromptArray);
-  const prompt = pickRandomItem(promptArray);
-  const restoreFaces = pickRandomItem(restoreFacesArray);
-  const sampler = pickRandomItem(samplerArray);
-  const scaleFactor = pickRandomItem(scaleFactorsArray);
-  const seed = pickRandomItem(seedArray);
-  const steps = pickRandomItem(stepsArray);
-  const stylesSets = pickRandomItem(stylesSetsArray);
-  const tiledDiffusion = pickRandomItem(tiledDiffusionArray);
-  const tiledVAE = pickRandomItem(tiledVAEArray);
-  const tiling = pickRandomItem(tilingArray);
-  const ultimateSdUpscale = pickRandomItem(ultimateSdUpscaleArray);
-  const upscaler = pickRandomItem(upscalerArray);
-  const vaeOption = pickRandomItem(vaeArray);
-  const width = pickRandomItem(widthArray);
-  const controlNet = pickRandomItem(controlNetArray);
-  const upscalingPrompt = pickRandomItem(upscalingPromptArray);
-  const upscalingNegativePrompt = pickRandomItem(upscalingNegativePromptArray);
-  const negativePromptStyle = pickRandomItem(negativePromptStyleArray);
-  const negativePromptSubject = pickRandomItem(negativePromptSubjectArray);
-  const promptStyle = pickRandomItem(promptStyleArray);
-  const promptSubject = pickRandomItem(promptSubjectArray);
-
-  return prepareSingleQuery(basePrompt, permutations, {
-    autoCutOff,
-    autoLCM,
-    cfg,
-    checkpointsOption,
-    clipSkip,
-    controlNet,
-    denoising,
-    enableHighRes,
-    height,
-    initImage,
-    negativePrompt,
-    negativePromptStyle,
-    negativePromptSubject,
-    prompt,
-    promptStyle,
-    promptSubject,
-    restoreFaces,
-    sampler,
-    scaleFactor,
-    seed,
-    steps,
-    stylesSets,
-    tiledDiffusion,
-    tiledVAE,
-    tiling,
-    ultimateSdUpscale,
-    upscaler,
-    upscalingNegativePrompt,
-    upscalingPrompt,
-    vaeOption,
-    width
-  });
 };
 
 const getSeedArray = (seeds: `${string}-${string}` | number | number[] | undefined): [undefined] | number[] => {
@@ -845,7 +267,6 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
 
   basePrompts.prompts.forEach((basePrompt) => {
     const autoCutOffArray = getArraysBoolean(basePrompt.autoCutOff);
-    const autoLCMArray = getArraysBoolean(basePrompt.autoLCM);
     const enableHighResArray = getArraysBoolean(basePrompt.enableHighRes);
     const restoreFacesArray = getArraysBoolean(basePrompt.restoreFaces);
     const tilingArray = getArraysBoolean(basePrompt.tiling);
@@ -887,7 +308,6 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
 
     const prepareSingleQueryParameter: IPrepareSingleQueryFromArray = {
       autoCutOffArray,
-      autoLCMArray,
       cfgArray,
       checkpointsArray,
       clipSkipArray,
@@ -979,6 +399,29 @@ const validateTemplate = (template: string) => {
   });
 };
 
+const mergeQueries = (checkpoint: IModel | undefined, singleQueryBase: IPromptSingle) => {
+  const defaultQueryConfigs = getDefaultQueryConfig(checkpoint);
+  const forcedQueryConfigs = getForcedQueryConfig(checkpoint) as IPromptSingle;
+
+  const singleQuery: Record<string, unknown> = { ...defaultQueryConfigs };
+
+  Object.keys(singleQueryBase).forEach((key) => {
+    const value = singleQueryBase[key as keyof IPromptSingle];
+    if (value !== undefined) {
+      singleQuery[key] = value;
+    }
+  });
+
+  Object.keys(forcedQueryConfigs).forEach((key) => {
+    const value = forcedQueryConfigs[key as keyof IPromptSingle];
+    if (value !== undefined) {
+      singleQuery[key] = value;
+    }
+  });
+
+  return singleQuery as unknown as IPromptSingle;
+};
+
 export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
   const queries: Array<IImg2ImgQuery | ITxt2ImgQuery> = [];
 
@@ -987,11 +430,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
   const autoAdetailers = Config.get('autoAdetailers');
   const autoControlnetPose = Config.get('autoControlnetPose');
 
-  queriesArray.forEach((singleQuery) => {
+  queriesArray.forEach((singleQueryBase) => {
+    const checkpoint = singleQueryBase.checkpoints ? findCheckpoint(singleQueryBase.checkpoints) : ({ version: 'unknown' } as IModel);
+
+    const singleQuery = mergeQueries(checkpoint, singleQueryBase);
+
     const {
       adetailer,
       autoCutOff,
-      autoLCM,
       cfg,
       checkpoints,
       clipSkip,
@@ -1031,7 +477,6 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       height: height,
       hr_scale: scaleFactor,
       init_images: (initImage ? [getBase64Image(initImage)] : undefined) as string[],
-      lcm: autoLCM ?? false,
       negative_prompt: negativePrompt,
       override_settings: {},
       prompt: prompt,
@@ -1046,14 +491,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       width: width
     };
 
-    const checkpoint = checkpoints ? findCheckpoint(checkpoints) : ({ version: 'unknown' } as IModel);
-
-    const defaultValues = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none');
-
-    if (query.sampler_name !== undefined && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
-      loggerInfo(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
-      process.exit(ExitCodes.PROMPT_INVALID_SAMPLER);
-    }
+    //console.log(1, {query})
 
     if (controlNet) {
       controlNet.forEach((controlNetPrompt) => {
@@ -1352,8 +790,12 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       });
     }
 
+    //console.log(2, {query})
+
     queries.push(query);
   });
+
+  //console.log({queries})
 
   return queries;
 };
@@ -1386,22 +828,4 @@ const resolveStyles = (query: IImg2ImgQuery & ITxt2ImgQuery, foundStyle: IStyle)
   }
 
   return updatedQuery;
-};
-
-export const prompts = async (config: IPromptsResolved, validateOnly: boolean) => {
-  const queries = preparePrompts(config);
-
-  loggerInfo(`Your configuration seems valid. ${queries.length} queries has been generated.`);
-  if (validateOnly) {
-    writeLog({ queries }, true);
-    process.exit(0);
-  }
-
-  for await (const queryParams of queries) {
-    if ((queryParams as IImg2ImgQuery).init_images) {
-      await renderQuery(queryParams as IImg2ImgQuery, 'img2img');
-    } else {
-      await renderQuery(queryParams as ITxt2ImgQuery, 'txt2img');
-    }
-  }
 };

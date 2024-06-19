@@ -1,10 +1,10 @@
 import { resolve } from 'node:path';
 
-import { TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
-import { getArraysControlNet, preparePrompts } from './prompts';
-import { type IPrompts, type ITxt2ImgQuery } from './types';
+import { TiledDiffusionMethods } from '../extensions/multidiffusionUpscaler';
+import { type IPrompts, type ITxt2ImgQuery } from '../types';
+import { getArraysControlNet, preparePrompts } from './preparePrompts';
 
-const root = resolve(__dirname, '..', '..');
+const root = resolve(__dirname, '..', '..', '..');
 
 const imageSingle = resolve(root, 'test', 'images', 'close-front.pose.png');
 const imageSingle2 = resolve(root, 'test', 'images', 'single2', 'close-front.png');
@@ -134,7 +134,7 @@ describe('prompt test', () => {
 
       const result = preparePrompts(config);
 
-      const filtered = result.filter((r) => r.prompt === 'before, test prompt 2' && r.height === 768 && r.cfg_scale === 8);
+      const filtered = result.filter((r) => r.prompt === 'before,test prompt 2' && r.height === 768 && r.cfg_scale === 8);
 
       expect(result).toHaveLength(20);
       expect(filtered).toHaveLength(1);
@@ -143,13 +143,12 @@ describe('prompt test', () => {
         denoising_strength: undefined,
         //enable_hr: false,
         height: 768,
-        lcm: false,
         negative_prompt: 'test negative prompt 2',
         override_settings: {
           samples_filename_pattern: 'filename 1 pattern',
           sd_model_checkpoint: 'CounterfeitV30_v30.safetensors'
         },
-        prompt: 'before, test prompt 2',
+        prompt: 'before,test prompt 2',
         //restore_faces: false,
         sampler_name: 'DPM++ 2M',
         seed: undefined,
@@ -214,7 +213,7 @@ describe('prompt test', () => {
 
       const filtered = result.filter(
         (r) =>
-          r.prompt === 'before, test prompt 2' &&
+          r.prompt === 'before,test prompt 2' &&
           r.override_settings.samples_filename_pattern === 'filename 1 Permut 2 pattern' &&
           r.height === 768 &&
           r.cfg_scale === 8
@@ -227,13 +226,12 @@ describe('prompt test', () => {
         denoising_strength: undefined,
         //enable_hr: false,
         height: 768,
-        lcm: false,
         negative_prompt: 'test negative prompt 2',
         override_settings: {
           samples_filename_pattern: 'filename 1 Permut 2 pattern',
           sd_model_checkpoint: 'CounterfeitV30_v30.safetensors'
         },
-        prompt: 'before, test prompt 2',
+        prompt: 'before,test prompt 2',
         //restore_faces: false,
         sampler_name: 'euler test',
         seed: undefined,
@@ -1866,29 +1864,301 @@ describe('prompt test', () => {
 
       expect(result).toMatchObject([
         {
-          negative_prompt: 'before negative prompt, negative prompt, after negative prompt',
+          negative_prompt: 'before negative prompt,negative prompt,after negative prompt',
           override_settings: {
             samples_filename_pattern: 'before filename - filename - after filename',
             sd_model_checkpoint: 'sdxl.safetensors'
           },
-          prompt: 'before prompt, base prompt 1, after prompt'
+          prompt: 'before prompt,base prompt 1,after prompt'
         },
         {
-          negative_prompt: 'before negative prompt, , after negative prompt',
+          negative_prompt: 'before negative prompt,,after negative prompt',
           override_settings: {
             samples_filename_pattern: 'before filename -  - after filename',
             sd_model_checkpoint: 'sdxl.safetensors'
           },
-          prompt: 'before prompt, base prompt 2, after prompt'
+          prompt: 'before prompt,base prompt 2,after prompt'
         },
 
         {
-          negative_prompt: 'before negative prompt, , after negative prompt',
+          negative_prompt: 'before negative prompt,,after negative prompt',
           override_settings: {
             samples_filename_pattern: 'before filename -',
             sd_model_checkpoint: 'sdxl.safetensors'
           },
-          prompt: 'before prompt, base prompt 3, after prompt'
+          prompt: 'before prompt,base prompt 3,after prompt'
+        }
+      ]);
+    });
+  });
+
+  describe('default and forced parameters', () => {
+    it('should use the default parameters', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        prompts: [
+          {
+            checkpoints: 'test-sd15',
+            prompt: 'base prompt'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          cfg_scale: 7,
+          height: 768,
+          prompt: 'base prompt',
+          restore_faces: false,
+          sampler_name: 'DPM++ SDE',
+          steps: 30,
+          width: 512
+        }
+      ]);
+    });
+    it('should use the forced parameters', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        prompts: [
+          {
+            checkpoints: 'sdxl-turbo',
+            prompt: 'base prompt'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          cfg_scale: 3,
+          height: 1024,
+          prompt: 'base prompt',
+          restore_faces: false,
+          sampler_name: 'DPM++ SDE',
+          steps: 4,
+          width: 1024
+        }
+      ]);
+    });
+    it('should keep specified parameter over the default parameters', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        prompts: [
+          {
+            checkpoints: 'test-sd15',
+            prompt: 'base prompt',
+            steps: 25
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          cfg_scale: 7,
+          height: 768,
+          prompt: 'base prompt',
+          restore_faces: false,
+          sampler_name: 'DPM++ SDE',
+          steps: 25,
+          width: 512
+        }
+      ]);
+    });
+    it('should override specified parameter with the forced parameters', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        prompts: [
+          {
+            cfg: 20,
+            checkpoints: 'sdxl-turbo',
+            prompt: 'base prompt'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          cfg_scale: 3,
+          height: 1024,
+          prompt: 'base prompt',
+          restore_faces: false,
+          sampler_name: 'DPM++ SDE',
+          steps: 4,
+          width: 1024
+        }
+      ]);
+    });
+  });
+
+  describe('prompt permutations', () => {
+    it('should apply replacement', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        permutations: [
+          {
+            filenameReplace: [{ from: 'name', to: 'NAME' }],
+            promptReplace: [
+              { from: 'base', to: 'BASE' },
+              { from: 'prompt', to: 'PROMPT' }
+            ]
+          }
+        ],
+        prompts: [
+          {
+            filename: 'filename 1',
+            negativePrompt: 'negative prompt 1',
+            pattern: '{filename}',
+            prompt: 'base prompt 1'
+          },
+          {
+            negativePrompt: 'negative prompt 2',
+            prompt: 'base prompt 2'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          negative_prompt: 'negative prompt 1',
+          override_settings: { samples_filename_pattern: 'filename 1' },
+          prompt: 'base prompt 1'
+        },
+        {
+          negative_prompt: 'negative PROMPT 1',
+          override_settings: { samples_filename_pattern: 'fileNAME 1' },
+          prompt: 'BASE PROMPT 1'
+        },
+        {
+          negative_prompt: 'negative PROMPT 2',
+          override_settings: { samples_filename_pattern: 'NAME-[datetime]' },
+          prompt: 'BASE PROMPT 2'
+        },
+        {
+          negative_prompt: 'negative prompt 2',
+          override_settings: {},
+          prompt: 'base prompt 2'
+        }
+      ]);
+    });
+    it('should override prompt with permutation parameter', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        permutations: [{ overwrite: { cfg: 8, prompt: 'BASE PROMPT 1' } }, { overwrite: { prompt: 'BASE PROMPT 2', steps: 20 } }],
+        prompts: [
+          {
+            negativePrompt: 'negative prompt',
+            prompt: 'base prompt'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          cfg_scale: 8,
+          negative_prompt: 'negative prompt',
+          prompt: 'BASE PROMPT 1'
+        },
+        {
+          negative_prompt: 'negative prompt',
+          prompt: 'BASE PROMPT 2',
+          steps: 20
+        },
+        {
+          negative_prompt: 'negative prompt',
+          prompt: 'base prompt'
+        }
+      ]);
+    });
+
+    it('should add before and after prompts and filenames', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        permutations: [
+          {
+            afterFilename: ' - after filename',
+            afterNegativePrompt: 'after negative prompt',
+            afterPrompt: 'after prompt',
+            beforeFilename: 'before filename - ',
+            beforeNegativePrompt: 'before negative prompt',
+            beforePrompt: 'before prompt'
+          }
+        ],
+        prompts: [
+          {
+            filename: 'filename 1',
+            negativePrompt: 'negative prompt 1',
+            pattern: '{filename}',
+            prompt: 'base prompt 1'
+          },
+          {
+            negativePrompt: 'negative prompt 2',
+            prompt: 'base prompt 2'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          negative_prompt: 'before negative prompt,negative prompt 1,after negative prompt',
+          override_settings: {
+            samples_filename_pattern: 'before filename - filename 1 - after filename'
+          },
+          prompt: 'before prompt,base prompt 1,after prompt'
+        },
+        {
+          negative_prompt: 'negative prompt 1',
+          override_settings: { samples_filename_pattern: 'filename 1' },
+          prompt: 'base prompt 1'
+        },
+        {
+          negative_prompt: 'before negative prompt,negative prompt 2,after negative prompt',
+          override_settings: {
+            samples_filename_pattern: 'before filename -  - after filename-[datetime]'
+          },
+          prompt: 'before prompt,base prompt 2,after prompt'
+        },
+        {
+          negative_prompt: 'negative prompt 2',
+          override_settings: {},
+          prompt: 'base prompt 2'
+        }
+      ]);
+    });
+  });
+
+  describe('prompt from image', () => {
+    it('should use the size of the image', () => {
+      expect.assertions(1);
+      const result = preparePrompts({
+        prompts: [
+          {
+            filename: 'filename 1',
+            initImageOrFolder: resolve(imageMultiFolder, 'pose-heroic-full-018-ar2x3.depth.png'),
+            negativePrompt: 'negative prompt 1',
+            pattern: '{filename}',
+            prompt: 'base prompt 1'
+          },
+          {
+            filename: 'filename 2',
+            initImageOrFolder: resolve(imageInstructFolder, 'close-front.txt'),
+            negativePrompt: 'negative prompt 2',
+            pattern: '{filename}',
+            prompt: 'base prompt 2'
+          }
+        ]
+      });
+
+      expect(result).toMatchObject([
+        {
+          height: 768,
+          negative_prompt: 'negative prompt 1',
+          override_settings: { samples_filename_pattern: 'filename 1' },
+          prompt: 'base prompt 1',
+          width: 512
+        },
+        {
+          negative_prompt: 'negative prompt 2',
+          override_settings: { samples_filename_pattern: 'filename 2' },
+          prompt: 'base prompt 2'
         }
       ]);
     });

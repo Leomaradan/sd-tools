@@ -55,13 +55,13 @@ const setModels = async (
   const modelsQueryResolved: IModelWithHash[] = [];
 
   for await (const modelQuery of modelsQuery) {
-    const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
+    const item: IModelWithHash = { accelerator: 'none', name: modelQuery.title, version: Version.Unknown };
     const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
     const metadata = await getMetadataCheckpoint(modelQuery.filename);
 
     if (metadata) {
       item.version = metadata.sdVersion;
-      item.accelarator = metadata.accelerator;
+      item.accelerator = metadata.accelerator;
     }
 
     if (hash) {
@@ -397,7 +397,6 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     );
     Config.set('commonPositiveXL', '');
     Config.set('commonNegativeXL', '');
-    Config.set('lcm', { auto: false });
     Config.set('autoTiledDiffusion', false);
     Config.set('autoTiledVAE', true);
   }

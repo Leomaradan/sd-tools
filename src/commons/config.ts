@@ -2,13 +2,16 @@
 const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
+import { getDefaultQueryTemplate15, getDefaultQueryTemplate20, getDefaultQueryTemplateXL } from './defaultQuery';
 import { loggerVerbose, mode } from './logger';
-import { type ICache, type IConfig } from './types';
+import { type ICache, type IConfig, type IDefaultQueryTemplate, type IModelWithHash, type MetadataAccelerator } from './types';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
 
-const LATEST_CONFIG_VERSION = 3;
+const LATEST_CONFIG_VERSION = 4;
+
+type OldModel = { accelarator: MetadataAccelerator } & Omit<IModelWithHash, 'accelerator'>;
 
 const migrations: Record<number, () => void> = {
   0: () => {
@@ -25,6 +28,33 @@ const migrations: Record<number, () => void> = {
   2: () => {
     Config.set('autoAdetailers', []);
     Config.set('autoControlnetPose', []);
+  },
+  3: () => {
+    const modelsOld = Config.get('models') as OldModel[];
+
+    const models: IModelWithHash[] = modelsOld.map((model) => ({
+      accelerator: model.accelarator,
+      hash: model.hash,
+      name: model.name,
+      version: model.version
+    }));
+
+    Config.set('models', models);
+
+    const templates: IDefaultQueryTemplate[] = [
+      { accelerator: 'none', templateName: 'SD 1.5', versions: ['sd15'], ...getDefaultQueryTemplate15('none') },
+      { accelerator: 'lcm', templateName: 'SD 1.5 LCM', versions: ['sd15'], ...getDefaultQueryTemplate15('lcm') },
+      { accelerator: 'none', templateName: 'SD 2.x', versions: ['sd20', 'sd21'], ...getDefaultQueryTemplate20(false) },
+      { accelerator: 'none', templateName: 'SD 2.x Full', versions: ['sd20-768', 'sd21-768'], ...getDefaultQueryTemplate20(true) },
+      { accelerator: 'none', templateName: 'SDXL', versions: ['sdxl'], ...getDefaultQueryTemplateXL('none') },
+      { accelerator: 'lcm', templateName: 'SDXL LCM', versions: ['sdxl'], ...getDefaultQueryTemplateXL('lcm') },
+      { accelerator: 'lightning', templateName: 'SDXL Lightning', versions: ['sdxl'], ...getDefaultQueryTemplateXL('lightning') },
+      { accelerator: 'turbo', templateName: 'SDXL Turbo', versions: ['sdxl'], ...getDefaultQueryTemplateXL('turbo') }
+    ];
+
+    Config.set('defaultQueryTemplates', templates);
+    Config.set('defaultQueryConfigs', []);
+    Config.set('forcedQueryConfigs', []);
   }
 };
 
@@ -43,7 +73,6 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-
     // Manually manage the flags here
     mode.verbose = process.argv.includes('--verbose');
     mode.info = !process.argv.includes('--silent');

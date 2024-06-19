@@ -1,8 +1,8 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import DOMPurify from 'dompurify';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
+import DOMPurify from 'isomorphic-dompurify';
 import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
@@ -231,48 +231,40 @@ export const getFiles = (source: string, recursive?: boolean, noCache?: boolean)
 
 const imageCache: Record<string, { data: string; height: number; width: number }> = {};
 
-export const getBase64Image = (url: string) => {
+const getImage = (url: string) => {
   if (imageCache[url] !== undefined) {
-    return imageCache[url].data;
+    return { data: imageCache[url].data, height: imageCache[url].height, width: imageCache[url].width };
   }
 
-  if (statSync(url).isDirectory()) {
-    return;
-  }
+  const stats = statSync(url);
 
-  const buffer = readFileSync(url);
-  const data = buffer.toString('base64');
-
-  const sizes = sizeOf(url);
-  imageCache[url] = {
-    data,
-    height: sizes.height ?? -1,
-    width: sizes.width ?? -1
-  };
-
-  return data;
-};
-
-export const getImageSize = (url: string) => {
-  if (imageCache[url] !== undefined) {
-    return { height: imageCache[url].height, width: imageCache[url].width };
-  }
-
-  if (statSync(url).isDirectory()) {
+  if (stats.isDirectory()) {
     return { height: -1, width: -1 };
   }
 
-  const buffer = readFileSync(url);
-  const data = buffer.toString('base64');
+  try {
+    const buffer = readFileSync(url);
+    const data = buffer.toString('base64');
 
-  const sizes = sizeOf(url);
-  imageCache[url] = {
-    data,
-    height: sizes.height ?? -1,
-    width: sizes.width ?? -1
-  };
+    const sizes = sizeOf(url);
+    imageCache[url] = {
+      data,
+      height: sizes.height ?? -1,
+      width: sizes.width ?? -1
+    };
 
-  return { height: sizes.height ?? -1, width: sizes.width ?? -1 };
+    return { data, height: sizes.height ?? -1, width: sizes.width ?? -1 };
+  } catch {
+    return { height: -1, width: -1 };
+  }
+};
+
+export const getBase64Image = (url: string) => {
+  return getImage(url).data;
+};
+
+export const getImageSize = (url: string) => {
+  return getImage(url);
 };
 
 /*export const getMetadataAutomatic1111 = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {
@@ -488,8 +480,10 @@ export const getMetadataCivitAiRest = async (
       trainedWords: [] //metadata.trainedWords
     };
 
+    console.log({ DOMPurify });
+
     purgedMetadata.baseModel = DOMPurify.sanitize(metadata.baseModel) as VersionKey;
-    purgedMetadata.description = DOMPurify.sanitize(metadata.description);
+    purgedMetadata.description = DOMPurify.sanitize(metadata.description ?? '');
     if (metadata.model?.description) {
       (purgedMetadata as Required<ICivitAIInfoFile>).model.description = DOMPurify.sanitize(metadata.model?.description);
     }

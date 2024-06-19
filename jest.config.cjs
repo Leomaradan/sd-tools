@@ -3,6 +3,12 @@
  * https://jestjs.io/docs/configuration
  */
 
+const { argv } = process;
+
+if(!argv.includes('--verbose')) {
+  console.log('Disabling console.log for all tests. Use --verbose to enable.')
+}
+
 /** @type {import('jest').Config} */
 const config = {
   // All imported modules in your tests should be mocked automatically

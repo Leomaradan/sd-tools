@@ -6,7 +6,6 @@ import { ExitCodes, loggerInfo } from '../commons/logger';
 import {
   type EditableOptions,
   setConfigAutoCutoff,
-  setConfigAutoLCM,
   setConfigAutoTiledDiffusion,
   setConfigAutoTiledVAE,
   setConfigCommonNegative,
@@ -16,18 +15,12 @@ import {
   setConfigCutoffTokens,
   setConfigCutoffWeight,
   setConfigEndpoint,
-  setConfigLCMCommandLine,
   setConfigRedrawModelsCommandLine,
   setConfigScheduler
 } from './functions';
 
 interface ISetConfig {
   config: EditableOptions;
-}
-
-interface ISetConfigAutoLCM extends ISetConfig {
-  config: 'auto-lcm';
-  value: boolean;
 }
 
 interface ISetConfigAutoTiledDiffusion extends ISetConfig {
@@ -65,11 +58,6 @@ interface ISetConfigEndpoint extends ISetConfig {
   value: string;
 }
 
-interface ISetConfigLCMLoras extends ISetConfig {
-  config: 'lcm';
-  value: string[];
-}
-
 interface ISetConfigRedrawModels extends ISetConfig {
   config: 'redraw-models';
   value: string[];
@@ -81,7 +69,6 @@ interface ISetConfigScheduler extends ISetConfig {
 }
 
 const options: EditableOptions[] = [
-  'auto-lcm',
   'auto-tiled-diffusion',
   'auto-tiled-vae',
   'common-negative',
@@ -92,13 +79,11 @@ const options: EditableOptions[] = [
   'cutoff-tokens',
   'cutoff-weight',
   'endpoint',
-  'lcm',
   'redraw-models',
   'scheduler'
 ];
 
 type ISetConfigOptions =
-  | ISetConfigAutoLCM
   | ISetConfigAutoTiledDiffusion
   | ISetConfigAutoTiledVAE
   | ISetConfigCommonPrompt
@@ -106,7 +91,6 @@ type ISetConfigOptions =
   | ISetConfigCutoffTokens
   | ISetConfigCutoffWeight
   | ISetConfigEndpoint
-  | ISetConfigLCMLoras
   | ISetConfigRedrawModels
   | ISetConfigScheduler;
 
@@ -147,10 +131,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
   }
 
   switch (config) {
-    case 'auto-lcm':
-      setConfigAutoLCM(value);
-
-      break;
     case 'auto-tiled-diffusion':
       setConfigAutoTiledDiffusion(value);
       break;
@@ -181,10 +161,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
       break;
     case 'endpoint':
       setConfigEndpoint(value);
-      break;
-
-    case 'lcm':
-      setConfigLCMCommandLine(value);
       break;
 
     case 'redraw-models':

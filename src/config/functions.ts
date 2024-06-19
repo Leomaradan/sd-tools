@@ -1,14 +1,26 @@
-import { Separator, input, select } from '@inquirer/prompts';
+import { Separator, checkbox, input, select } from '@inquirer/prompts';
 import { existsSync } from 'node:fs';
 
-import type { IAutoAdetailer, IAutoControlnetPose, IConfig } from '../commons/types';
+import type {
+  IAutoAdetailer,
+  IAutoControlnetPose,
+  IConfig,
+  IDefaultQueryConfig,
+  IDefaultQueryTemplate,
+  IForcedQueryConfig,
+  IModelWithHash,
+  IPromptSingleSimple,
+  MetadataAccelerator,
+  MetadataVersionKey
+} from '../commons/types';
 
 import { Config, getParamBoolean } from '../commons/config';
+import { mergeConfigs } from '../commons/defaultQuery';
 import { CUTOFF_URL } from '../commons/extensions/cutoff';
 import { MULTIDIFFUSION_URL, TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
 import { SCHEDULER_URL } from '../commons/extensions/scheduler';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
-import { BaseUpscalers, findCheckpoint, findLORA } from '../commons/models';
+import { BaseUpscalers, findCheckpoint } from '../commons/models';
 
 export type ReadonlyOptions =
   | 'adetailers-models'
@@ -28,7 +40,6 @@ export type EditableOptions =
   | 'auto-adetailers'
   | 'auto-controlnet-pose'
   | 'auto-cutoff'
-  | 'auto-lcm'
   | 'auto-tiled-diffusion'
   | 'auto-tiled-vae'
   | 'common-negative'
@@ -37,8 +48,10 @@ export type EditableOptions =
   | 'common-positive-xl'
   | 'cutoff-tokens'
   | 'cutoff-weight'
+  | 'default-configs'
+  | 'default-templates'
   | 'endpoint'
-  | 'lcm'
+  | 'forced-configs'
   | 'redraw-models'
   | 'scheduler';
 
@@ -51,6 +64,8 @@ const displayList = (list: { name: string }[] | Set<{ name: string } | string> |
 
   return '\n' + list.map((item) => `  - ${typeof item === 'string' ? item : item.name}`).join('\n');
 };
+
+const SELECT_ACTION_TYPE = 'Select action type';
 
 export const getConfigVersion = () => loggerInfo(`Config version: ${Config.get('configVersion') ?? 0}`);
 export const getConfigControlnetModels = () => loggerInfo(`ControlNet Models: ${displayList(Config.get('controlnetModels'))}`);
@@ -65,10 +80,7 @@ export const getConfigUpscalers = () => loggerInfo(`Upscalers: ${displayList([..
 export const getConfigVAE = () => loggerInfo(`VAE: ${displayList(Config.get('vae'))}`);
 
 export const getConfigAddDetailerModels = () => loggerInfo(`Add Detailers models: ${displayList(Config.get('adetailersModels'))}`);
-export const getConfigAutoLCM = () => {
-  const { auto } = Config.get('lcm');
-  loggerInfo(`Auto LCM: ${auto ? 'enabled' : 'disabled'}`);
-};
+
 export const getConfigAutoTiledDiffusion = () => {
   const auto = Config.get('autoTiledDiffusion');
   loggerInfo(`Auto Tiled Diffusion: ${auto || 'disabled'}`);
@@ -85,12 +97,7 @@ export const getConfigCutoff = () => loggerInfo(`Auto CutOff: ${Config.get('cuto
 export const getConfigCutoffTokens = () => loggerInfo(`CutOff Auto Tokens: ${displayList(Config.get('cutoffTokens'))}`);
 export const getConfigCutoffWeight = () => loggerInfo(`CutOff Weight: ${Config.get('cutoffWeight')}`);
 export const getConfigEndpoint = () => loggerInfo(`Endpoint: ${Config.get('endpoint')}`);
-export const getConfigLCM = () => {
-  const { sd15, sdxl } = Config.get('lcm');
-  loggerInfo(`Redraw models: 
-  - SD 1.5 : ${sd15}
-  - SDXL : ${sdxl}`);
-};
+
 export const getConfigRedrawModels = () => {
   const { anime15, animexl, realist15, realistxl } = Config.get('redrawModels');
   loggerInfo(`Redraw models: 
@@ -157,13 +164,6 @@ export const getConfigAutoControlnetPoses = () => {
   });
 
   loggerInfo(`Auto ControlNet Poses: ${displayList(list)}`);
-};
-
-export const setConfigAutoLCM = (value: boolean) => {
-  const lcm = Config.get('lcm');
-  lcm.auto = getParamBoolean(value);
-  Config.set('lcm', lcm);
-  getConfigAutoLCM();
 };
 
 export const setConfigAutoTiledDiffusion = (value: TiledDiffusionMethods | false) => {
@@ -271,55 +271,6 @@ export const setConfigEndpoint = (value: string) => {
   getConfigEndpoint();
 };
 
-export const setConfigLCMCommandLine = (value: string[]) => {
-  let valueArray = value;
-  if (!Array.isArray(value)) {
-    valueArray = (value as string).split(',');
-  }
-
-  if (
-    valueArray.some((val) => {
-      if (val.indexOf(':') === -1) {
-        return true;
-      }
-
-      const [category, lora] = val.split(':');
-
-      if (!['sd15', 'sdxl'].includes(category.toLowerCase())) {
-        loggerInfo(`Category is invalid`);
-        return true;
-      }
-
-      const foundLora = findLORA(lora);
-
-      return !foundLora;
-    })
-  ) {
-    loggerInfo(`Value contains invalid value. Values must start with "sd15:" or "sdxl:" followed by a valid lora name`);
-    process.exit(ExitCodes.CONFIG_SET_LCM_INVALID_TOKEN);
-  }
-
-  const lcm = Config.get('lcm');
-
-  valueArray.forEach((keyValue) => {
-    const [category, model] = keyValue.split(':');
-
-    const foundModel = findLORA(model);
-    if (category.toLowerCase() === 'sdxl') {
-      lcm.sdxl = foundModel?.name;
-    } else {
-      lcm.sd15 = foundModel?.name;
-    }
-  });
-
-  setConfigLCM(lcm);
-};
-
-export const setConfigLCM = (lcm: IConfig['lcm']) => {
-  Config.set('lcm', lcm);
-  getConfigLCM();
-};
-
 export const setConfigRedrawModelsCommandLine = (value: string[]) => {
   let valueArray = value;
   if (!Array.isArray(value)) {
@@ -385,7 +336,7 @@ export const setInquirerAdetailerTriggers = async () => {
       { name: 'Add a trigger', value: 'add' },
       { name: 'Remove a trigger', value: 'remove' }
     ],
-    message: 'Select action type'
+    message: SELECT_ACTION_TYPE
   });
 
   if (actionType === 'add') {
@@ -478,7 +429,7 @@ export const setInquirerControlNetPoseTriggers = async () => {
       { name: 'Add a trigger', value: 'add' },
       { name: 'Remove a trigger', value: 'remove' }
     ],
-    message: 'Select action type'
+    message: SELECT_ACTION_TYPE
   });
 
   if (actionType === 'add') {
@@ -570,4 +521,531 @@ const setInquirerControlNetPoseTriggersRemove = async () => {
   const index = autoControlnetPose.findIndex((model) => model.pose === triggerModel);
   autoControlnetPose.splice(index, 1);
   Config.set('autoControlnetPose', autoControlnetPose);
+};
+
+const getDefaultMessage = (baseMessage: string, defaultValue?: boolean | number | string) => {
+  if (!defaultValue) {
+    return `${baseMessage}. Leave empty to ignore property`;
+  }
+
+  return `${baseMessage}. Leave empty to to use template value (${defaultValue})`;
+};
+
+const inquirerValidateFloat =
+  (allowEmpty: boolean) =>
+  (value: string): boolean | string => {
+    if (!value) {
+      if (allowEmpty) {
+        return true;
+      }
+      return 'The value cannot be empty';
+    }
+    const num = Number.parseFloat(value);
+
+    if (Number.isNaN(num)) {
+      return 'The value is not a valid number';
+    }
+
+    if (num <= 0) {
+      return 'The value must be greater than 0';
+    }
+
+    return true;
+  };
+
+const inquirerSelectBooleanEmpty = async (message: string) => {
+  const result = await select({
+    choices: [
+      { name: 'Yes', value: '1' },
+      { name: 'No', value: '0' },
+      { name: 'N/A', value: '-' }
+    ],
+    default: '-',
+    message
+  });
+
+  if (result === '-') {
+    return;
+  }
+
+  return result === '1';
+};
+
+const inquirerValidateInteger =
+  (allowEmpty: boolean) =>
+  (value: string): boolean | string => {
+    if (!value) {
+      if (allowEmpty) {
+        return true;
+      }
+      return 'The value cannot be empty';
+    }
+    const num = Number.parseInt(value);
+
+    if (Number.isNaN(num)) {
+      return 'The value is not a valid number';
+    }
+
+    if (num <= 0) {
+      return 'The value must be greater than 0';
+    }
+
+    return true;
+  };
+
+const inquirerConvertFloat = (value: string): number | undefined => {
+  if (!value) {
+    return;
+  }
+  return Number.parseFloat(value);
+};
+
+const inquirerConvertInteger = (value: string): number | undefined => {
+  if (!value) {
+    return;
+  }
+  return Number.parseInt(value);
+};
+
+/*
+export interface IPromptSingleSimple {
+
+  tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
+} 
+ */
+
+const getQueryOptions = async (versions: MetadataVersionKey[], defaultValues?: IPromptSingleSimple): Promise<IPromptSingleSimple> => {
+  const listSamplers = Config.get('samplers');
+  const listUpscaler = Config.get('upscalers');
+  const listVAE = Config.get('vae');
+
+  const cfg = await input({
+    message: getDefaultMessage('Enter CFG', defaultValues?.cfg),
+    validate: inquirerValidateFloat(true)
+  });
+
+  const clipSkip = await input({
+    message: getDefaultMessage('Enter Clip Skip', defaultValues?.clipSkip),
+    validate: inquirerValidateInteger(true)
+  });
+  const denoising = await input({
+    message: getDefaultMessage('Enter Denoising strength (for upscaling)', defaultValues?.denoising),
+    validate: inquirerValidateFloat(true)
+  });
+  const enableHighRes = await inquirerSelectBooleanEmpty(getDefaultMessage('Enable High-Res', defaultValues?.denoising));
+
+  const height = await input({
+    message: getDefaultMessage('Enter Height', defaultValues?.height),
+    validate: inquirerValidateInteger(true)
+  });
+
+  const restoreFaces = await inquirerSelectBooleanEmpty(getDefaultMessage('Enable Face Restoration', defaultValues?.restoreFaces));
+
+  const sampler = await select({
+    choices: [{ name: 'N/A', value: '-' }, ...listSamplers.map((sampler) => ({ value: sampler.name }))],
+    default: '-',
+    message: getDefaultMessage('Select the Sampler', defaultValues?.sampler)
+  });
+
+  const scaleFactor = await input({
+    message: getDefaultMessage('Enter Scale Factor (for upscaling)', defaultValues?.scaleFactor),
+    validate: inquirerValidateFloat(true)
+  });
+
+  const steps = await input({
+    message: getDefaultMessage('Enter Steps', defaultValues?.steps),
+    validate: inquirerValidateInteger(true)
+  });
+
+  const tiling = await inquirerSelectBooleanEmpty(getDefaultMessage('Enable Tiling', defaultValues?.tiling));
+
+  const upscaler = await select({
+    choices: [{ name: 'N/A', value: '-' }, ...listUpscaler.map((upscaler) => ({ value: upscaler.name }))],
+    default: '-',
+    message: getDefaultMessage('Select the Upscaler', defaultValues?.upscaler)
+  });
+
+  const vae = await select({
+    choices: [{ name: 'N/A', value: '-' }, ...listVAE.map((upscaler) => ({ value: upscaler }))],
+    default: '-',
+    message: getDefaultMessage('Select the VAE', defaultValues?.vae)
+  });
+
+  const width = await input({
+    message: getDefaultMessage('Enter Width', defaultValues?.width),
+    validate: inquirerValidateInteger(true)
+  });
+
+  return {
+    cfg: inquirerConvertFloat(cfg),
+    clipSkip: inquirerConvertInteger(clipSkip),
+    denoising: inquirerConvertFloat(denoising),
+    enableHighRes,
+    height: inquirerConvertInteger(height),
+    restoreFaces,
+    sampler,
+    scaleFactor: inquirerConvertFloat(scaleFactor),
+    steps: inquirerConvertInteger(steps),
+    tiling,
+    upscaler,
+    vae,
+    width: inquirerConvertInteger(width)
+  };
+};
+
+export const setInquirerDefaultQueryTemplates = async () => {
+  const actionType = await select({
+    choices: [
+      { name: 'Add a template', value: 'add' },
+      { name: 'Remove a template', value: 'remove' }
+    ],
+    message: SELECT_ACTION_TYPE
+  });
+
+  if (actionType === 'add') {
+    await setInquirerDefaultQueryTemplatesAdd();
+  } else {
+    await setInquirerDefaultQueryTemplatesRemove();
+  }
+};
+
+const TEMPLATE_NAME = 'Template name';
+
+const setInquirerDefaultQueryTemplatesAdd = async () => {
+  const defaultQueryTemplates = Config.get('defaultQueryTemplates');
+
+  const templateName = await input({
+    message: TEMPLATE_NAME,
+    validate: (value) => {
+      if (!value) {
+        return `${TEMPLATE_NAME} must not be empty`;
+      }
+
+      const found = defaultQueryTemplates.find((model) => model.templateName === value);
+
+      if (found) {
+        return `${TEMPLATE_NAME} already exists`;
+      }
+
+      return true;
+    }
+  });
+
+  if (!templateName) {
+    return;
+  }
+
+  const accelerator = await select<MetadataAccelerator>({
+    choices: [
+      { name: 'None', value: 'none' },
+      { name: 'LCM', value: 'lcm' },
+      { name: 'Turbo', value: 'turbo' },
+      { name: 'Lightning', value: 'lightning' },
+      { name: 'Distilled', value: 'distilled' }
+    ],
+    default: 'none',
+    message: 'Select the accelerator'
+  });
+
+  const version = await checkbox<MetadataVersionKey>({
+    choices: [
+      { name: 'SD 1.4', value: 'sd14' },
+      { name: 'SD 1.5', value: 'sd15' },
+      { name: 'SD 2.0', value: 'sd20' },
+      { name: 'SD 2.0 768', value: 'sd20-768' },
+      { name: 'SD 2.1', value: 'sd21' },
+      { name: 'SD 2.1 768', value: 'sd21-768' },
+      { name: 'SD XL', value: 'sdxl' }
+    ],
+    message: 'Select the versions',
+    required: true
+  });
+
+  const options = await getQueryOptions(version);
+
+  const newTemplate: IDefaultQueryTemplate = {
+    ...options,
+    accelerator,
+    templateName,
+    versions: version
+  };
+
+  Config.set('defaultQueryTemplates', Array.from(new Set([...defaultQueryTemplates, newTemplate])));
+};
+
+const setInquirerDefaultQueryTemplatesRemove = async () => {
+  const defaultQueryTemplates = Config.get('defaultQueryTemplates');
+  const defaultQueryConfigs = Config.get('defaultQueryConfigs');
+
+  const template = await select({
+    choices: [
+      { name: '(Cancel)', value: '-' },
+      new Separator(),
+      ...defaultQueryTemplates.map((template) => {
+        const disabled = defaultQueryConfigs.filter((config) => config.extends === template.templateName);
+
+        return {
+          description: `Version(s): "${template.versions.join(', ')}", Accelerator: ${template.accelerator ?? 'none'}`,
+          disabled: disabled.length > 0,
+          name: `${template.templateName} (Used in ${disabled.length} model(s))`,
+          value: template.templateName
+        };
+      }),
+      new Separator()
+    ],
+    message: 'Select template to remove'
+  });
+  if (template === '-') {
+    return;
+  }
+
+  const index = defaultQueryTemplates.findIndex((model) => model.templateName === template);
+  defaultQueryTemplates.splice(index, 1);
+  Config.set('defaultQueryTemplates', defaultQueryTemplates);
+};
+
+export const getDefaultTemplates = () => {
+  const defaultQueryTemplates = Config.get('defaultQueryTemplates');
+
+  const list = defaultQueryTemplates.map((item) => {
+    const { accelerator, templateName, versions: version, ...other } = item;
+
+    let text = `${templateName} (For version "${version.join(', ')}", Accelerator: ${accelerator})`;
+
+    Object.keys(other).forEach((key) => {
+      const value = other[key as keyof typeof other];
+
+      text += ` | ${key}: "${value}"`;
+    });
+
+    return text;
+  });
+
+  loggerInfo(`Default Templates: ${displayList(list)}`);
+};
+
+export const setInquirerDefaultQueryConfigs = async () => {
+  const actionType = await select({
+    choices: [
+      { name: 'Add a config', value: 'add' },
+      { name: 'Remove a config', value: 'remove' }
+    ],
+    message: SELECT_ACTION_TYPE
+  });
+
+  if (actionType === 'add') {
+    await setInquirerDefaultQueryConfigsAdd();
+  } else {
+    await setInquirerDefaultQueryConfigsRemove();
+  }
+};
+
+const setInquirerDefaultQueryConfigsAdd = async () => {
+  const defaultQueryTemplates = Config.get('defaultQueryTemplates');
+  const models = Config.get('models');
+  const defaultQueryConfigs = Config.get('defaultQueryConfigs');
+
+  const templateName = await input({
+    message: TEMPLATE_NAME,
+    validate: (value) => {
+      if (!value) {
+        return `${TEMPLATE_NAME} must not be empty`;
+      }
+
+      const found = defaultQueryConfigs.find((model) => model.templateName === value);
+
+      if (found) {
+        return `${TEMPLATE_NAME} already exists`;
+      }
+
+      return true;
+    }
+  });
+
+  if (!templateName) {
+    return;
+  }
+
+  const modelName = await select({
+    choices: models.map((model) => ({ description: `Version: ${model.version}`, value: model.name })),
+    message: 'Select the model'
+  });
+
+  const selectedModel = models.find((model) => model.name === modelName) as IModelWithHash;
+
+  const availableTemplates = defaultQueryTemplates.filter((template) => template.versions.includes(selectedModel.version));
+
+  const extendsName = await select({
+    choices: availableTemplates.map((template) => ({ description: `Accelerator: ${template.accelerator}`, value: template.templateName })),
+    message: 'Select the template'
+  });
+
+  const selectedTemplate = availableTemplates.find((template) => template.templateName === extendsName) as IDefaultQueryTemplate;
+
+  const options = await getQueryOptions([selectedModel.version], selectedTemplate);
+
+  const newConfig: IDefaultQueryConfig = {
+    ...options,
+    extends: extendsName,
+    modelName,
+    templateName
+  };
+
+  Config.set('defaultQueryConfigs', Array.from(new Set([...defaultQueryConfigs, newConfig])));
+};
+
+const setInquirerDefaultQueryConfigsRemove = async () => {
+  const defaultQueryConfigs = Config.get('defaultQueryConfigs');
+
+  const template = await select({
+    choices: [
+      { name: '(Cancel)', value: '-' },
+      new Separator(),
+      ...defaultQueryConfigs.map((config) => {
+        return {
+          description: `Template(s): "${config.extends}", Model: ${config.modelName}`,
+          name: config.templateName,
+          value: config.templateName
+        };
+      }),
+      new Separator()
+    ],
+    message: 'Select config to remove'
+  });
+  if (template === '-') {
+    return;
+  }
+
+  const index = defaultQueryConfigs.findIndex((model) => model.templateName === template);
+  defaultQueryConfigs.splice(index, 1);
+  Config.set('defaultQueryConfigs', defaultQueryConfigs);
+};
+
+export const getDefaultConfigs = () => {
+  const defaultQueryConfigs = Config.get('defaultQueryConfigs');
+  const defaultQueryTemplates = Config.get('defaultQueryTemplates');
+
+  const list = defaultQueryConfigs.map((item) => {
+    const { extends: extendsName, modelName, templateName, ...other } = item;
+
+    const realConfig = mergeConfigs(item, defaultQueryTemplates);
+
+    let text = `${templateName} (${modelName}, extending ${extendsName})`;
+
+    Object.keys(realConfig).forEach((key) => {
+      const value = other[key as keyof typeof realConfig];
+      const fromTemplateText = other[key as keyof typeof other] === undefined ? ' (from template)' : '';
+
+      text += ` | ${key}: "${value}"${fromTemplateText}`;
+    });
+
+    return text;
+  });
+
+  loggerInfo(`Default Configs: ${displayList(list)}`);
+};
+
+export const setInquirerForcedQueryConfigs = async () => {
+  const actionType = await select({
+    choices: [
+      { name: 'Add a config', value: 'add' },
+      { name: 'Remove a config', value: 'remove' }
+    ],
+    message: SELECT_ACTION_TYPE
+  });
+
+  if (actionType === 'add') {
+    await setInquirerForcedQueryConfigsAdd();
+  } else {
+    await setInquirerForcedQueryConfigsRemove();
+  }
+};
+
+const setInquirerForcedQueryConfigsAdd = async () => {
+  const models = Config.get('models');
+  const forcedQueryConfigs = Config.get('forcedQueryConfigs');
+
+  const templateName = await input({
+    message: 'Template name',
+    validate: (value) => {
+      if (!value) {
+        return 'Template name must not be empty';
+      }
+
+      const found = forcedQueryConfigs.find((model) => model.templateName === value);
+
+      if (found) {
+        return 'Template name already exists';
+      }
+
+      return true;
+    }
+  });
+
+  if (!templateName) {
+    return;
+  }
+
+  const modelName = await select({
+    choices: models.map((model) => ({ description: `Version: ${model.version}`, value: model.name })),
+    message: 'Select the model'
+  });
+
+  const selectedModel = models.find((model) => model.name === modelName) as IModelWithHash;
+
+  const options = await getQueryOptions([selectedModel.version]);
+
+  const newConfig: IForcedQueryConfig = {
+    ...options,
+    modelName,
+    templateName
+  };
+
+  Config.set('forcedQueryConfigs', Array.from(new Set([...forcedQueryConfigs, newConfig])));
+};
+
+const setInquirerForcedQueryConfigsRemove = async () => {
+  const forcedQueryConfigs = Config.get('forcedQueryConfigs');
+
+  const template = await select({
+    choices: [
+      { name: '(Cancel)', value: '-' },
+      new Separator(),
+      ...forcedQueryConfigs.map((config) => {
+        return {
+          description: `Model: ${config.modelName}`,
+          name: config.templateName,
+          value: config.templateName
+        };
+      }),
+      new Separator()
+    ],
+    message: 'Select config to remove'
+  });
+  if (template === '-') {
+    return;
+  }
+
+  const index = forcedQueryConfigs.findIndex((model) => model.templateName === template);
+  forcedQueryConfigs.splice(index, 1);
+  Config.set('forcedQueryConfigs', forcedQueryConfigs);
+};
+
+export const getForcedConfigs = () => {
+  const forcedQueryConfigs = Config.get('forcedQueryConfigs');
+
+  const list = forcedQueryConfigs.map((item) => {
+    const { modelName, templateName, ...other } = item;
+    let text = `${templateName} (${modelName})`;
+
+    Object.keys(other).forEach((key) => {
+      const value = other[key as keyof typeof other];
+      text += ` | ${key}: "${value}"`;
+    });
+
+    return text;
+  });
+
+  loggerInfo(`Forced Configs: ${displayList(list)}`);
 };

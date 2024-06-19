@@ -1,7 +1,8 @@
 class Configstore {
   store = {};
   constructor(_name) {
-    this.store = {
+    /** @type {import('../src/commons/types').IConfig} */
+    const store = {
       adetailersModels: ['adetailers1', 'adetailers2'],
       autoAdetailers: [],
       autoControlnetPose: [],
@@ -12,7 +13,7 @@ class Configstore {
       commonNegativeXL: '',
       commonPositive: '',
       commonPositiveXL: '',
-      configVersion: 3,
+      configVersion: 4,
       controlnetModels: [
         { name: 'model1', version: 'unknown' },
         { name: 'model2', version: 'unknown' },
@@ -22,13 +23,118 @@ class Configstore {
       cutoff: false,
       cutoffTokens: ['blue', 'red', 'green'],
       cutoffWeight: 1,
+      defaultQueryConfigs: [
+        {
+          extends: 'SD 1.5',
+          height: 768,
+          modelName: 'test-sd15.safetensors',
+          sampler: 'DPM++ SDE',
+          steps: 30,
+          templateName: 'CyberRealistic'
+        }
+      ],
+      defaultQueryTemplates: [
+        {
+          accelerator: 'none',
+          cfg: 7,
+          height: 512,
+          restoreFaces: false,
+          sampler: 'DPM++ 2M',
+          steps: 20,
+          templateName: 'SD 1.5',
+          versions: ['sd15'],
+          width: 512
+        },
+        {
+          accelerator: 'lcm',
+          cfg: 2,
+          height: 512,
+          restoreFaces: false,
+          sampler: 'LCM',
+          steps: 5,
+          templateName: 'SD 1.5 LCM',
+          versions: ['sd15'],
+          width: 512
+        },
+        {
+          accelerator: 'none',
+          cfg: 7,
+          height: 512,
+          restoreFaces: false,
+          sampler: 'DPM++ 2M',
+          steps: 20,
+          templateName: 'SD 2.x',
+          versions: ['sd20', 'sd21'],
+          width: 512
+        },
+        {
+          accelerator: 'none',
+          cfg: 7,
+          height: 768,
+          restoreFaces: false,
+          sampler: 'DPM++ 2M',
+          steps: 20,
+          templateName: 'SD 2.x Full',
+          versions: ['sd20-768', 'sd21-768'],
+          width: 768
+        },
+        {
+          accelerator: 'none',
+          cfg: 7,
+          height: 1024,
+          restoreFaces: false,
+          sampler: 'DPM++ 2M',
+          steps: 20,
+          templateName: 'SDXL',
+          versions: ['sdxl'],
+          width: 1024
+        },
+        {
+          accelerator: 'lcm',
+          cfg: 1.5,
+          height: 1024,
+          restoreFaces: false,
+          sampler: 'LCM',
+          steps: 4,
+          templateName: 'SDXL LCM',
+          versions: ['sdxl'],
+          width: 1024
+        },
+        {
+          accelerator: 'lightning',
+          cfg: 2,
+          height: 1024,
+          restoreFaces: false,
+          sampler: 'DPM++ SDE',
+          steps: 6,
+          templateName: 'SDXL Lightning',
+          versions: ['sdxl'],
+          width: 1024
+        },
+        {
+          accelerator: 'turbo',
+          cfg: 2,
+          height: 1024,
+          restoreFaces: false,
+          sampler: 'DPM++ SDE',
+          steps: 8,
+          templateName: 'SDXL Turbo',
+          versions: ['sdxl'],
+          width: 1024
+        }
+      ],
       embeddings: ['embeddings1', 'embeddings2'],
       endpoint: 'http://jest.local:8000',
       extensions: [],
+      forcedQueryConfigs: [
+        {
+          cfg: 3,
+          modelName: 'sdxl-turbo.safetensors',
+          steps: 4,
+          templateName: 'SDXL Turbo'
+        }
+      ],
       initialized: true,
-      lcm: {
-        auto: false
-      },
       loras: [
         {
           keywords: ['trigger1'],
@@ -49,6 +155,10 @@ class Configstore {
           version: 'unknown'
         },
         {
+          name: 'test-sd15.safetensors',
+          version: 'sd15'
+        },
+        {
           name: 'CounterfeitV30_v30.safetensors',
           version: 'unknown'
         },
@@ -59,6 +169,11 @@ class Configstore {
         },
         {
           name: 'sdxl.safetensors',
+          version: 'sdxl'
+        },
+        {
+          accelerator: 'turbo',
+          name: 'sdxl-turbo.safetensors',
           version: 'sdxl'
         }
       ],
@@ -87,6 +202,8 @@ class Configstore {
       ],
       vae: ['vae-ft-mse-840000-ema-pruned', 'orangemix.vae']
     };
+
+    this.store = store;
   }
 
   get(key) {

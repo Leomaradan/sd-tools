@@ -1,7 +1,11 @@
 /// <reference types="jest" />
 
+import { argv } from 'process';
+
 beforeEach(() => {
-  jest.spyOn(console, 'log').mockImplementation();
+  if (!argv.includes('--verbose')) {
+    jest.spyOn(console, 'log').mockImplementation();
+  }
 });
 
 afterEach(() => {

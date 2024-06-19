@@ -1,6 +1,7 @@
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import jest from 'eslint-plugin-jest';
+import 'eslint-plugin-only-warn';
 import perfectionist from 'eslint-plugin-perfectionist';
 import perfectionistRecommendedNatural from 'eslint-plugin-perfectionist/configs/recommended-natural';
 import sonarjs from 'eslint-plugin-sonarjs';

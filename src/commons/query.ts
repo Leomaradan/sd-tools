@@ -5,7 +5,7 @@ import type { IAdetailer } from './extensions/adetailer';
 import type { ICutOff } from './extensions/cutoff';
 
 import { Cache, Config } from './config';
-import { getDefaultQuery } from './defaultQuery';
+import { baseParamsAll } from './defaultQuery';
 import { type IControlNet, type IControlNetQuery, normalizeControlNetMode, normalizeControlNetResizes } from './extensions/controlNet';
 import {
   type ITiledDiffusion,
@@ -15,7 +15,7 @@ import {
 } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, RedrawMode, TargetSizeType } from './extensions/ultimateSdUpscale';
 import { getBase64Image } from './file';
-import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
+import { loggerInfo, loggerVerbose, mode, writeLog } from './logger';
 import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
 import {
   AlwaysOnScriptsNames,
@@ -191,27 +191,6 @@ const prepareCutOff = (baseQuery: IBaseQuery, cutOff: ICutOff | undefined) => {
   return updatedQuery;
 };
 
-const prepareLCM = (baseQuery: IBaseQuery, lcm: boolean | undefined, checkpoint: IModel | undefined, isSDXL: boolean) => {
-  const updatedQuery = { ...baseQuery };
-
-  const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
-  const accelarator = checkpoint?.accelarator ?? 'none';
-  const addLCM = (lcm ?? accelarator === 'lcm') || autoLcm;
-  if (addLCM) {
-    const lcmModel = isSDXL ? lcmXL : lcm15;
-    if (lcmModel) {
-      const defaultValues = getDefaultQuery(isSDXL ? 'sdxl' : 'sd15', 'lcm');
-
-      updatedQuery.prompt = `<lora:${lcmModel}:1> ${updatedQuery.prompt}`;
-      updatedQuery.cfg_scale = defaultValues.cfg_scale;
-      updatedQuery.steps = defaultValues.steps;
-      updatedQuery.sampler_name = defaultValues.sampler_name;
-    }
-  }
-
-  return updatedQuery;
-};
-
 const prepareScriptUltimateSDUpscale = (
   script: boolean,
   baseQuery: IBaseQuery,
@@ -249,7 +228,7 @@ const prepareScriptUltimateSDUpscale = (
 };
 
 export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: 'img2img' | 'txt2img') => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, cutOff, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
 
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
@@ -258,18 +237,11 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
   let baseQuery = JSON.parse(
     JSON.stringify({
-      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as {
-        forcedSampler?: string;
-      } & IBaseQuery)
+      ...baseParamsAll()
     })
   );
 
   baseQuery = prepareBaseQuery(baseQuery, baseQueryRaw as IImg2ImgQuery);
-
-  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
-    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
-    process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
-  }
 
   let script = false;
 
@@ -293,7 +265,6 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   baseQuery = prepareTiledVAE(baseQuery, tiledVAE, isSDXL);
   baseQuery = prepareTiledDiffusion(baseQuery, tiledDiffusion, defaultUpscaler, isSDXL);
   baseQuery = prepareCutOff(baseQuery, cutOff);
-  baseQuery = prepareLCM(baseQuery, lcm, checkpoint, isSDXL);
 
   [script, baseQuery] = prepareScriptUltimateSDUpscale(script, baseQuery, ultimateSdUpscale, type);
 
@@ -302,7 +273,6 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   delete (baseQuery as ITxt2ImgQuery).controlNet;
   delete (baseQuery as ITxt2ImgQuery).enable_hr;
   delete (baseQuery as ITxt2ImgQuery).cutOff;
-  delete (baseQuery as ITxt2ImgQuery).lcm;
   delete (baseQuery as ITxt2ImgQuery).tiledDiffusion;
   delete (baseQuery as ITxt2ImgQuery).tiledVAE;
 

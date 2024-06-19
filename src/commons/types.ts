@@ -77,7 +77,6 @@ export interface ITxt2ImgQuery
   hr_prompt?: string;
   hr_scale?: number;
   hr_upscaler?: string;
-  lcm?: boolean;
   tiledDiffusion?: ITiledDiffusion;
   tiledVAE?: ITiledVAE;
   //ultimateSdUpscale?: number;
@@ -98,7 +97,6 @@ export interface IImg2ImgQuery
   inpainting_fill?: number;
   inpainting_mask_invert?: number;
   latent_mask?: string;
-  lcm?: boolean;
   mask?: string;
   mask_blur?: number;
   mask_blur_x?: number;
@@ -163,7 +161,7 @@ export interface IRedrawOptions {
 export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
 
 export interface IModel {
-  accelarator?: MetadataAccelerator;
+  accelerator?: MetadataAccelerator;
   name: string;
   version: MetadataVersionKey;
 }
@@ -233,6 +231,23 @@ export interface IAutoControlnetPose {
   trigger: string;
 }
 
+export interface IDefaultQueryTemplate extends Partial<IPromptSingleSimple> {
+  accelerator: MetadataAccelerator;
+  templateName: string;
+  versions: MetadataVersionKey[];
+}
+
+export interface IDefaultQueryConfig extends Partial<IPromptSingleSimple> {
+  extends: string;
+  modelName: string;
+  templateName: string;
+}
+
+export interface IForcedQueryConfig extends Partial<IPromptSingleSimple> {
+  modelName: string;
+  templateName: string;
+}
+
 export interface IConfig {
   adetailersModels: string[];
   autoAdetailers: IAutoAdetailer[];
@@ -249,15 +264,13 @@ export interface IConfig {
   cutoff: boolean;
   cutoffTokens: string[];
   cutoffWeight: number;
+  defaultQueryConfigs: IDefaultQueryConfig[];
+  defaultQueryTemplates: IDefaultQueryTemplate[];
   embeddings: string[];
   endpoint: string;
   extensions: Extensions[];
+  forcedQueryConfigs: IForcedQueryConfig[];
   initialized: boolean;
-  lcm: {
-    auto: boolean;
-    sd15?: string;
-    sdxl?: string;
-  };
   loras: ILora[];
   models: IModelWithHash[];
   redrawModels: {
@@ -305,7 +318,6 @@ type ControlNetSchema = Omit<IControlNet, 'image_name'>;
 export interface BaseIPrompt {
   adetailer?: IAdetailerPrompt[];
   autoCutOff?: 'both' | boolean;
-  autoLCM?: 'both' | boolean;
   cfg?: number | number[];
   checkpoints?: ICheckpointWithVAE[] | string | string[];
   clipSkip?: number | number[];
@@ -360,18 +372,30 @@ export interface IStyleSubjectPrompt extends BaseIPrompt {
 
 export type IPrompt = IClassicPrompt | IStyleSubjectPrompt;
 
-export interface IPromptSingle {
-  adetailer?: IAdetailerPrompt[];
-  autoCutOff?: boolean;
-  autoLCM?: boolean;
+export interface IPromptSingleSimple {
   cfg?: number;
-  checkpoints?: string;
   clipSkip?: number;
-  controlNet?: IControlNet[];
   denoising?: number;
   enableHighRes?: boolean;
-  filename?: string;
   height?: number;
+  restoreFaces?: boolean;
+  sampler?: string;
+  scaleFactor?: number;
+  steps?: number;
+  tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
+  tiling?: boolean;
+  upscaler?: string;
+  vae?: string;
+  width?: number;
+}
+
+export interface IPromptSingle extends IPromptSingleSimple {
+  adetailer?: IAdetailerPrompt[];
+  autoCutOff?: boolean;
+  checkpoints?: string;
+  controlNet?: IControlNet[];
+  filename?: string;
   highRes?: {
     afterNegativePrompt?: string;
     afterPrompt?: string;
@@ -383,21 +407,11 @@ export interface IPromptSingle {
   outDir?: string;
   pattern?: string;
   prompt: string;
-  restoreFaces?: boolean;
-  sampler?: string;
-  scaleFactor?: number;
   seed?: number;
-  steps?: number;
   styles?: string[];
-  tiledDiffusion?: ITiledDiffusion;
-  tiledVAE?: ITiledVAE;
-  tiling?: boolean;
   ultimateSdUpscale?: IUltimateSDUpscale;
-  upscaler?: string;
   upscalingNegativePrompt?: string;
   upscalingPrompt?: string;
-  vae?: string;
-  width?: number;
 }
 
 export interface IPromptSingleSchema extends Omit<IPromptSingle, 'controlNet'> {

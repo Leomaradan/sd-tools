@@ -1,13 +1,12 @@
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import {
   type Options,
   getConfigAddDetailerModels,
   getConfigAutoAdetailers,
   getConfigAutoControlnetPoses,
-  getConfigAutoLCM,
   getConfigAutoTiledDiffusion,
   getConfigAutoTiledVAE,
   getConfigCommonNegative,
@@ -21,7 +20,6 @@ import {
   getConfigEmbeddings,
   getConfigEndpoint,
   getConfigExtensions,
-  getConfigLCM,
   getConfigLoras,
   getConfigModels,
   getConfigRedrawModels,
@@ -30,13 +28,14 @@ import {
   getConfigStyles,
   getConfigUpscalers,
   getConfigVAE,
-  getConfigVersion
+  getConfigVersion,
+  getDefaultConfigs,
+  getDefaultTemplates,
+  getForcedConfigs
 } from './functions';
 
 export const options: { description: string; option: Options }[] = [
   { description: 'List of Add Details models, if existing', option: 'adetailers-models' },
-  { description: 'If set, the LCM models will be used', option: 'auto-lcm' },
-  { description: 'LCM models to Auto LCM', option: 'lcm' },
   {
     description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled Diffusion will be enabled',
     option: 'auto-tiled-diffusion'
@@ -145,9 +144,6 @@ export const handler = (argv: { config?: string }) => {
     case 'auto-adetailers':
       getConfigAutoAdetailers();
       break;
-    case 'auto-lcm':
-      getConfigAutoLCM();
-      break;
     case 'auto-tiled-diffusion':
       getConfigAutoTiledDiffusion();
       break;
@@ -179,14 +175,23 @@ export const handler = (argv: { config?: string }) => {
     case 'endpoint':
       getConfigEndpoint();
       break;
-    case 'lcm':
-      getConfigLCM();
-      break;
     case 'redraw-models':
       getConfigRedrawModels();
       break;
     case 'scheduler':
       getConfigScheduler();
+      break;
+
+    case 'default-templates':
+      getDefaultTemplates();
+      break;
+
+    case 'default-configs':
+      getDefaultConfigs();
+      break;
+
+    case 'forced-configs':
+      getForcedConfigs();
       break;
 
     default:

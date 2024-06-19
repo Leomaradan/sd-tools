@@ -5,7 +5,6 @@ import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpsca
 import {
   type EditableOptions,
   setConfigAutoCutoff,
-  setConfigAutoLCM,
   setConfigAutoTiledDiffusion,
   setConfigAutoTiledVAE,
   setConfigCommonNegative,
@@ -14,11 +13,13 @@ import {
   setConfigCommonPositiveXL,
   setConfigCutoffWeight,
   setConfigEndpoint,
-  setConfigLCM,
   setConfigRedrawModels,
   setConfigScheduler,
   setInquirerAdetailerTriggers,
-  setInquirerControlNetPoseTriggers
+  setInquirerControlNetPoseTriggers,
+  setInquirerDefaultQueryConfigs,
+  setInquirerDefaultQueryTemplates,
+  setInquirerForcedQueryConfigs
 } from './functions';
 
 export const command = 'wizard';
@@ -32,7 +33,7 @@ interface IWizardOptions {
 }
 
 export const wizardOptions: Array<IWizardOptions | Separator> = [
-  new Separator('Basic options'),
+  new Separator('Default values'),
   {
     callback: async () => {
       const prompt = Config.get('commonPositive');
@@ -73,6 +74,24 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Common Negative XL',
     value: 'common-negative-xl'
   },
+  {
+    callback: setInquirerDefaultQueryTemplates,
+    description: 'Set template for default values',
+    name: 'Default Values Templates',
+    value: 'default-templates'
+  },
+  {
+    callback: setInquirerDefaultQueryConfigs,
+    description: 'Set configs for default values',
+    name: 'Default Values Configs',
+    value: 'default-configs'
+  },
+  {
+    callback: setInquirerForcedQueryConfigs,
+    description: 'Set forced values',
+    name: 'Forced Values',
+    value: 'forced-configs'
+  },
   new Separator('Select models'),
   {
     callback: async () => {
@@ -111,40 +130,6 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     name: 'Redraw Models',
     value: 'redraw-models'
   },
-  {
-    callback: async () => {
-      const lcm = Config.get('lcm');
-
-      const actionType = await select<keyof typeof lcm>({
-        choices: [
-          { name: 'SD 1.5', value: 'sd15' },
-          { name: 'SDXL', value: 'sdxl' }
-        ],
-        message: 'Select model type'
-      });
-
-      const listLoras = Config.get('loras');
-      const listLorasFiltered = listLoras.filter((loras) => loras.version === actionType);
-      const selectedLoras = lcm[actionType] as string;
-
-      const model = await select({
-        choices: [{ name: 'None', value: 'none' }, ...listLorasFiltered.map((model) => ({ value: model.name }))],
-        default: selectedLoras,
-        message: 'Select the model'
-      });
-
-      if (model === 'none') {
-        delete lcm[actionType];
-      } else if (actionType === 'sd15' || actionType === 'sdxl') {
-        lcm[actionType] = model;
-      }
-
-      setConfigLCM(lcm);
-    },
-    description: 'Set LCM models',
-    name: 'LCM Models',
-    value: 'lcm'
-  },
   new Separator('Execution options'),
   {
     callback: async () => {
@@ -176,16 +161,6 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     value: 'scheduler'
   },
   new Separator('Automatic actions'),
-  {
-    callback: async () => {
-      const lcm = Config.get('lcm');
-      const response = await confirm({ default: lcm.auto, message: 'Activate Auto-LCM ?' });
-      setConfigAutoLCM(response);
-    },
-    description: 'Enable or disable auto lcm',
-    name: 'Auto LCM',
-    value: 'auto-lcm'
-  },
   {
     callback: setInquirerAdetailerTriggers,
     description: 'Set the Auto Add Detailers triggers',

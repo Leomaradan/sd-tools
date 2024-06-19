@@ -15,7 +15,6 @@ describe('query tests', () => {
       cfg_scale: 7,
       enable_hr: false,
       height: 512,
-      lcm: false,
       negative_prompt: 'test negative prompt 1',
       override_settings: {},
       prompt: 'test prompt 1',
@@ -66,7 +65,6 @@ describe('query tests', () => {
       height: 768,
 
       hr_upscaler: 'hr upscaler',
-      lcm: true,
       override_settings: {
         sd_model_checkpoint: 'cyberrealistic_v40',
         sd_vae: '840000'
@@ -184,7 +182,6 @@ describe('query tests', () => {
       height: 256,
 
       hr_upscaler: 'hr upscaler2',
-      lcm: true,
       override_settings: {
         sd_model_checkpoint: 'sdxl',
         sd_vae: '840000'

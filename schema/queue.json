@@ -146,10 +146,6 @@
           "enum": ["both", false, true],
           "title": "autoCutOff"
         },
-        "autoLCM": {
-          "enum": ["both", false, true],
-          "title": "autoLCM"
-        },
         "cfg": {
           "anyOf": [
             {
@@ -730,10 +726,6 @@
           "enum": ["both", false, true],
           "title": "autoCutOff"
         },
-        "autoLCM": {
-          "enum": ["both", false, true],
-          "title": "autoLCM"
-        },
         "cfg": {
           "anyOf": [
             {
@@ -1198,10 +1190,6 @@
           "enum": ["both", false, true],
           "title": "autoCutOff"
         },
-        "autoLCM": {
-          "enum": ["both", false, true],
-          "title": "autoLCM"
-        },
         "cfg": {
           "anyOf": [
             {
@@ -1585,10 +1573,6 @@
           "title": "autoCutOff",
           "type": "boolean"
         },
-        "autoLCM": {
-          "title": "autoLCM",
-          "type": "boolean"
-        },
         "cfg": {
           "title": "cfg",
           "type": "number"
@@ -1728,10 +1712,6 @@
         "autoCutOff": {
           "enum": ["both", false, true],
           "title": "autoCutOff"
-        },
-        "autoLCM": {
-          "enum": ["both", false, true],
-          "title": "autoLCM"
         },
         "cfg": {
           "anyOf": [
