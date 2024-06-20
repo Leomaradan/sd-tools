@@ -300,7 +300,6 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   // Remove artifacts from the temporary query
   delete (baseQuery as ITxt2ImgQuery).adetailer;
   delete (baseQuery as ITxt2ImgQuery).controlNet;
-  delete (baseQuery as ITxt2ImgQuery).enable_hr;
   delete (baseQuery as ITxt2ImgQuery).cutOff;
   delete (baseQuery as ITxt2ImgQuery).lcm;
   delete (baseQuery as ITxt2ImgQuery).tiledDiffusion;

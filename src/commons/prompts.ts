@@ -1248,7 +1248,13 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
           const existing = query.adetailer.find((adetailer) => adetailer.ad_model === autoAdetailer.ad_model);
           if (!existing) {
-            query.adetailer.push(autoAdetailer);
+            query.adetailer.push({
+              ad_confidence: autoAdetailer.ad_confidence,
+              ad_denoising_strength: autoAdetailer.ad_denoising_strength,
+              ad_model: autoAdetailer.ad_model,
+              ad_negative_prompt: autoAdetailer.ad_negative_prompt,
+              ad_prompt: autoAdetailer.ad_prompt
+            });
           }
         }
       });
