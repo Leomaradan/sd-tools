@@ -28,7 +28,7 @@
     "@types/dompurify": "^3",
     "@types/eslint__js": "^8.42.3",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.12.13",
+    "@types/node": "^20.14.8",
     "@types/png-chunk-text": "^1.0.3",
     "@types/png-chunks-extract": "^1.0.2",
     "@types/yargs": "^17.0.32",
