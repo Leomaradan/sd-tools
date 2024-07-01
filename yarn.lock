@@ -1888,10 +1888,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:9.3.0, @eslint/js@npm:^9.3.0":
+"@eslint/js@npm:9.3.0":
   version: 9.3.0
   resolution: "@eslint/js@npm:9.3.0"
   checksum: 10c0/1550c68922eb17c3ce541d9ffbb687e656bc0d4e2fff2d9cb0a75101a9cdb6184b7af7378ccf46c6ca750b280d25d45cc5e7374a83a4ee89d404d3717502fd9d
+  languageName: node
+  linkType: hard
+
+"@eslint/js@npm:^9.6.0":
+  version: 9.6.0
+  resolution: "@eslint/js@npm:9.6.0"
+  checksum: 10c0/83967a7e59f2e958c9bbb3acd0929cad00d59d927ad786ed8e0d30b07f983c6bea3af6f4ad32da32145db40b7a741a816ba339bdd8960fc7fc8231716d943b7f
   languageName: node
   linkType: hard
 
@@ -2391,7 +2398,7 @@ __metadata:
     "@babel/core": "npm:^7.24.6"
     "@babel/preset-env": "npm:^7.24.6"
     "@babel/preset-typescript": "npm:^7.24.6"
-    "@eslint/js": "npm:^9.3.0"
+    "@eslint/js": "npm:^9.6.0"
     "@inquirer/prompts": "npm:^5.0.4"
     "@types/configstore": "npm:^6.0.2"
     "@types/dompurify": "npm:^3"
