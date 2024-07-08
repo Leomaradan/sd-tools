@@ -8,7 +8,7 @@ import { type ICache, type IConfig } from './types';
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
 
-const LATEST_CONFIG_VERSION = 3;
+const LATEST_CONFIG_VERSION = 4;
 
 const migrations: Record<number, () => void> = {
   0: () => {
@@ -25,6 +25,9 @@ const migrations: Record<number, () => void> = {
   2: () => {
     Config.set('autoAdetailers', []);
     Config.set('autoControlnetPose', []);
+  },
+  3: () => {
+    Config.set('interrogatorModels', []);
   }
 };
 
@@ -43,7 +46,6 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-
     // Manually manage the flags here
     mode.verbose = process.argv.includes('--verbose');
     mode.info = !process.argv.includes('--silent');

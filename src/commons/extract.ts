@@ -14,6 +14,16 @@ export interface IExtractOptionsFull extends Omit<IExtractOptions, 'format'> {
   source: string;
 }
 
+export interface IInterrogateOptions {
+  addBefore?: string;
+  deepBooru?: boolean;
+  recursive?: boolean;
+}
+
+export interface IInterrogateOptionsFull extends IInterrogateOptions {
+  source: string;
+}
+
 interface IFormatTextbox {
   cfg_scale?: number;
   height?: number;
@@ -311,10 +321,18 @@ export const extractFromFile = async (
   }
 
   if (interrogate) {
-    const interrogateResponse = await interrogateQuery(file.filename);
+    const interrogateResponse = await interrogateQuery(file.filename, ['ViT-H-14/laion2b_s32b_b79k']);
 
     if (interrogateResponse) {
       return { prompt: interrogateResponse.prompt };
     }
+  }
+};
+
+export const interrogateFromFile = async (file: IFile, deepBooru?: boolean): Promise<string | undefined> => {
+  const interrogateResponse = await interrogateQuery(file.filename, [deepBooru ? 'deepdanbooru' : 'clip' /*'ViT-L-14/openai'*/]);
+
+  if (interrogateResponse) {
+    return interrogateResponse.prompt;
   }
 };

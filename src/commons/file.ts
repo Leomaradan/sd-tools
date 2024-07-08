@@ -5,6 +5,7 @@ import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
 import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
+import { basename, extname } from 'path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
@@ -21,6 +22,10 @@ import {
 } from './types';
 
 const CIVITAI_FILE = '.civitai.info';
+
+export const getFileNameWithoutExtension = (filename: string): string => {
+  return basename(filename, extname(filename));
+};
 
 const readFile = (path: string, noCache?: boolean): string[] | undefined => {
   let data = undefined;

@@ -6,6 +6,7 @@ import * as configSet from './config/configSet';
 import * as init from './config/init';
 import * as wizard from './config/wizard';
 import * as extract from './extract';
+import * as interrogate from './interrogate';
 import * as queue from './queue';
 import * as redraw from './redraw';
 import * as rename from './rename';
@@ -24,6 +25,7 @@ Config.migrate().then(() => {
     .command(queue)
     .command(rename)
     .command(extract)
+    .command(interrogate)
     .command(upscale)
     .command(redraw)
     .command(stats)

@@ -24,7 +24,10 @@ import {
   type IInterrogateResponse,
   type IModel,
   type ITxt2ImgQuery,
-  type IUpscaler
+  type IUpscaler,
+  type InterrogateModelsAll,
+  type InterrogateModelsBase,
+  type InterrogateModelsInterogator
 } from './types';
 
 const headerRequest = {
@@ -327,7 +330,61 @@ export const renderQuery: Query = async (query, type) => {
   }
 };
 
-export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
+const interrogateQueryWithInterrogator = async (
+  base64Image: string,
+  model: InterrogateModelsInterogator
+): Promise<IInterrogateResponse | undefined> => {
+  const query = {
+    clip_model_name: model,
+    image: base64Image,
+    mode: 'fast'
+  };
+
+  const url = `${Config.get('endpoint')}/interrogator/prompt`;
+
+  const result = await axios
+    .post<IInterrogateResponse>(url, query, headerRequest)
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+
+  if (result) {
+    return { prompt: result.prompt };
+  }
+};
+
+const interrogateQueryWithBase = async (base64Image: string, model: InterrogateModelsBase): Promise<IInterrogateResponse | undefined> => {
+  const query = {
+    image: base64Image,
+    model: model
+  };
+
+  const url = `${Config.get('endpoint')}/sdapi/v1/interrogate`;
+
+  const result = await axios
+    .post<{ caption: string }>(url, query, headerRequest)
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      loggerInfo(`Error: `);
+      loggerInfo(error.message);
+    });
+
+  if (result) {
+    return { prompt: result.caption };
+  }
+};
+
+export const interrogateQuery = async (
+  imagePath: string,
+  wantedModel: InterrogateModelsAll[]
+  //fallback: [InterrogateModelsBase, InterrogateModelsInterogator] = ['clip', 'ViT-L-14/openai']
+): Promise<IInterrogateResponse | void> => {
   const interrogatorCache = Cache.get('interrogator');
 
   if (interrogatorCache[imagePath]) {
@@ -340,22 +397,37 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
 
   loggerVerbose(`Executing query to interrogator for ${imagePath}`);
   const base64Image = getBase64Image(imagePath);
+  const interrogatorModels = Config.get('interrogatorModels');
 
-  const query = {
-    clip_model_name: 'ViT-L-14/openai',
-    image: base64Image,
-    mode: 'fast'
-  };
+  if (!base64Image) {
+    loggerInfo(`Error: `);
+    loggerInfo(`Could not read image ${imagePath}`);
+    return;
+  }
 
-  const response = await axios
-    .post<IInterrogateResponse>(`${Config.get('endpoint')}/interrogator/prompt`, query, headerRequest)
-    .then((response) => {
-      return response.data;
-    })
-    .catch((error) => {
-      loggerInfo(`Error: `);
-      loggerInfo(error.message);
-    });
+  let response: IInterrogateResponse | undefined;
+
+  const hasInterrogator = Config.get('extensions').includes('interrogator');
+
+  let filtered = wantedModel;
+
+  if (!hasInterrogator) {
+    filtered = wantedModel.filter((model) => interrogatorModels.includes(model));
+  }
+
+  if (filtered.length === 0) {
+    filtered.push('clip');
+  }
+
+  const firstModel = filtered[0];
+
+  const isInterrogator = interrogatorModels.includes(firstModel);
+
+  if (isInterrogator) {
+    response = await interrogateQueryWithInterrogator(base64Image, firstModel as InterrogateModelsInterogator);
+  } else {
+    response = await interrogateQueryWithBase(base64Image, firstModel as InterrogateModelsBase);
+  }
 
   if (response) {
     interrogatorCache[imagePath] = {
@@ -372,7 +444,9 @@ type MiscQueryApi =
   | 'agent-scheduler/v1/history?limit=1'
   | 'controlnet/model_list'
   | 'controlnet/module_list'
+  | 'interrogator/models'
   | 'sdapi/v1/embeddings'
+  | 'sdapi/v1/interrogate'
   | 'sdapi/v1/loras'
   | 'sdapi/v1/prompt-styles'
   | 'sdapi/v1/samplers'
@@ -401,6 +475,7 @@ export const getSamplersQuery = () => miscQuery<{ aliases: string[]; name: strin
 export const getUpscalersQuery = () => miscQuery<{ model_path: null | string; name: string }[]>('sdapi/v1/upscalers');
 export const getExtensionsQuery = () => miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
 export const getSchedulerQuery = () => miscQuery<{ tasks: string[] }>('agent-scheduler/v1/history?limit=1');
+export const getInterrogatorQuery = () => miscQuery<string[]>('interrogator/models');
 export const getLORAsQuery = () => miscQuery<{ alias: string; name: string; path: string }[]>('sdapi/v1/loras');
 export const getEmbeddingsQuery = () =>
   miscQuery<{ loaded: Record<string, unknown>; skipped: Record<string, unknown> }>('sdapi/v1/embeddings');

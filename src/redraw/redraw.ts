@@ -219,7 +219,7 @@ const prepareQueryClassical = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;
@@ -284,7 +284,7 @@ const prepareQueryIpAdapter = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;

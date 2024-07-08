@@ -12,6 +12,7 @@ import {
   getControlnetModulesQuery,
   getEmbeddingsQuery,
   getExtensionsQuery,
+  getInterrogatorQuery,
   getLORAsQuery,
   getModelsQuery,
   getSamplersQuery,
@@ -194,7 +195,8 @@ const setExtensions = (
   },
   schedulerQuery: {
     tasks: string[];
-  } | void
+  } | void,
+  interrogatorQuery: string[] | void
 ) => {
   const extensions = new Set<Extensions>();
 
@@ -223,6 +225,11 @@ const setExtensions = (
 
   if (schedulerQuery) {
     extensions.add('scheduler');
+  }
+
+  if (interrogatorQuery) {
+    extensions.add('interrogator');
+    Config.set('interrogatorModels', interrogatorQuery);
   }
 
   Config.set('extensions', Array.from(extensions));
@@ -298,6 +305,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
   const samplersQuery = await getSamplersQuery();
   const upscalersQuery = await getUpscalersQuery();
   const extensionsQuery = await getExtensionsQuery();
+  const interrogatorQuery = await getInterrogatorQuery();
   const schedulerQuery = await getSchedulerQuery();
   const lorasQuery = await getLORAsQuery();
   const embeddingsQuery = await getEmbeddingsQuery();
@@ -332,7 +340,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
 
   await setLoras(lorasQuery);
 
-  const extensions = setExtensions(extensionsQuery, schedulerQuery);
+  const extensions = setExtensions(extensionsQuery, schedulerQuery, interrogatorQuery);
 
   setControlnet(extensions);
 
