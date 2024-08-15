@@ -1,6 +1,8 @@
 import * as esbuild from 'esbuild';
 import { readFileSync } from 'fs';
 
+import { jsdomPatch } from './jsdomPlugin.mjs';
+
 const isProd = process.env.NODE_ENV === 'production';
 const isWatch = process.env.NODE_ENV === 'watch';
 
@@ -12,8 +14,10 @@ const baseOptions = {
     'process.env.VERSION': `"${packageJson.version}"`
   },
   entryPoints: ['./src/index.ts'],
+  inject: ["./src/document.ts"],
   platform: 'node',
-  target: 'node20'
+  plugins: [jsdomPatch],
+  target: 'node20',
 };
 
 const buildProd = async () => {

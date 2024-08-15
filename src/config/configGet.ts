@@ -28,11 +28,9 @@ import {
   getConfigStyles,
   getConfigUpscalers,
   getConfigVAE,
-  getConfigVersion,
-  getDefaultConfigs,
-  getDefaultTemplates,
-  getForcedConfigs
+  getConfigVersion
 } from './functions';
+import { getDefaultTemplates, getDefaultConfigs, getForcedConfigs } from './defaultValues';
 
 export const options: { description: string; option: Options }[] = [
   { description: 'List of Add Details models, if existing', option: 'adetailers-models' },

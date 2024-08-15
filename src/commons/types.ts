@@ -30,12 +30,15 @@ export interface IBaseQuery {
   alwayson_scripts: Partial<Record<AlwaysOnScriptsNames, AlwaysOnScripts>>;
   batch_size?: number;
   cfg_scale?: number;
+  comments?: object;
   denoising_strength?: number;
   disable_extra_networks?: boolean;
   do_not_save_grid?: boolean;
   do_not_save_samples?: boolean;
   eta?: number;
+  force_task_id?: string;
   height?: number;
+  infotext?: string;
   n_iter?: number;
   negative_prompt?: string;
   override_settings: Partial<IOverrideSettings>;
@@ -43,14 +46,17 @@ export interface IBaseQuery {
   prompt: string;
   refiner_checkpoint?: string;
   refiner_switch_at?: number;
+  firstpass_image?: string;
   restore_faces?: boolean;
   s_churn?: number;
   s_min_uncond?: number;
+  s_noise?: number;
   s_tmax?: number;
   s_tmin?: number;
   sampler_index?: string;
   sampler_name?: string;
   save_images?: boolean;
+  scheduler?: string;
   script_args?: ScriptsArgs;
   script_name?: string;
   seed?: number;
@@ -71,11 +77,18 @@ export interface ITxt2ImgQuery
   controlNet?: IControlNet[];
   cutOff?: ICutOff;
   enable_hr?: boolean;
+
   firstphase_height?: number;
   firstphase_width?: number;
+  hr_checkpoint_name?: string;
   hr_negative_prompt?: string;
   hr_prompt?: string;
+  hr_resize_x?: number;
+  hr_resize_y?: number;
+  hr_sampler_name?: string;
   hr_scale?: number;
+  hr_scheduler?: string;
+  hr_second_pass_steps?: number;
   hr_upscaler?: string;
   tiledDiffusion?: ITiledDiffusion;
   tiledVAE?: ITiledVAE;
@@ -89,6 +102,7 @@ export interface IImg2ImgQuery
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
   cutOff?: ICutOff;
+  image_cfg_scale?: number;
   include_init_images?: boolean;
   init_images: string[];
   initial_noise_multiplier?: number;
@@ -101,6 +115,8 @@ export interface IImg2ImgQuery
   mask_blur?: number;
   mask_blur_x?: number;
   mask_blur_y?: number;
+  mask_round?: boolean;
+  resize_mode?: number;
   tiledDiffusion?: ITiledDiffusion;
   tiledVAE?: ITiledVAE;
   ultimateSdUpscale?: IUltimateSDUpscale;
@@ -231,20 +247,26 @@ export interface IAutoControlnetPose {
   trigger: string;
 }
 
-export interface IDefaultQueryTemplate extends Partial<IPromptSingleSimple> {
+export interface IDefaultValuesConfigPrompt extends IPromptSingleSimple {
+  baseNegativePrompt?: string;
+  basePrompt?: string;
+}
+
+export interface IDefaultQueryTemplate extends Partial<IDefaultValuesConfigPrompt> {
   accelerator: MetadataAccelerator;
+  autoLoad: boolean;
   templateName: string;
   versions: MetadataVersionKey[];
 }
 
-export interface IDefaultQueryConfig extends Partial<IPromptSingleSimple> {
+export interface IDefaultQueryConfig extends Partial<IDefaultValuesConfigPrompt> {
   extends: string;
-  modelName: string;
+  modelName: string[];
   templateName: string;
 }
 
-export interface IForcedQueryConfig extends Partial<IPromptSingleSimple> {
-  modelName: string;
+export interface IForcedQueryConfig extends Partial<IDefaultValuesConfigPrompt> {
+  modelName: string[];
   templateName: string;
 }
 
@@ -382,8 +404,6 @@ export interface IPromptSingleSimple {
   sampler?: string;
   scaleFactor?: number;
   steps?: number;
-  tiledDiffusion?: ITiledDiffusion;
-  tiledVAE?: ITiledVAE;
   tiling?: boolean;
   upscaler?: string;
   vae?: string;
@@ -409,6 +429,8 @@ export interface IPromptSingle extends IPromptSingleSimple {
   prompt: string;
   seed?: number;
   styles?: string[];
+  tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
   ultimateSdUpscale?: IUltimateSDUpscale;
   upscalingNegativePrompt?: string;
   upscalingPrompt?: string;

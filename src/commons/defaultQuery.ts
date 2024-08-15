@@ -113,32 +113,32 @@ export const getDefaultQueryTemplateXL = (accelerator?: MetadataAccelerator): Pa
 export const mergeConfigs = (modelConfig: IDefaultQueryConfig, templates: IDefaultQueryTemplate[]) => {
   const template = templates.find((t) => t.templateName === modelConfig.extends) ?? ({} as Partial<IDefaultQueryTemplate>);
 
-  const { accelerator: _ta, templateName: _tt, versions: _v, ...templateConfig } = template;
+  const { accelerator: _ta, autoLoad: _a, templateName: _tt, versions: _v, ...templateConfig } = template;
   const { extends: _e, modelName: _m, templateName: _t, ...config } = modelConfig;
 
   return { ...templateConfig, ...config };
 };
 
-export const getDefaultQueryConfig = (model?: IModelWithHash): Partial<IPromptSingleSimple> => {
+export const getDefaultQueryConfig = (model?: IModelWithHash): Partial<IDefaultQueryTemplate> => {
   if (model) {
     const { accelerator, name, version } = model;
     const templates = Config.get('defaultQueryTemplates');
     const models = Config.get('defaultQueryConfigs');
 
-    const modelConfig = models.find((m) => m.modelName === name);
+    const modelConfig = models.find((m) => m.modelName.includes(name));
 
     if (modelConfig) {
       return mergeConfigs(modelConfig, templates);
     }
 
-    const templateAccelerator = templates.find((t) => t.accelerator === accelerator && t.versions?.includes(version));
+    const templateAccelerator = templates.find((t) => t.accelerator === accelerator && t.versions?.includes(version) && t.autoLoad);
 
     if (templateAccelerator) {
       const { accelerator: _ta, templateName: _tt, versions: _v, ...templateConfig } = templateAccelerator;
       return { ...templateConfig };
     }
 
-    const templateVersion = templates.find((t) => t.versions?.includes(version)) ?? ({} as Partial<IDefaultQueryTemplate>);
+    const templateVersion = templates.find((t) => t.versions?.includes(version) && t.autoLoad) ?? ({} as Partial<IDefaultQueryTemplate>);
 
     const { accelerator: _ta, templateName: _tt, versions: _v, ...templateConfig } = templateVersion;
 
@@ -148,12 +148,12 @@ export const getDefaultQueryConfig = (model?: IModelWithHash): Partial<IPromptSi
   return {};
 };
 
-export const getForcedQueryConfig = (model?: IModelWithHash): Partial<IPromptSingleSimple> => {
+export const getForcedQueryConfig = (model?: IModelWithHash): Partial<IDefaultQueryTemplate> => {
   if (model) {
     const { name } = model;
     const models = Config.get('forcedQueryConfigs');
 
-    const modelConfig = models.find((m) => m.modelName === name) ?? ({} as Partial<IForcedQueryConfig>);
+    const modelConfig = models.find((m) => m.modelName.includes(name)) ?? ({} as Partial<IForcedQueryConfig>);
 
     const { modelName: _m, templateName: _t, ...config } = modelConfig;
 

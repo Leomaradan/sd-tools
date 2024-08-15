@@ -16,11 +16,9 @@ import {
   setConfigRedrawModels,
   setConfigScheduler,
   setInquirerAdetailerTriggers,
-  setInquirerControlNetPoseTriggers,
-  setInquirerDefaultQueryConfigs,
-  setInquirerDefaultQueryTemplates,
-  setInquirerForcedQueryConfigs
+  setInquirerControlNetPoseTriggers
 } from './functions';
+import { setDefaultQueryTemplates, setDefaultQueryConfigs, setForcedQueryConfigs } from './defaultValues';
 
 export const command = 'wizard';
 export const describe = 'wizard helping configuring values';
@@ -75,19 +73,19 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
     value: 'common-negative-xl'
   },
   {
-    callback: setInquirerDefaultQueryTemplates,
+    callback: setDefaultQueryTemplates,
     description: 'Set template for default values',
     name: 'Default Values Templates',
     value: 'default-templates'
   },
   {
-    callback: setInquirerDefaultQueryConfigs,
+    callback: setDefaultQueryConfigs,
     description: 'Set configs for default values',
     name: 'Default Values Configs',
     value: 'default-configs'
   },
   {
-    callback: setInquirerForcedQueryConfigs,
+    callback: setForcedQueryConfigs,
     description: 'Set forced values',
     name: 'Forced Values',
     value: 'forced-configs'

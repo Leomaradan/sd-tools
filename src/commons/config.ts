@@ -42,14 +42,26 @@ const migrations: Record<number, () => void> = {
     Config.set('models', models);
 
     const templates: IDefaultQueryTemplate[] = [
-      { accelerator: 'none', templateName: 'SD 1.5', versions: ['sd15'], ...getDefaultQueryTemplate15('none') },
-      { accelerator: 'lcm', templateName: 'SD 1.5 LCM', versions: ['sd15'], ...getDefaultQueryTemplate15('lcm') },
-      { accelerator: 'none', templateName: 'SD 2.x', versions: ['sd20', 'sd21'], ...getDefaultQueryTemplate20(false) },
-      { accelerator: 'none', templateName: 'SD 2.x Full', versions: ['sd20-768', 'sd21-768'], ...getDefaultQueryTemplate20(true) },
-      { accelerator: 'none', templateName: 'SDXL', versions: ['sdxl'], ...getDefaultQueryTemplateXL('none') },
-      { accelerator: 'lcm', templateName: 'SDXL LCM', versions: ['sdxl'], ...getDefaultQueryTemplateXL('lcm') },
-      { accelerator: 'lightning', templateName: 'SDXL Lightning', versions: ['sdxl'], ...getDefaultQueryTemplateXL('lightning') },
-      { accelerator: 'turbo', templateName: 'SDXL Turbo', versions: ['sdxl'], ...getDefaultQueryTemplateXL('turbo') }
+      { accelerator: 'none', autoLoad: true, templateName: 'SD 1.5', versions: ['sd15'], ...getDefaultQueryTemplate15('none') },
+      { accelerator: 'lcm', autoLoad: true, templateName: 'SD 1.5 LCM', versions: ['sd15'], ...getDefaultQueryTemplate15('lcm') },
+      { accelerator: 'none', autoLoad: true, templateName: 'SD 2.x', versions: ['sd20', 'sd21'], ...getDefaultQueryTemplate20(false) },
+      {
+        accelerator: 'none',
+        autoLoad: true,
+        templateName: 'SD 2.x Full',
+        versions: ['sd20-768', 'sd21-768'],
+        ...getDefaultQueryTemplate20(true)
+      },
+      { accelerator: 'none', autoLoad: true, templateName: 'SDXL', versions: ['sdxl'], ...getDefaultQueryTemplateXL('none') },
+      { accelerator: 'lcm', autoLoad: true, templateName: 'SDXL LCM', versions: ['sdxl'], ...getDefaultQueryTemplateXL('lcm') },
+      {
+        accelerator: 'lightning',
+        autoLoad: true,
+        templateName: 'SDXL Lightning',
+        versions: ['sdxl'],
+        ...getDefaultQueryTemplateXL('lightning')
+      },
+      { accelerator: 'turbo', autoLoad: true, templateName: 'SDXL Turbo', versions: ['sdxl'], ...getDefaultQueryTemplateXL('turbo') }
     ];
 
     Config.set('defaultQueryTemplates', templates);

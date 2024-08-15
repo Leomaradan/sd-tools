@@ -28,6 +28,7 @@ import {
 import { isTxt2ImgQuery } from '../query';
 import {
   type IClassicPrompt,
+  type IDefaultValuesConfigPrompt,
   type IImg2ImgQuery,
   type IModel,
   type IPromptSingle,
@@ -400,8 +401,12 @@ const validateTemplate = (template: string) => {
 };
 
 const mergeQueries = (checkpoint: IModel | undefined, singleQueryBase: IPromptSingle) => {
-  const defaultQueryConfigs = getDefaultQueryConfig(checkpoint);
-  const forcedQueryConfigs = getForcedQueryConfig(checkpoint) as IPromptSingle;
+  const { baseNegativePrompt, basePrompt, ...defaultQueryConfigs } = getDefaultQueryConfig(checkpoint);
+  const {
+    baseNegativePrompt: forcedBaseNegativePrompt,
+    basePrompt: forcedBasePrompt,
+    ...forcedQueryConfigs
+  } = getForcedQueryConfig(checkpoint) as IDefaultValuesConfigPrompt; //IPromptSingle;
 
   const singleQuery: Record<string, unknown> = { ...defaultQueryConfigs };
 
@@ -413,11 +418,30 @@ const mergeQueries = (checkpoint: IModel | undefined, singleQueryBase: IPromptSi
   });
 
   Object.keys(forcedQueryConfigs).forEach((key) => {
-    const value = forcedQueryConfigs[key as keyof IPromptSingle];
+    const value = forcedQueryConfigs[key as keyof typeof forcedQueryConfigs];
     if (value !== undefined) {
       singleQuery[key] = value;
     }
   });
+
+  if (basePrompt) {
+    singleQuery.prompt = basePrompt.replace('{prompt}', (singleQuery as unknown as IPromptSingle)?.prompt ?? '');
+  }
+
+  if (forcedBasePrompt) {
+    singleQuery.prompt = forcedBasePrompt.replace('{prompt}', (singleQuery as unknown as IPromptSingle)?.prompt ?? '');
+  }
+
+  if (baseNegativePrompt) {
+    singleQuery.negativePrompt = baseNegativePrompt.replace('{prompt}', (singleQuery as unknown as IPromptSingle)?.negativePrompt ?? '');
+  }
+
+  if (forcedBaseNegativePrompt) {
+    singleQuery.negativePrompt = forcedBaseNegativePrompt.replace(
+      '{prompt}',
+      (singleQuery as unknown as IPromptSingle)?.negativePrompt ?? ''
+    );
+  }
 
   return singleQuery as unknown as IPromptSingle;
 };
@@ -475,6 +499,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       denoising_strength: denoising,
       enable_hr: enableHighRes,
       height: height,
+
       hr_scale: scaleFactor,
       init_images: (initImage ? [getBase64Image(initImage)] : undefined) as string[],
       negative_prompt: negativePrompt,
