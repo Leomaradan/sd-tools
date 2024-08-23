@@ -28,9 +28,10 @@ describe('query tests', () => {
     };
     const result = prepareRenderQuery(config, 'txt2img');
 
-    const expectedResponse: IBaseQuery = {
+    const expectedResponse: { enable_hr: boolean } & IBaseQuery = {
       alwayson_scripts: {},
       cfg_scale: 7,
+      enable_hr: false,
       height: 512,
       negative_prompt: 'test negative prompt 1',
       override_settings: {},
@@ -89,7 +90,13 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
+    const expectedResponse: {
+      enable_hr: boolean;
+      hr_negative_prompt?: string;
+      hr_prompt?: string;
+      hr_scale?: number;
+      hr_upscaler?: string;
+    } & IBaseQuery = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
@@ -117,6 +124,7 @@ describe('query tests', () => {
       },
       cfg_scale: 5,
       denoising_strength: 0.5,
+      enable_hr: true,
       height: 768,
       hr_negative_prompt: '',
       hr_prompt: '',
@@ -207,7 +215,13 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
+    const expectedResponse: {
+      enable_hr: boolean;
+      hr_negative_prompt?: string;
+      hr_prompt?: string;
+      hr_scale?: number;
+      hr_upscaler?: string;
+    } & IBaseQuery = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }]
@@ -232,6 +246,7 @@ describe('query tests', () => {
       },
       cfg_scale: 5,
       denoising_strength: 0.5,
+      enable_hr: true,
       height: 256,
       hr_negative_prompt: '',
       hr_prompt: '',
@@ -267,9 +282,10 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(config, 'txt2img');
 
-    const expectedResponse: IBaseQuery = {
+    const expectedResponse: { enable_hr: boolean } & IBaseQuery = {
       alwayson_scripts: {},
       cfg_scale: 7,
+      enable_hr: false,
       height: 512,
       negative_prompt: '',
       override_settings: {},
