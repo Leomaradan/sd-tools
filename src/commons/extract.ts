@@ -1,6 +1,6 @@
 import { type IFile } from './file';
 import { interrogateQuery } from './query';
-import { type IAdetailerPrompt, type IPromptSingle } from './types';
+import { type IAdetailerPrompt, type IPromptSingle, type InterrogateModelsAll } from './types';
 
 export interface IExtractOptions {
   addBefore?: string;
@@ -16,7 +16,8 @@ export interface IExtractOptionsFull extends Omit<IExtractOptions, 'format'> {
 
 export interface IInterrogateOptions {
   addBefore?: string;
-  deepBooru?: boolean;
+  //deepBooru?: boolean;
+  models?: InterrogateModelsAll[];
   recursive?: boolean;
 }
 
@@ -329,8 +330,8 @@ export const extractFromFile = async (
   }
 };
 
-export const interrogateFromFile = async (file: IFile, deepBooru?: boolean): Promise<string | undefined> => {
-  const interrogateResponse = await interrogateQuery(file.filename, [deepBooru ? 'deepdanbooru' : 'clip' /*'ViT-L-14/openai'*/]);
+export const interrogateFromFile = async (file: IFile, models?: InterrogateModelsAll[]): Promise<string | undefined> => {
+  const interrogateResponse = await interrogateQuery(file.filename, models ?? ['ViT-L-14/openai', 'clip']);
 
   if (interrogateResponse) {
     return interrogateResponse.prompt;

@@ -227,6 +227,8 @@ export type InterrogateModelsInterogator = 'ViT-H-14/laion2b_s32b_b79k' | 'ViT-L
 export type InterrogateModelsBase = 'clip' | 'deepdanbooru';
 export type InterrogateModelsAll = InterrogateModelsBase | InterrogateModelsInterogator;
 
+export const interrogateModelsAll: InterrogateModelsAll[] = ['clip', 'deepdanbooru', 'ViT-H-14/laion2b_s32b_b79k', 'ViT-L-14/openai'];
+
 export interface IInterrogateResponse {
   prompt: string;
 }

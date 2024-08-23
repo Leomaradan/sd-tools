@@ -4,6 +4,7 @@ import yargs from 'yargs';
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { type IInterrogateOptions, type IInterrogateOptionsFull } from '../commons/extract';
 import { ExitCodes, loggerInfo } from '../commons/logger';
+import { type InterrogateModelsAll, interrogateModelsAll } from '../commons/types';
 import { interrogate } from './interrogate';
 
 export const command = 'interrogate <source>';
@@ -21,10 +22,23 @@ export const builder = (builder: yargs.Argv<object>) => {
         describe: 'add before prompt. Use {filename} to insert filename without extension',
         type: 'string'
       },
-      deepBooru: {
-        alias: 'b',
-        describe: 'Use DeepBooru to extract tags from images',
-        type: 'boolean'
+      models: {
+        alias: 'm',
+        coerce: (models: string) => {
+          if (!models || models === '') {
+            return undefined;
+          }
+
+          const modelsList = models.split(',') as InterrogateModelsAll[];
+
+          if (modelsList.every((model) => interrogateModelsAll.includes(model))) {
+            return modelsList;
+          }
+
+          throw new Error(`Models must be one of the following: ${interrogateModelsAll}`);
+        },
+        describe: `Models to use, separated by comma. Can be anything from the following list: ${interrogateModelsAll}`,
+        type: 'string'
       },
       recursive: {
         alias: 'r',
@@ -45,7 +59,7 @@ export const handler = (argv: IInterrogateOptionsFull) => {
 
   const options: IInterrogateOptions = {
     addBefore: argv.addBefore ?? undefined,
-    deepBooru: argv.deepBooru ?? false,
+    models: argv.models ?? undefined,
     recursive: argv.recursive ?? false
   };
 
