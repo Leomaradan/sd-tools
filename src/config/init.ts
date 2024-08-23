@@ -7,6 +7,7 @@ import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
+  checkApiQuery,
   getAdModelQuery,
   getControlnetModelsQuery,
   getControlnetModulesQuery,
@@ -286,7 +287,13 @@ const setAdetailer = async (
   }
 };
 
-export const handler = async (argv: { endpoint?: string; force?: boolean; ['purge-cache']?: boolean }) => {
+interface IInitArgs {
+  endpoint?: string;
+  force?: boolean;
+  ['purge-cache']?: boolean;
+}
+
+export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
   const { endpoint, force } = argv;
   const initialized = Config.get('initialized');
 
@@ -298,6 +305,13 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
 
   if (endpoint || !initialized || force) {
     Config.set('endpoint', endpoint ?? 'http://127.0.0.1:7860');
+  }
+
+  const result = await checkApiQuery();
+
+  if (!result) {
+    loggerInfo('Error: Cannot initialize config : API is offline');
+    return false;
   }
 
   const modelsQuery = await getModelsQuery();
@@ -409,4 +423,9 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     Config.set('autoTiledDiffusion', false);
     Config.set('autoTiledVAE', true);
   }
+  return true;
+};
+
+export const handler = async (argv: IInitArgs) => {
+  initFunction(argv);
 };

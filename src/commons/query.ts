@@ -442,6 +442,7 @@ export const interrogateQuery = async (
 type MiscQueryApi =
   | 'adetailer/v1/ad_model'
   | 'agent-scheduler/v1/history?limit=1'
+  | 'app_id'
   | 'controlnet/model_list'
   | 'controlnet/module_list'
   | 'interrogator/models'
@@ -464,11 +465,19 @@ const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> 
       return response.data;
     })
     .catch((error) => {
-      loggerInfo(`Error: `);
-      loggerInfo(error.message);
+      loggerVerbose(`Error: `);
+      loggerVerbose(error.message);
     });
 };
 
+export const checkApiQuery = async () => {
+  try {
+    const result = await miscQuery<{ filename: string; model_name: string; title: string }[]>('app_id');
+    return !!result;
+  } catch {
+    return false;
+  }
+};
 export const getModelsQuery = () => miscQuery<{ filename: string; model_name: string; title: string }[]>('sdapi/v1/sd-models');
 export const getVAEQuery = () => miscQuery<{ model_name: string }[]>('sdapi/v1/sd-vae');
 export const getSamplersQuery = () => miscQuery<{ aliases: string[]; name: string }[]>('sdapi/v1/samplers');
