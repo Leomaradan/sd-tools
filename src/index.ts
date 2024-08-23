@@ -16,7 +16,7 @@ import * as upscale from './upscale';
 const argv = process.argv.slice(2);
 
 Config.migrate().then((loaded) => {
-  if (!loaded) {
+  if (loaded) {
     yargs(argv)
       .scriptName('sd-tools')
       .command(init)
