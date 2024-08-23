@@ -1,6 +1,6 @@
 import { type IFile } from './file';
 import { interrogateQuery } from './query';
-import { type IAdetailerPrompt, type IPromptSingle } from './types';
+import { type IAdetailerPrompt, type IPromptSingle, type InterrogateModelsAll } from './types';
 
 export interface IExtractOptions {
   addBefore?: string;
@@ -11,6 +11,17 @@ export interface IExtractOptions {
 
 export interface IExtractOptionsFull extends Omit<IExtractOptions, 'format'> {
   format: string;
+  source: string;
+}
+
+export interface IInterrogateOptions {
+  addBefore?: string;
+  //deepBooru?: boolean;
+  models?: InterrogateModelsAll[];
+  recursive?: boolean;
+}
+
+export interface IInterrogateOptionsFull extends IInterrogateOptions {
   source: string;
 }
 
@@ -311,10 +322,18 @@ export const extractFromFile = async (
   }
 
   if (interrogate) {
-    const interrogateResponse = await interrogateQuery(file.filename);
+    const interrogateResponse = await interrogateQuery(file.filename, ['ViT-H-14/laion2b_s32b_b79k']);
 
     if (interrogateResponse) {
       return { prompt: interrogateResponse.prompt };
     }
+  }
+};
+
+export const interrogateFromFile = async (file: IFile, models?: InterrogateModelsAll[]): Promise<string | undefined> => {
+  const interrogateResponse = await interrogateQuery(file.filename, models ?? ['ViT-L-14/openai', 'clip']);
+
+  if (interrogateResponse) {
+    return interrogateResponse.prompt;
   }
 };

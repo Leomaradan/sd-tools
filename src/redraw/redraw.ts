@@ -166,7 +166,7 @@ const getControlNetIPAdapter = (sdxl: boolean, file: IFile): IControlNet | undef
   }
 };
 
-const prepareQueryClassical = async (
+const prepareQueryClassicalBase = (
   file: IFile,
   style: 'anime' | 'realism',
   denoising_strength: number | number[],
@@ -182,7 +182,7 @@ const prepareQueryClassical = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: { sdxl: boolean } & IClassicPrompt = {
+  const baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -198,6 +198,18 @@ const prepareQueryClassical = async (
     styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     width
   };
+
+  return baseParams;
+};
+
+const prepareQueryClassical = async (
+  file: IFile,
+  style: 'anime' | 'realism',
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let baseParams = prepareQueryClassicalBase(file, style, denoising_strength, addToPrompt, sdxl);
 
   const controlNet1 = getControlNetLineart(sdxl ?? false, style);
   const controlNet2 = getControlNetOpenPose(sdxl ?? false, style);
@@ -219,7 +231,7 @@ const prepareQueryClassical = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;
@@ -232,7 +244,7 @@ const prepareQueryClassical = async (
   }
 };
 
-const prepareQueryIpAdapter = async (
+const prepareQueryIpAdapterBase = (
   file: IFile,
   style: 'anime' | 'realism',
   denoising_strength: number | number[],
@@ -248,7 +260,7 @@ const prepareQueryIpAdapter = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: { sdxl: boolean } & IClassicPrompt = {
+  const baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -263,6 +275,18 @@ const prepareQueryIpAdapter = async (
     styles: style === 'anime' ? ['Anime (SDXL)'] : [],
     width
   };
+
+  return baseParams;
+};
+
+const prepareQueryIpAdapter = async (
+  file: IFile,
+  style: 'anime' | 'realism',
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let baseParams = prepareQueryIpAdapterBase(file, style, denoising_strength, addToPrompt, sdxl);
 
   const controlNet1 = getControlNetIPAdapter(sdxl ?? false, file);
   const controlNet2 = getControlNetOpenPose(sdxl ?? false, style, file);
@@ -284,7 +308,7 @@ const prepareQueryIpAdapter = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;

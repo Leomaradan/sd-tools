@@ -160,7 +160,15 @@ export interface IRedrawOptions {
   upscales?: number[];
 }
 
-export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
+export type Extensions =
+  | 'adetailer'
+  | 'controlnet'
+  | 'cutoff'
+  | 'interrogator'
+  | 'scheduler'
+  | 'tiled diffusion'
+  | 'tiled vae'
+  | 'ultimate-sd-upscale';
 
 export interface IModel {
   accelarator?: MetadataAccelerator;
@@ -215,6 +223,12 @@ export interface ICivitAIInfoFile {
   trainedWords: string[];
 }
 
+export type InterrogateModelsInterogator = 'ViT-H-14/laion2b_s32b_b79k' | 'ViT-L-14/openai';
+export type InterrogateModelsBase = 'clip' | 'deepdanbooru';
+export type InterrogateModelsAll = InterrogateModelsBase | InterrogateModelsInterogator;
+
+export const interrogateModelsAll: InterrogateModelsAll[] = ['clip', 'deepdanbooru', 'ViT-H-14/laion2b_s32b_b79k', 'ViT-L-14/openai'];
+
 export interface IInterrogateResponse {
   prompt: string;
 }
@@ -253,6 +267,7 @@ export interface IConfig {
   endpoint: string;
   extensions: Extensions[];
   initialized: boolean;
+  interrogatorModels: string[];
   lcm: {
     auto: boolean;
     sd15?: string;

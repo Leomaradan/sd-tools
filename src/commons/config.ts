@@ -1,14 +1,15 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { default: Configstore } = require('configstore');
 
-import { handler as init } from '../config/init';
-import { loggerVerbose, mode } from './logger';
+import { initFunction } from '../config/init';
+import { loggerInfo, loggerVerbose, mode } from './logger';
+import { checkApiQuery } from './query';
 import { type ICache, type IConfig } from './types';
 
 const config = new Configstore('sd-tools');
 const cache = new Configstore('sd-tools-cache');
 
-const LATEST_CONFIG_VERSION = 3;
+const LATEST_CONFIG_VERSION = 4;
 
 const migrations: Record<number, () => void> = {
   0: () => {
@@ -25,10 +26,13 @@ const migrations: Record<number, () => void> = {
   2: () => {
     Config.set('autoAdetailers', []);
     Config.set('autoControlnetPose', []);
+  },
+  3: () => {
+    Config.set('interrogatorModels', []);
   }
 };
 
-const configMigration = async () => {
+const configMigration = async (): Promise<boolean> => {
   let configVersion = Config.get('configVersion') as number | undefined;
 
   if (configVersion === undefined) {
@@ -43,16 +47,26 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-
     // Manually manage the flags here
     mode.verbose = process.argv.includes('--verbose');
     mode.info = !process.argv.includes('--silent');
     mode.log = !process.argv.includes('--no-log');
 
     loggerVerbose('Config has changed, refreshing models...');
-    await init({ force: true });
+    const response = await initFunction({ force: true });
     Config.set('configVersion', LATEST_CONFIG_VERSION);
+
+    return response;
   }
+
+  const result = await checkApiQuery();
+
+  if (!result) {
+    loggerInfo('Error: Cannot initialize config : API is offline');
+    return false;
+  }
+
+  return true;
 };
 
 export const Config = {

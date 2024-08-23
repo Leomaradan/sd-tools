@@ -7,11 +7,13 @@ import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
+  checkApiQuery,
   getAdModelQuery,
   getControlnetModelsQuery,
   getControlnetModulesQuery,
   getEmbeddingsQuery,
   getExtensionsQuery,
+  getInterrogatorQuery,
   getLORAsQuery,
   getModelsQuery,
   getSamplersQuery,
@@ -194,7 +196,8 @@ const setExtensions = (
   },
   schedulerQuery: {
     tasks: string[];
-  } | void
+  } | void,
+  interrogatorQuery: string[] | void
 ) => {
   const extensions = new Set<Extensions>();
 
@@ -223,6 +226,11 @@ const setExtensions = (
 
   if (schedulerQuery) {
     extensions.add('scheduler');
+  }
+
+  if (interrogatorQuery) {
+    extensions.add('interrogator');
+    Config.set('interrogatorModels', interrogatorQuery);
   }
 
   Config.set('extensions', Array.from(extensions));
@@ -279,7 +287,13 @@ const setAdetailer = async (
   }
 };
 
-export const handler = async (argv: { endpoint?: string; force?: boolean; ['purge-cache']?: boolean }) => {
+interface IInitArgs {
+  endpoint?: string;
+  force?: boolean;
+  ['purge-cache']?: boolean;
+}
+
+export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
   const { endpoint, force } = argv;
   const initialized = Config.get('initialized');
 
@@ -293,11 +307,19 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     Config.set('endpoint', endpoint ?? 'http://127.0.0.1:7860');
   }
 
+  const result = await checkApiQuery();
+
+  if (!result) {
+    loggerInfo('Error: Cannot initialize config : API is offline');
+    return false;
+  }
+
   const modelsQuery = await getModelsQuery();
   const vaeQuery = await getVAEQuery();
   const samplersQuery = await getSamplersQuery();
   const upscalersQuery = await getUpscalersQuery();
   const extensionsQuery = await getExtensionsQuery();
+  const interrogatorQuery = await getInterrogatorQuery();
   const schedulerQuery = await getSchedulerQuery();
   const lorasQuery = await getLORAsQuery();
   const embeddingsQuery = await getEmbeddingsQuery();
@@ -332,7 +354,7 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
 
   await setLoras(lorasQuery);
 
-  const extensions = setExtensions(extensionsQuery, schedulerQuery);
+  const extensions = setExtensions(extensionsQuery, schedulerQuery, interrogatorQuery);
 
   setControlnet(extensions);
 
@@ -401,4 +423,9 @@ export const handler = async (argv: { endpoint?: string; force?: boolean; ['purg
     Config.set('autoTiledDiffusion', false);
     Config.set('autoTiledVAE', true);
   }
+  return true;
+};
+
+export const handler = async (argv: IInitArgs) => {
+  initFunction(argv);
 };
