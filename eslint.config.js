@@ -1,8 +1,8 @@
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import jest from 'eslint-plugin-jest';
+import onlyWarnPlugin from 'eslint-plugin-only-warn';
 import perfectionist from 'eslint-plugin-perfectionist';
-import perfectionistRecommendedNatural from 'eslint-plugin-perfectionist/configs/recommended-natural';
 import sonarjs from 'eslint-plugin-sonarjs';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
@@ -17,11 +17,19 @@ const config = [
   {
     ignores: ['coverage/**', 'test/**', 'build/**', 'dist/**', '.yarn/**']
   },
-
+  {
+    name: 'Only Warn',
+    plugins: { 'only-warn': onlyWarnPlugin }
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
-  perfectionistRecommendedNatural,
-  sonarjs.configs.recommended,
+  {
+    name: 'SonarLint Plugin',
+    plugins: {
+      sonarjs
+    },
+    rules: sonarjs.configs.recommended.rules
+  },
   prettier,
   {
     linterOptions: {
@@ -30,6 +38,7 @@ const config = [
     },
     plugins: { jest, perfectionist },
     rules: {
+      ...perfectionist.configs['recommended-natural'].rules,
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_', ignoreRestSiblings: true }
@@ -66,7 +75,8 @@ const config = [
       'sonarjs/prefer-object-literal': 'warn',
       'sonarjs/prefer-single-boolean-return': 'warn',
       'sonarjs/prefer-while': 'warn'
-    }
+    },
+    settings: { react: { version: 'detect' } }
   },
   {
     files: ['*.cjs', '*.mjs'],
