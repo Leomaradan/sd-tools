@@ -74,7 +74,8 @@ const config = [
       'sonarjs/prefer-immediate-return': 'warn',
       'sonarjs/prefer-object-literal': 'warn',
       'sonarjs/prefer-single-boolean-return': 'warn',
-      'sonarjs/prefer-while': 'warn'
+      'sonarjs/prefer-while': 'warn',
+      'sonarjs/sonar-no-fallthrough': 'off'
     },
     settings: { react: { version: 'detect' } }
   },
