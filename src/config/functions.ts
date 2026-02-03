@@ -1,4 +1,4 @@
-import { Separator, input, select } from '@inquirer/prompts';
+import { input, select, Separator } from '@inquirer/prompts';
 import { existsSync } from 'node:fs';
 
 import type { IAutoAdetailer, IAutoControlnetPose, IConfig } from '../commons/types';
@@ -39,6 +39,7 @@ export type EditableOptions =
   | 'cutoff-weight'
   | 'endpoint'
   | 'lcm'
+  | 'output-folder'
   | 'redraw-models'
   | 'scheduler';
 
@@ -91,13 +92,21 @@ export const getConfigLCM = () => {
   - SD 1.5 : ${sd15}
   - SDXL : ${sdxl}`);
 };
+
+export const getConfigOutputFolder = () => {
+  const outputFolder = Config.get('outputFolder');
+  loggerInfo(`Output folder: ${outputFolder}`);
+};
+
 export const getConfigRedrawModels = () => {
-  const { anime15, animexl, realist15, realistxl } = Config.get('redrawModels');
+  const { anime15, animexl, pixel15, pixelxl, realist15, realistxl } = Config.get('redrawModels');
   loggerInfo(`Redraw models: 
 - Anime : ${anime15}
 - Anime (SDXL) : ${animexl}
 - Realist : ${realist15}
-- Realist (SDXL) : ${realistxl}`);
+- Realist (SDXL) : ${realistxl}
+- Pixel Art : ${pixel15}
+- Pixel Art (SDXL) : ${pixelxl}`);
 };
 export const getConfigScheduler = () => loggerInfo(`Scheduler: ${Config.get('scheduler') ? 'enabled' : 'disabled'}`);
 
@@ -166,7 +175,7 @@ export const setConfigAutoLCM = (value: boolean) => {
   getConfigAutoLCM();
 };
 
-export const setConfigAutoTiledDiffusion = (value: TiledDiffusionMethods | false) => {
+export const setConfigAutoTiledDiffusion = (value: false | TiledDiffusionMethods) => {
   if (!Config.get('extensions').includes('tiled diffusion')) {
     loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
     loggerVerbose(`MultiDiffusion Upscaler extension url: ${MULTIDIFFUSION_URL}`);
@@ -271,6 +280,11 @@ export const setConfigEndpoint = (value: string) => {
   getConfigEndpoint();
 };
 
+export const setConfigOutputFolder = (value: string) => {
+  Config.set('outputFolder', value);
+  getConfigOutputFolder();
+};
+
 export const setConfigLCMCommandLine = (value: string[]) => {
   let valueArray = value;
   if (!Array.isArray(value)) {
@@ -333,7 +347,7 @@ export const setConfigRedrawModelsCommandLine = (value: string[]) => {
 
       const [category, model] = val.split(':');
 
-      if (!['anime15', 'animexl', 'realist15', 'realistxl'].includes(category.toLocaleLowerCase())) {
+      if (!['anime15', 'animexl', 'pixel15', 'pixelxl', 'realist15', 'realistxl'].includes(category.toLocaleLowerCase())) {
         loggerInfo(`Category is invalid`);
         return true;
       }
@@ -344,7 +358,7 @@ export const setConfigRedrawModelsCommandLine = (value: string[]) => {
     })
   ) {
     loggerInfo(
-      `Value contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:" or "animeXL:" followed by a valid model name`
+      `Value contains invalid value. Values must start with "realist15:", "realistXL:", "anime15:", "animeXL:", "pixel15:" or "pixelXL:" followed by a valid model name`
     );
     process.exit(ExitCodes.CONFIG_SET_REDRAW_INVALID_MODELS);
   }

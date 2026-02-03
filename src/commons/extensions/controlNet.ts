@@ -54,8 +54,16 @@ export const normalizeControlNetMode = (input: ControlNetMode | ControlNetModeLe
 
 export interface IControlNet {
   control_mode: ControlNetMode | ControlNetModeLegacy;
+  image?: string;
   image_name?: string;
+  /**
+   * @deprecated Use image instead
+   */
   input_image?: string;
+  low_vram?: boolean;
+  /**
+   * @deprecated Use low_vram instead
+   */
   lowvram?: boolean;
   model: string;
   module: string;
@@ -63,6 +71,7 @@ export interface IControlNet {
   prompt?: string;
   regex?: string;
   resize_mode: ControlNetResizes | ControlNetResizesLegacy;
+  weight?: number;
 }
 
 /**
@@ -71,12 +80,13 @@ export interface IControlNet {
 export interface IControlNetQuery {
   control_mode: ControlNetMode;
   enabled: true;
-  input_image?: string;
-  lowvram?: boolean;
+  image?: { image: string };
+  low_vram?: boolean;
   model: string;
   module: string;
   pixel_perfect?: boolean;
   resize_mode: ControlNetResizes;
+  weight?: number;
 }
 
 export const CONTROLNET_URL = 'https://github.com/Mikubill/sd-webui-controlnet.git';

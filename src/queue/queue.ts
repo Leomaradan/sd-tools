@@ -18,6 +18,7 @@ export const queueFromFile = async (source: string, validateOnly: boolean) => {
       loggerInfo(`Merged config from ${source} has no prompts`);
       process.exit(ExitCodes.QUEUE_NO_RESULTING_PROMPTS);
     }
+
     prompts(promptsResolved, validateOnly);
   }
 };

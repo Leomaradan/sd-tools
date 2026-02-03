@@ -1,4 +1,4 @@
-import { Separator, confirm, input, select } from '@inquirer/prompts';
+import { confirm, input, select, Separator } from '@inquirer/prompts';
 
 import { Config } from '../commons/config';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
@@ -83,12 +83,14 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
           { name: 'Anime for SD 1.5', value: 'anime15' },
           { name: 'Realist for SD 1.5', value: 'realist15' },
           { name: 'Anime for SDXL', value: 'animexl' },
-          { name: 'Realist for SDXL', value: 'realistxl' }
+          { name: 'Realist for SDXL', value: 'realistxl' },
+          { name: 'Pixel Art for SD 1.5', value: 'pixel15' },
+          { name: 'Pixel Art for SDXL', value: 'pixelxl' }
         ],
         message: 'Select model type'
       });
 
-      const modelType = actionType === 'anime15' || actionType === 'realist15' ? 'sd15' : 'sdxl';
+      const modelType = actionType === 'anime15' || actionType === 'realist15' || actionType === 'pixel15' ? 'sd15' : 'sdxl';
       const listModels = Config.get('models');
       const listModelsFiltered = listModels.filter((model) => model.version === modelType);
       const selectedModels = redrawModels[actionType] as string;

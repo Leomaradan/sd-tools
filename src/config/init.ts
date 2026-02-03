@@ -20,7 +20,8 @@ import {
   getSchedulerQuery,
   getStylesQuery,
   getUpscalersQuery,
-  getVAEQuery
+  getVAEQuery,
+  getVAEQueryForge
 } from '../commons/query';
 import { type Extensions, type ILora, type IModel, type IModelWithHash, type IStyle, Version } from '../commons/types';
 
@@ -212,14 +213,17 @@ const setExtensions = (
       case 'cutoff':
         extensions.add('cutoff');
         break;
-      case 'ultimate-sd-upscale':
-        extensions.add('ultimate-sd-upscale');
+      case 'forge couple':
+        extensions.add('sd-forge-couple');
         break;
       case 'tiled diffusion':
         extensions.add('tiled diffusion');
         break;
       case 'tiled vae':
         extensions.add('tiled vae');
+        break;
+      case 'ultimate-sd-upscale':
+        extensions.add('ultimate-sd-upscale');
         break;
     }
   });
@@ -240,12 +244,49 @@ const setExtensions = (
 
 const setControlnet = async (extensions: Set<Extensions>) => {
   if (extensions.has('controlnet')) {
-    const controlnetModelsQuery = await getControlnetModelsQuery();
+    const controlnetModelsQueryOriginal = await getControlnetModelsQuery();
+    const controlnetModelsQuery = {
+      model_list: [
+        'control-lora-canny-rank256 [ec2dbbe4]',
+        'control-lora-depth-rank256 [9fe0fd3b]',
+        'control_v11e_sd15_ip2p [c4bb465c]',
+        'control_v11e_sd15_shuffle [526bfdae]',
+        'control_v11f1e_sd15_tile [a371b31b]',
+        'control_v11f1p_sd15_depth [cfd03158]',
+        'control_v11p_sd15_canny [d14c016b]',
+        'control_v11p_sd15_inpaint [ebff9138]',
+        'control_v11p_sd15_lineart [43d4be0d]',
+        'control_v11p_sd15_mlsd [aca30ff0]',
+        'control_v11p_sd15_normalbae [316696f1]',
+        'control_v11p_sd15_openpose [cab727d4]',
+        'control_v11p_sd15_scribble [d4ba51ff]',
+        'control_v11p_sd15_seg [e1f51eb9]',
+        'control_v11p_sd15_softedge [a8575a2a]',
+        'control_v11p_sd15s2_lineart_anime [3825e83e]',
+        'diffusers_xl_canny_mid [112a778d]',
+        'diffusers_xl_depth_full [2f51180b]',
+        'diffusers_xl_depth_mid [39c49e13]',
+        'ip-adapter-faceid-plusv2_sd15 [6e14fc1a]',
+        'ip-adapter_sd15 [6a3f6166]',
+        'ip-adapter_sd15_plus [32cd8f7f]',
+        'ip-adapter_xl [4209e9f7]',
+        'kohya_controllllite_xl_blur [22117d11]',
+        'sai_xl_recolor_128lora [4198a181]',
+        'sai_xl_sketch_128lora [b06d459a]',
+        'sargezt_xl_softedge [b6f7415b]',
+        'sdxlControlnet_v10eOpticalpattern [1e4e1607]',
+        't2i-adapter_diffusers_xl_lineart [bae0efef]',
+        'thibaud_xl_openpose_256lora [14288071]',
+        'ttplanetSDXLControlnet_v10Fp16 [6c558c4d]'
+      ]
+    }; //await getControlnetModelsQuery() ??  [];
+    const controlnetModulesQueryOriginal = await getControlnetModulesQuery();
     const controlnetModulesQuery = await getControlnetModulesQuery();
 
     if (!controlnetModelsQuery || !controlnetModulesQuery) {
       loggerInfo('Error: Cannot initialize config : Error in ControlNet');
       process.exit(ExitCodes.INIT_NO_CONTROLNET);
+      return;
     }
 
     Config.set(
@@ -316,6 +357,7 @@ export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
 
   const modelsQuery = await getModelsQuery();
   const vaeQuery = await getVAEQuery();
+  const vaeQueryForge = await getVAEQueryForge();
   const samplersQuery = await getSamplersQuery();
   const upscalersQuery = await getUpscalersQuery();
   const extensionsQuery = await getExtensionsQuery();
@@ -328,7 +370,7 @@ export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
 
   if (
     !modelsQuery ||
-    !vaeQuery ||
+    (!vaeQuery && !vaeQueryForge) ||
     !samplersQuery ||
     !upscalersQuery ||
     !extensionsQuery ||
@@ -342,7 +384,11 @@ export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
 
   await setModels(modelsQuery);
 
-  setVAE(vaeQuery);
+  if (vaeQuery) {
+    setVAE(vaeQuery);
+  } else if (vaeQueryForge) {
+    setVAE(vaeQueryForge);
+  }
 
   setSamplers(samplersQuery);
 
@@ -409,6 +455,8 @@ export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
     Config.set('redrawModels', {
       anime15: findCheckpoint(...ratedCheckpoints.anime15)?.name,
       animexl: findCheckpoint(...ratedCheckpoints.animeXL)?.name,
+      pixel15: findCheckpoint(...ratedCheckpoints.pixel15)?.name,
+      pixelxl: findCheckpoint(...ratedCheckpoints.pixelXL)?.name,
       realist15: findCheckpoint(...ratedCheckpoints.realist15)?.name,
       realistxl: findCheckpoint(...ratedCheckpoints.realistXL)?.name
     });

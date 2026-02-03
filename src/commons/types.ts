@@ -1,14 +1,21 @@
+import type { IForgeCouple, IForgeCoupleQuery } from './extensions/forgeCouple';
+
 import { type IAdetailer } from './extensions/adetailer';
 import { type IControlNet, type IControlNetQuery } from './extensions/controlNet';
 import { type ICutOff } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
-export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNetQuery[] };
+export type AlwaysOnScripts =
+  | { args: Array<boolean | number | string> }
+  | { args: IAdetailer[] }
+  | { args: IControlNetQuery[] }
+  | { args: IForgeCoupleQuery };
 
 export enum AlwaysOnScriptsNames {
   ADetailer = 'ADetailer',
   ControlNet = 'controlnet',
+  Couple = 'forge couple',
   Cutoff = 'Cutoff',
   TiledDiffusion = 'Tiled Diffusion',
   TiledVAE = 'Tiled VAE'
@@ -69,6 +76,7 @@ export interface ITxt2ImgQuery
   extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
+  couple?: IForgeCouple;
   cutOff?: ICutOff;
   enable_hr?: boolean;
   firstphase_height?: number;
@@ -89,6 +97,7 @@ export interface IImg2ImgQuery
   extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
+  couple?: IForgeCouple;
   cutOff?: ICutOff;
   include_init_images?: boolean;
   init_images: string[];
@@ -137,25 +146,37 @@ export const Version: Record<string, MetadataVersionKey> = {
   Unknown: 'unknown'
 };
 
+export const RedrawMethods = ['denoise', 'ip-adapter', 'lineart', 'line+pose', 'openpose'] as const;
+
 export enum IRedrawMethod {
-  Both = 'both',
-  Classical = 'classical',
-  IPAdapter = 'ip-adapter'
+  Denoise = 'denoise',
+  IPAdapter = 'ip-adapter',
+  Lineart = 'lineart',
+  LinePose = 'line+pose',
+  Openpose = 'openpose'
 }
+
+export const RedrawStyles = ['anime', 'realism', 'pixelart'] as const;
 
 export enum IRedrawStyle {
   Anime = 'anime',
-  Both = 'both',
+  PixelArt = 'pixelart',
   Realism = 'realism'
 }
 
 export interface IRedrawOptions {
-  addToPrompt?: string;
+  addAfterPrompt?: string;
+  addBeforePrompt?: string;
   denoising?: number[];
-  method: IRedrawMethod;
+  filenameRemove?: string[];
+  method: IRedrawMethod[];
+  negativePrompt?: string;
+  negativePromptRemove?: string[];
+  noTime: boolean;
+  promptRemove?: string[];
   recursive?: boolean;
   sdxl?: boolean;
-  style: IRedrawStyle;
+  style: IRedrawStyle[];
   upscaler?: string;
   upscales?: number[];
 }
@@ -166,6 +187,7 @@ export type Extensions =
   | 'cutoff'
   | 'interrogator'
   | 'scheduler'
+  | 'sd-forge-couple'
   | 'tiled diffusion'
   | 'tiled vae'
   | 'ultimate-sd-upscale';
@@ -251,7 +273,7 @@ export interface IConfig {
   adetailersModels: string[];
   autoAdetailers: IAutoAdetailer[];
   autoControlnetPose: IAutoControlnetPose[];
-  autoTiledDiffusion: TiledDiffusionMethods | false;
+  autoTiledDiffusion: false | TiledDiffusionMethods;
   autoTiledVAE: boolean;
   commonNegative?: string;
   commonNegativeXL?: string;
@@ -275,9 +297,12 @@ export interface IConfig {
   };
   loras: ILora[];
   models: IModelWithHash[];
+  outputFolder: string;
   redrawModels: {
     anime15?: string;
     animexl?: string;
+    pixel15?: string;
+    pixelxl?: string;
     realist15?: string;
     realistxl?: string;
   };
@@ -312,6 +337,8 @@ export interface ICheckpointWithVAE {
   addBeforeNegativePrompt?: string;
   addBeforePrompt?: string;
   checkpoint: string;
+  negativePrompt?: string;
+  prompt?: string;
   vae?: string;
 }
 
@@ -326,8 +353,11 @@ export interface BaseIPrompt {
   clipSkip?: number | number[];
   controlNet?: ControlNetSchema | ControlNetSchema[];
   count?: number;
+  couple?: IForgeCouple | IForgeCouple[];
   denoising?: number | number[];
+  directoryPath?: string;
   enableHighRes?: 'both' | boolean;
+  existingImagesStrategy?: 'none' | 'numbered' | 'overwrite' | 'skip'; // If none, no special handling of existing images
   filename?: string;
   height?: number | number[];
   highRes?: {
@@ -349,7 +379,7 @@ export interface BaseIPrompt {
   styles?: string | string[];
   stylesSets?: Array<string | string[]>;
   tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
-  tiledVAE?: 'both' | ITiledVAE | boolean;
+  tiledVAE?: 'both' | boolean | ITiledVAE;
   tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
@@ -383,8 +413,11 @@ export interface IPromptSingle {
   checkpoints?: string;
   clipSkip?: number;
   controlNet?: IControlNet[];
+  couple?: IForgeCouple;
   denoising?: number;
+  directoryPath?: string;
   enableHighRes?: boolean;
+  existingImagesStrategy?: 'none' | 'numbered' | 'overwrite' | 'skip'; // If none, no special handling of existing images
   filename?: string;
   height?: number;
   highRes?: {

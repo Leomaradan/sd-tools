@@ -16,9 +16,7 @@ export const getStats = (source: string) => {
         data.forEach((line) => {
           if (line.includes('Model: ')) {
             const model = line.split('Model: ')[1].split(', ')[0];
-            if (stats[model] === undefined) {
-              stats[model] = {};
-            }
+            stats[model] ??= {};
 
             stats[model].total = (stats[model].total ?? 0) + 1;
 

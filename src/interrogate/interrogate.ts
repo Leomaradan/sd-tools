@@ -4,14 +4,12 @@ import { resolve } from 'node:path';
 import type { InterrogateModelsAll } from '../commons/types';
 
 import { type IInterrogateOptions, interrogateFromFile } from '../commons/extract';
-import { type IFile, getFileNameWithoutExtension, getFiles } from '../commons/file';
+import { getFileNameWithoutExtension, getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 
 const executeOnSingleFile = async (file: IFile, models?: InterrogateModelsAll[], addBefore?: string) => {
   loggerInfo(`Analyzing file ${file.fullpath}`);
   const prompt = await interrogateFromFile(file, models);
-
-  console.log({ prompt });
 
   if (prompt) {
     if (addBefore) {
@@ -31,7 +29,6 @@ const executeOnFiles = async (filesList: IFile[], models?: InterrogateModelsAll[
     }
   }
 
-  console.log({ prompts });
   return prompts;
 };
 

@@ -1,9 +1,7 @@
-import axios from 'axios';
 import crypto from 'crypto';
-import DOMPurify from 'dompurify';
-import * as htmlparser2 from 'htmlparser2';
+// import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
-import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import { basename, extname } from 'path';
 import text from 'png-chunk-text';
@@ -11,15 +9,7 @@ import extract from 'png-chunks-extract';
 
 import { Cache } from './config';
 import { loggerInfo, loggerVerbose } from './logger';
-import {
-  type CacheMetadata,
-  type ICivitAIInfoFile,
-  type IMetadata,
-  type IMetadataCheckpoint,
-  type IMetadataLora,
-  Version,
-  type VersionKey
-} from './types';
+import { type CacheMetadata, type ICivitAIInfoFile, type IMetadata, type IMetadataCheckpoint, type IMetadataLora, Version } from './types';
 
 const CIVITAI_FILE = '.civitai.info';
 
@@ -41,7 +31,7 @@ const readFile = (path: string, noCache?: boolean): string[] | undefined => {
 
     const buffer = readFileSync(path);
 
-    const chunks = extract(buffer);
+    const chunks = extract(buffer as Uint8Array);
 
     const exif = chunks
       .filter((chunk) => {
@@ -212,7 +202,7 @@ const getHash = (url: string) => {
   console.log(table(dataTable));
 };*/
 
-const parseDescriptions = (source: string) => {
+/* const parseDescriptions = (source: string) => {
   let data = source;
 
   data = data.replace(/<\/p>/g, '\n');
@@ -222,7 +212,7 @@ const parseDescriptions = (source: string) => {
   const dom = htmlparser2.parseDocument('<div>' + data + '</div>');
 
   return '<!--' + htmlparser2.DomUtils.textContent(dom) + '-->';
-};
+};*/
 
 export const getFiles = (source: string, recursive?: boolean, noCache?: boolean) => {
   const filesList: IFile[] = [];
@@ -455,6 +445,7 @@ export const getMetadataCivitAiRest = async (
   actualCacheMetadata: CacheMetadata,
   url: string
 ): Promise<[CacheMetadata, IMetadata] | false | undefined> => {
+  /*
   if (!existsSync(url)) {
     loggerInfo(`File does not exists : ${url}`);
     return;
@@ -523,7 +514,7 @@ export const getMetadataCivitAiRest = async (
     } else {
       loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error}`);
     }
-  }
+  }*/
 
   return undefined;
 };

@@ -36,6 +36,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SD 1.4 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -44,6 +45,7 @@ describe('file tests', () => {
       sdVersion: 'sd14'
     });
   });
+
   it('should return the normalized SD 1.5 LCM metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -53,6 +55,7 @@ describe('file tests', () => {
       sdVersion: 'sd15'
     });
   });
+
   it('should return the normalized SD 1.5 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -61,6 +64,7 @@ describe('file tests', () => {
       sdVersion: 'sd15'
     });
   });
+
   it('should return the normalized SD 2.0 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -69,6 +73,7 @@ describe('file tests', () => {
       sdVersion: 'sd20'
     });
   });
+
   it('should return the normalized SD 2.0 768 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -77,6 +82,7 @@ describe('file tests', () => {
       sdVersion: 'sd20-768'
     });
   });
+
   it('should return the normalized SD 2.1 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -85,6 +91,7 @@ describe('file tests', () => {
       sdVersion: 'sd21'
     });
   });
+
   it('should return the normalized SD 2.1 768 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -93,6 +100,7 @@ describe('file tests', () => {
       sdVersion: 'sd21-768'
     });
   });
+
   it('should return the normalized SDXL 0.9 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -101,6 +109,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SDXL 1.0 metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -109,6 +118,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SDXL 1.0 LCM metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -118,6 +128,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SDXL Distilled metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -127,6 +138,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SDXL Turbo metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -136,6 +148,7 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
+
   it('should return the normalized SDXL Lightning metadata from CivitAI requests', () => {
     expect.assertions(1);
 
@@ -145,5 +158,4 @@ describe('file tests', () => {
       sdVersion: 'sdxl'
     });
   });
-
 });

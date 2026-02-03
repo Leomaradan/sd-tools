@@ -19,7 +19,7 @@ export const getConfigs = (source: string): IPrompts | undefined => {
     try {
       const data = readFileSync(source, 'utf8');
       jsonContent = JSON.parse(data);
-    } catch (err) {
+    } catch {
       loggerInfo(`Unable to parse JSON in ${source}`);
       process.exit(ExitCodes.QUEUE_CORRUPTED_JSON);
     }
@@ -78,7 +78,7 @@ export const mergeConfigs = (source: string): IPrompts | undefined => {
     const extendsContent = mergeConfigs(extendsPath);
     if (extendsContent) {
       return {
-        basePrompt: { ...(extendsContent.basePrompt ?? {}), ...(jsonContent.basePrompt ?? {}) },
+        basePrompt: { ...extendsContent.basePrompt, ...jsonContent.basePrompt },
         multiValueMethod: jsonContent.multiValueMethod ?? extendsContent.multiValueMethod,
         permutations: [...(extendsContent.permutations ?? []), ...(jsonContent.permutations ?? [])],
         prompts: [...(extendsContent.prompts ?? []), ...(jsonContent.prompts ?? [])]

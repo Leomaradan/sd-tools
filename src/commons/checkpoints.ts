@@ -34,6 +34,8 @@ export const ratedCheckpoints = {
     'duchaitenAiartSDXL_v10',
     'duchaitenAiartSDXL_v20'
   ],
+  pixel15: ['meinamix_meinaV11'],
+  pixelXL: ['novaPixelsXL_v30', 'novaPixelsXL_v20', 'novaPixelsXL_v10'],
   realist15: [
     'aZovyaPhotoreal_v2',
     'photon_v1',

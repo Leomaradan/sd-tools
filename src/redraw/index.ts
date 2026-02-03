@@ -5,22 +5,28 @@ import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findUpscaler } from '../commons/models';
-import { IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
+import { IRedrawMethod, type IRedrawOptions, IRedrawStyle, RedrawMethods, RedrawStyles } from '../commons/types';
 import { redraw } from './redraw';
 
 interface IRedrawArgsOptions {
-  'add-before'?: string;
+  addAfter?: string;
+  addBefore?: string;
   denoising?: number[];
-  method: string;
+  filenameRemove?: string[];
+  method?: string[];
+  negativePrompt?: string;
+  negativePromptRemove?: string[];
+  noTime?: boolean;
+  promptRemove?: string[];
   recursive?: boolean;
   sdxl?: boolean;
   source: string;
-  style: string;
+  style?: string[];
   upscaler?: string;
   upscaling?: number[];
 }
 
-export const command = 'redraw <source> <style> <method>';
+export const command = 'redraw <source>';
 export const describe = 'redraw image in specific style';
 export const builder = (builder: yargs.Argv<object>) => {
   return addBaseCommandOptions(builder, true)
@@ -29,22 +35,14 @@ export const builder = (builder: yargs.Argv<object>) => {
       describe: 'source directory',
       type: 'string'
     })
-    .positional('style', {
-      choices: ['realism', 'anime', 'both'],
-      demandOption: true,
-      describe: 'style of render',
-      type: 'string'
-    })
-    .positional('method', {
-      choices: ['classical', 'ip-adapter', 'both'],
-      default: 'classical',
-      demandOption: true,
-      describe: 'method to draw image',
-      type: 'string'
-    })
     .options({
-      'add-before': {
+      'add-after': {
         alias: 'a',
+        describe: 'add after prompt',
+        type: 'string'
+      },
+      'add-before': {
+        alias: 'b',
         describe: 'add before prompt',
         type: 'string'
       },
@@ -70,14 +68,59 @@ export const builder = (builder: yargs.Argv<object>) => {
         describe: 'denoising factor. If multiple values are provided, multiple upscales will be generated',
         type: 'array'
       },
+      filenameRemove: {
+        alias: 'f',
+        array: true,
+        describe: 'filename text to remove from the existing configuration',
+        type: 'string'
+      },
+      method: {
+        alias: 'm',
+        array: true,
+        choices: RedrawMethods,
+        default: ['denoise'],
+        describe: 'method to draw image',
+        type: 'string'
+      },
+      negativePrompt: {
+        alias: 'n',
+        describe: 'negative prompt to use instead of the existing configuration',
+        type: 'string'
+      },
+      negativePromptRemove: {
+        array: true,
+        describe: 'negative prompt to remove from the existing configuration',
+        type: 'string'
+      },
+      noTime: {
+        alias: 't',
+        default: false,
+        describe: 'do not add timestamp to the output filename',
+        type: 'boolean'
+      },
+      promptRemove: {
+        alias: 'p',
+        array: true,
+        describe: 'prompt to remove from the existing configuration',
+        type: 'string'
+      },
       recursive: {
         alias: 'r',
         describe: 'Recursively upscale images from subdirectories',
         type: 'boolean'
       },
       sdxl: {
+        default: true,
         describe: 'If set, the SDXL models will be used',
         type: 'boolean'
+      },
+      style: {
+        alias: 's',
+        array: true,
+        choices: RedrawStyles,
+        default: ['realism'],
+        describe: 'style of render',
+        type: 'string'
       },
       upscaler: {
         alias: 'u',
@@ -143,12 +186,18 @@ export const handler = (argv: IRedrawArgsOptions) => {
   }
 
   const options: IRedrawOptions = {
-    addToPrompt: argv['add-before'] ?? undefined,
+    addAfterPrompt: argv.addAfter ?? undefined,
+    addBeforePrompt: argv.addBefore ?? undefined,
     denoising: argv.denoising ?? undefined,
-    method: argv.method as IRedrawMethod,
+    filenameRemove: argv.filenameRemove?.map((item) => item.replace(/\\-/g, '-')) ?? undefined,
+    method: argv.method as IRedrawMethod[],
+    negativePrompt: argv.negativePrompt,
+    negativePromptRemove: argv.negativePromptRemove,
+    noTime: argv.noTime ?? false,
+    promptRemove: argv.promptRemove,
     recursive: argv.recursive ?? false,
-    sdxl: argv.sdxl ?? false,
-    style: argv.style as IRedrawStyle,
+    sdxl: argv.sdxl ?? true,
+    style: argv.style as IRedrawStyle[],
     upscaler: argv.upscaler ?? undefined,
     upscales: argv.upscaling ?? undefined
   }; //0.55 //1

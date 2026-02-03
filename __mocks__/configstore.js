@@ -23,7 +23,7 @@ class Configstore {
       cutoffTokens: ['blue', 'red', 'green'],
       cutoffWeight: 1,
       embeddings: ['embeddings1', 'embeddings2'],
-      endpoint: 'http://jest.local:8000',
+      endpoint: 'https://jest.local:8000',
       extensions: [],
       initialized: true,
       lcm: {

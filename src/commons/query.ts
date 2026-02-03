@@ -3,15 +3,16 @@ import { statSync } from 'node:fs';
 
 import type { IAdetailer } from './extensions/adetailer';
 import type { ICutOff } from './extensions/cutoff';
+import type { IForgeCouple } from './extensions/forgeCouple';
 
 import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type IControlNet, type IControlNetQuery, normalizeControlNetMode, normalizeControlNetResizes } from './extensions/controlNet';
 import {
-  type ITiledDiffusion,
-  type ITiledVAE,
   defaultTiledDiffusionOptions,
-  defaultTiledVAEnOptions
+  defaultTiledVAEnOptions,
+  type ITiledDiffusion,
+  type ITiledVAE
 } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, RedrawMode, TargetSizeType } from './extensions/ultimateSdUpscale';
 import { getBase64Image } from './file';
@@ -23,11 +24,11 @@ import {
   type IImg2ImgQuery,
   type IInterrogateResponse,
   type IModel,
-  type ITxt2ImgQuery,
-  type IUpscaler,
   type InterrogateModelsAll,
   type InterrogateModelsBase,
-  type InterrogateModelsInterogator
+  type InterrogateModelsInterogator,
+  type ITxt2ImgQuery,
+  type IUpscaler
 } from './types';
 
 const headerRequest = {
@@ -57,7 +58,17 @@ const prepareBaseQuery = (baseQuery: Partial<IBaseQuery>, baseQueryRaw: IImg2Img
     const value = baseQueryRaw[key as keyof typeof baseQueryRaw];
 
     if (value !== undefined) {
-      if (typeof value === 'object') {
+      if (Array.isArray(value)) {
+        if (updatedQuery[key as keyof typeof updatedQuery] === undefined) {
+          (updatedQuery as unknown as Record<string, unknown>)[key] = [];
+        }
+
+        (value as Array<unknown>).forEach((item) => {
+          if (item !== undefined) {
+            (updatedQuery as unknown as Record<string, Array<unknown>>)[key].push(item);
+          }
+        });
+      } else if (typeof value === 'object') {
         if (updatedQuery[key as keyof typeof updatedQuery] === undefined) {
           (updatedQuery as unknown as Record<string, unknown>)[key] = {};
         }
@@ -81,23 +92,31 @@ const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | un
   const updatedQuery = { ...baseQuery };
   if (controlNet) {
     const args = controlNet.map((controlNet) => {
+      //const image =  (controlNet.input_image ?? controlNet.image) ? { image: controlNet.input_image ?? (controlNet.image as string) } : undefined;
+      const image =
+        (controlNet.input_image ?? controlNet.image) ? (controlNet.input_image ?? (controlNet.image as string as any)) : undefined;
       const params: IControlNetQuery = {
         control_mode: normalizeControlNetMode(controlNet.control_mode),
         enabled: true,
-        input_image: controlNet.input_image,
-        lowvram: controlNet.lowvram,
+        image,
+        low_vram: controlNet.lowvram ?? controlNet.low_vram,
         model: controlNet.model,
         module: controlNet.module,
         pixel_perfect: controlNet.pixel_perfect,
-        resize_mode: normalizeControlNetResizes(controlNet.resize_mode)
+        resize_mode: normalizeControlNetResizes(controlNet.resize_mode),
+        weight: controlNet.weight
       };
 
-      if (params.lowvram === undefined) {
-        params.lowvram = true;
+      if (params.low_vram === undefined) {
+        params.low_vram = true;
       }
 
       if (params.pixel_perfect === undefined) {
         params.pixel_perfect = true;
+      }
+
+      if (params.weight === undefined) {
+        params.weight = 1;
       }
 
       return params;
@@ -112,6 +131,28 @@ const prepareAdetailer = (baseQuery: IBaseQuery, adetailer: IAdetailer[] | undef
   const updatedQuery = { ...baseQuery };
   if (adetailer) {
     updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.ADetailer] = { args: adetailer };
+  }
+
+  return updatedQuery;
+};
+
+const prepareCouple = (baseQuery: IBaseQuery, couple: IForgeCouple | undefined) => {
+  const updatedQuery = { ...baseQuery };
+  if (couple) {
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Couple] = {
+      args: [
+        true,
+        true,
+        couple.mode,
+        couple.separator ?? '\n',
+        couple.direction ?? null,
+        couple.background ?? null,
+        couple.background_weight ?? null,
+        couple.mapping ?? null,
+        couple.common_parser ?? null,
+        couple.common_debug ?? null
+      ]
+    };
   }
 
   return updatedQuery;
@@ -169,6 +210,35 @@ const prepareTiledDiffusion = (
           tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
         ]
       };
+
+      if (tiledDiffusion.regionalPrompt && tiledDiffusion.regionalPrompt.length > 0) {
+        const updatedArgs = updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion].args;
+
+        updatedArgs.push(true); // Enable Noise Inversion
+        updatedArgs.push(10); // Inversion Steps
+        updatedArgs.push(1); // Retouch
+        updatedArgs.push(1); // Renoise strength
+        updatedArgs.push(64); // Renoise kernel size
+        updatedArgs.push(false); // Move ControlNet tensor to CPU (if applicable)
+        updatedArgs.push(true); // Enable Control
+        updatedArgs.push(false); // Draw full canvas background
+        updatedArgs.push(false); // Causalize layers
+
+        tiledDiffusion.regionalPrompt.forEach((regionalPrompt) => {
+          updatedArgs.push(true);
+          updatedArgs.push(regionalPrompt.x);
+          updatedArgs.push(regionalPrompt.y);
+          updatedArgs.push(regionalPrompt.w);
+          updatedArgs.push(regionalPrompt.h);
+          updatedArgs.push(regionalPrompt.prompt);
+          updatedArgs.push(regionalPrompt.neg_prompt ?? '');
+          updatedArgs.push(regionalPrompt.blend_mode ?? 'Background');
+          updatedArgs.push(regionalPrompt.feather_ratio ?? 0);
+          updatedArgs.push(regionalPrompt.seed ?? -1);
+        });
+
+        updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion].args = updatedArgs;
+      }
     } else if (Config.get('autoTiledDiffusion') !== false) {
       updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = { args: ['True', Config.get('autoTiledDiffusion')] };
     }
@@ -252,7 +322,8 @@ const prepareScriptUltimateSDUpscale = (
 };
 
 export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: 'img2img' | 'txt2img') => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+  const { adetailer, controlNet, couple, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } =
+    query as IImg2ImgQuery;
 
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
@@ -297,6 +368,7 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   baseQuery = prepareTiledDiffusion(baseQuery, tiledDiffusion, defaultUpscaler, isSDXL);
   baseQuery = prepareCutOff(baseQuery, cutOff);
   baseQuery = prepareLCM(baseQuery, lcm, checkpoint, isSDXL);
+  baseQuery = prepareCouple(baseQuery, couple);
 
   [script, baseQuery] = prepareScriptUltimateSDUpscale(script, baseQuery, ultimateSdUpscale, type);
 
@@ -314,7 +386,7 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
 export const renderQuery: Query = async (query, type) => {
   const useScheduler = Config.get('scheduler');
 
-  const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
+  const endpoint = !mode.noAgent && useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
   loggerVerbose(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
 
   const baseQuery = prepareRenderQuery(query, type);
@@ -323,6 +395,7 @@ export const renderQuery: Query = async (query, type) => {
 
   if (!mode.simulate) {
     await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
+      console.log(error);
       loggerInfo(`Error: `);
       loggerInfo(error.message);
     });
@@ -452,6 +525,7 @@ type MiscQueryApi =
   | 'sdapi/v1/samplers'
   | 'sdapi/v1/scripts'
   | 'sdapi/v1/sd-models'
+  | 'sdapi/v1/sd-modules'
   | 'sdapi/v1/sd-vae'
   | 'sdapi/v1/upscalers';
 
@@ -479,6 +553,7 @@ export const checkApiQuery = async () => {
 };
 export const getModelsQuery = () => miscQuery<{ filename: string; model_name: string; title: string }[]>('sdapi/v1/sd-models');
 export const getVAEQuery = () => miscQuery<{ model_name: string }[]>('sdapi/v1/sd-vae');
+export const getVAEQueryForge = () => miscQuery<{ model_name: string }[]>('sdapi/v1/sd-modules');
 export const getSamplersQuery = () => miscQuery<{ aliases: string[]; name: string }[]>('sdapi/v1/samplers');
 export const getUpscalersQuery = () => miscQuery<{ model_path: null | string; name: string }[]>('sdapi/v1/upscalers');
 export const getExtensionsQuery = () => miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
@@ -490,5 +565,5 @@ export const getEmbeddingsQuery = () =>
 export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
 export const getAdModelQuery = () => miscQuery<{ ad_model: string[] }>('adetailer/v1/ad_model');
 
-export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list');
+export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list?update=true' as any);
 export const getControlnetModulesQuery = () => miscQuery<{ module_list: string[] }>('controlnet/module_list');

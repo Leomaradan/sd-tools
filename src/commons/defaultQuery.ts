@@ -110,14 +110,14 @@ export const getDefaultQuery = (
   accelarator?: MetadataAccelerator
 ): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
   switch (version) {
+    case 'sd15':
+      return getDefaultQuery15(accelarator);
     case 'sd20':
     case 'sd21':
       return getDefaultQuery20(false);
     case 'sd20-768':
     case 'sd21-768':
       return getDefaultQuery20(true);
-    case 'sd15':
-      return getDefaultQuery15(accelarator);
 
     case 'sdxl':
       return getDefaultQueryXL(accelarator);

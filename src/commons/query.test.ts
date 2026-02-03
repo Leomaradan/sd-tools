@@ -5,12 +5,13 @@ import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
 import { Config } from './config';
 import { ControlNetMode, ControlNetResizes } from './extensions/controlNet';
-import { TiledDiffusionMethods, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
+import { defaultTiledVAEnOptions, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { prepareRenderQuery } from './query';
 
 describe('query tests', () => {
   it('should send a basic query for txt2img', () => {
     expect.assertions(1);
+
     const config = {
       cfg_scale: 7,
       enable_hr: false,
@@ -53,6 +54,7 @@ describe('query tests', () => {
 
   it('should send the correct query to the API for txt2img', () => {
     expect.assertions(2);
+
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }],
       cfg_scale: 5,
@@ -101,25 +103,26 @@ describe('query tests', () => {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
         },
-        /*Cutoff: {
-          args: [true, 'blue', 1, false, false, '', 'Lerp']
-        },*/
-        'Tiled Diffusion': {
-          args: [true, 'Mixture of Diffusers', true, false, 500, 768, 96, 96, 48, 4, '4x-UltraSharp', 2]
-        },
         controlnet: {
           args: [
             {
               control_mode: ControlNetMode.Balanced,
               enabled: true,
-              input_image: undefined,
-              lowvram: true,
+              image: undefined,
+              low_vram: true,
               model: 'cn-model',
               module: 'cn-module',
               pixel_perfect: true,
-              resize_mode: ControlNetResizes.Envelope
+              resize_mode: ControlNetResizes.Envelope,
+              weight: 1
             }
           ]
+        },
+        /*Cutoff: {
+          args: [true, 'blue', 1, false, false, '', 'Lerp']
+        },*/
+        'Tiled Diffusion': {
+          args: [true, 'Mixture of Diffusers', true, false, 500, 768, 96, 96, 48, 4, '4x-UltraSharp', 2]
         }
       },
       cfg_scale: 5,
@@ -178,6 +181,7 @@ describe('query tests', () => {
 
   it('should send the correct query to the API for txt2img for SDXL', async () => {
     expect.assertions(1);
+
     const input: ITxt2ImgQuery = {
       adetailer: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }],
       cfg_scale: 5,
@@ -226,22 +230,23 @@ describe('query tests', () => {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }]
         },
-        Cutoff: {
-          args: [true, 'red', 0.8, false, false, '', 'Lerp']
-        },
         controlnet: {
           args: [
             {
               control_mode: ControlNetMode.Balanced,
               enabled: true,
-              input_image: undefined,
-              lowvram: true,
+              image: undefined,
+              low_vram: true,
               model: 'cn-model2',
               module: 'cn-module2',
               pixel_perfect: true,
-              resize_mode: ControlNetResizes.Envelope
+              resize_mode: ControlNetResizes.Envelope,
+              weight: 1
             }
           ]
+        },
+        Cutoff: {
+          args: [true, 'red', 0.8, false, false, '', 'Lerp']
         }
       },
       cfg_scale: 5,
@@ -275,6 +280,7 @@ describe('query tests', () => {
 
   it('should send a minimal query for txt2img', () => {
     expect.assertions(1);
+
     const config = {
       override_settings: {},
       prompt: 'test prompt 1'

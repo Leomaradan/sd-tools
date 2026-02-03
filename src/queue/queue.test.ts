@@ -10,6 +10,7 @@ describe('queue loader test', () => {
   describe('simple config', () => {
     it('should load simple config from json', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/simple.json'), true);
 
       const expectedConfig = {
@@ -27,7 +28,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -35,6 +36,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from js', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/simple.js'), true);
 
       const expectedConfig = {
@@ -51,7 +53,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -59,6 +61,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from cjs', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/simple.cjs'), true);
 
       const expectedConfig = {
@@ -75,7 +78,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -83,6 +86,7 @@ describe('queue loader test', () => {
 
     it('should load simple config from json with basePrompts', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/basePrompts.json'), true);
 
       const expectedConfig = {
@@ -121,7 +125,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -131,6 +135,7 @@ describe('queue loader test', () => {
   describe('extended config', () => {
     it('should load cascading config from json', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/cascadeA.json'), true);
 
       const expectedConfig = {
@@ -161,7 +166,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -169,6 +174,7 @@ describe('queue loader test', () => {
 
     it('should load cascading config from json with absolute path marker', () => {
       expect.assertions(2);
+
       queueFromFile(resolve(__dirname, '../../test/configs/cascadeAPath.json'), true);
 
       const expectedConfig = {
@@ -199,7 +205,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -209,6 +215,7 @@ describe('queue loader test', () => {
   describe('invalid config', () => {
     it('should exit if no prompts is found', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/configs/cascadeC.json'), true);
@@ -218,6 +225,7 @@ describe('queue loader test', () => {
 
     it('should exit if corrupted file is provided', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/configs/corrupted.json'), true);
@@ -227,6 +235,7 @@ describe('queue loader test', () => {
 
     it('should exit if the file is not found', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/configs/not-found.json'), true);
@@ -236,6 +245,7 @@ describe('queue loader test', () => {
 
     it('should exit if invalid JSON file is provided', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/configs/invalid.json'), true);
@@ -245,6 +255,7 @@ describe('queue loader test', () => {
 
     it('should exit if invalid JS file is provided', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/configs/invalid.js'), true);
@@ -254,6 +265,7 @@ describe('queue loader test', () => {
 
     it('should exit if invalid file type is provided', () => {
       expect.assertions(1);
+
       const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
       queueFromFile(resolve(__dirname, '../../test/images/instruct/close-front.txt'), true);

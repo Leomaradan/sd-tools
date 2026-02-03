@@ -17,8 +17,8 @@ export interface ITiledDiffusionRegion {
 
 export interface ITiledDiffusion {
   method: TiledDiffusionMethods;
+  regionalPrompt?: ITiledDiffusionRegion[];
   scaleFactor?: number;
-  // regionalPrompt?: ITiledDiffusionRegion[];
   tileBatchSize?: number;
   tileHeight?: number;
   tileOverlap?: number;
@@ -36,6 +36,7 @@ export interface ITiledVAE {
 
 export const defaultTiledDiffusionOptions: Required<ITiledDiffusion> = {
   method: TiledDiffusionMethods.MultiDiffusion,
+  regionalPrompt: [],
   scaleFactor: 2,
   tileBatchSize: 4,
   tileHeight: 96,

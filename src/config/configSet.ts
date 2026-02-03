@@ -17,6 +17,7 @@ import {
   setConfigCutoffWeight,
   setConfigEndpoint,
   setConfigLCMCommandLine,
+  setConfigOutputFolder,
   setConfigRedrawModelsCommandLine,
   setConfigScheduler
 } from './functions';
@@ -32,7 +33,7 @@ interface ISetConfigAutoLCM extends ISetConfig {
 
 interface ISetConfigAutoTiledDiffusion extends ISetConfig {
   config: 'auto-tiled-diffusion';
-  value: TiledDiffusionMethods | false;
+  value: false | TiledDiffusionMethods;
 }
 
 interface ISetConfigAutoTiledVAE extends ISetConfig {
@@ -70,6 +71,11 @@ interface ISetConfigLCMLoras extends ISetConfig {
   value: string[];
 }
 
+interface ISetConfigOutputFolder extends ISetConfig {
+  config: 'output-folder';
+  value: string;
+}
+
 interface ISetConfigRedrawModels extends ISetConfig {
   config: 'redraw-models';
   value: string[];
@@ -93,6 +99,7 @@ const options: EditableOptions[] = [
   'cutoff-weight',
   'endpoint',
   'lcm',
+  'output-folder',
   'redraw-models',
   'scheduler'
 ];
@@ -107,6 +114,7 @@ type ISetConfigOptions =
   | ISetConfigCutoffWeight
   | ISetConfigEndpoint
   | ISetConfigLCMLoras
+  | ISetConfigOutputFolder
   | ISetConfigRedrawModels
   | ISetConfigScheduler;
 
@@ -147,6 +155,9 @@ export const handler = (argv: ISetConfigArgsOptions) => {
   }
 
   switch (config) {
+    case 'auto-cutoff':
+      setConfigAutoCutoff(value);
+      break;
     case 'auto-lcm':
       setConfigAutoLCM(value);
 
@@ -169,9 +180,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
     case 'common-positive-xl':
       setConfigCommonPositiveXL(value);
       break;
-    case 'auto-cutoff':
-      setConfigAutoCutoff(value);
-      break;
 
     case 'cutoff-tokens':
       setConfigCutoffTokens(value);
@@ -185,6 +193,10 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
     case 'lcm':
       setConfigLCMCommandLine(value);
+      break;
+
+    case 'output-folder':
+      setConfigOutputFolder(value);
       break;
 
     case 'redraw-models':

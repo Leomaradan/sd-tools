@@ -85,8 +85,8 @@
     "test": "jest --coverage --detectOpenHandles",
     "lint": "eslint --report-unused-disable-directives",
     "schema": "yarn schema:queue && yarn schema:rename",
-    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
-    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword",
+    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --out schema/queue.json --titles --useTypeOfKeyword",
+    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --out schema/rename.json --titles --useTypeOfKeyword",
     "postinstall": "husky install",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable"

@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import { xdgState } from './xdgBaseDir';
 
-export const mode = { info: true, log: true, simulate: false, verbose: false };
+export const mode = { info: true, log: true, noAgent: false, simulate: false, verbose: false };
 
 let session: string | undefined = undefined;
 
@@ -29,7 +29,7 @@ export const loggerVerbose = (message: string) => {
 };
 
 const purgePathInLog = (key: string, value: unknown) => {
-  if (['init_images', 'input_image'].includes(key)) {
+  if (['image', 'images', 'init_images', 'input_image'].includes(key)) {
     if (!value) {
       return value;
     }
@@ -119,6 +119,7 @@ export enum ExitCodes {
   PROMPT_INVALID_CONTROLNET_MODEL = 47,
   PROMPT_INVALID_CONTROLNET_MODULE = 46,
   PROMPT_INVALID_CONTROLNET_POSE = 54,
+  PROMPT_INVALID_EXISTING_IMAGES_STRATEGY = 56,
   PROMPT_INVALID_PATTERN_TOKEN = 52,
   PROMPT_INVALID_SAMPLER = 45,
   PROMPT_INVALID_STRING_TOKEN = 44,

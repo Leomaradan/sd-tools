@@ -9,7 +9,7 @@ jest.mock<typeof import('node:fs')>('node:fs', () => {
 });
 
 import { writeFileSync } from 'node:fs';
-import path from 'path';
+import path from 'node:path';
 
 import type { IFile } from '../commons/file';
 
@@ -19,14 +19,14 @@ import { interrogate } from './interrogate';
 describe('interrogate', () => {
   // eslint-disable-next-line jest/no-hooks
   beforeEach(() => {
-    (interrogateFromFile as jest.MockedFunction<typeof interrogateFromFile>).mockImplementation((file: IFile) =>
-      Promise.resolve(file.file)
-    );
+    jest.mocked(interrogateFromFile).mockImplementation((file: IFile) => Promise.resolve(file.file));
   });
+
   // eslint-disable-next-line jest/no-hooks
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   it('should call single file', async () => {
     expect.assertions(4);
 
@@ -47,7 +47,7 @@ describe('interrogate', () => {
       1,
       {
         data: undefined,
-        date: '2024-05-27T13:57:40.490Z',
+        date: '2025-08-12T11:39:37.869Z',
         file: 'close-front.pose.png',
         filename: path.resolve(sourcePath, 'close-front.pose.png'),
         fullpath: path.resolve(sourcePath, 'close-front.pose.png'),
@@ -79,7 +79,7 @@ describe('interrogate', () => {
       5,
       {
         data: undefined,
-        date: '2024-05-27T13:57:40.500Z',
+        date: '2025-08-12T11:39:37.870Z',
         file: 'close-front.png',
         filename: path.resolve(sourcePath, 'single2', 'close-front.png'),
         fullpath: path.resolve(sourcePath, 'single2', 'close-front.png'),

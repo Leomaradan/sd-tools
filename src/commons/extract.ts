@@ -1,6 +1,6 @@
 import { type IFile } from './file';
 import { interrogateQuery } from './query';
-import { type IAdetailerPrompt, type IPromptSingle, type InterrogateModelsAll } from './types';
+import { type IAdetailerPrompt, type InterrogateModelsAll, type IPromptSingle } from './types';
 
 export interface IExtractOptions {
   addBefore?: string;
@@ -57,7 +57,7 @@ export const getPromptTextBox = (options: IBaseParams): string => {
     promptOptions.negative_prompt = negativePrompt;
   }
 
-  if (!isNaN(steps)) {
+  if (!Number.isNaN(steps)) {
     promptOptions.steps = Number(steps);
   }
 
@@ -65,7 +65,7 @@ export const getPromptTextBox = (options: IBaseParams): string => {
     promptOptions.sampler_name = sampler;
   }
 
-  if (!isNaN(cfg)) {
+  if (!Number.isNaN(cfg)) {
     promptOptions.cfg_scale = Number(cfg);
   }
 
@@ -118,7 +118,7 @@ export const getPromptJSON = (options: {
     promptOptions.negativePrompt = negativePrompt;
   }
 
-  if (!isNaN(steps)) {
+  if (!Number.isNaN(steps)) {
     promptOptions.steps = steps;
   }
 
@@ -126,7 +126,7 @@ export const getPromptJSON = (options: {
     promptOptions.sampler = sampler;
   }
 
-  if (!isNaN(cfg)) {
+  if (!Number.isNaN(cfg)) {
     promptOptions.cfg = cfg;
   }
 
@@ -148,11 +148,11 @@ export const getPromptJSON = (options: {
     promptOptions.vae = vae;
   }
 
-  if (!isNaN(denoise)) {
+  if (!Number.isNaN(denoise)) {
     promptOptions.denoising = denoise;
   }
 
-  if (!isNaN(clip)) {
+  if (!Number.isNaN(clip)) {
     promptOptions.clipSkip = clip;
   }
 
@@ -225,13 +225,13 @@ export const getBaseParams = (
   if (data.length <= 1) {
     return {
       basePrompt: data?.[0] ?? '',
-      cfg: NaN,
+      cfg: Number.NaN,
       negativePrompt: '',
       otherParams: '',
       sampler: '',
       seed: -1,
       sizes: null,
-      steps: NaN
+      steps: Number.NaN
     };
   }
 
@@ -255,9 +255,9 @@ export const getBaseParams = (
   const seedTest = /Seed: (\d+),/i.exec(otherParams);
   const sizesTest = /Size: (\d+)x(\d+),/i.exec(otherParams);
 
-  const steps = stepsTest ? Number(stepsTest[1]) : NaN;
+  const steps = stepsTest ? Number(stepsTest[1]) : Number.NaN;
   const sampler = samplerTest ? samplerTest[1] : '';
-  const cfg = cfgTest ? Number(cfgTest[1]) : NaN;
+  const cfg = cfgTest ? Number(cfgTest[1]) : Number.NaN;
   const seed = seedTest ? Number(seedTest[1]) : -1;
   const sizes = sizesTest ? { height: sizesTest[2], width: sizesTest[1] } : null;
 
@@ -276,8 +276,8 @@ export const getPrompts = (data: string[], format: 'json' | 'textbox') => {
 
     const model = modelTest ? modelTest[1] : '';
     const vae = vaeTest ? vaeTest[1] : '';
-    const denoise = denoising ? Number(denoising[1]) : NaN;
-    const clip = clipSkip ? Number(clipSkip[1]) : NaN;
+    const denoise = denoising ? Number(denoising[1]) : Number.NaN;
+    const clip = clipSkip ? Number(clipSkip[1]) : Number.NaN;
 
     const hiresUpscalerName = hiresUpscaler ? hiresUpscaler[1] : '';
 

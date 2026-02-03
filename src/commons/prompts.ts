@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { input } from '@inquirer/prompts';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, parse, relative, resolve, sep } from 'node:path';
 
 import { Config } from './config';
@@ -12,7 +13,7 @@ import {
   normalizeControlNetResizes
 } from './extensions/controlNet';
 import { getCutOffTokens } from './extensions/cutoff';
-import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
+import { defaultTiledDiffusionOptions, type ITiledDiffusion, type ITiledVAE } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
 import { ExitCodes, loggerInfo, writeLog } from './logger';
 import {
@@ -25,7 +26,7 @@ import {
   findUpscaler,
   findVAE
 } from './models';
-import { isTxt2ImgQuery, renderQuery } from './query';
+import { isImg2ImgQuery, isTxt2ImgQuery, renderQuery } from './query';
 import {
   type ICheckpointWithVAE,
   type IClassicPrompt,
@@ -118,6 +119,13 @@ const removePromptToken = (input: string) => {
 
 const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
   query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern as string).replace(
+    `{${token}}`,
+    value
+  );
+};
+
+const updateDirectoryPath = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
+  query.override_settings.directories_filename_pattern = (query.override_settings.directories_filename_pattern as string).replace(
     `{${token}}`,
     value
   );
@@ -268,11 +276,30 @@ const prepareSingleQuery = (
       } else {
         vae = checkpointsOption.vae ?? vae;
         checkpoints = checkpointsOption.checkpoint;
+        if (checkpointsOption.prompt) {
+          const hasSubPrompts = checkpointsOption.prompt.includes('{prompt}');
+          if (hasSubPrompts) {
+            promptText = checkpointsOption.prompt.replace('{prompt}', promptText);
+          } else {
+            promptText = `${checkpointsOption.prompt}, ${promptText}`;
+          }
+        }
+
         promptText = checkpointsOption.addAfterPrompt ? `${promptText}, ${checkpointsOption.addAfterPrompt}` : promptText;
         promptText = checkpointsOption.addBeforePrompt ? `${checkpointsOption.addBeforePrompt}, ${promptText}` : promptText;
         if (!negativePromptText && (checkpointsOption.addBeforeNegativePrompt || checkpointsOption.addAfterNegativePrompt)) {
           negativePromptText = '';
         }
+
+        if (checkpointsOption.negativePrompt) {
+          const hasSubPrompts = checkpointsOption.negativePrompt.includes('{prompt}');
+          if (hasSubPrompts) {
+            negativePromptText = checkpointsOption.negativePrompt.replace('{prompt}', negativePromptText ?? '');
+          } else {
+            negativePromptText = `${checkpointsOption.negativePrompt}, ${negativePromptText}`;
+          }
+        }
+
         negativePromptText = checkpointsOption.addAfterNegativePrompt
           ? `${negativePromptText}, ${checkpointsOption.addAfterNegativePrompt}`
           : negativePromptText;
@@ -325,19 +352,21 @@ const prepareSingleQuery = (
 
     if (prompt.initImage) {
       const { height, width } = getImageSize(prompt.initImage);
-      prompt.width = !prompt.width && width != -1 ? width : undefined;
-      prompt.height = !prompt.height && height != -1 ? height : undefined;
+      prompt.width = !prompt.width && width != -1 ? width : prompt.width;
+      prompt.height = !prompt.height && height != -1 ? height : prompt.height;
     }
 
     if (controlNet) {
       prompt.controlNet = controlNet;
 
-      if (prompt.controlNet.some((controlNet) => controlNet.input_image)) {
-        const firstImage = prompt.controlNet.find((controlNet) => controlNet.input_image)?.input_image;
+      if (prompt.controlNet.some((controlNet) => controlNet.input_image || controlNet.image)) {
+        const element = prompt.controlNet.find((controlNet) => controlNet.input_image || controlNet.image) as IControlNet;
+        const firstImage = element.input_image ?? element.image;
         if (firstImage) {
           const { height, width } = getImageSize(firstImage);
-          prompt.width = !prompt.width && width != -1 ? width : undefined;
-          prompt.height = !prompt.height && height != -1 ? height : undefined;
+
+          prompt.width = !prompt.width && width != -1 ? width : prompt.width;
+          prompt.height = !prompt.height && height != -1 ? height : prompt.height;
         }
       }
     }
@@ -702,27 +731,38 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-type SeriesItem = { input_image?: string[] } & Omit<IControlNet, 'input_image'>;
+type SeriesItem = { image?: string[]; input_image?: string[] } & Omit<IControlNet, 'image' | 'input_image'>;
 
-const cartesianProduct = <T>(...arrays: T[][]): T[][] => {
-  return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
+const cartesianProduct = <T>(...arrays: (T[] | undefined)[]): T[][] => {
+  return arrays.reduce(
+    (acc, curr) =>
+      acc.flatMap((arr) => {
+        if (!curr) {
+          return [arr];
+        }
+        return curr.map((item) => [...arr, item]);
+      }),
+    [[]] as T[][]
+  );
 };
 
 const permuteSeries = (series: SeriesItem[]): IControlNet[][] => {
   // Helper function to compute the cartesian product of arrays
 
   // Extract all image arrays
-  const imageArrays = series.map((item) => item.input_image as string[]);
+  const imageArrays = series.map((item) => item.image as string[]);
+  const inputImageArrays = series.map((item) => item.input_image as string[]);
 
   // Generate the cartesian product of all image arrays
-  const combinations = cartesianProduct(...imageArrays);
+  const combinations = cartesianProduct(...imageArrays, ...inputImageArrays);
 
   // Map each combination back to the series structure
   return combinations.map((combination) =>
     combination.map((image, index) => ({
       ...series[index],
+      image,
       image_name: relative(series[index].image_name ?? '', image).replace(sep, '-'),
-      input_image: image
+      input_image: undefined
     }))
   );
 };
@@ -734,22 +774,25 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
   const controlNetArray = Array.isArray(value) ? value : [value];
 
-  const noImages = controlNetArray.every((controlNet) => !controlNet.input_image);
+  const noImages = controlNetArray.every((controlNet) => !controlNet.input_image && !controlNet.image);
 
   if (noImages) {
     return [controlNetArray];
   }
 
-  const noDirectories = controlNetArray.every((controlNet) => !controlNet.input_image || !statSync(controlNet.input_image).isDirectory());
+  const noDirectoriesOld = controlNetArray.every(
+    (controlNet) => !controlNet.input_image || !statSync(controlNet.input_image).isDirectory()
+  );
+  const noDirectoriesNew = controlNetArray.every((controlNet) => !controlNet.image || !statSync(controlNet.image).isDirectory());
 
-  if (noDirectories) {
+  if (noDirectoriesOld && noDirectoriesNew) {
     return [
       controlNetArray.map((controlNet) => {
-        if (!controlNet.input_image) {
+        if (!controlNet.input_image && !controlNet.image) {
           return controlNet;
         }
 
-        const initImage = controlNet.input_image;
+        const initImage = controlNet.input_image ?? (controlNet.image as string);
         const initImageBase = dirname(initImage);
         const promptFile = resolve(initImageBase, `${parse(initImage).name}.txt`);
         let prompt: string | undefined;
@@ -758,26 +801,29 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
           prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
         }
 
-        return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage, prompt };
+        return { ...controlNet, image: initImage, image_name: relative(initImageBase, initImage).replace(sep, '-'), prompt };
       })
     ];
   }
 
-  const temporaryControlNetArray: Array<{ input_image?: string[] } & Omit<IControlNet, 'input_image'>> = [];
+  const temporaryControlNetArray: Array<{ image?: string[]; input_image?: string[] } & Omit<IControlNet, 'image' | 'input_image'>> = [];
 
   controlNetArray.forEach((controlNet) => {
-    const controlNetImage = controlNet.input_image;
+    const controlNetInputImage = controlNet.input_image;
+    const controlNetImage = controlNet.image;
 
-    if (!controlNetImage) {
-      temporaryControlNetArray.push({ ...controlNet, input_image: [''] });
+    if (!controlNetImage && !controlNetInputImage) {
+      temporaryControlNetArray.push({ ...controlNet, image: [''], input_image: undefined });
       return;
     }
 
-    let initImageBase = dirname(controlNetImage);
+    const imageToUse = controlNetInputImage ?? (controlNetImage as string);
 
-    if (statSync(controlNetImage).isDirectory()) {
-      initImageBase = resolve(controlNetImage, '..');
-      let files = readdirSync(controlNetImage);
+    let initImageBase = dirname(imageToUse);
+
+    if (statSync(imageToUse).isDirectory()) {
+      initImageBase = resolve(imageToUse, '..');
+      let files = readdirSync(imageToUse);
 
       if (controlNet.regex) {
         files = files.filter((file) => new RegExp(controlNet.regex as string).test(file));
@@ -791,11 +837,12 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
       temporaryControlNetArray.push({
         ...controlNet,
+        image: files.map((file) => resolve(imageToUse, file)),
         image_name: initImageBase,
-        input_image: files.map((file) => resolve(controlNetImage, file))
+        input_image: undefined
       });
     } else {
-      temporaryControlNetArray.push({ ...controlNet, image_name: initImageBase, input_image: [controlNetImage] });
+      temporaryControlNetArray.push({ ...controlNet, image: [imageToUse], image_name: initImageBase, input_image: undefined });
     }
   });
 
@@ -803,14 +850,17 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
 
   return result.map((current) => {
     return current.map((controlNet) => {
+      const imageToUse = controlNet.input_image ?? controlNet.image ?? undefined;
+
       const controlNetNormalized = {
         ...controlNet,
+        image: imageToUse,
         image_name: controlNet.image_name ? controlNet.image_name : undefined,
-        input_image: controlNet.input_image ? controlNet.input_image : undefined
+        input_image: undefined
       };
 
-      if (controlNetNormalized.input_image) {
-        const promptFile = resolve(dirname(controlNetNormalized.input_image), `${parse(controlNetNormalized.input_image).name}.txt`);
+      if (controlNetNormalized.image) {
+        const promptFile = resolve(dirname(controlNetNormalized.image), `${parse(controlNetNormalized.image).name}.txt`);
 
         if (existsSync(promptFile)) {
           controlNetNormalized.prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
@@ -822,7 +872,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
   });
 };
 
-const getArraysTiledVAE = (value: 'both' | ITiledVAE | boolean | undefined): Array<ITiledVAE | undefined> => {
+const getArraysTiledVAE = (value: 'both' | boolean | ITiledVAE | undefined): Array<ITiledVAE | undefined> => {
   if (typeof value === 'object') {
     return [value];
   }
@@ -979,6 +1029,60 @@ const validateTemplate = (template: string) => {
   });
 };
 
+const manageExistingImages = (
+  existingImagesStrategy: 'none' | 'numbered' | 'overwrite' | 'skip' | undefined,
+  query: IImg2ImgQuery & ITxt2ImgQuery
+): (IImg2ImgQuery & ITxt2ImgQuery) | undefined => {
+  if (!existingImagesStrategy || existingImagesStrategy === 'none') {
+    return query;
+  }
+
+  if (!query.override_settings.samples_filename_pattern) {
+    loggerInfo(`To use existing images strategy, you must set a filename pattern or directory path.`);
+    process.exit(ExitCodes.PROMPT_INVALID_EXISTING_IMAGES_STRATEGY);
+  }
+
+  if (query.override_settings.samples_filename_pattern.includes('[')) {
+    loggerInfo(`Existing images strategy is not compatible with dynamic filename pattern. Please use a static pattern without tokens.`);
+    process.exit(ExitCodes.PROMPT_INVALID_EXISTING_IMAGES_STRATEGY);
+  }
+
+  const outputFolder = Config.get('outputFolder');
+  const dir = isImg2ImgQuery(query) ? 'img2img-images' : 'txt2img-images';
+
+  const filePath = resolve(
+    outputFolder,
+    dir,
+    query.override_settings.directories_filename_pattern ?? '[date]',
+    `${query.override_settings.samples_filename_pattern}.png`
+  );
+
+  const fileExists = existsSync(filePath);
+
+  if (fileExists) {
+    switch (existingImagesStrategy) {
+      case 'numbered':
+        loggerInfo('File exists, applying numbered strategy.');
+        return {
+          ...query,
+          override_settings: {
+            ...query.override_settings,
+            samples_filename_pattern: query.override_settings.samples_filename_pattern + `-[generation_number]`
+          }
+        };
+      case 'overwrite':
+        loggerInfo('File exists, applying overwrite strategy.');
+        return query;
+
+      case 'skip':
+        loggerInfo('File exists, applying skip strategy.');
+        return undefined;
+    }
+  }
+
+  return query;
+};
+
 export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
   const queries: Array<IImg2ImgQuery | ITxt2ImgQuery> = [];
 
@@ -996,8 +1100,11 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       checkpoints,
       clipSkip,
       controlNet,
+      couple,
       denoising,
+      directoryPath,
       enableHighRes,
+      existingImagesStrategy,
       filename,
       height,
       highRes,
@@ -1026,6 +1133,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     let query: IImg2ImgQuery & ITxt2ImgQuery = {
       cfg_scale: cfg,
       controlNet: [],
+      couple,
       denoising_strength: denoising,
       enable_hr: enableHighRes,
       height: height,
@@ -1083,10 +1191,12 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
           }
         }
 
+        const imageToUse = controlNetPrompt.input_image ?? controlNetPrompt.image;
+
         query.controlNet.push({
           control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? ControlNetMode.Balanced),
-          image_name: controlNetPrompt.image_name ?? controlNetPrompt.input_image,
-          input_image: controlNetPrompt.input_image ? getBase64Image(controlNetPrompt.input_image) : undefined,
+          image: imageToUse ? getBase64Image(imageToUse) : undefined,
+          image_name: controlNetPrompt.image_name ?? imageToUse,
           model: controlNetModel.name,
           module: controlNetModule,
           resize_mode: normalizeControlNetResizes(controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope)
@@ -1123,8 +1233,8 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
           query.controlNet.push({
             control_mode: ControlNetMode.Balanced,
+            image: getBase64Image(pose.pose),
             image_name: pose.pose,
-            input_image: getBase64Image(pose.pose),
             model,
             module: 'none',
             resize_mode: ControlNetResizes.Envelope
@@ -1336,9 +1446,74 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
 
+    if (directoryPath) {
+      query.override_settings.directories_filename_pattern = directoryPath;
+
+      const allowedTokens = [
+        'filename',
+        'cfg',
+        'checkpoint',
+        'clipSkip',
+        'cutOff',
+        'denoising',
+        'enableHighRes',
+        'height',
+        'restoreFaces',
+        'sampler',
+        'scaleFactor',
+        'seed',
+        'steps',
+        'tiling',
+        'upscaler',
+        'vae',
+        'width',
+        'pose'
+      ];
+
+      const matches = directoryPath.match(/\{([a-z0-9_]+)\}/gi);
+
+      if (matches) {
+        matches.forEach((match) => {
+          if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
+            loggerInfo(`Invalid pattern token ${match}`);
+            process.exit(ExitCodes.PROMPT_INVALID_PATTERN_TOKEN);
+          }
+        });
+      }
+
+      updateDirectoryPath(query, 'filename', filename ?? '');
+
+      const findExistingPose = query.controlNet?.find((controlNet) => controlNet.model.includes('openpose'));
+
+      // Alias to official tokens
+      updateDirectoryPath(query, 'cfg', query.cfg_scale !== undefined ? '[cfg]' : '');
+      updateDirectoryPath(query, 'checkpoint', query.override_settings.sd_model_checkpoint !== undefined ? '[model_name]' : '');
+      updateDirectoryPath(query, 'clipSkip', query.override_settings.CLIP_stop_at_last_layers !== undefined ? '[clip_skip]' : '');
+      updateDirectoryPath(query, 'height', query.height !== undefined ? '[height]' : '');
+      updateDirectoryPath(query, 'seed', query.seed !== undefined ? '[seed]' : '');
+      updateDirectoryPath(query, 'steps', query.steps !== undefined ? '[steps]' : '');
+      updateDirectoryPath(query, 'width', query.width !== undefined ? '[width]' : '');
+
+      updateDirectoryPath(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
+      updateDirectoryPath(query, 'denoising', query.denoising_strength?.toFixed(2) ?? '');
+      updateDirectoryPath(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateDirectoryPath(query, 'pose', findExistingPose?.image_name ? findExistingPose.image_name.toString() : '');
+      updateDirectoryPath(query, 'restoreFaces', query.restore_faces !== undefined ? query.restore_faces.toString() : '');
+      updateDirectoryPath(query, 'sampler', query.sampler_name !== undefined ? query.sampler_name.toString() : '');
+      updateDirectoryPath(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
+      updateDirectoryPath(query, 'tiling', tiling !== undefined ? tiling.toString() : '');
+      updateDirectoryPath(query, 'upscaler', query.hr_upscaler !== undefined ? query.hr_upscaler.toString() : '');
+      updateDirectoryPath(query, 'vae', query.override_settings.sd_vae !== undefined ? query.override_settings.sd_vae.toString() : '');
+    }
+
     if (query.override_settings.samples_filename_pattern) {
       validateTemplate(query.override_settings.samples_filename_pattern);
       query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.trim();
+    }
+
+    if (query.override_settings.directories_filename_pattern) {
+      validateTemplate(query.override_settings.directories_filename_pattern);
+      query.override_settings.directories_filename_pattern = query.override_settings.directories_filename_pattern.trim();
     }
 
     if (styles && styles.length > 0) {
@@ -1358,7 +1533,11 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       });
     }
 
-    queries.push(query);
+    const finalQuery = manageExistingImages(existingImagesStrategy, query);
+
+    if (finalQuery) {
+      queries.push(query);
+    }
   });
 
   return queries;
@@ -1403,7 +1582,7 @@ export const prompts = async (config: IPromptsResolved, validateOnly: boolean) =
     process.exit(0);
   }
 
-  for await (const queryParams of queries) {
+  for (const queryParams of queries) {
     if ((queryParams as IImg2ImgQuery).init_images) {
       await renderQuery(queryParams as IImg2ImgQuery, 'img2img');
     } else {

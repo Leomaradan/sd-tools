@@ -1,76 +1,67 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "additionalProperties": false,
-    "definitions": {
-        "IKeysList": {
-            "additionalProperties": false,
-            "properties": {
-                "key": {
-                    "title": "key",
-                    "type": "string"
-                },
-                "value": {
-                    "items": {
-                        "$ref": "#/definitions/Key"
-                    },
-                    "title": "value",
-                    "type": "array"
-                }
-            },
-            "required": [
-                "key",
-                "value"
-            ],
-            "title": "IKeysList",
-            "type": "object"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "IKeysList": {
+      "properties": {
+        "key": {
+          "title": "key",
+          "type": "string"
         },
-        "Key": {
-            "anyOf": [
-                {
-                    "items": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "maxItems": 2,
-                    "minItems": 2,
-                    "type": "array"
-                },
-                {
-                    "type": "string"
-                }
-            ],
-            "title": "Key"
+        "value": {
+          "items": {
+            "$ref": "#/definitions/Key"
+          },
+          "title": "value",
+          "type": "array"
         }
+      },
+      "required": ["key", "value"],
+      "title": "IKeysList",
+      "type": "object"
     },
-    "properties": {
-        "$schema": {
-            "title": "$schema",
-            "type": "string"
-        },
-        "folderPattern": {
-            "title": "folderPattern",
-            "type": "string"
-        },
-        "keys": {
-            "items": {
-                "$ref": "#/definitions/IKeysList"
+    "Key": {
+      "anyOf": [
+        {
+          "items": [
+            {
+              "type": "string"
             },
-            "title": "keys",
-            "type": "array"
+            {
+              "type": "string"
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
         },
-        "pattern": {
-            "title": "pattern",
-            "type": "string"
+        {
+          "type": "string"
         }
+      ],
+      "title": "Key"
+    }
+  },
+  "properties": {
+    "$schema": {
+      "title": "$schema",
+      "type": "string"
     },
-    "required": [
-        "keys",
-        "pattern"
-    ],
-    "type": "object"
+    "folderPattern": {
+      "title": "folderPattern",
+      "type": "string"
+    },
+    "keys": {
+      "items": {
+        "$ref": "#/definitions/IKeysList"
+      },
+      "title": "keys",
+      "type": "array"
+    },
+    "pattern": {
+      "title": "pattern",
+      "type": "string"
+    }
+  },
+  "required": ["keys", "pattern"],
+  "type": "object"
 }
-

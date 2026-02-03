@@ -16,6 +16,7 @@ describe('prompt test', () => {
   describe('generate queries', () => {
     it('should generate the query from single config', () => {
       expect.assertions(2);
+
       const config: IPrompts = {
         prompts: [
           {
@@ -38,6 +39,7 @@ describe('prompt test', () => {
 
     it('should manage adetailers params', () => {
       expect.assertions(4);
+
       const config: IPrompts = {
         prompts: [
           {
@@ -91,6 +93,7 @@ describe('prompt test', () => {
 
     it('should generate all the queries from config', () => {
       expect.assertions(3);
+
       const config: IPrompts = {
         prompts: [
           {
@@ -160,6 +163,7 @@ describe('prompt test', () => {
 
     it('should generate all the queries from config with additional permutations', () => {
       expect.assertions(3);
+
       const config: IPrompts = {
         permutations: [
           { afterFilename: ' Permut 1', beforePrompt: 'permut prompt, ' },
@@ -246,6 +250,7 @@ describe('prompt test', () => {
   describe('controlNet resolver', () => {
     it('should return one permutation with no images', () => {
       expect.assertions(4);
+
       //getArraysControlNet
       const resultUndefined = getArraysControlNet(undefined);
       const resultEmpty = getArraysControlNet([]);
@@ -260,22 +265,23 @@ describe('prompt test', () => {
 
     it('should return one permutation with simple images', () => {
       expect.assertions(3);
+
       const resultOneImage = getArraysControlNet({
         control_mode: 0,
-        input_image: imageSingle,
+        image: imageSingle,
         model: 'model1',
         module: 'module1',
         resize_mode: 0
       });
 
       const resultOneImageArray = getArraysControlNet([
-        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 0, image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
         { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       const resultTwoImages = getArraysControlNet([
-        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
-        { control_mode: 1, input_image: imageSingle2, model: 'model2', module: 'module2', resize_mode: 1 }
+        { control_mode: 0, image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, image: imageSingle2, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       expect(resultOneImage).toMatchObject([
@@ -299,38 +305,39 @@ describe('prompt test', () => {
 
     it('should return multiple permutations', () => {
       expect.assertions(4);
+
       const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
       const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
 
       const resultOneImage = getArraysControlNet({
         control_mode: 0,
-        input_image: imageMultiFolder,
+        image: imageMultiFolder,
         model: 'model1',
         module: 'module1',
         resize_mode: 0
       });
 
       const resultOneImageArray = getArraysControlNet([
-        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 0, image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
         { control_mode: 1, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       const resultTwoImages = getArraysControlNet([
-        { control_mode: 0, input_image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
-        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+        { control_mode: 0, image: imageSingle, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       const resultFourImages = getArraysControlNet([
-        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
-        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
+        { control_mode: 0, image: imageMultiFolder, model: 'model1', module: 'module1', resize_mode: 0 },
+        { control_mode: 1, image: imageMultiFolder, model: 'model2', module: 'module2', resize_mode: 1 }
       ]);
 
       expect(resultOneImage).toMatchObject([
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -339,8 +346,8 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
@@ -352,24 +359,24 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
-          { control_mode: 1, image_name: undefined, input_image: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
+          { control_mode: 1, image: '', image_name: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
         ],
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
-          { control_mode: 1, image_name: undefined, input_image: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
+          { control_mode: 1, image: '', image_name: undefined, model: 'model2', module: 'module2', resize_mode: 1 }
         ]
       ]);
 
@@ -377,16 +384,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: imageSingle,
             image_name: 'close-front.pose.png',
-            input_image: imageSingle,
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -395,16 +402,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: imageSingle,
             image_name: 'close-front.pose.png',
-            input_image: imageSingle,
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -416,16 +423,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -434,16 +441,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -452,16 +459,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -470,16 +477,16 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -490,28 +497,29 @@ describe('prompt test', () => {
 
     it('should return one permutation with regex pattern', () => {
       expect.assertions(1);
+
       const image1 = 'pose-heroic-full-018-ar2x3.depth.png';
       const image2 = 'pose-heroic-full-018-ar2x3.pose.png';
 
       const result = getArraysControlNet([
-        { control_mode: 0, input_image: imageMultiFolder, model: 'model1', module: 'module1', regex: 'depth', resize_mode: 0 },
-        { control_mode: 1, input_image: imageMultiFolder, model: 'model2', module: 'module2', regex: '.pose', resize_mode: 1 }
+        { control_mode: 0, image: imageMultiFolder, model: 'model1', module: 'module1', regex: 'depth', resize_mode: 0 },
+        { control_mode: 1, image: imageMultiFolder, model: 'model2', module: 'module2', regex: '.pose', resize_mode: 1 }
       ]);
 
       expect(result).toMatchObject([
         [
           {
             control_mode: 0,
+            image: resolve(imageMultiFolder, image1),
             image_name: `multi-${image1}`,
-            input_image: resolve(imageMultiFolder, image1),
             model: 'model1',
             module: 'module1',
             resize_mode: 0
           },
           {
             control_mode: 1,
+            image: resolve(imageMultiFolder, image2),
             image_name: `multi-${image2}`,
-            input_image: resolve(imageMultiFolder, image2),
             model: 'model2',
             module: 'module2',
             resize_mode: 1
@@ -522,9 +530,10 @@ describe('prompt test', () => {
 
     it('should add the optional prompts', () => {
       expect.assertions(3);
+
       const resultImage = getArraysControlNet({
         control_mode: 0,
-        input_image: imageInstruct,
+        image: imageInstruct,
         model: 'model1',
         module: 'module1',
         resize_mode: 0
@@ -532,7 +541,7 @@ describe('prompt test', () => {
 
       const resultFolder = getArraysControlNet({
         control_mode: 0,
-        input_image: imageInstructFolder,
+        image: imageInstructFolder,
         model: 'model1',
         module: 'module1',
         resize_mode: 0
@@ -543,7 +552,7 @@ describe('prompt test', () => {
           {
             controlNet: {
               control_mode: 0,
-              input_image: imageInstruct,
+              image: imageInstruct,
               model: 'model1',
               module: 'module1',
               resize_mode: 0
@@ -557,8 +566,8 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: imageInstruct,
             image_name: 'close-front.png',
-            input_image: imageInstruct,
             model: 'model1',
             module: 'module1',
             prompt: 'test prompt instruct, {prompt}',
@@ -571,8 +580,8 @@ describe('prompt test', () => {
         [
           {
             control_mode: 0,
+            image: imageInstruct,
             image_name: 'instruct-close-front.png',
-            input_image: imageInstruct,
             model: 'model1',
             module: 'module1',
             prompt: 'test prompt instruct, {prompt}',
@@ -633,6 +642,7 @@ describe('prompt test', () => {
   describe('prompts for Style and Subject', () => {
     it('should override the classic prompt if we use style ans subject prompt', () => {
       expect.assertions(5);
+
       const config1: IPrompts = {
         prompts: [
           {
@@ -687,6 +697,7 @@ describe('prompt test', () => {
 
     it('should remove the negativePrompt of the classic prompt if we use style and subject prompt', () => {
       expect.assertions(3);
+
       const config1: IPrompts = {
         prompts: [
           {
@@ -738,6 +749,7 @@ describe('prompt test', () => {
 
     it('should generate correct prompts with promptStyle and promptSubject without hiRes prompt', () => {
       expect.assertions(5);
+
       const config1: IPrompts = {
         prompts: [
           {
@@ -803,6 +815,7 @@ describe('prompt test', () => {
 
     it('should generate correct prompts with promptStyle and promptSubject with hiRes prompt', () => {
       expect.assertions(4);
+
       const config1: IPrompts = {
         prompts: [
           {
@@ -873,6 +886,7 @@ describe('prompt test', () => {
 
     it('should correctly manage permutations for promptStyle and promptSubject', () => {
       expect.assertions(2);
+
       const config1: IPrompts = {
         prompts: [
           {
@@ -906,6 +920,7 @@ describe('prompt test', () => {
   describe('prompts pattern token replacement', () => {
     it('should replace the {scaleFactor} tokens', () => {
       expect.assertions(3);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -978,6 +993,7 @@ describe('prompt test', () => {
 
     it('should replace the {filename} tokens', () => {
       expect.assertions(4);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1055,6 +1071,7 @@ describe('prompt test', () => {
 
     it('should replace the {cfg} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1097,6 +1114,7 @@ describe('prompt test', () => {
 
     it('should replace the {checkpoint} and {vae} tokens', () => {
       expect.assertions(4);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1153,6 +1171,7 @@ describe('prompt test', () => {
 
     it('should replace the {clipSkip} tokens', () => {
       expect.assertions(3);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1196,6 +1215,7 @@ describe('prompt test', () => {
 
     it('should replace the {cutOff} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1237,6 +1257,7 @@ describe('prompt test', () => {
 
     it('should replace the {denoising} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1279,6 +1300,7 @@ describe('prompt test', () => {
 
     it('should replace the {enableHighRes} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1328,6 +1350,7 @@ describe('prompt test', () => {
 
     it('should replace the {width} and {height} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1373,6 +1396,7 @@ describe('prompt test', () => {
 
     it('should replace the {restoreFaces} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1421,6 +1445,7 @@ describe('prompt test', () => {
 
     it('should replace the {sampler} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1463,6 +1488,7 @@ describe('prompt test', () => {
 
     it('should replace the {seed} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1505,6 +1531,7 @@ describe('prompt test', () => {
 
     it('should replace the {steps} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1547,6 +1574,7 @@ describe('prompt test', () => {
 
     it('should replace the {tiling} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1596,6 +1624,7 @@ describe('prompt test', () => {
 
     it('should replace the {upscaler} tokens', () => {
       expect.assertions(3);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1639,13 +1668,14 @@ describe('prompt test', () => {
 
     it('should replace the {pose} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
             controlNet: [
               {
                 control_mode: 0,
-                input_image: 'test/images/close-front.pose.png',
+                image: 'test/images/close-front.pose.png',
                 model: 'openpose',
                 module: 'module1',
                 resize_mode: 0
@@ -1687,6 +1717,7 @@ describe('prompt test', () => {
 
     it('should replace the {count} tokens', () => {
       expect.assertions(2);
+
       const result1 = preparePrompts({
         prompts: [
           {
@@ -1735,6 +1766,7 @@ describe('prompt test', () => {
   describe('checkpoints resolution', () => {
     it('should resolve single checkpoint', () => {
       expect.assertions(1);
+
       const result = preparePrompts({
         prompts: [
           {
@@ -1756,6 +1788,7 @@ describe('prompt test', () => {
 
     it('should resolve array of string checkpoints', () => {
       expect.assertions(1);
+
       const result = preparePrompts({
         prompts: [
           {
@@ -1783,6 +1816,7 @@ describe('prompt test', () => {
 
     it('should resolve array of checkpoints', () => {
       expect.assertions(1);
+
       const result = preparePrompts({
         prompts: [
           {
@@ -1813,6 +1847,7 @@ describe('prompt test', () => {
 
     it('should manage addBefore* and addAfter* in checkpoint', () => {
       expect.assertions(1);
+
       const result = preparePrompts({
         prompts: [
           {

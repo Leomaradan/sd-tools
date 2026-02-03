@@ -18,6 +18,13 @@ export const addBaseCommandOptions = (builder: yargs.Argv<object>, simulate?: bo
       }
     })
     .options({
+      'no-agent': {
+        default: false,
+        describe: 'If set, the agent will not be used',
+        type: 'boolean'
+      }
+    })
+    .options({
       verbose: {
         describe: 'If set, more information will be displayed in the console',
         type: 'boolean'
@@ -39,13 +46,14 @@ export const addBaseCommandOptions = (builder: yargs.Argv<object>, simulate?: bo
 };
 
 export const resolveBaseOptions = (argv: unknown) => {
-  const options = argv as { ['no-log']: boolean; silent?: boolean; simulate: boolean; verbose?: boolean };
+  const options = argv as { noAgent?: boolean; noLog?: boolean; silent?: boolean; simulate: boolean; verbose?: boolean };
 
   const silent = options.silent ?? false;
   const verbose = options.verbose ?? false;
 
   mode.info = !silent;
   mode.verbose = verbose;
-  mode.log = !options['no-log'];
+  mode.log = !options.noLog;
   mode.simulate = options.simulate;
+  mode.noAgent = !!options.noAgent;
 };

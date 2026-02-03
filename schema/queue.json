@@ -13,15 +13,22 @@
   ],
   "definitions": {
     "ControlNetSchema": {
-      "additionalProperties": false,
       "properties": {
         "control_mode": {
           "enum": [0, 1, 2, "Balanced", "ControlNet is more important", "My prompt is more important"],
           "title": "control_mode"
         },
+        "image": {
+          "title": "image",
+          "type": "string"
+        },
         "input_image": {
           "title": "input_image",
           "type": "string"
+        },
+        "low_vram": {
+          "title": "low_vram",
+          "type": "boolean"
         },
         "lowvram": {
           "title": "lowvram",
@@ -50,6 +57,10 @@
         "resize_mode": {
           "enum": [0, 1, 2, "Crop and Resize", "Just Resize", "Resize and Fill"],
           "title": "resize_mode"
+        },
+        "weight": {
+          "title": "weight",
+          "type": "number"
         }
       },
       "required": ["control_mode", "model", "module", "resize_mode"],
@@ -57,7 +68,6 @@
       "type": "object"
     },
     "IAdetailerPrompt": {
-      "additionalProperties": false,
       "properties": {
         "confidence": {
           "title": "confidence",
@@ -93,7 +103,6 @@
       "type": "object"
     },
     "ICheckpointWithVAE": {
-      "additionalProperties": false,
       "properties": {
         "addAfterFilename": {
           "title": "addAfterFilename",
@@ -123,6 +132,14 @@
           "title": "checkpoint",
           "type": "string"
         },
+        "negativePrompt": {
+          "title": "negativePrompt",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "prompt",
+          "type": "string"
+        },
         "vae": {
           "title": "vae",
           "type": "string"
@@ -133,7 +150,6 @@
       "type": "object"
     },
     "IClassicPrompt": {
-      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -216,6 +232,20 @@
           "title": "count",
           "type": "number"
         },
+        "couple": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IForgeCouple"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/IForgeCouple"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "couple"
+        },
         "denoising": {
           "anyOf": [
             {
@@ -230,9 +260,18 @@
           ],
           "title": "denoising"
         },
+        "directoryPath": {
+          "title": "directoryPath",
+          "type": "string"
+        },
         "enableHighRes": {
           "enum": ["both", false, true],
           "title": "enableHighRes"
+        },
+        "existingImagesStrategy": {
+          "enum": ["none", "numbered", "overwrite", "skip"],
+          "title": "existingImagesStrategy",
+          "type": "string"
         },
         "filename": {
           "title": "filename",
@@ -509,6 +548,78 @@
       "title": "IClassicPrompt",
       "type": "object"
     },
+    "IForgeCouple": {
+      "properties": {
+        "background": {
+          "anyOf": [
+            {
+              "enum": ["First Line", "Last Line", "None"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "background"
+        },
+        "background_weight": {
+          "title": "background_weight",
+          "type": ["null", "number"]
+        },
+        "common_debug": {
+          "title": "common_debug",
+          "type": ["null", "boolean"]
+        },
+        "common_parser": {
+          "anyOf": [
+            {
+              "enum": ["< >", "off", "{ }"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "common_parser"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "enum": ["Horizontal", "Vertical"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "direction"
+        },
+        "mapping": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "mapping"
+        },
+        "mode": {
+          "enum": ["Advanced", "Basic", "Mask"],
+          "title": "mode",
+          "type": "string"
+        },
+        "separator": {
+          "title": "separator",
+          "type": "string"
+        }
+      },
+      "required": ["mode"],
+      "title": "IForgeCouple",
+      "type": "object"
+    },
     "IPrompt": {
       "anyOf": [
         {
@@ -521,7 +632,6 @@
       "title": "IPrompt"
     },
     "IPromptPermutations": {
-      "additionalProperties": false,
       "properties": {
         "afterFilename": {
           "title": "afterFilename",
@@ -570,7 +680,6 @@
       "type": "object"
     },
     "IPromptReplace": {
-      "additionalProperties": false,
       "properties": {
         "from": {
           "title": "from",
@@ -586,7 +695,6 @@
       "type": "object"
     },
     "IPromptsWithBasePrompt": {
-      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -625,7 +733,6 @@
       "type": "object"
     },
     "IPromptsWithExtends": {
-      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -671,7 +778,6 @@
       "type": "object"
     },
     "IPromptsWithPrompt": {
-      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -717,7 +823,6 @@
       "type": "object"
     },
     "IStyleSubjectPrompt": {
-      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -800,6 +905,20 @@
           "title": "count",
           "type": "number"
         },
+        "couple": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IForgeCouple"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/IForgeCouple"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "couple"
+        },
         "denoising": {
           "anyOf": [
             {
@@ -814,9 +933,18 @@
           ],
           "title": "denoising"
         },
+        "directoryPath": {
+          "title": "directoryPath",
+          "type": "string"
+        },
         "enableHighRes": {
           "enum": ["both", false, true],
           "title": "enableHighRes"
+        },
+        "existingImagesStrategy": {
+          "enum": ["none", "numbered", "overwrite", "skip"],
+          "title": "existingImagesStrategy",
+          "type": "string"
         },
         "filename": {
           "title": "filename",
@@ -1094,11 +1222,17 @@
       "type": "object"
     },
     "ITiledDiffusion": {
-      "additionalProperties": false,
       "properties": {
         "method": {
           "$ref": "#/definitions/TiledDiffusionMethods",
           "title": "method"
+        },
+        "regionalPrompt": {
+          "items": {
+            "$ref": "#/definitions/ITiledDiffusionRegion"
+          },
+          "title": "regionalPrompt",
+          "type": "array"
         },
         "scaleFactor": {
           "title": "scaleFactor",
@@ -1125,8 +1259,51 @@
       "title": "ITiledDiffusion",
       "type": "object"
     },
+    "ITiledDiffusionRegion": {
+      "properties": {
+        "blend_mode": {
+          "enum": ["Background", "Foreground"],
+          "title": "blend_mode",
+          "type": "string"
+        },
+        "feather_ratio": {
+          "title": "feather_ratio",
+          "type": "number"
+        },
+        "h": {
+          "title": "h",
+          "type": "number"
+        },
+        "neg_prompt": {
+          "title": "neg_prompt",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "prompt",
+          "type": "string"
+        },
+        "seed": {
+          "title": "seed",
+          "type": "number"
+        },
+        "w": {
+          "title": "w",
+          "type": "number"
+        },
+        "x": {
+          "title": "x",
+          "type": "number"
+        },
+        "y": {
+          "title": "y",
+          "type": "number"
+        }
+      },
+      "required": ["blend_mode", "h", "prompt", "w", "x", "y"],
+      "title": "ITiledDiffusionRegion",
+      "type": "object"
+    },
     "ITiledVAE": {
-      "additionalProperties": false,
       "properties": {
         "colorFix": {
           "title": "colorFix",
@@ -1157,7 +1334,6 @@
       "type": "object"
     },
     "IUltimateSDUpscale": {
-      "additionalProperties": false,
       "properties": {
         "height": {
           "title": "height",
@@ -1185,7 +1361,6 @@
       "type": "object"
     },
     "Partial<IClassicPrompt>": {
-      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1268,6 +1443,20 @@
           "title": "count",
           "type": "number"
         },
+        "couple": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IForgeCouple"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/IForgeCouple"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "couple"
+        },
         "denoising": {
           "anyOf": [
             {
@@ -1282,9 +1471,18 @@
           ],
           "title": "denoising"
         },
+        "directoryPath": {
+          "title": "directoryPath",
+          "type": "string"
+        },
         "enableHighRes": {
           "enum": ["both", false, true],
           "title": "enableHighRes"
+        },
+        "existingImagesStrategy": {
+          "enum": ["none", "numbered", "overwrite", "skip"],
+          "title": "existingImagesStrategy",
+          "type": "string"
         },
         "filename": {
           "title": "filename",
@@ -1572,7 +1770,6 @@
       "title": "Partial<IPrompt>"
     },
     "Partial<IPromptSingleSchema>": {
-      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1608,13 +1805,26 @@
           "title": "controlNet",
           "type": "array"
         },
+        "couple": {
+          "$ref": "#/definitions/IForgeCouple",
+          "title": "couple"
+        },
         "denoising": {
           "title": "denoising",
           "type": "number"
         },
+        "directoryPath": {
+          "title": "directoryPath",
+          "type": "string"
+        },
         "enableHighRes": {
           "title": "enableHighRes",
           "type": "boolean"
+        },
+        "existingImagesStrategy": {
+          "enum": ["none", "numbered", "overwrite", "skip"],
+          "title": "existingImagesStrategy",
+          "type": "string"
         },
         "filename": {
           "title": "filename",
@@ -1716,7 +1926,6 @@
       "type": "object"
     },
     "Partial<IStyleSubjectPrompt>": {
-      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1799,6 +2008,20 @@
           "title": "count",
           "type": "number"
         },
+        "couple": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IForgeCouple"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/IForgeCouple"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "couple"
+        },
         "denoising": {
           "anyOf": [
             {
@@ -1813,9 +2036,18 @@
           ],
           "title": "denoising"
         },
+        "directoryPath": {
+          "title": "directoryPath",
+          "type": "string"
+        },
         "enableHighRes": {
           "enum": ["both", false, true],
           "title": "enableHighRes"
+        },
+        "existingImagesStrategy": {
+          "enum": ["none", "numbered", "overwrite", "skip"],
+          "title": "existingImagesStrategy",
+          "type": "string"
         },
         "filename": {
           "title": "filename",

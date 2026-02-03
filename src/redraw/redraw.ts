@@ -3,16 +3,15 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { ControlNetMode, ControlNetResizes, type IControlNet } from '../commons/extensions/controlNet';
-import { type IFile, getBase64Image, getFiles } from '../commons/file';
+import { getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
 import { interrogateQuery } from '../commons/query';
 import { type IClassicPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle } from '../commons/types';
 
-const IP_ADAPTER = 'ip-adapter';
-const LINEART = 'lineart';
-const HED = 'hed';
+const INTERROGATE_MODEL_LAION = 'ViT-H-14/laion2b_s32b_b79k';
+const INTERROGATE_MODEL_OPENAI = 'ViT-L-14/openai';
 
 const prepareQueryData = (baseParamsProps: { sdxl: boolean } & IClassicPrompt, file: IFile) => {
   const baseParams = { ...baseParamsProps };
@@ -68,15 +67,21 @@ const prepareQueryData = (baseParamsProps: { sdxl: boolean } & IClassicPrompt, f
   return baseParams;
 };
 
-const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
+const getModelCheckpoint = (style: IRedrawStyle, sdxl?: boolean) => {
   const redrawModels = Config.get('redrawModels');
   let sd_model_checkpoint = redrawModels.realist15;
 
-  if (style === 'anime') {
+  if (style === IRedrawStyle.Anime) {
     if (sdxl) {
       sd_model_checkpoint = redrawModels.animexl;
     } else {
       sd_model_checkpoint = redrawModels.anime15;
+    }
+  } else if (style === IRedrawStyle.PixelArt) {
+    if (sdxl) {
+      sd_model_checkpoint = redrawModels.pixelxl;
+    } else {
+      sd_model_checkpoint = redrawModels.pixel15;
     }
   } else if (sdxl) {
     sd_model_checkpoint = redrawModels.realistxl;
@@ -85,11 +90,19 @@ const getModelCheckpoint = (style: 'anime' | 'realism', sdxl?: boolean) => {
   return sd_model_checkpoint;
 };
 
-const getControlNetLineart = (sdxl: boolean, style: 'anime' | 'realism'): IControlNet | undefined => {
+const getControlNetLineart = (sdxl: boolean, style: IRedrawStyle, weight = 1): IControlNet | undefined => {
   let controlnetModelName: string[] = [];
 
+  let controlnetModule = findControlnetModule('lineart_realistic', 'lineart');
+  if (style === 'anime') {
+    controlnetModule = findControlnetModule('lineart_anime', 'lineart');
+  }
   if (sdxl) {
-    controlnetModelName = ['t2i-adapter_diffusers_xl_lineart'];
+    controlnetModule = findControlnetModule('canny');
+  }
+
+  if (sdxl) {
+    controlnetModelName = ['control-lora-canny-rank256'];
   } else if (style === 'anime') {
     controlnetModelName = ['control_v11p_sd15s2_lineart_anime', 'control_v11p_sd15_lineart'];
   } else {
@@ -97,20 +110,19 @@ const getControlNetLineart = (sdxl: boolean, style: 'anime' | 'realism'): IContr
   }
 
   const controlnetModel = findControlnetModel(...controlnetModelName)?.name;
-  const controlnetModule =
-    style === 'anime' ? findControlnetModule('lineart_anime', 'lineart') : findControlnetModule('lineart_realistic', 'lineart');
 
   if (controlnetModel !== undefined && controlnetModule !== undefined) {
     return {
       control_mode: ControlNetMode.ControleNetImportant,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: ControlNetResizes.Resize
+      resize_mode: ControlNetResizes.Resize,
+      weight
     };
   }
 };
 
-const getControlNetOpenPose = (sdxl: boolean, style: 'anime' | 'realism', input_image?: IFile): IControlNet | undefined => {
+const getControlNetOpenPose = (sdxl: boolean, style: IRedrawStyle, input_image?: IFile, weight = 1): IControlNet | undefined => {
   let controlnetModelName: string[] = [];
 
   if (sdxl) {
@@ -133,15 +145,16 @@ const getControlNetOpenPose = (sdxl: boolean, style: 'anime' | 'realism', input_
   if (controlnetModel !== undefined && controlnetModule !== undefined) {
     return {
       control_mode: ControlNetMode.PromptImportant,
-      input_image: input_image ? getBase64Image(input_image.filename) : undefined,
+      image: input_image?.filename,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: ControlNetResizes.Resize
+      resize_mode: ControlNetResizes.Resize,
+      weight
     };
   }
 };
 
-const getControlNetIPAdapter = (sdxl: boolean, file: IFile): IControlNet | undefined => {
+const getControlNetIPAdapter = (sdxl: boolean, input_image: IFile, weight = 1): IControlNet | undefined => {
   let controlnetModelName: string[] = [];
 
   if (sdxl) {
@@ -158,17 +171,19 @@ const getControlNetIPAdapter = (sdxl: boolean, file: IFile): IControlNet | undef
   if (controlnetModel !== undefined && controlnetModule !== undefined) {
     return {
       control_mode: ControlNetMode.ControleNetImportant,
-      input_image: getBase64Image(file.filename),
+      image: input_image.filename,
       model: controlnetModel,
       module: controlnetModule,
-      resize_mode: ControlNetResizes.Resize
+      resize_mode: ControlNetResizes.Resize,
+      weight
     };
   }
 };
 
 const prepareQueryClassicalBase = (
   file: IFile,
-  style: 'anime' | 'realism',
+  style: IRedrawStyle,
+  method: IRedrawMethod,
   denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
@@ -182,6 +197,16 @@ const prepareQueryClassicalBase = (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
+  const stylesArray = [];
+
+  if (style === IRedrawStyle.Anime) {
+    stylesArray.push('Anime (SDXL)');
+  }
+
+  if (style === IRedrawStyle.PixelArt && !sdxl) {
+    stylesArray.push('Pixel Art');
+  }
+
   const baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
@@ -190,29 +215,132 @@ const prepareQueryClassicalBase = (
     filename: basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', ''),
     height,
     initImageOrFolder: file.filename,
-    negativePrompt: sdxl ? Config.get('commonNegative') : Config.get('commonNegativeXL'),
-    pattern: `[datetime]-{denoising}-${style}-classical-{filename}`,
+    negativePrompt: sdxl ? Config.get('commonNegativeXL') : Config.get('commonNegative'),
+    pattern: `[datetime]-{denoising}-${style}-${method}-{filename}`,
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
-    restoreFaces: true,
+    restoreFaces: false,
     sdxl: !!sdxl,
-    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
+    styles: stylesArray,
     width
   };
 
   return baseParams;
 };
 
-const prepareQueryClassical = async (
+const prepareQueryDenoise = async (
   file: IFile,
-  style: 'anime' | 'realism',
+  style: IRedrawStyle,
   denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
 ) => {
-  let baseParams = prepareQueryClassicalBase(file, style, denoising_strength, addToPrompt, sdxl);
+  let baseParams = prepareQueryClassicalBase(file, style, IRedrawMethod.Denoise, denoising_strength, addToPrompt, sdxl);
 
-  const controlNet1 = getControlNetLineart(sdxl ?? false, style);
-  const controlNet2 = getControlNetOpenPose(sdxl ?? false, style);
+  let ready = false;
+  if (file.data) {
+    baseParams = prepareQueryData(baseParams, file);
+
+    ready = true;
+  } else {
+    const prompt = await interrogateQuery(file.filename, [sdxl ? INTERROGATE_MODEL_LAION : INTERROGATE_MODEL_OPENAI]);
+
+    if (prompt) {
+      baseParams.prompt += prompt.prompt;
+      ready = true;
+    }
+  }
+
+  if (ready) {
+    return baseParams;
+  }
+};
+
+const prepareQueryLineart = async (
+  file: IFile,
+  style: IRedrawStyle,
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let baseParams = prepareQueryClassicalBase(file, style, IRedrawMethod.Lineart, denoising_strength, addToPrompt, sdxl);
+
+  const controlNet = getControlNetLineart(sdxl ?? false, style);
+  //const controlNet2 = getControlNetOpenPose(sdxl ?? false, style);
+
+  if (controlNet) {
+    (baseParams.controlNet as IControlNet[]).push(controlNet);
+  } else {
+    loggerInfo(`Controlnet models for lineart not found`);
+    process.exit(ExitCodes.REDRAW_LINEART_MODEL_NOT_FOUND);
+  }
+
+  let ready = false;
+  if (file.data) {
+    baseParams = prepareQueryData(baseParams, file);
+
+    ready = true;
+  } else {
+    const prompt = await interrogateQuery(file.filename, [sdxl ? INTERROGATE_MODEL_LAION : INTERROGATE_MODEL_OPENAI]);
+
+    if (prompt) {
+      baseParams.prompt += prompt.prompt;
+      ready = true;
+    }
+  }
+
+  if (ready) {
+    return baseParams;
+  }
+};
+
+const prepareQueryOpenpose = async (
+  file: IFile,
+  style: IRedrawStyle,
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let baseParams = prepareQueryClassicalBase(file, style, IRedrawMethod.Openpose, denoising_strength, addToPrompt, sdxl);
+
+  const controlNet = getControlNetOpenPose(sdxl ?? false, style);
+
+  if (controlNet) {
+    (baseParams.controlNet as IControlNet[]).push(controlNet);
+  } else {
+    loggerInfo(`OpenPose models for openpose not found`);
+    process.exit(ExitCodes.REDRAW_LINEART_MODEL_NOT_FOUND);
+  }
+
+  let ready = false;
+  if (file.data) {
+    baseParams = prepareQueryData(baseParams, file);
+
+    ready = true;
+  } else {
+    const prompt = await interrogateQuery(file.filename, [sdxl ? INTERROGATE_MODEL_LAION : INTERROGATE_MODEL_OPENAI]);
+
+    if (prompt) {
+      baseParams.prompt += prompt.prompt;
+      ready = true;
+    }
+  }
+
+  if (ready) {
+    return baseParams;
+  }
+};
+
+const prepareQueryLineAndPose = async (
+  file: IFile,
+  style: IRedrawStyle,
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => {
+  let baseParams = prepareQueryClassicalBase(file, style, IRedrawMethod.LinePose, denoising_strength, addToPrompt, sdxl);
+
+  const controlNet1 = getControlNetLineart(sdxl ?? false, style, 0.5);
+  const controlNet2 = getControlNetOpenPose(sdxl ?? false, style, undefined, 0.5);
 
   if (controlNet1) {
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
@@ -231,7 +359,7 @@ const prepareQueryClassical = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? INTERROGATE_MODEL_LAION : INTERROGATE_MODEL_OPENAI]);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;
@@ -246,7 +374,7 @@ const prepareQueryClassical = async (
 
 const prepareQueryIpAdapterBase = (
   file: IFile,
-  style: 'anime' | 'realism',
+  style: IRedrawStyle,
   denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
@@ -260,6 +388,16 @@ const prepareQueryIpAdapterBase = (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
+  const stylesArray = [];
+
+  if (style === IRedrawStyle.Anime) {
+    stylesArray.push('Anime (SDXL)');
+  }
+
+  if (style === IRedrawStyle.PixelArt && !sdxl) {
+    stylesArray.push('Pixel Art');
+  }
+
   const baseParams: { sdxl: boolean } & IClassicPrompt = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
@@ -272,7 +410,7 @@ const prepareQueryIpAdapterBase = (
     prompt: addToPrompt ? `${addToPrompt}, ` : '',
     restoreFaces: true,
     sdxl: !!sdxl,
-    styles: style === 'anime' ? ['Anime (SDXL)'] : [],
+    styles: stylesArray,
     width
   };
 
@@ -281,15 +419,15 @@ const prepareQueryIpAdapterBase = (
 
 const prepareQueryIpAdapter = async (
   file: IFile,
-  style: 'anime' | 'realism',
+  style: IRedrawStyle,
   denoising_strength: number | number[],
   addToPrompt?: string,
   sdxl?: boolean
 ) => {
   let baseParams = prepareQueryIpAdapterBase(file, style, denoising_strength, addToPrompt, sdxl);
 
-  const controlNet1 = getControlNetIPAdapter(sdxl ?? false, file);
-  const controlNet2 = getControlNetOpenPose(sdxl ?? false, style, file);
+  const controlNet1 = getControlNetIPAdapter(sdxl ?? false, file, 0.5);
+  const controlNet2 = getControlNetOpenPose(sdxl ?? false, style, undefined, 0.5);
 
   if (controlNet1) {
     (baseParams.controlNet as IControlNet[]).push(controlNet1);
@@ -308,7 +446,7 @@ const prepareQueryIpAdapter = async (
 
     ready = true;
   } else {
-    const prompt = await interrogateQuery(file.filename, [sdxl ? 'ViT-H-14/laion2b_s32b_b79k' : 'ViT-L-14/openai']);
+    const prompt = await interrogateQuery(file.filename, [sdxl ? INTERROGATE_MODEL_LAION : INTERROGATE_MODEL_OPENAI]);
 
     if (prompt) {
       baseParams.prompt += prompt.prompt;
@@ -321,15 +459,15 @@ const prepareQueryIpAdapter = async (
   }
 };
 
-const getCombination = (filesList: IFile[], styles: IRedrawStyle, methods: IRedrawMethod) => {
+const getCombination = (filesList: IFile[], styles: IRedrawStyle[], methods: IRedrawMethod[]) => {
   const combinations: Array<{
     file: IFile;
-    method: 'classical' | 'ip-adapter';
-    style: 'anime' | 'realism';
+    method: IRedrawMethod;
+    style: IRedrawStyle;
   }> = [];
 
-  const methodArray: Array<'classical' | 'ip-adapter'> = methods === 'both' ? [IP_ADAPTER, 'classical'] : [methods];
-  const stylesArray: Array<'anime' | 'realism'> = styles === 'both' ? ['anime', 'realism'] : [styles];
+  const methodArray = methods.length > 0 ? [...methods] : [IRedrawMethod.Denoise];
+  const stylesArray = styles.length > 0 ? [...styles] : [IRedrawStyle.Realism];
 
   for (const file of filesList) {
     for (const style of stylesArray) {
@@ -347,22 +485,67 @@ export interface IRedrawOptionsCompleted extends IRedrawOptions {
   upscales: number[];
 }
 
+type QueryPreparationFunction = (
+  file: IFile,
+  style: IRedrawStyle,
+  denoising_strength: number | number[],
+  addToPrompt?: string,
+  sdxl?: boolean
+) => Promise<IClassicPrompt | undefined>;
+
 const prepareQueries = async (
   combinations: {
     file: IFile;
-    method: 'classical' | 'ip-adapter';
-    style: 'anime' | 'realism';
+    method: IRedrawMethod;
+    style: IRedrawStyle;
   }[],
-  { addToPrompt, denoising, sdxl, upscaler, upscales }: IRedrawOptionsCompleted
+  {
+    addAfterPrompt,
+    addBeforePrompt,
+    denoising,
+    filenameRemove,
+    negativePrompt,
+    negativePromptRemove,
+    noTime,
+    promptRemove,
+    sdxl,
+    upscaler,
+    upscales
+  }: IRedrawOptionsCompleted
 ) => {
   const queries: IClassicPrompt[] = [];
 
-  for await (const combination of combinations) {
-    const prefix = [addToPrompt, combination.file.prefix].filter(Boolean).join(', ');
+  for (const combination of combinations) {
+    const prefix = [combination.file.prefix].filter(Boolean).join(', ');
 
-    const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryClassical;
+    let prepareQuery: QueryPreparationFunction;
+
+    switch (combination.method) {
+      case IRedrawMethod.IPAdapter:
+        prepareQuery = prepareQueryIpAdapter;
+        break;
+      case IRedrawMethod.Lineart:
+        prepareQuery = prepareQueryLineart;
+        break;
+      case IRedrawMethod.LinePose:
+        prepareQuery = prepareQueryLineAndPose;
+        break;
+      case IRedrawMethod.Openpose:
+        prepareQuery = prepareQueryOpenpose;
+        break;
+      case IRedrawMethod.Denoise:
+      default:
+        prepareQuery = prepareQueryDenoise;
+        break;
+    }
+
+    // const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryClassical;
 
     const query = await prepareQuery(combination.file, combination.style, denoising, prefix, sdxl);
+
+    if (noTime && query) {
+      query.pattern = query.pattern?.replace('[datetime]-', '');
+    }
 
     if (query) {
       query.prompt = Array.isArray(query.prompt)
@@ -375,13 +558,67 @@ const prepareQueries = async (
           : query.negativePrompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       }
 
+      if (negativePrompt) {
+        query.negativePrompt = negativePrompt;
+      }
+
+      if (negativePromptRemove && query.negativePrompt) {
+        if (Array.isArray(query.negativePrompt)) {
+          for (const npRemove of negativePromptRemove) {
+            query.negativePrompt = query.negativePrompt.map((prompt) => prompt.replace(npRemove, ''));
+          }
+        } else {
+          for (const npRemove of negativePromptRemove) {
+            if (query.negativePrompt.includes(npRemove)) {
+              query.negativePrompt = query.negativePrompt.replace(npRemove, '');
+            }
+          }
+        }
+      }
+
+      if (promptRemove) {
+        if (Array.isArray(query.prompt)) {
+          for (const pRemove of promptRemove) {
+            query.prompt = query.prompt.map((prompt) => prompt.replace(pRemove, ''));
+          }
+        } else {
+          for (const pRemove of promptRemove) {
+            if (query.prompt.includes(pRemove)) {
+              query.prompt = query.prompt.replace(pRemove, '');
+            }
+          }
+        }
+      }
+
+      if (addAfterPrompt) {
+        query.prompt = Array.isArray(query.prompt)
+          ? query.prompt.map((prompt) => `${prompt}, ${addAfterPrompt}`)
+          : `${query.prompt}, ${addAfterPrompt}`;
+      }
+
+      if (addBeforePrompt) {
+        query.prompt = Array.isArray(query.prompt)
+          ? query.prompt.map((prompt) => `${addBeforePrompt}, ${prompt}`)
+          : `${addBeforePrompt}, ${query.prompt}`;
+      }
+
       query.scaleFactor = upscales;
 
       query.upscaler = upscaler;
 
+      if (filenameRemove) {
+        for (const fRemove of filenameRemove) {
+          if (query.filename?.includes(fRemove)) {
+            query.filename = query.filename.replace(fRemove, '');
+          }
+        }
+      }
+
       queries.push(query);
     }
   }
+
+  loggerInfo(`Prepared ${queries.length} redraw queries`);
 
   return queries;
 };
