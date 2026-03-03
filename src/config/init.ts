@@ -58,7 +58,7 @@ const setModels = async (
 ) => {
   const modelsQueryResolved: IModelWithHash[] = [];
 
-  for await (const modelQuery of modelsQuery) {
+  for (const modelQuery of modelsQuery) {
     const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
     const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
     const metadata = await getMetadataCheckpoint(modelQuery.filename);
@@ -88,7 +88,7 @@ const setLoras = async (
 ) => {
   const lorasQueryResolved: ILora[] = [];
 
-  for await (const loraQuery of lorasQuery) {
+  for (const loraQuery of lorasQuery) {
     const item: ILora = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
 
     const metadata = await getMetadataLora(loraQuery.path);
@@ -186,7 +186,7 @@ const setStyles = (
 
             return style;
           })
-          .filter((style) => style !== undefined) as IStyle[]
+          .filter((style) => style !== undefined)
       )
     )
   );

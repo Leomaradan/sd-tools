@@ -56,7 +56,7 @@ const extractBasePrompt = (prompts: IPromptSingle[] = []): IPrompts => {
 
 const executeOnFiles = async (filesList: IFile[], format: 'json' | 'textbox', addBefore?: string) => {
   const prompts: (IPromptSingle | string)[] = [];
-  for await (const file of filesList) {
+  for (const file of filesList) {
     const prompt = await executeOnSingleFile(file, format, addBefore);
 
     if (prompt) {
@@ -85,7 +85,7 @@ export const extract = async (source: string, { addBefore, format, output, recur
       ...extractBasePrompt(prompts as IPromptSingle[])
     });
   } else {
-    result = prompts.join('\n');
+    result = (prompts as string[]).join('\n');
   }
 
   const outputFile = output ?? resolve(source, `prompts.${format === 'json' ? 'json' : 'txt'}`);

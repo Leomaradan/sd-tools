@@ -111,17 +111,11 @@ const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | un
         weight: controlNet.weight
       };
 
-      if (params.low_vram === undefined) {
-        params.low_vram = true;
-      }
+      params.low_vram ??= true;
 
-      if (params.pixel_perfect === undefined) {
-        params.pixel_perfect = true;
-      }
+      params.pixel_perfect ??= true;
 
-      if (params.weight === undefined) {
-        params.weight = 1;
-      }
+      params.weight ??= 1;
 
       return params;
     });

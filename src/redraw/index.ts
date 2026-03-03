@@ -196,7 +196,7 @@ export const handler = (argv: IRedrawArgsOptions) => {
     addAfterPrompt: argv.addAfter ?? undefined,
     addBeforePrompt: argv.addBefore ?? undefined,
     denoising: argv.denoising ?? undefined,
-    filenameRemove: argv.filenameRemove?.map((item) => item.replace(/\\-/g, '-')) ?? undefined,
+    filenameRemove: argv.filenameRemove?.map((item) => item.replaceAll(String.raw`\-`, '-')) ?? undefined,
     method: argv.method as IRedrawMethod[],
     negativePrompt: argv.negativePrompt,
     negativePromptRemove: argv.negativePromptRemove,

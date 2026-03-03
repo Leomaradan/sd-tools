@@ -26,7 +26,7 @@ export const upscaleTiledDiffusion = async (
   const denoising = denoisingArray ?? [0.4];
   const upscaling = upscalingArray ?? [2];
 
-  for await (const file of filesList) {
+  for (const file of filesList) {
     const query = (await extractFromFile(file, 'json', true)) as IClassicPrompt;
 
     if (query) {
@@ -40,8 +40,8 @@ export const upscaleTiledDiffusion = async (
       query.scaleFactor = upscaling;
       query.filename = basename(file.file).replace('.png', '').replace('.jpg', '').replace('.jpeg', '');
       query.prompt = Array.isArray(query.prompt)
-        ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
-        : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
+        ? query.prompt.map((prompt) => prompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
+        : query.prompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       query.pattern = `[datetime]-x{scaleFactor}-multidiffusion-{filename}`;
 
       if (checkpoint) {

@@ -1,4 +1,3 @@
-import { input } from '@inquirer/prompts';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, parse, relative, resolve, sep } from 'node:path';
 

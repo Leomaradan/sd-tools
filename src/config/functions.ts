@@ -196,11 +196,11 @@ export const setConfigAutoTiledDiffusion = (value: false | TiledDiffusionMethods
 
   if (!value || (value as string) === 'false') {
     Config.set('autoTiledDiffusion', false);
-  } else if (![TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value)) {
+  } else if ([TiledDiffusionMethods.MixtureOfDiffusers, TiledDiffusionMethods.MultiDiffusion].includes(value)) {
+    Config.set('autoTiledDiffusion', value);
+  } else {
     loggerInfo(`Value must be either "${TiledDiffusionMethods.MixtureOfDiffusers}" or "${TiledDiffusionMethods.MultiDiffusion}"`);
     process.exit(ExitCodes.CONFIG_SET_INVALID_MULTIDIFFUSION);
-  } else {
-    Config.set('autoTiledDiffusion', value);
   }
 
   Config.set('autoTiledDiffusion', (value as string) === 'false' ? false : value);
@@ -272,7 +272,7 @@ export const setConfigCutoffTokens = (value: string[]) => {
 
 export const setConfigCutoffWeight = (value: number) => {
   const valueNumber = Number(value);
-  if (typeof valueNumber !== 'number' || isNaN(valueNumber)) {
+  if (typeof valueNumber !== 'number' || Number.isNaN(valueNumber)) {
     loggerInfo(`Value must be a number`);
     process.exit(ExitCodes.CONFIG_SET_CUTOFF_INVALID_WEIGHT);
   }
@@ -315,7 +315,7 @@ export const setConfigLCMCommandLine = (value: string[]) => {
 
   if (
     valueArray.some((val) => {
-      if (val.indexOf(':') === -1) {
+      if (!val.includes(':')) {
         return true;
       }
 
@@ -363,7 +363,7 @@ export const setConfigRedrawModelsCommandLine = (value: string[]) => {
   }
   if (
     valueArray.some((val) => {
-      if (val.indexOf(':') === -1) {
+      if (!val.includes(':')) {
         return true;
       }
 
@@ -438,7 +438,7 @@ const setInquirerAdetailerTriggersAdd = async () => {
   const triggerName = await input({
     message: 'Enter trigger',
     validate: (value) => {
-      const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+      const pass = new RegExp(/^[a-z0-9_-]+$/i).exec(value);
       if (!pass) {
         return 'Trigger must be a string with only letters, numbers, dash and underscore';
       }
@@ -475,8 +475,8 @@ const setInquirerAdetailerTriggersAdd = async () => {
   const newAutoAdetailers: IAutoAdetailer = {
     ad_denoising_strength: denoisingStrength ? Number(denoisingStrength) : undefined,
     ad_model: triggerModel,
-    ad_negative_prompt: negativePrompt !== '' ? negativePrompt : undefined,
-    ad_prompt: prompt !== '' ? prompt : undefined,
+    ad_negative_prompt: negativePrompt === '' ? undefined : negativePrompt,
+    ad_prompt: prompt === '' ? undefined : prompt,
     trigger: triggerName
   };
 
@@ -530,7 +530,7 @@ const setInquirerControlNetPoseTriggersAdd = async () => {
   const triggerName = await input({
     message: 'Enter trigger',
     validate: (value) => {
-      const pass = RegExp(/^[a-z0-9_-]+$/i).exec(value);
+      const pass = new RegExp(/^[a-z0-9_-]+$/i).exec(value);
       if (!pass) {
         return 'Trigger must be a string with only letters, numbers, dash and underscore';
       }
@@ -574,8 +574,8 @@ const setInquirerControlNetPoseTriggersAdd = async () => {
   const afterPrompt = await input({ message: 'Enter optional prompt that will be PREPEND to the query prompt. Leave empty to skip' });
 
   const newAutoControlNetPose: IAutoControlnetPose = {
-    afterPrompt: afterPrompt !== '' ? afterPrompt : undefined,
-    beforePrompt: beforePrompt !== '' ? beforePrompt : undefined,
+    afterPrompt: afterPrompt === '' ? undefined : afterPrompt,
+    beforePrompt: beforePrompt === '' ? undefined : beforePrompt,
     pose: triggerPose,
     trigger: triggerName
   };

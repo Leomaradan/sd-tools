@@ -21,7 +21,7 @@ const executeOnSingleFile = async (file: IFile, models?: InterrogateModelsAll[],
 
 const executeOnFiles = async (filesList: IFile[], models?: InterrogateModelsAll[], addBefore?: string) => {
   const prompts: Record<string, string> = {};
-  for await (const file of filesList) {
+  for (const file of filesList) {
     const prompt = await executeOnSingleFile(file, models, addBefore);
 
     if (prompt) {

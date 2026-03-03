@@ -292,7 +292,7 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
         default: String(prompt),
         message: 'Cutoff weight',
         validate: (value) => {
-          const pass = RegExp(/^\d+$/).exec(value);
+          const pass = new RegExp(/^\d+$/).exec(value);
           if (!pass) {
             return 'Please enter a valid URL';
           }
