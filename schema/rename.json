@@ -1,7 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
   "definitions": {
     "IKeysList": {
+      "additionalProperties": false,
       "properties": {
         "key": {
           "title": "key",

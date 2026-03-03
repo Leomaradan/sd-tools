@@ -92,9 +92,13 @@ const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | un
   const updatedQuery = { ...baseQuery };
   if (controlNet) {
     const args = controlNet.map((controlNet) => {
-      //const image =  (controlNet.input_image ?? controlNet.image) ? { image: controlNet.input_image ?? (controlNet.image as string) } : undefined;
-      const image =
+      let image =
         (controlNet.input_image ?? controlNet.image) ? (controlNet.input_image ?? (controlNet.image as string as any)) : undefined;
+
+      if (!mode.noAgent && Config.get('scheduler')) {
+        image = { image };
+      }
+
       const params: IControlNetQuery = {
         control_mode: normalizeControlNetMode(controlNet.control_mode),
         enabled: true,
@@ -139,18 +143,39 @@ const prepareAdetailer = (baseQuery: IBaseQuery, adetailer: IAdetailer[] | undef
 const prepareCouple = (baseQuery: IBaseQuery, couple: IForgeCouple | undefined) => {
   const updatedQuery = { ...baseQuery };
   if (couple) {
+    const optionsBasic = {
+      background_weight: null,
+      mapping: null
+    };
+
+    const optionsAdvanced = {
+      background_weight: null,
+      direction: null,
+      mapping: [
+        [0, 0.5, 0, 1, 1],
+        [0.5, 1, 0, 1, 1]
+      ]
+    };
+
     updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Couple] = {
       args: [
-        true,
-        true,
-        couple.mode,
+        true, // enable
+        true, // disable_hr
+        couple.mode, // "Basic" | "Advanced" | "Mask"
         couple.separator ?? '\n',
-        couple.direction ?? null,
-        couple.background ?? null,
+        couple.direction ?? 'Horizontal',
+        couple.background ?? 'None',
         couple.background_weight ?? null,
-        couple.mapping ?? null,
-        couple.common_parser ?? null,
-        couple.common_debug ?? null
+        couple.mapping ?? [],
+        couple.common_parser ?? '{ }',
+        couple.common_debug ?? false,
+        couple.def_in_prompt ?? false,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
       ]
     };
   }
@@ -273,7 +298,7 @@ const prepareLCM = (baseQuery: IBaseQuery, lcm: boolean | undefined, checkpoint:
   if (addLCM) {
     const lcmModel = isSDXL ? lcmXL : lcm15;
     if (lcmModel) {
-      const defaultValues = getDefaultQuery(isSDXL ? 'sdxl' : 'sd15', 'lcm');
+      const defaultValues = getDefaultQuery(checkpoint?.name ?? '-', isSDXL ? 'sdxl' : 'sd15', 'lcm');
 
       updatedQuery.prompt = `<lora:${lcmModel}:1> ${updatedQuery.prompt}`;
       updatedQuery.cfg_scale = defaultValues.cfg_scale;
@@ -332,7 +357,7 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
   let baseQuery = JSON.parse(
     JSON.stringify({
-      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as {
+      ...(getDefaultQuery(checkpoint?.name ?? '-', checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as {
         forcedSampler?: string;
       } & IBaseQuery)
     })
@@ -514,9 +539,9 @@ export const interrogateQuery = async (
 type MiscQueryApi =
   | 'adetailer/v1/ad_model'
   | 'agent-scheduler/v1/history?limit=1'
-  | 'app_id'
   | 'controlnet/model_list'
   | 'controlnet/module_list'
+  | 'internal/sysinfo?attachment=false'
   | 'interrogator/models'
   | 'sdapi/v1/embeddings'
   | 'sdapi/v1/interrogate'
@@ -545,8 +570,22 @@ const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> 
 
 export const checkApiQuery = async () => {
   try {
-    const result = await miscQuery<{ filename: string; model_name: string; title: string }[]>('app_id');
-    return !!result;
+    const result = await miscQuery<{ Version: string }>('internal/sysinfo?attachment=false');
+    if (!result?.Version) {
+      return false;
+    }
+
+    if (result.Version.includes('f2.0')) {
+      loggerInfo('Forge API detected');
+      return 'forge';
+    }
+
+    if (result.Version.includes('proxy')) {
+      loggerInfo('Proxy API detected');
+      return 'proxy';
+    }
+
+    return 'automatic1111';
   } catch {
     return false;
   }

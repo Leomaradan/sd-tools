@@ -26,9 +26,11 @@ export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 export interface IOverrideSettings {
   CLIP_stop_at_last_layers: number;
   directories_filename_pattern: string;
+  forge_inference_memory?: number;
   outdir_img2img_samples: string;
   outdir_txt2img_samples: string;
   samples_filename_pattern: string;
+  save_images_replace_action?: 'Add number suffix' | 'Replace';
   sd_model_checkpoint: string;
   sd_vae: string;
 }
@@ -43,6 +45,7 @@ export interface IBaseQuery {
   do_not_save_samples?: boolean;
   eta?: number;
   height?: number;
+  hr_additional_modules?: string[];
   n_iter?: number;
   negative_prompt?: string;
   override_settings: Partial<IOverrideSettings>;
@@ -285,6 +288,7 @@ export interface IConfig {
   cutoff: boolean;
   cutoffTokens: string[];
   cutoffWeight: number;
+  defaultQuery: Record<string, Partial<IBaseQuery>>;
   embeddings: string[];
   endpoint: string;
   extensions: Extensions[];
@@ -309,14 +313,18 @@ export interface IConfig {
   samplers: ISampler[];
   scheduler: boolean;
   styles: IStyle[];
+  templatesFolder: string;
   upscalers: IUpscaler[];
   vae: string[];
+  wildcardsFolder: string;
 }
 
 export interface ICache {
   imageData: CacheImageData;
   interrogator: CacheInterrogator;
   metadata: CacheMetadata;
+  templates: Record<string, { name: string; content: object; update: number }>;
+  wildcards: Record<string, { name: string; content: 'flat' | object; update: number }>;
 }
 
 export interface IAdetailerPrompt {
@@ -378,15 +386,17 @@ export interface BaseIPrompt {
   steps?: number | number[];
   styles?: string | string[];
   stylesSets?: Array<string | string[]>;
+  templates?: boolean;
   tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
   tiledVAE?: 'both' | boolean | ITiledVAE;
   tiling?: 'both' | boolean;
   ultimateSdUpscale?: 'both' | boolean;
   upscaler?: string | string[];
-  // upscalingNegativePrompt?: string | string[];
   // upscalingPrompt?: string | string[];
   vae?: string | string[];
+  // upscalingNegativePrompt?: string | string[];
   width?: number | number[];
+  wildcards?: boolean;
 }
 
 export interface IClassicPrompt extends BaseIPrompt {

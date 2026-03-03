@@ -3,8 +3,9 @@ export interface IForgeCouple {
   background_weight?: null | number;
   common_debug?: boolean | null;
   common_parser?: '< >' | '{ }' | 'off' | null;
+  def_in_prompt?: boolean | null;
   direction?: 'Horizontal' | 'Vertical' | null;
-  mapping?: Array<any> | null;
+  mapping?: Array<unknown> | null;
   mode: 'Advanced' | 'Basic' | 'Mask';
   separator?: string;
 }
@@ -17,9 +18,16 @@ export type IForgeCoupleQuery = [
   direction: 'Horizontal' | 'Vertical' | null,
   background: 'First Line' | 'Last Line' | 'None' | null,
   background_weight: null | number,
-  mapping: Array<any> | null,
-  common_parser: '< >' | '{ }' | 'off' | null,
-  common_debug: boolean | null
+  mapping: Array<unknown> | null,
+  common_parser: '< >' | '{ }' | 'off',
+  common_debug: boolean,
+  def_in_prompt: boolean,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
 ];
 
 /*

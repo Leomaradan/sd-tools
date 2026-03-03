@@ -2,7 +2,7 @@ import { basename } from 'node:path';
 import yargs from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
-import { Cache, Config } from '../commons/config';
+import { Cache, Config, type ApiType } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
@@ -24,6 +24,7 @@ import {
   getVAEQueryForge
 } from '../commons/query';
 import { type Extensions, type ILora, type IModel, type IModelWithHash, type IStyle, Version } from '../commons/types';
+import { loadWildcards } from '../commons/wildcards/loadWildcards';
 
 export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';
@@ -266,6 +267,7 @@ const setControlnet = async (extensions: Set<Extensions>) => {
         'diffusers_xl_canny_mid [112a778d]',
         'diffusers_xl_depth_full [2f51180b]',
         'diffusers_xl_depth_mid [39c49e13]',
+        'illustriousXL_v10 [7c192463]',
         'ip-adapter-faceid-plusv2_sd15 [6e14fc1a]',
         'ip-adapter_sd15 [6a3f6166]',
         'ip-adapter_sd15_plus [32cd8f7f]',
@@ -334,7 +336,7 @@ interface IInitArgs {
   ['purge-cache']?: boolean;
 }
 
-export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
+export const initFunction = async (argv: IInitArgs): Promise<ApiType | false> => {
   const { endpoint, force } = argv;
   const initialized = Config.get('initialized');
 
@@ -471,7 +473,12 @@ export const initFunction = async (argv: IInitArgs): Promise<boolean> => {
     Config.set('autoTiledDiffusion', false);
     Config.set('autoTiledVAE', true);
   }
-  return true;
+
+  if (Config.get('wildcardsFolder')) {
+    await loadWildcards();
+  }
+
+  return result;
 };
 
 export const handler = async (argv: IInitArgs) => {

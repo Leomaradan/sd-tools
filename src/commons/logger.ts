@@ -2,9 +2,11 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
+import type { ApiType } from './config';
+
 import { xdgState } from './xdgBaseDir';
 
-export const mode = { info: true, log: true, noAgent: false, simulate: false, verbose: false };
+export const mode = { apiType: false as ApiType | false, info: true, log: true, noAgent: false, simulate: false, verbose: false };
 
 let session: string | undefined = undefined;
 

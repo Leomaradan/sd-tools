@@ -15,7 +15,7 @@ import {
 import { getCutOffTokens } from './extensions/cutoff';
 import { defaultTiledDiffusionOptions, type ITiledDiffusion, type ITiledVAE } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
-import { ExitCodes, loggerInfo, writeLog } from './logger';
+import { ExitCodes, loggerInfo, mode, writeLog } from './logger';
 import {
   findADetailersModel,
   findCheckpoint,
@@ -1050,6 +1050,11 @@ const manageExistingImages = (
   const outputFolder = Config.get('outputFolder');
   const dir = isImg2ImgQuery(query) ? 'img2img-images' : 'txt2img-images';
 
+  if (!outputFolder) {
+    loggerInfo(`Output folder is not set in config. Please set it to use existing images strategy.`);
+    process.exit(ExitCodes.PROMPT_INVALID_EXISTING_IMAGES_STRATEGY);
+  }
+
   const filePath = resolve(
     outputFolder,
     dir,
@@ -1057,25 +1062,33 @@ const manageExistingImages = (
     `${query.override_settings.samples_filename_pattern}.png`
   );
 
+  const relativeFilePath = relative(outputFolder, filePath);
+
   const fileExists = existsSync(filePath);
 
   if (fileExists) {
     switch (existingImagesStrategy) {
       case 'numbered':
-        loggerInfo('File exists, applying numbered strategy.');
+        loggerInfo(`File ${relativeFilePath} exists, applying numbered strategy.`);
         return {
           ...query,
           override_settings: {
             ...query.override_settings,
-            samples_filename_pattern: query.override_settings.samples_filename_pattern + `-[generation_number]`
+            save_images_replace_action: 'Add number suffix'
           }
         };
       case 'overwrite':
-        loggerInfo('File exists, applying overwrite strategy.');
-        return query;
+        loggerInfo(`File ${relativeFilePath} exists, applying overwrite strategy.`);
+        return {
+          ...query,
+          override_settings: {
+            ...query.override_settings,
+            save_images_replace_action: 'Replace'
+          }
+        };
 
       case 'skip':
-        loggerInfo('File exists, applying skip strategy.');
+        loggerInfo(`File ${relativeFilePath} exists, applying skip strategy.`);
         return undefined;
     }
   }
@@ -1154,9 +1167,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       width: width
     };
 
+    if (mode.apiType !== 'automatic1111') {
+      query.override_settings.forge_inference_memory = 6940;
+      query.hr_additional_modules = [];
+    }
+
     const checkpoint = checkpoints ? findCheckpoint(checkpoints) : ({ version: 'unknown' } as IModel);
 
-    const defaultValues = getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none');
+    const defaultValues = getDefaultQuery(checkpoint?.name ?? '-', checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none');
 
     if (query.sampler_name !== undefined && defaultValues.forcedSampler && query.sampler_name !== defaultValues.forcedSampler) {
       loggerInfo(`Invalid sampler for this model (must be ${defaultValues.forcedSampler})`);
@@ -1165,12 +1183,16 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
     if (controlNet) {
       controlNet.forEach((controlNetPrompt) => {
-        const controlNetModule = findControlnetModule(controlNetPrompt.module);
+        let controlNetModule = findControlnetModule(controlNetPrompt.module);
         const controlNetModel = findControlnetModel(controlNetPrompt.model);
 
         if (!controlNetModule) {
           loggerInfo(`Invalid ControlNet module ${controlNetPrompt.module}`);
           process.exit(ExitCodes.PROMPT_INVALID_CONTROLNET_MODULE);
+        }
+
+        if (controlNetModule === 'none') {
+          controlNetModule = 'None';
         }
 
         if (!controlNetModel) {
@@ -1421,7 +1443,9 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
       updateFilename(query, 'filename', filename ?? '');
 
-      const findExistingPose = query.controlNet?.find((controlNet) => controlNet.model.includes('openpose'));
+      const findExistingPose = query.controlNet?.find(
+        (controlNet) => controlNet.model.includes('openpose') || controlNet.model.includes('llustriousXL_v10')
+      );
 
       // Alias to official tokens
       updateFilename(query, 'cfg', query.cfg_scale !== undefined ? '[cfg]' : '');
@@ -1509,11 +1533,15 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     if (query.override_settings.samples_filename_pattern) {
       validateTemplate(query.override_settings.samples_filename_pattern);
       query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.trim();
+    } else {
+      query.override_settings.samples_filename_pattern = '[date]-[seed]';
     }
 
     if (query.override_settings.directories_filename_pattern) {
       validateTemplate(query.override_settings.directories_filename_pattern);
       query.override_settings.directories_filename_pattern = query.override_settings.directories_filename_pattern.trim();
+    } else {
+      query.override_settings.directories_filename_pattern = '[date]';
     }
 
     if (styles && styles.length > 0) {

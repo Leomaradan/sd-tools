@@ -41,7 +41,9 @@ export type EditableOptions =
   | 'lcm'
   | 'output-folder'
   | 'redraw-models'
-  | 'scheduler';
+  | 'scheduler'
+  | 'templates-folder'
+  | 'wildcards-folder';
 
 export type Options = EditableOptions | ReadonlyOptions;
 
@@ -96,6 +98,16 @@ export const getConfigLCM = () => {
 export const getConfigOutputFolder = () => {
   const outputFolder = Config.get('outputFolder');
   loggerInfo(`Output folder: ${outputFolder}`);
+};
+
+export const getConfigWildcardsFolder = () => {
+  const wildcardsFolder = Config.get('wildcardsFolder');
+  loggerInfo(`Wildcards folder: ${wildcardsFolder}`);
+};
+
+export const getConfigTemplatesFolder = () => {
+  const templatesFolder = Config.get('templatesFolder');
+  loggerInfo(`Templates folder: ${templatesFolder}`);
 };
 
 export const getConfigRedrawModels = () => {
@@ -283,6 +295,16 @@ export const setConfigEndpoint = (value: string) => {
 export const setConfigOutputFolder = (value: string) => {
   Config.set('outputFolder', value);
   getConfigOutputFolder();
+};
+
+export const setConfigTemplatesFolder = (value: string) => {
+  Config.set('templatesFolder', value);
+  getConfigTemplatesFolder();
+};
+
+export const setConfigWildcardsFolder = (value: string) => {
+  Config.set('wildcardsFolder', value);
+  getConfigWildcardsFolder();
 };
 
 export const setConfigLCMCommandLine = (value: string[]) => {

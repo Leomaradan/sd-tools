@@ -46,7 +46,7 @@ describe('get default query for version 1.5', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQuery15();
-    const resultFull = getDefaultQuery('sd15', 'none');
+    const resultFull = getDefaultQuery('-', 'sd15', 'none');
 
     expect(resultDirect).toMatchObject(base15);
     expect(resultFull).toMatchObject(base15);
@@ -56,7 +56,7 @@ describe('get default query for version 1.5', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQuery15('lcm');
-    const resultFull = getDefaultQuery('sd15', 'lcm');
+    const resultFull = getDefaultQuery('-', 'sd15', 'lcm');
 
     expect(resultDirect).toMatchObject(lcm15);
     expect(resultFull).toMatchObject(lcm15);
@@ -66,7 +66,7 @@ describe('get default query for version 1.5', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQuery15('distilled');
-    const resultFull = getDefaultQuery('sd15', 'lightning');
+    const resultFull = getDefaultQuery('-', 'sd15', 'lightning');
 
     expect(resultDirect).toMatchObject(base15);
     expect(resultFull).toMatchObject(base15);
@@ -116,8 +116,8 @@ describe('get default query for version 2.x', () => {
     expect.assertions(3);
 
     const resultDirect = getDefaultQuery20(false);
-    const result20 = getDefaultQuery('sd20', 'lcm');
-    const result21 = getDefaultQuery('sd21', 'lightning');
+    const result20 = getDefaultQuery('-', 'sd20', 'lcm');
+    const result21 = getDefaultQuery('-', 'sd21', 'lightning');
 
     expect(resultDirect).toMatchObject(base20);
     expect(result20).toMatchObject(base20);
@@ -128,8 +128,8 @@ describe('get default query for version 2.x', () => {
     expect.assertions(3);
 
     const resultDirect = getDefaultQuery20(true);
-    const result20 = getDefaultQuery('sd20-768', 'none');
-    const result21 = getDefaultQuery('sd21-768', 'turbo');
+    const result20 = getDefaultQuery('-', 'sd20-768', 'none');
+    const result21 = getDefaultQuery('-', 'sd21-768', 'turbo');
 
     expect(resultDirect).toMatchObject(base20Full);
     expect(result20).toMatchObject(base20Full);
@@ -221,7 +221,7 @@ describe('get default query for version XL', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQueryXL();
-    const resultFull = getDefaultQuery('sdxl', 'none');
+    const resultFull = getDefaultQuery('-', 'sdxl', 'none');
 
     expect(resultDirect).toMatchObject(baseXL);
     expect(resultFull).toMatchObject(baseXL);
@@ -231,7 +231,7 @@ describe('get default query for version XL', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQueryXL('lcm');
-    const resultFull = getDefaultQuery('sdxl', 'lcm');
+    const resultFull = getDefaultQuery('-', 'sdxl', 'lcm');
 
     expect(resultDirect).toMatchObject(lcmXL);
     expect(resultFull).toMatchObject(lcmXL);
@@ -241,7 +241,7 @@ describe('get default query for version XL', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQueryXL('lightning');
-    const resultFull = getDefaultQuery('sdxl', 'lightning');
+    const resultFull = getDefaultQuery('-', 'sdxl', 'lightning');
 
     expect(resultDirect).toMatchObject(lightningXL);
     expect(resultFull).toMatchObject(lightningXL);
@@ -251,7 +251,7 @@ describe('get default query for version XL', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQueryXL('turbo');
-    const resultFull = getDefaultQuery('sdxl', 'turbo');
+    const resultFull = getDefaultQuery('-', 'sdxl', 'turbo');
 
     expect(resultDirect).toMatchObject(turboXL);
     expect(resultFull).toMatchObject(turboXL);
@@ -261,7 +261,7 @@ describe('get default query for version XL', () => {
     expect.assertions(2);
 
     const resultDirect = getDefaultQueryXL('distilled');
-    const resultFull = getDefaultQuery('sdxl', 'distilled');
+    const resultFull = getDefaultQuery('-', 'sdxl', 'distilled');
 
     expect(resultDirect).toMatchObject(baseXL);
     expect(resultFull).toMatchObject(baseXL);
@@ -291,9 +291,9 @@ describe('get default query for other versions', () => {
   it('should get base query for other versions', () => {
     expect.assertions(3);
 
-    const result14 = getDefaultQuery('sd14', 'lcm');
-    const resultUnknown = getDefaultQuery('unknown', 'lightning');
-    const resultDefaultCase = getDefaultQuery('jest' as 'sd14', 'lightning');
+    const result14 = getDefaultQuery('-', 'sd14', 'lcm');
+    const resultUnknown = getDefaultQuery('-', 'unknown', 'lightning');
+    const resultDefaultCase = getDefaultQuery('-', 'jest' as 'sd14', 'lightning');
 
     expect(result14).toMatchObject(baseUnknown);
     expect(resultUnknown).toMatchObject(baseUnknown);

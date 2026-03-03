@@ -19,7 +19,9 @@ import {
   setConfigLCMCommandLine,
   setConfigOutputFolder,
   setConfigRedrawModelsCommandLine,
-  setConfigScheduler
+  setConfigScheduler,
+  setConfigTemplatesFolder,
+  setConfigWildcardsFolder
 } from './functions';
 
 interface ISetConfig {
@@ -76,6 +78,16 @@ interface ISetConfigOutputFolder extends ISetConfig {
   value: string;
 }
 
+interface ISetConfigTemplatesFolder extends ISetConfig {
+  config: 'templates-folder';
+  value: string;
+}
+
+interface ISetConfigWildcardsFolder extends ISetConfig {
+  config: 'wildcards-folder';
+  value: string;
+}
+
 interface ISetConfigRedrawModels extends ISetConfig {
   config: 'redraw-models';
   value: string[];
@@ -100,6 +112,8 @@ const options: EditableOptions[] = [
   'endpoint',
   'lcm',
   'output-folder',
+  'wildcards-folder',
+  'templates-folder',
   'redraw-models',
   'scheduler'
 ];
@@ -116,7 +130,9 @@ type ISetConfigOptions =
   | ISetConfigLCMLoras
   | ISetConfigOutputFolder
   | ISetConfigRedrawModels
-  | ISetConfigScheduler;
+  | ISetConfigScheduler
+  | ISetConfigTemplatesFolder
+  | ISetConfigWildcardsFolder;
 
 interface ISetConfigArgsOptions {
   config: string;
@@ -205,6 +221,14 @@ export const handler = (argv: ISetConfigArgsOptions) => {
 
     case 'scheduler':
       setConfigScheduler(value);
+      break;
+
+    case 'templates-folder':
+      setConfigTemplatesFolder(value);
+      break;
+
+    case 'wildcards-folder':
+      setConfigWildcardsFolder(value);
       break;
     default:
       break;

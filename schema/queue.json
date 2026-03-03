@@ -13,6 +13,7 @@
   ],
   "definitions": {
     "ControlNetSchema": {
+      "additionalProperties": false,
       "properties": {
         "control_mode": {
           "enum": [0, 1, 2, "Balanced", "ControlNet is more important", "My prompt is more important"],
@@ -68,6 +69,7 @@
       "type": "object"
     },
     "IAdetailerPrompt": {
+      "additionalProperties": false,
       "properties": {
         "confidence": {
           "title": "confidence",
@@ -103,6 +105,7 @@
       "type": "object"
     },
     "ICheckpointWithVAE": {
+      "additionalProperties": false,
       "properties": {
         "addAfterFilename": {
           "title": "addAfterFilename",
@@ -150,6 +153,7 @@
       "type": "object"
     },
     "IClassicPrompt": {
+      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -440,6 +444,10 @@
           "title": "stylesSets",
           "type": "array"
         },
+        "templates": {
+          "title": "templates",
+          "type": "boolean"
+        },
         "tiledDiffusion": {
           "anyOf": [
             {
@@ -542,6 +550,10 @@
             }
           ],
           "title": "width"
+        },
+        "wildcards": {
+          "title": "wildcards",
+          "type": "boolean"
         }
       },
       "required": ["prompt"],
@@ -549,6 +561,7 @@
       "type": "object"
     },
     "IForgeCouple": {
+      "additionalProperties": false,
       "properties": {
         "background": {
           "anyOf": [
@@ -581,6 +594,10 @@
             }
           ],
           "title": "common_parser"
+        },
+        "def_in_prompt": {
+          "title": "def_in_prompt",
+          "type": ["null", "boolean"]
         },
         "direction": {
           "anyOf": [
@@ -632,6 +649,7 @@
       "title": "IPrompt"
     },
     "IPromptPermutations": {
+      "additionalProperties": false,
       "properties": {
         "afterFilename": {
           "title": "afterFilename",
@@ -680,6 +698,7 @@
       "type": "object"
     },
     "IPromptReplace": {
+      "additionalProperties": false,
       "properties": {
         "from": {
           "title": "from",
@@ -695,6 +714,7 @@
       "type": "object"
     },
     "IPromptsWithBasePrompt": {
+      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -733,6 +753,7 @@
       "type": "object"
     },
     "IPromptsWithExtends": {
+      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -778,6 +799,7 @@
       "type": "object"
     },
     "IPromptsWithPrompt": {
+      "additionalProperties": false,
       "properties": {
         "$schema": {
           "title": "$schema",
@@ -823,6 +845,7 @@
       "type": "object"
     },
     "IStyleSubjectPrompt": {
+      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1141,6 +1164,10 @@
           "title": "stylesSets",
           "type": "array"
         },
+        "templates": {
+          "title": "templates",
+          "type": "boolean"
+        },
         "tiledDiffusion": {
           "anyOf": [
             {
@@ -1215,6 +1242,10 @@
             }
           ],
           "title": "width"
+        },
+        "wildcards": {
+          "title": "wildcards",
+          "type": "boolean"
         }
       },
       "required": ["promptStyle", "promptSubject"],
@@ -1222,6 +1253,7 @@
       "type": "object"
     },
     "ITiledDiffusion": {
+      "additionalProperties": false,
       "properties": {
         "method": {
           "$ref": "#/definitions/TiledDiffusionMethods",
@@ -1260,6 +1292,7 @@
       "type": "object"
     },
     "ITiledDiffusionRegion": {
+      "additionalProperties": false,
       "properties": {
         "blend_mode": {
           "enum": ["Background", "Foreground"],
@@ -1304,6 +1337,7 @@
       "type": "object"
     },
     "ITiledVAE": {
+      "additionalProperties": false,
       "properties": {
         "colorFix": {
           "title": "colorFix",
@@ -1334,6 +1368,7 @@
       "type": "object"
     },
     "IUltimateSDUpscale": {
+      "additionalProperties": false,
       "properties": {
         "height": {
           "title": "height",
@@ -1361,6 +1396,7 @@
       "type": "object"
     },
     "Partial<IClassicPrompt>": {
+      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1651,6 +1687,10 @@
           "title": "stylesSets",
           "type": "array"
         },
+        "templates": {
+          "title": "templates",
+          "type": "boolean"
+        },
         "tiledDiffusion": {
           "anyOf": [
             {
@@ -1753,6 +1793,10 @@
             }
           ],
           "title": "width"
+        },
+        "wildcards": {
+          "title": "wildcards",
+          "type": "boolean"
         }
       },
       "title": "Partial<IClassicPrompt>",
@@ -1770,6 +1814,7 @@
       "title": "Partial<IPrompt>"
     },
     "Partial<IPromptSingleSchema>": {
+      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -1926,6 +1971,7 @@
       "type": "object"
     },
     "Partial<IStyleSubjectPrompt>": {
+      "additionalProperties": false,
       "properties": {
         "adetailer": {
           "items": {
@@ -2244,6 +2290,10 @@
           "title": "stylesSets",
           "type": "array"
         },
+        "templates": {
+          "title": "templates",
+          "type": "boolean"
+        },
         "tiledDiffusion": {
           "anyOf": [
             {
@@ -2318,6 +2368,10 @@
             }
           ],
           "title": "width"
+        },
+        "wildcards": {
+          "title": "wildcards",
+          "type": "boolean"
         }
       },
       "title": "Partial<IStyleSubjectPrompt>",

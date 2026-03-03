@@ -17,6 +17,7 @@
     "png-chunks-extract": "^1.0.0",
     "table": "^6.8.2",
     "xdg-basedir": "^5.1.0",
+    "yaml": "^2.8.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
@@ -85,8 +86,8 @@
     "test": "jest --coverage --detectOpenHandles",
     "lint": "eslint --report-unused-disable-directives",
     "schema": "yarn schema:queue && yarn schema:rename",
-    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --out schema/queue.json --titles --useTypeOfKeyword",
-    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --out schema/rename.json --titles --useTypeOfKeyword",
+    "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
+    "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword",
     "postinstall": "husky install",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable"

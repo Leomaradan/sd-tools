@@ -1,9 +1,6 @@
-import crypto from 'crypto';
-// import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
-import { createReadStream, existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { relative, resolve, sep } from 'node:path';
-import { basename, extname } from 'path';
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { basename, extname, relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
 
@@ -129,91 +126,6 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
   return result;
 };
 
-const getHash = (url: string) => {
-  return new Promise((resolve, reject) => {
-    const hashBuilder = crypto.createHash('sha256');
-    hashBuilder.setEncoding('hex');
-    const stream = createReadStream(url);
-
-    stream.on('end', function () {
-      hashBuilder.end();
-      resolve(hashBuilder.read());
-    });
-
-    stream.on('error', (error) => {
-      hashBuilder.end();
-      reject(error);
-    });
-
-    stream.pipe(hashBuilder);
-  });
-};
-
-/*export const getStats = (source: string) => {
-  const files = getFiles(source, true, true);
-
-  const stats: Record<string, Record<string, number>> = {};
-
-  files.forEach((file) => {
-    if (file.filename.endsWith('.png')) {
-      const date = new Date(file.date);
-      const dateStr = `${date.getFullYear()}-${date.getMonth()}`;
-      const { data } = file;
-      if (data) {
-        data.forEach((line) => {
-          if (line.includes('Model: ')) {
-            const model = line.split('Model: ')[1].split(', ')[0];
-            if (stats[model] === undefined) {
-              stats[model] = {};
-            }
-
-            stats[model].total = (stats[model].total ?? 0) + 1;
-
-            stats[model][dateStr] = (stats[model][dateStr] ?? 0) + 1;
-          }
-        });
-      }
-    }
-  });
-
-  const dataTable: Array<number | string>[] = [['Model']];
-
-  const columnMapping: Record<string, number> = {};
-  Object.keys(stats).forEach((model, index) => {
-    if (index === 0) {
-      Object.keys(stats[model])
-        .sort((a, b) => a.localeCompare(b))
-        .forEach((date, index) => {
-          columnMapping[date] = index + 1;
-          dataTable[0].push(date);
-        });
-    }
-
-    const row: Array<number | string> = [model];
-    Object.keys(stats[model]).forEach((date) => {
-      const mappedIndex = columnMapping[date];
-      row[mappedIndex] = stats[model][date];
-    });
-
-    dataTable.push(row);
-  });
-
-  // eslint-disable-next-line no-console
-  console.log(table(dataTable));
-};*/
-
-/* const parseDescriptions = (source: string) => {
-  let data = source;
-
-  data = data.replace(/<\/p>/g, '\n');
-  data = data.replace(/<p>/g, '\n'); //<br />
-  data = data.replace(/<br \/>/g, '\n');
-
-  const dom = htmlparser2.parseDocument('<div>' + data + '</div>');
-
-  return '<!--' + htmlparser2.DomUtils.textContent(dom) + '-->';
-};*/
-
 export const getFiles = (source: string, recursive?: boolean, noCache?: boolean) => {
   const filesList: IFile[] = [];
 
@@ -269,60 +181,6 @@ export const getImageSize = (url: string) => {
 
   return { height: sizes.height ?? -1, width: sizes.width ?? -1 };
 };
-
-/*export const getMetadataAutomatic1111 = (actualCacheMetadata: CacheMetadata, url: string): [CacheMetadata, IMetadata] | undefined => {
-  if (!url.endsWith('.json')) {
-    loggerInfo(`Invalid metadata file : ${url}`);
-  }
-
-  if (!existsSync(url)) {
-    loggerInfo(`File does not exists : ${url}`);
-    return;
-  }
-
-  const cacheMetadata = { ...actualCacheMetadata };
-
-  try {
-    if (cacheMetadata[url] !== undefined) {
-      if (cacheMetadata[url].timestamp === statSync(url).mtimeMs.toString()) {
-        return [cacheMetadata, cacheMetadata[url]];
-      }
-
-      delete actualCacheMetadata[url];
-    }
-
-    const content = readFileSync(url, 'utf8');
-    const metadata = JSON.parse(content);
-
-    const result: IMetadata = {
-      // description: metadata.description,
-      preferredWeight: metadata['preferred weight'],
-      sdVersion: Version.Unknown //metadata['sd version'].toLowerCase().includes('xl') ? 'sdxl' : 'sd15'
-    };
-
-    if (!metadata[SD_VERSION]) {
-      return undefined;
-    }
-
-    if (metadata[SD_VERSION].toLowerCase().includes('xl')) {
-      result.sdVersion = Version.SDXL;
-    } else if (metadata[SD_VERSION].toLowerCase().includes('1.5') || metadata[SD_VERSION].toLowerCase().includes('sd1')) {
-      result.sdVersion = Version.SD15;
-    }
-
-    cacheMetadata[url] = { ...result, timestamp: statSync(url).mtimeMs.toString() };
-
-    return [cacheMetadata, result];
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      loggerInfo(`Error while reading metadata for ${url} : ${error.message}`);
-    } else {
-      loggerInfo(`Error while reading metadata for ${url} : ${error}`);
-    }
-  }
-
-  return undefined;
-};*/
 
 export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | undefined => {
   try {
@@ -441,84 +299,6 @@ export const getMetadataCivitAiInfo = (actualCacheMetadata: CacheMetadata, url: 
   return undefined;
 };
 
-export const getMetadataCivitAiRest = async (
-  actualCacheMetadata: CacheMetadata,
-  url: string
-): Promise<[CacheMetadata, IMetadata] | false | undefined> => {
-  /*
-  if (!existsSync(url)) {
-    loggerInfo(`File does not exists : ${url}`);
-    return;
-  }
-
-  const cacheMetadata = { ...actualCacheMetadata };
-
-  try {
-    // Calculate the hash of the file
-    // Calling the REST API
-    loggerVerbose(`Calculating hash for file ${url}`);
-    const hash = await getHash(url);
-
-    loggerVerbose(`Getting metadata from CivitAI RestAPI for model with hash ${hash}`);
-    const response = await axios.get<ICivitAIInfoFile>(`https://civitai.com/api/v1/model-versions/by-hash/${hash}`);
-
-    const metadata = response.data;
-
-    if (metadata.description) {
-      metadata.description = parseDescriptions(metadata.description);
-    }
-
-    if (metadata.model?.description) {
-      metadata.model.description = parseDescriptions(metadata.model.description);
-    }
-
-    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
-
-    const purgedMetadata: ICivitAIInfoFile = {
-      // Use forced
-      baseModel: 'SD 1.5', //metadata.baseModel,
-      description: '', //metadata.description,
-      model: {
-        description: '' //metadata.model?.description,
-      },
-      trainedWords: [] //metadata.trainedWords
-    };
-
-    purgedMetadata.baseModel = DOMPurify.sanitize(metadata.baseModel) as VersionKey;
-    purgedMetadata.description = DOMPurify.sanitize(metadata.description);
-    if (metadata.model?.description) {
-      (purgedMetadata as Required<ICivitAIInfoFile>).model.description = DOMPurify.sanitize(metadata.model?.description);
-    }
-
-    if (metadata.trainedWords) {
-      (purgedMetadata as Required<ICivitAIInfoFile>).trainedWords = metadata.trainedWords.map((word) => DOMPurify.sanitize(word));
-    }
-
-    writeFileSync(civitAiFile, JSON.stringify(purgedMetadata, null, 2));
-
-    const result = getMetadataFromCivitAi(purgedMetadata);
-
-    if (!result) {
-      return;
-    }
-
-    cacheMetadata[url] = { ...result, timestamp: Date.now().toString() };
-
-    return [cacheMetadata, result];
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error.message}`);
-      if (error.message.includes('404')) {
-        return false;
-      }
-    } else {
-      loggerInfo(`Error while reading metadata for ${url} with CivitAI Rest API : ${error}`);
-    }
-  }*/
-
-  return undefined;
-};
-
 const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
   const cacheMetadata = Cache.get('metadata');
 
@@ -529,7 +309,7 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
   // If nothing is found, try getting metadata from CivitAI REST API
 
   try {
-    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt)$/, CIVITAI_FILE);
+    const civitAiFile = url.replace(/(\.safetensors|\.ckpt|\.pt|\.gguf)$/, CIVITAI_FILE);
     const metadataCivitAiInfo = getMetadataCivitAiInfo(cacheMetadata, civitAiFile);
 
     if (metadataCivitAiInfo) {
@@ -538,25 +318,6 @@ const getMetadata = async (url: string): Promise<IMetadata | undefined> => {
       Cache.set('metadata', cacheMetadataNew);
 
       return metadata;
-    }
-
-    const metadataCivitAiRest = await getMetadataCivitAiRest(cacheMetadata, url);
-
-    if (metadataCivitAiRest) {
-      const [cacheMetadataNew, metadata] = metadataCivitAiRest;
-
-      Cache.set('metadata', cacheMetadataNew);
-
-      return metadata;
-    } else if (metadataCivitAiRest === false) {
-      // Store fake metadata to ensure we don't try to get it again
-      const fakeMetadata: IMetadata = {
-        accelerator: 'none',
-        keywords: [],
-        sdVersion: 'unknown'
-      };
-      cacheMetadata[url] = { ...fakeMetadata, timestamp: Date.now().toString() };
-      Cache.set('metadata', cacheMetadata);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {

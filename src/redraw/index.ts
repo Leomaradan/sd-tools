@@ -16,6 +16,7 @@ interface IRedrawArgsOptions {
   method?: string[];
   negativePrompt?: string;
   negativePromptRemove?: string[];
+  noLora?: boolean;
   noTime?: boolean;
   promptRemove?: string[];
   recursive?: boolean;
@@ -91,6 +92,12 @@ export const builder = (builder: yargs.Argv<object>) => {
         array: true,
         describe: 'negative prompt to remove from the existing configuration',
         type: 'string'
+      },
+      noLora: {
+        alias: 'l',
+        default: true,
+        describe: 'do not use Lora models for redraw',
+        type: 'boolean'
       },
       noTime: {
         alias: 't',

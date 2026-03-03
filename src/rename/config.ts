@@ -1,4 +1,4 @@
-import {  loggerInfo, loggerVerbose } from '../commons/logger';
+import { loggerInfo, loggerVerbose } from '../commons/logger';
 
 type Key = [string, string] | string;
 
@@ -26,7 +26,7 @@ export const executeConfig = (config: IRenameConfig, source: string, promptData:
     return ['', undefined];
   }
 
-  config.keys.forEach(({key}) => {
+  config.keys.forEach(({ key }) => {
     loggerVerbose(`Searching for ${key} in "${source}"`);
 
     const found = config.keys

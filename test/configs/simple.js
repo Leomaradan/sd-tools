@@ -1,8 +1,8 @@
 /* eslint-disable */
 
 const checkpoints = () => {
-  return ["check1", "check2"]
-}
+  return ['check1', 'check2'];
+};
 
 module.exports = {
   prompts: [

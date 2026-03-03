@@ -28,9 +28,11 @@ import {
   getConfigSamplers,
   getConfigScheduler,
   getConfigStyles,
+  getConfigTemplatesFolder,
   getConfigUpscalers,
   getConfigVAE,
   getConfigVersion,
+  getConfigWildcardsFolder,
   type Options
 } from './functions';
 
@@ -61,6 +63,8 @@ export const options: { description: string; option: Options }[] = [
   { description: 'Available LoRA. Refreshed with command "init"', option: 'loras' },
   { description: 'Available Checkpoints. Refreshed with command "init"', option: 'models' },
   { description: 'Output folder for generated images', option: 'output-folder' },
+  { description: 'Wildcards folder for generated images', option: 'wildcards-folder' },
+  { description: 'Templates folder for generated images', option: 'templates-folder' },
   { description: 'Checkpoints for the Redraw command', option: 'redraw-models' },
   { description: 'Available Samplers. Refreshed with command "init"', option: 'samplers' },
   {
@@ -180,18 +184,24 @@ export const handler = (argv: { config?: string }) => {
     case 'samplers':
       getConfigSamplers();
       break;
-
     case 'scheduler':
       getConfigScheduler();
       break;
     case 'styles':
       getConfigStyles();
       break;
+
+    case 'templates-folder':
+      getConfigTemplatesFolder();
+      break;
     case 'upscalers':
       getConfigUpscalers();
       break;
     case 'vae':
       getConfigVAE();
+      break;
+    case 'wildcards-folder':
+      getConfigWildcardsFolder();
       break;
 
     default:

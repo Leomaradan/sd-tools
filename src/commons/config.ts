@@ -11,6 +11,8 @@ const cache = new Configstore('sd-tools-cache');
 
 const LATEST_CONFIG_VERSION = 4;
 
+export type ApiType = 'automatic1111' | 'forge' | 'proxy';
+
 const migrations: Record<number, () => void> = {
   0: () => {
     Config.set('configVersion', 1);
@@ -32,12 +34,10 @@ const migrations: Record<number, () => void> = {
   }
 };
 
-const configMigration = async (): Promise<boolean> => {
+const configMigration = async (): Promise<ApiType | false> => {
   let configVersion = Config.get('configVersion') as number | undefined;
 
-  if (configVersion === undefined) {
-    configVersion = 0;
-  }
+  configVersion ??= 0;
 
   let migrated = false;
 
@@ -56,6 +56,8 @@ const configMigration = async (): Promise<boolean> => {
     const response = await initFunction({ force: true });
     Config.set('configVersion', LATEST_CONFIG_VERSION);
 
+    mode.apiType = response;
+
     return response;
   }
 
@@ -66,11 +68,23 @@ const configMigration = async (): Promise<boolean> => {
     return false;
   }
 
-  return true;
+  mode.apiType = result;
+
+  return result;
 };
 
 export const Config = {
-  get: <T extends keyof IConfig>(key: T): IConfig[T] => config.get(key),
+  get: <T extends keyof IConfig>(key: T): IConfig[T] => {
+    if ((key === 'autoTiledDiffusion' || key === 'autoTiledVAE') && mode.apiType === 'forge') {
+      return false as IConfig[T];
+    }
+
+    if (key === 'scheduler' && mode.apiType === 'proxy') {
+      return false as IConfig[T];
+    }
+
+    return config.get(key);
+  },
   migrate: configMigration,
   set: <T extends keyof IConfig>(key: T, value: IConfig[T]): void => config.set(key, value)
 };

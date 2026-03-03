@@ -1,3 +1,4 @@
+import { Config } from './config';
 import { findSampler } from './models';
 import { type IBaseQuery, type MetadataAccelerator, type MetadataVersionKey } from './types';
 
@@ -106,9 +107,26 @@ export const getDefaultQueryXL = (
 };
 
 export const getDefaultQuery = (
+  checkpointName: string,
   version: MetadataVersionKey,
   accelarator?: MetadataAccelerator
 ): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
+  const defaultQuery = Config.get('defaultQuery');
+
+  const found =
+    checkpointName === '-'
+      ? undefined
+      : Object.entries(defaultQuery).find(([key]) => {
+          return !!new RegExp(key).test(checkpointName);
+        })?.[1];
+
+  if (found) {
+    return {
+      ...baseParamsAll,
+      ...found
+    };
+  }
+
   switch (version) {
     case 'sd15':
       return getDefaultQuery15(accelarator);
