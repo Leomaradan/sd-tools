@@ -4,7 +4,7 @@ import { type IBaseQuery, type MetadataAccelerator, type MetadataVersionKey } fr
 
 const DEFAULT_SAMPLERS = ['DPM++ 2M', 'Euler a'];
 
-const baseParamsAll: { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> = {
+const baseParamsAll: Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } = {
   alwayson_scripts: {},
   //cfg_scale: 7,
   enable_hr: false,
@@ -25,7 +25,7 @@ const baseParamsAll: { enable_hr: boolean; forcedSampler?: string } & Partial<IB
 
 export const getDefaultQuery15 = (
   accelarator?: MetadataAccelerator
-): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
+): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
   const baseParams = { ...baseParamsAll, height: 512, width: 512 };
 
   if (accelarator === 'lcm') {
@@ -34,7 +34,7 @@ export const getDefaultQuery15 = (
       ...baseParams,
       cfg_scale: 2,
       forcedSampler: 'LCM',
-      sampler_name: findSampler('LCM')?.name as string,
+      sampler_name: findSampler('LCM')?.name,
       steps: 5
     };
   }
@@ -42,13 +42,13 @@ export const getDefaultQuery15 = (
   return {
     ...baseParams,
     cfg_scale: 7,
-    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
+    sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name,
     steps: 20
   };
 };
 
-export const getDefaultQuery20 = (sizeFull: boolean): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
-  const baseParams = { ...baseParamsAll, cfg_scale: 7, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string, steps: 20 };
+export const getDefaultQuery20 = (sizeFull: boolean): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
+  const baseParams = { ...baseParamsAll, cfg_scale: 7, sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name, steps: 20 };
   if (sizeFull) {
     // Other accelerator than LCM are not supported
     return {
@@ -67,7 +67,7 @@ export const getDefaultQuery20 = (sizeFull: boolean): { enable_hr: boolean; forc
 
 export const getDefaultQueryXL = (
   accelarator?: MetadataAccelerator
-): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
+): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
   const baseParams = { ...baseParamsAll, height: 1024, width: 1024 };
   switch (accelarator) {
     case 'lcm':
@@ -75,7 +75,7 @@ export const getDefaultQueryXL = (
         ...baseParams,
         cfg_scale: 1.5,
         forcedSampler: 'LCM',
-        sampler_name: findSampler('LCM')?.name as string,
+        sampler_name: findSampler('LCM')?.name,
         steps: 4
       };
     case 'lightning':
@@ -83,7 +83,7 @@ export const getDefaultQueryXL = (
         ...baseParams,
         cfg_scale: 2,
         forcedSampler: 'DPM++ SDE',
-        sampler_name: findSampler('DPM++ SDE')?.name as string,
+        sampler_name: findSampler('DPM++ SDE')?.name,
         steps: 6
       };
     case 'turbo':
@@ -91,7 +91,7 @@ export const getDefaultQueryXL = (
         ...baseParams,
         cfg_scale: 2,
         forcedSampler: 'DPM++ SDE',
-        sampler_name: findSampler('DPM++ SDE')?.name as string,
+        sampler_name: findSampler('DPM++ SDE')?.name,
         steps: 8
       };
     case 'distilled':
@@ -100,7 +100,7 @@ export const getDefaultQueryXL = (
       return {
         ...baseParams,
         cfg_scale: 7,
-        sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name as string,
+        sampler_name: findSampler(...DEFAULT_SAMPLERS)?.name,
         steps: 20
       };
   }
@@ -147,7 +147,7 @@ export const getDefaultQuery = (
         ...baseParamsAll,
         cfg_scale: 7,
         height: 512,
-        sampler_name: findSampler('DPM++ 2M', 'Euler a')?.name as string,
+        sampler_name: findSampler('DPM++ 2M', 'Euler a')?.name,
         steps: 20,
         width: 512
       };

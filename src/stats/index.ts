@@ -1,12 +1,12 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { getStats } from './stats';
 
 export const command = 'stats <source>';
 export const describe = 'Get stats of generated images';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder
     .positional('source', {
       demandOption: true,

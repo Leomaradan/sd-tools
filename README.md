@@ -42,26 +42,28 @@ node -v
 
 2. **Install the dependencies:**
 
-*NPM:*
-  ```bash
-  npm install -g @leomaradan/sd-tools
-  ```
+_NPM:_
 
-*YARN:*
-  ```bash
-  yarn global add @leomaradan/sd-tools
-  ```
+```bash
+npm install -g @leomaradan/sd-tools
+```
+
+_YARN:_
+
+```bash
+yarn global add @leomaradan/sd-tools
+```
 
 3. **Run AUTOMATIC1111 with --api:**
 
-*Windows*
+_Windows_
 
 ```bash
 cd <automatic1111 folder>
 webui-user.bat --api
 ```
 
-*Unix*
+_Unix_
 
 ```bash
 cd <automatic1111 folder>
@@ -69,9 +71,10 @@ cd <automatic1111 folder>
 ```
 
 4. **Run the Tool:**
-  ```bash
-  ./sd-tools init
-  ```
+
+```bash
+./sd-tools init
+```
 
 ## "Why so serious?"
 
@@ -84,7 +87,6 @@ cd <automatic1111 folder>
   ```
 
   Allowed parameters:
-
   - **--silent**: Do not display anything in the terminal
   - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
@@ -98,7 +100,6 @@ cd <automatic1111 folder>
   ```
 
   Allowed parameters:
-
   - **--silent**: Do not display anything in the terminal
   - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
@@ -114,7 +115,6 @@ cd <automatic1111 folder>
   ```
 
   Allowed parameters:
-
   - **--silent**: Do not display anything in the terminal
   - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
@@ -129,7 +129,6 @@ cd <automatic1111 folder>
   ```
 
   Allowed parameters:
-
   - **--silent**: Do not display anything in the terminal
   - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
@@ -146,7 +145,6 @@ cd <automatic1111 folder>
   ```
 
   Allowed parameters:
-
   - **--silent**: Do not display anything in the terminal
   - **--no-log**: Don't log the queries output to a file
   - **--verbose**: Display additional information in the terminal
@@ -154,26 +152,25 @@ cd <automatic1111 folder>
 
 - **Other Commands:**
 
-  *Init the tools, or force refreshing the cache*
+  _Init the tools, or force refreshing the cache_
 
   ```bash
   sd-tools init
   ```
 
   Allowed parameters:
-
   - **-e, --endpoint**: Endpoint to use. Default is http://127.0.0.1:7860
   - **-f, --force**: Force reset config
   - **-p, --purge-cache**: Purge the cache
 
-  *Get or set the configs*
+  _Get or set the configs_
 
   ```bash
   sd-tools config-get <key>
   sd-tools config-set <key> <value>
   ```
 
-  *Running the configuration wizard*
+  _Running the configuration wizard_
 
   ```bash
   sd-tools wizard
@@ -197,7 +194,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 If you encounter any issues, check out our [Wiki](https://github.com/Leomaradan/sd-tools/wiki) or open an [issue](https://github.com/Leomaradan/sd-tools/issues) on GitHub.
 
-Please be aware that this tool is still in development, and some features may not be fully implemented or may change in the future. *It works on my PC, bye the way*
+Please be aware that this tool is still in development, and some features may not be fully implemented or may change in the future. _It works on my PC, bye the way_
 
 ---
 

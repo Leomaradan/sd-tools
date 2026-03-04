@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type ArgumentsCamelCase, type Argv } from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
@@ -13,7 +13,7 @@ interface IQueueArgsOptions {
 
 export const command = 'queue <source>';
 export const describe = 'queue image using a json of js file';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
@@ -34,7 +34,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     });
 };
 
-export const handler = (argv: IQueueArgsOptions) => {
+export const handler = (argv: ArgumentsCamelCase<IQueueArgsOptions>) => {
   const source = resolve(argv.source);
 
   resolveBaseOptions(argv);

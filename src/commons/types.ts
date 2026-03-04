@@ -6,12 +6,6 @@ import { type ICutOff } from './extensions/cutoff';
 import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
 
-export type AlwaysOnScripts =
-  | { args: Array<boolean | number | string> }
-  | { args: IAdetailer[] }
-  | { args: IControlNetQuery[] }
-  | { args: IForgeCoupleQuery };
-
 export enum AlwaysOnScriptsNames {
   ADetailer = 'ADetailer',
   ControlNet = 'controlnet',
@@ -21,19 +15,11 @@ export enum AlwaysOnScriptsNames {
   TiledVAE = 'Tiled VAE'
 }
 
-export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
-
-export interface IOverrideSettings {
-  CLIP_stop_at_last_layers: number;
-  directories_filename_pattern: string;
-  forge_inference_memory?: number;
-  outdir_img2img_samples: string;
-  outdir_txt2img_samples: string;
-  samples_filename_pattern: string;
-  save_images_replace_action?: 'Add number suffix' | 'Replace';
-  sd_model_checkpoint: string;
-  sd_vae: string;
-}
+export type AlwaysOnScripts =
+  | { args: Array<boolean | number | string> }
+  | { args: IAdetailer[] }
+  | { args: IControlNetQuery[] }
+  | { args: IForgeCoupleQuery };
 
 export interface IBaseQuery {
   alwayson_scripts: Partial<Record<AlwaysOnScriptsNames, AlwaysOnScripts>>;
@@ -75,27 +61,6 @@ export interface IBaseQuery {
   width?: number;
 }
 
-export interface ITxt2ImgQuery
-  extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
-  adetailer?: IAdetailer[];
-  controlNet?: IControlNet[];
-  couple?: IForgeCouple;
-  cutOff?: ICutOff;
-  enable_hr?: boolean;
-  firstphase_height?: number;
-  firstphase_width?: number;
-  hr_negative_prompt?: string;
-  hr_prompt?: string;
-  hr_scale?: number;
-  hr_upscaler?: string;
-  lcm?: boolean;
-  tiledDiffusion?: ITiledDiffusion;
-  tiledVAE?: ITiledVAE;
-  //ultimateSdUpscale?: number;
-
-  //init_images: string[];
-}
-
 export interface IImg2ImgQuery
   extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
   adetailer?: IAdetailer[];
@@ -120,20 +85,55 @@ export interface IImg2ImgQuery
   ultimateSdUpscale?: IUltimateSDUpscale;
 }
 
-export type MetadataVersionKey = 'sd14' | 'sd15' | 'sd20' | 'sd20-768' | 'sd21' | 'sd21-768' | 'sdxl' | 'unknown';
+export interface IOverrideSettings {
+  CLIP_stop_at_last_layers: number;
+  directories_filename_pattern: string;
+  forge_inference_memory?: number;
+  outdir_img2img_samples: string;
+  outdir_txt2img_samples: string;
+  samples_filename_pattern: string;
+  save_images_replace_action?: 'Add number suffix' | 'Replace';
+  sd_model_checkpoint: string;
+  sd_vae: string;
+}
+
+export interface ITxt2ImgQuery
+  extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
+  adetailer?: IAdetailer[];
+  controlNet?: IControlNet[];
+  couple?: IForgeCouple;
+  cutOff?: ICutOff;
+  enable_hr?: boolean;
+  firstphase_height?: number;
+  firstphase_width?: number;
+  hr_negative_prompt?: string;
+  hr_prompt?: string;
+  hr_scale?: number;
+  hr_upscaler?: string;
+  lcm?: boolean;
+  tiledDiffusion?: ITiledDiffusion;
+  tiledVAE?: ITiledVAE;
+  //ultimateSdUpscale?: number;
+
+  //init_images: string[];
+}
+
 export type MetadataAccelerator = 'distilled' | 'lcm' | 'lightning' | 'none' | 'turbo';
+
+export type MetadataVersionKey = 'sd14' | 'sd15' | 'sd20' | 'sd20-768' | 'sd21' | 'sd21-768' | 'sdxl' | 'unknown';
+export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 export type VersionKey =
   | 'Pony'
   | 'SD 1.4'
-  | 'SD 1.5 LCM'
   | 'SD 1.5'
-  | 'SD 2.0 768'
+  | 'SD 1.5 LCM'
   | 'SD 2.0'
-  | 'SD 2.1 768'
   | 'SD 2.1'
+  | 'SD 2.1 768'
+  | 'SD 2.0 768'
   | 'SDXL 0.9'
-  | 'SDXL 1.0 LCM'
   | 'SDXL 1.0'
+  | 'SDXL 1.0 LCM'
   | 'SDXL Distilled'
   | 'SDXL Lightning'
   | 'SDXL Turbo';
@@ -167,6 +167,59 @@ export enum IRedrawStyle {
   Realism = 'realism'
 }
 
+export type Extensions =
+  | 'adetailer'
+  | 'controlnet'
+  | 'cutoff'
+  | 'interrogator'
+  | 'scheduler'
+  | 'sd-forge-couple'
+  | 'tiled diffusion'
+  | 'tiled vae'
+  | 'ultimate-sd-upscale';
+
+export interface ICivitAIInfoFile {
+  baseModel: VersionKey;
+  description?: string;
+  model?: {
+    description?: string;
+  };
+  trainedWords: string[];
+}
+
+export interface ILora {
+  alias?: string;
+  keywords: string[];
+  name: string;
+  version: MetadataVersionKey;
+}
+
+export interface IMetadata {
+  accelerator: MetadataAccelerator;
+  keywords: string[];
+  sdVersion: MetadataVersionKey;
+}
+
+export type IMetadataCheckpoint = Omit<IMetadata, 'keywords'>;
+
+export type IMetadataLora = Omit<IMetadata, 'accelerator'>;
+
+export interface IModel {
+  accelarator?: MetadataAccelerator;
+  name: string;
+  version: MetadataVersionKey;
+}
+
+export interface IModelWithHash extends IModel {
+  hash?: string;
+}
+
+export type InterrogateModelsAll = InterrogateModelsBase | InterrogateModelsInterogator;
+
+export type InterrogateModelsBase = 'clip' | 'deepdanbooru';
+
+export type InterrogateModelsInterogator = 'ViT-H-14/laion2b_s32b_b79k' | 'ViT-L-14/openai';
+
 export interface IRedrawOptions {
   addAfterPrompt?: string;
   addBeforePrompt?: string;
@@ -184,82 +237,82 @@ export interface IRedrawOptions {
   upscales?: number[];
 }
 
-export type Extensions =
-  | 'adetailer'
-  | 'controlnet'
-  | 'cutoff'
-  | 'interrogator'
-  | 'scheduler'
-  | 'sd-forge-couple'
-  | 'tiled diffusion'
-  | 'tiled vae'
-  | 'ultimate-sd-upscale';
-
-export interface IModel {
-  accelarator?: MetadataAccelerator;
-  name: string;
-  version: MetadataVersionKey;
-}
-
-export interface IModelWithHash extends IModel {
-  hash?: string;
-}
-
-export interface ILora {
-  alias?: string;
-  keywords: string[];
-  name: string;
-  version: MetadataVersionKey;
-}
-
 export interface ISampler {
   aliases: string[];
   name: string;
 }
-
+export interface IStyle {
+  name: string;
+  negativePrompt: string;
+  prompt: string;
+}
 export interface IUpscaler {
   filename?: string;
   index?: number; // If no index, cannot be used in Ultimate SD Upscale
   name: string;
 }
 
-export interface IStyle {
-  name: string;
-  negativePrompt: string;
-  prompt: string;
-}
-
-export interface IMetadata {
-  accelerator: MetadataAccelerator;
-  keywords: string[];
-  sdVersion: MetadataVersionKey;
-}
-
-export interface IMetadataCheckpoint extends Omit<IMetadata, 'keywords'> {}
-
-export interface IMetadataLora extends Omit<IMetadata, 'accelerator'> {}
-
-export interface ICivitAIInfoFile {
-  baseModel: VersionKey;
-  description?: string;
-  model?: {
-    description?: string;
-  };
-  trainedWords: string[];
-}
-
-export type InterrogateModelsInterogator = 'ViT-H-14/laion2b_s32b_b79k' | 'ViT-L-14/openai';
-export type InterrogateModelsBase = 'clip' | 'deepdanbooru';
-export type InterrogateModelsAll = InterrogateModelsBase | InterrogateModelsInterogator;
-
 export const interrogateModelsAll: InterrogateModelsAll[] = ['clip', 'deepdanbooru', 'ViT-H-14/laion2b_s32b_b79k', 'ViT-L-14/openai'];
 
-export interface IInterrogateResponse {
-  prompt: string;
+export interface BaseIPrompt {
+  adetailer?: IAdetailerPrompt[];
+  autoCutOff?: 'both' | boolean;
+  autoLCM?: 'both' | boolean;
+  cfg?: number | number[];
+  checkpoints?: ICheckpointWithVAE[] | string | string[];
+  clipSkip?: number | number[];
+  controlNet?: ControlNetSchema | ControlNetSchema[];
+  count?: number;
+  couple?: IForgeCouple | IForgeCouple[];
+  denoising?: number | number[];
+  directoryPath?: string;
+  enableHighRes?: 'both' | boolean;
+  existingImagesStrategy?: 'none' | 'numbered' | 'overwrite' | 'skip'; // If none, no special handling of existing images
+  filename?: string;
+  height?: number | number[];
+  highRes?: {
+    afterNegativePrompt?: string;
+    afterPrompt?: string;
+    beforeNegativePrompt?: string;
+    beforePrompt?: string;
+  };
+  initImageOrFolder?: string | string[];
+  // negativePrompt?: string | string[];
+  outDir?: string;
+  pattern?: string;
+  // prompt: string | string[];
+  restoreFaces?: 'both' | boolean;
+  sampler?: string | string[];
+  scaleFactor?: number | number[];
+  seed?: `${number}-${number}` | number | number[];
+  steps?: number | number[];
+  styles?: string | string[];
+  stylesSets?: Array<string | string[]>;
+  templates?: boolean;
+  tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
+  tiledVAE?: 'both' | boolean | ITiledVAE;
+  tiling?: 'both' | boolean;
+  ultimateSdUpscale?: 'both' | boolean;
+  upscaler?: string | string[];
+  // upscalingPrompt?: string | string[];
+  vae?: string | string[];
+  // upscalingNegativePrompt?: string | string[];
+  width?: number | number[];
+  wildcards?: boolean;
 }
-export type CacheMetadata = Record<string, { timestamp: string } & IMetadata>;
-export type CacheInterrogator = Record<string, { timestamp: string } & IInterrogateResponse>;
 export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
+export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
+export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
+
+export interface IAdetailerPrompt {
+  confidence?: number;
+  height?: number;
+  model: string;
+  negative?: string;
+  prompt?: string;
+  strength?: number;
+  width?: number;
+}
 
 export interface IAutoAdetailer extends IAdetailer {
   trigger: string;
@@ -270,6 +323,34 @@ export interface IAutoControlnetPose {
   beforePrompt?: string;
   pose: string;
   trigger: string;
+}
+
+export interface ICache {
+  imageData: CacheImageData;
+  interrogator: CacheInterrogator;
+  metadata: CacheMetadata;
+  templates: Record<string, { content: object; name: string; update: number }>;
+  wildcards: Record<string, { content: 'flat' | object; name: string; update: number }>;
+}
+
+export interface ICheckpointWithVAE {
+  addAfterFilename?: string;
+  addAfterNegativePrompt?: string;
+  addAfterPrompt?: string;
+  addBeforeFilename?: string;
+  addBeforeNegativePrompt?: string;
+  addBeforePrompt?: string;
+  checkpoint: string;
+  negativePrompt?: string;
+  prompt?: string;
+  vae?: string;
+}
+
+export interface IClassicPrompt extends BaseIPrompt {
+  negativePrompt?: string | string[];
+  prompt: string | string[];
+  upscalingNegativePrompt?: string | string[];
+  upscalingPrompt?: string | string[];
 }
 
 export interface IConfig {
@@ -319,101 +400,25 @@ export interface IConfig {
   wildcardsFolder: string;
 }
 
-export interface ICache {
-  imageData: CacheImageData;
-  interrogator: CacheInterrogator;
-  metadata: CacheMetadata;
-  templates: Record<string, { name: string; content: object; update: number }>;
-  wildcards: Record<string, { name: string; content: 'flat' | object; update: number }>;
-}
-
-export interface IAdetailerPrompt {
-  confidence?: number;
-  height?: number;
-  model: string;
-  negative?: string;
-  prompt?: string;
-  strength?: number;
-  width?: number;
-}
-
-export interface ICheckpointWithVAE {
-  addAfterFilename?: string;
-  addAfterNegativePrompt?: string;
-  addAfterPrompt?: string;
-  addBeforeFilename?: string;
-  addBeforeNegativePrompt?: string;
-  addBeforePrompt?: string;
-  checkpoint: string;
-  negativePrompt?: string;
-  prompt?: string;
-  vae?: string;
-}
-
-type ControlNetSchema = Omit<IControlNet, 'image_name'>;
-
-export interface BaseIPrompt {
-  adetailer?: IAdetailerPrompt[];
-  autoCutOff?: 'both' | boolean;
-  autoLCM?: 'both' | boolean;
-  cfg?: number | number[];
-  checkpoints?: ICheckpointWithVAE[] | string | string[];
-  clipSkip?: number | number[];
-  controlNet?: ControlNetSchema | ControlNetSchema[];
-  count?: number;
-  couple?: IForgeCouple | IForgeCouple[];
-  denoising?: number | number[];
-  directoryPath?: string;
-  enableHighRes?: 'both' | boolean;
-  existingImagesStrategy?: 'none' | 'numbered' | 'overwrite' | 'skip'; // If none, no special handling of existing images
-  filename?: string;
-  height?: number | number[];
-  highRes?: {
-    afterNegativePrompt?: string;
-    afterPrompt?: string;
-    beforeNegativePrompt?: string;
-    beforePrompt?: string;
-  };
-  initImageOrFolder?: string | string[];
-  // negativePrompt?: string | string[];
-  outDir?: string;
-  pattern?: string;
-  // prompt: string | string[];
-  restoreFaces?: 'both' | boolean;
-  sampler?: string | string[];
-  scaleFactor?: number | number[];
-  seed?: `${number}-${number}` | number | number[];
-  steps?: number | number[];
-  styles?: string | string[];
-  stylesSets?: Array<string | string[]>;
-  templates?: boolean;
-  tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
-  tiledVAE?: 'both' | boolean | ITiledVAE;
-  tiling?: 'both' | boolean;
-  ultimateSdUpscale?: 'both' | boolean;
-  upscaler?: string | string[];
-  // upscalingPrompt?: string | string[];
-  vae?: string | string[];
-  // upscalingNegativePrompt?: string | string[];
-  width?: number | number[];
-  wildcards?: boolean;
-}
-
-export interface IClassicPrompt extends BaseIPrompt {
-  negativePrompt?: string | string[];
-  prompt: string | string[];
-  upscalingNegativePrompt?: string | string[];
-  upscalingPrompt?: string | string[];
-}
-
-export interface IStyleSubjectPrompt extends BaseIPrompt {
-  negativePromptStyle?: string | string[];
-  negativePromptSubject?: string | string[];
-  promptStyle: string | string[];
-  promptSubject: string | string[];
+export interface IInterrogateResponse {
+  prompt: string;
 }
 
 export type IPrompt = IClassicPrompt | IStyleSubjectPrompt;
+
+export interface IPromptPermutations {
+  afterFilename?: string;
+  afterNegativePrompt?: string;
+  afterPrompt?: string;
+  beforeFilename?: string;
+  beforeNegativePrompt?: string;
+  beforePrompt?: string;
+  filenameReplace?: IPromptReplace[];
+  overwrite?: Partial<IPromptSingleSchema>;
+  promptReplace?: IPromptReplace[];
+}
+
+export type IPrompts = IPromptsWithBasePrompt | IPromptsWithExtends | IPromptsWithPrompt;
 
 export interface IPromptSingle {
   adetailer?: IAdetailerPrompt[];
@@ -461,33 +466,28 @@ export interface IPromptSingle {
 export interface IPromptSingleSchema extends Omit<IPromptSingle, 'controlNet'> {
   controlNet?: ControlNetSchema[];
 }
+export interface IPromptsResolved extends IPromptsCommon {
+  prompts: IPrompt[];
+}
+
+export interface IStyleSubjectPrompt extends BaseIPrompt {
+  negativePromptStyle?: string | string[];
+  negativePromptSubject?: string | string[];
+  promptStyle: string | string[];
+  promptSubject: string | string[];
+}
+
+type ControlNetSchema = Omit<IControlNet, 'image_name'>;
+
 interface IPromptReplace {
   from: string;
   to: string;
-}
-
-export interface IPromptPermutations {
-  afterFilename?: string;
-  afterNegativePrompt?: string;
-  afterPrompt?: string;
-  beforeFilename?: string;
-  beforeNegativePrompt?: string;
-  beforePrompt?: string;
-  filenameReplace?: IPromptReplace[];
-  overwrite?: Partial<IPromptSingleSchema>;
-  promptReplace?: IPromptReplace[];
 }
 
 interface IPromptsCommon {
   $schema?: string;
   multiValueMethod?: 'permutation' | 'random-selection';
   permutations?: IPromptPermutations[];
-}
-
-interface IPromptsWithPrompt extends IPromptsCommon {
-  basePrompt?: Partial<IPrompt>;
-  extends?: string;
-  prompts: IPrompt[];
 }
 
 interface IPromptsWithBasePrompt extends IPromptsCommon {
@@ -502,8 +502,8 @@ interface IPromptsWithExtends extends IPromptsCommon {
   prompts?: IPrompt[];
 }
 
-export type IPrompts = IPromptsWithBasePrompt | IPromptsWithExtends | IPromptsWithPrompt;
-
-export interface IPromptsResolved extends IPromptsCommon {
+interface IPromptsWithPrompt extends IPromptsCommon {
+  basePrompt?: Partial<IPrompt>;
+  extends?: string;
   prompts: IPrompt[];
 }

@@ -1,7 +1,7 @@
 import eslint from '@eslint/js';
-import prettier from 'eslint-config-prettier';
 import jest from 'eslint-plugin-jest';
 import onlyWarnPlugin from 'eslint-plugin-only-warn';
+import oxlint from 'eslint-plugin-oxlint';
 import perfectionist from 'eslint-plugin-perfectionist';
 import sonarjs from 'eslint-plugin-sonarjs';
 import globals from 'globals';
@@ -30,7 +30,7 @@ const config = [
     },
     rules: sonarjs.configs.recommended.rules
   },
-  prettier,
+  perfectionist.configs['recommended-natural'],
   {
     linterOptions: {
       // noInlineConfig: true,
@@ -62,7 +62,6 @@ const config = [
       'sonarjs/no-inverted-boolean-check': 'warn',
       'sonarjs/no-nested-switch': 'warn',
       'sonarjs/no-nested-template-literals': 'warn',
-      'sonarjs/no-one-iteration-loop': 'warn',
       'sonarjs/no-redundant-boolean': 'warn',
       'sonarjs/no-redundant-jump': 'warn',
       'sonarjs/no-same-line-conditional': 'warn',
@@ -97,7 +96,8 @@ const config = [
       'jest/prefer-importing-jest-globals': 'off',
       'sonarjs/no-duplicate-string': 'off'
     }
-  }
+  },
+  ...oxlint.configs['flat/recommended']
 ];
 
 export default config;

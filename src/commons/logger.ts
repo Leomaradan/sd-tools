@@ -1,20 +1,36 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
-import type { ApiType } from './config';
+import type { ApiType } from "./config";
 
-import { xdgState } from './xdgBaseDir';
+import { xdgState } from "./xdgBaseDir";
 
-export const mode = { apiType: false as ApiType | false, info: true, log: true, noAgent: false, simulate: false, verbose: false };
+export const mode = {
+  apiType: false as ApiType | false,
+  info: true,
+  log: true,
+  noAgent: false,
+  simulate: false,
+  verbose: false,
+};
 
 let session: string | undefined = undefined;
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === "production";
 
-const devLogPath = resolve(__dirname, '..', 'logs');
+const devLogPath = resolve(__dirname, "..", "logs");
 
-const oldLogs = isProd ? new Date().getTime() - 7 * 24 * 60 * 60 * 1000 : new Date().getTime() - 30 * 24 * 60 * 60 * 1000;
+const oldLogs = isProd
+  ? Date.now() - 7 * 24 * 60 * 60 * 1000
+  : Date.now() - 30 * 24 * 60 * 60 * 1000;
 
 export const loggerInfo = (message: string) => {
   if (mode.info) {
@@ -31,7 +47,7 @@ export const loggerVerbose = (message: string) => {
 };
 
 const purgePathInLog = (key: string, value: unknown) => {
-  if (['image', 'images', 'init_images', 'input_image'].includes(key)) {
+  if (["image", "images", "init_images", "input_image"].includes(key)) {
     if (!value) {
       return value;
     }
@@ -40,7 +56,7 @@ const purgePathInLog = (key: string, value: unknown) => {
       return (value as string[]).map((item) => item.substring(0, 100));
     }
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value?.substring(0, 100) ?? value;
     }
   }
@@ -52,7 +68,7 @@ const clearOldLogs = (source: string) => {
   const files = readdirSync(source);
 
   files.forEach((file) => {
-    const date = new Date(file.replace('log-', '').replace('.json', ''));
+    const date = new Date(file.replace("log-", "").replace(".json", ""));
     if (date.getTime() < oldLogs) {
       rmSync(resolve(source, file));
     }
@@ -61,11 +77,9 @@ const clearOldLogs = (source: string) => {
 
 export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
-    if (session === undefined) {
-      session = new Date().toISOString();
-    }
+    session ??= new Date().toISOString();
 
-    let logPath = resolve(__dirname, '..', 'logs');
+    let logPath = resolve(__dirname, "..", "logs");
 
     if (isProd) {
       if (existsSync(devLogPath)) {
@@ -73,7 +87,7 @@ export const writeLog = (data: object, force = false) => {
       }
 
       const rootDir = xdgState ?? join(tmpdir());
-      logPath = resolve(rootDir, 'sd-tools');
+      logPath = resolve(rootDir, "sd-tools");
     }
 
     const logFile = resolve(logPath, `log-${session}.json`);
@@ -82,12 +96,12 @@ export const writeLog = (data: object, force = false) => {
     }
 
     if (!existsSync(logFile)) {
-      writeFileSync(logFile, '[]');
+      writeFileSync(logFile, "[]");
     }
 
     const dataWithDate = { timestamp: Date.now(), ...data };
 
-    const content = JSON.parse(readFileSync(logFile, { encoding: 'utf8' }));
+    const content = JSON.parse(readFileSync(logFile, { encoding: "utf8" }));
 
     content.push(dataWithDate);
 
@@ -111,7 +125,6 @@ export enum ExitCodes {
   CONFIG_SET_NO_CUTOFF_INSTALLED = 9,
   CONFIG_SET_NO_MULTIDIFFUSION_INSTALLED = 7,
   CONFIG_SET_REDRAW_INVALID_MODELS = 13,
-  EXTRACT_INVALID_PARAMS = 16,
   EXTRACT_NO_SOURCE = 15,
   INIT_NO_CONTROLNET = 2,
   INIT_NO_SD_API = 1,
@@ -154,5 +167,5 @@ export enum ExitCodes {
   UPSCALE_NO_CONTROLNET = 38,
   UPSCALE_NO_CONTROLNET_TILES = 39,
   UPSCALE_NO_TILED_DIFFUSION = 40,
-  UPSCALE_TILES_NO_SOURCE = 42
+  UPSCALE_TILES_NO_SOURCE = 42,
 }

@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type ArgumentsCamelCase, type Argv } from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
@@ -14,7 +14,7 @@ const OPTION_TILED_DIFFUSION = 'tiled-diffusion';
 
 export const command = 'upscale <source> [method]';
 export const describe = 'upscale image';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
@@ -103,7 +103,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     });
 };
 
-export const handler = (argv: IUpscaleOptionsFull) => {
+export const handler = (argv: ArgumentsCamelCase<IUpscaleOptionsFull>) => {
   const source = resolve(argv.source);
   const { method } = argv;
 

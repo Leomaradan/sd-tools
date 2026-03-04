@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config, type ApiType } from '../commons/config';
@@ -29,7 +29,7 @@ import { loadWildcards } from '../commons/wildcards/loadWildcards';
 export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';
 
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder.options({
     endpoint: {
       alias: 'e',
@@ -196,7 +196,7 @@ const setExtensions = (
   extensionsQuery: {
     img2img: string[];
   },
-  schedulerQuery: {
+  schedulerQuery: void | {
     tasks: string[];
   } | void,
   interrogatorQuery: string[] | void
@@ -319,9 +319,9 @@ const setControlnet = async (extensions: Set<Extensions>) => {
 
 const setAdetailer = async (
   extensions: Set<Extensions>,
-  adModelsQuery: {
+  adModelsQuery: void | {
     ad_model: string[];
-  } | void
+  }
 ) => {
   if (extensions.has('adetailer') && adModelsQuery) {
     Config.set('adetailersModels', Array.from(adModelsQuery.ad_model));

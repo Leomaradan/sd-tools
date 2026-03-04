@@ -10,20 +10,6 @@ import { SCHEDULER_URL } from '../commons/extensions/scheduler';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { BaseUpscalers, findCheckpoint, findLORA } from '../commons/models';
 
-export type ReadonlyOptions =
-  | 'adetailers-models'
-  | 'config-version'
-  | 'controlnet-models'
-  | 'controlnet-modules'
-  | 'embeddings'
-  | 'extensions'
-  | 'loras'
-  | 'models'
-  | 'samplers'
-  | 'styles'
-  | 'upscalers'
-  | 'vae';
-
 export type EditableOptions =
   | 'auto-adetailers'
   | 'auto-controlnet-pose'
@@ -47,7 +33,21 @@ export type EditableOptions =
 
 export type Options = EditableOptions | ReadonlyOptions;
 
-const displayList = (list: { name: string }[] | Set<{ name: string } | string> | string[]) => {
+export type ReadonlyOptions =
+  | 'adetailers-models'
+  | 'config-version'
+  | 'controlnet-models'
+  | 'controlnet-modules'
+  | 'embeddings'
+  | 'extensions'
+  | 'loras'
+  | 'models'
+  | 'samplers'
+  | 'styles'
+  | 'upscalers'
+  | 'vae';
+
+const displayList = (list: Set<string | { name: string }> | string[] | { name: string }[]) => {
   if (list instanceof Set) {
     list = Array.from(list) as { name: string }[];
   }

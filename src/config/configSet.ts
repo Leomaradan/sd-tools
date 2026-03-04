@@ -1,4 +1,4 @@
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { Config } from '../commons/config';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
@@ -118,6 +118,11 @@ const options: EditableOptions[] = [
   'scheduler'
 ];
 
+interface ISetConfigArgsOptions {
+  config: string;
+  value: unknown;
+}
+
 type ISetConfigOptions =
   | ISetConfigAutoLCM
   | ISetConfigAutoTiledDiffusion
@@ -134,14 +139,9 @@ type ISetConfigOptions =
   | ISetConfigTemplatesFolder
   | ISetConfigWildcardsFolder;
 
-interface ISetConfigArgsOptions {
-  config: string;
-  value: unknown;
-}
-
 export const command = 'config-set <config> <value>';
 export const describe = 'set config value';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder
     .positional('config', {
       choices: options,

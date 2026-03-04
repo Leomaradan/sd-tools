@@ -193,9 +193,9 @@ describe('extract prompts', () => {
       const resultOnlyString = getBaseParams(['test']);
 
       expect(resultEmptyArray).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: '',
         cfg: NaN,
@@ -208,9 +208,9 @@ describe('extract prompts', () => {
       });
 
       expect(resultOnlyString).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: 'test',
         cfg: NaN,
@@ -229,9 +229,9 @@ describe('extract prompts', () => {
       const result = getBaseParams(promptNoNegative);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptNoNegative[0],
         cfg: 7,
@@ -250,9 +250,9 @@ describe('extract prompts', () => {
       const result = getBaseParams(promptFull);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptFull[0],
         cfg: 7,
@@ -271,9 +271,9 @@ describe('extract prompts', () => {
       const result = getBaseParams(promptNoExtra);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptNoExtra[0],
         cfg: NaN,

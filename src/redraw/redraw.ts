@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { ControlNetMode, ControlNetResizes, type IControlNet } from '../commons/extensions/controlNet';
-import { getFiles, type IFile } from '../commons/file';
+import { getBase64Image, getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
@@ -13,7 +13,7 @@ import { type IClassicPrompt, IRedrawMethod, type IRedrawOptions, IRedrawStyle }
 const INTERROGATE_MODEL_LAION = 'ViT-H-14/laion2b_s32b_b79k';
 const INTERROGATE_MODEL_OPENAI = 'ViT-L-14/openai';
 
-const prepareQueryData = (baseParamsProps: { sdxl: boolean } & IClassicPrompt, file: IFile) => {
+const prepareQueryData = (baseParamsProps: IClassicPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
