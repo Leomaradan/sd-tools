@@ -27,7 +27,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -51,7 +51,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -75,7 +75,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -121,7 +121,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -161,7 +161,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);
@@ -199,7 +199,7 @@ describe('queue loader test', () => {
         ]
       };
 
-      const called = (prompts as jest.Mock).mock.calls[0][0];
+      const called = jest.mocked(prompts).mock.calls[0][0];
 
       expect(prompts).toHaveBeenCalledTimes(1);
       expect(called).toMatchObject(expectedConfig);

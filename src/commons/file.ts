@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import DOMPurify from 'dompurify';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
-import { createReadStream, existsSync, lstatSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, lstatSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
 import extract from 'png-chunks-extract';
@@ -344,18 +344,15 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
       case 'SD 1.4':
         result.sdVersion = Version.SD14;
         break;
+      case 'SD 1.5':
+        result.sdVersion = Version.SD15;
+        break;
       case 'SD 1.5 LCM':
         result.sdVersion = Version.SD15;
         result.accelerator = 'lcm';
         break;
-      case 'SD 1.5':
-        result.sdVersion = Version.SD15;
-        break;
       case 'SD 2.0':
         result.sdVersion = Version.SD20;
-        break;
-      case 'SD 2.0 768':
-        result.sdVersion = Version.SD20Full;
         break;
       case 'SD 2.1':
         result.sdVersion = Version.SD21;
@@ -363,15 +360,18 @@ export const getMetadataFromCivitAi = (metadata: ICivitAIInfoFile): IMetadata | 
       case 'SD 2.1 768':
         result.sdVersion = Version.SD21Full;
         break;
+      case 'SD 2.0 768':
+        result.sdVersion = Version.SD20Full;
+        break;
       case 'SDXL 0.9':
+        result.sdVersion = Version.SDXL;
+        break;
+      case 'SDXL 1.0':
         result.sdVersion = Version.SDXL;
         break;
       case 'SDXL 1.0 LCM':
         result.sdVersion = Version.SDXL;
         result.accelerator = 'lcm';
-        break;
-      case 'SDXL 1.0':
-        result.sdVersion = Version.SDXL;
         break;
       case 'SDXL Distilled':
         result.sdVersion = Version.SDXL;

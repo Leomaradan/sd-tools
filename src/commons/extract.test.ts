@@ -1,6 +1,6 @@
 import type { IAdetailerPrompt, IPromptSingle } from './types';
 
-import { type IBaseParams, getAdetailerParams, getBaseParams, getPromptJSON, getPromptTextBox, getPrompts } from './extract';
+import { getAdetailerParams, getBaseParams, getPromptJSON, getPrompts, getPromptTextBox, type IBaseParams } from './extract';
 
 const promptNoNegative = [
   "In Casey Baugh's evocative style, art of a beautiful young girl cyborg with long brown hair, futuristic, scifi, intricate, elegant, highly detailed, majestic, Baugh's brushwork infuses the painting with a unique combination of realism and abstraction, greg rutkowski, surreal gold filigree, broken glass, (masterpiece, sidelighting, finely detailed beautiful eyes: 1.2), hdr, realistic painting, natural skin, textured skin, closed mouth, crystal eyes, butterfly filigree, chest armor, eye makeup, robot joints, long hair moved by the wind, window facing to another world, Baugh's distinctive style captures the essence of the girl's enigmatic nature, inviting viewers to explore the depths of her soul, award winning art",
@@ -188,9 +188,9 @@ describe('extract prompts', () => {
       const resultOnlyString = getBaseParams(['test']);
 
       expect(resultEmptyArray).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: '',
         cfg: NaN,
@@ -203,9 +203,9 @@ describe('extract prompts', () => {
       });
 
       expect(resultOnlyString).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: 'test',
         cfg: NaN,
@@ -223,9 +223,9 @@ describe('extract prompts', () => {
       const result = getBaseParams(promptNoNegative);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptNoNegative[0],
         cfg: 7,
@@ -237,14 +237,15 @@ describe('extract prompts', () => {
         steps: 20
       });
     });
+
     it('should return the prompt and base params with negative prompt', () => {
       expect.assertions(1);
       const result = getBaseParams(promptFull);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptFull[0],
         cfg: 7,
@@ -262,9 +263,9 @@ describe('extract prompts', () => {
       const result = getBaseParams(promptNoExtra);
 
       expect(result).toStrictEqual<
-        {
+        IBaseParams & {
           otherParams: string;
-        } & IBaseParams
+        }
       >({
         basePrompt: promptNoExtra[0],
         cfg: NaN,

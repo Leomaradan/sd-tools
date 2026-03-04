@@ -101,7 +101,6 @@ describe('models search', () => {
         findPartial: findPartialStringProperties(['name', 'hash'])
       })
     ).toStrictEqual({ hash: '12', name: 'invert' });
-    
   });
 
   it('should not find model in a object array', () => {

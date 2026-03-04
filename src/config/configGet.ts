@@ -1,9 +1,8 @@
 import yargs from 'yargs';
 
 import { Config } from '../commons/config';
-import { ExitCodes,  loggerInfo } from '../commons/logger';
+import { ExitCodes, loggerInfo } from '../commons/logger';
 import {
-  type Options,
   getConfigAddDetailerModels,
   getConfigAutoAdetailers,
   getConfigAutoControlnetPoses,
@@ -30,7 +29,8 @@ import {
   getConfigStyles,
   getConfigUpscalers,
   getConfigVAE,
-  getConfigVersion
+  getConfigVersion,
+  type Options
 } from './functions';
 
 export const options: { description: string; option: Options }[] = [
@@ -102,48 +102,17 @@ export const handler = (argv: { config?: string }) => {
   }
 
   switch (config) {
-    case 'config-version':
-      getConfigVersion();
-      break;
-    case 'controlnet-models':
-      getConfigControlnetModels();
-      break;
-    case 'controlnet-modules':
-      getConfigControlnetModules();
-      break;
-    case 'auto-controlnet-pose':
-      getConfigAutoControlnetPoses();
-      break;
-    case 'embeddings':
-      getConfigEmbeddings();
-      break;
-    case 'extensions':
-      getConfigExtensions();
-      break;
-    case 'loras':
-      getConfigLoras();
-      break;
-    case 'models':
-      getConfigModels();
-      break;
-    case 'samplers':
-      getConfigSamplers();
-      break;
-    case 'styles':
-      getConfigStyles();
-      break;
-    case 'upscalers':
-      getConfigUpscalers();
-      break;
-    case 'vae':
-      getConfigVAE();
-      break;
-
     case 'adetailers-models':
       getConfigAddDetailerModels();
       break;
     case 'auto-adetailers':
       getConfigAutoAdetailers();
+      break;
+    case 'auto-controlnet-pose':
+      getConfigAutoControlnetPoses();
+      break;
+    case 'auto-cutoff':
+      getConfigCutoff();
       break;
     case 'auto-lcm':
       getConfigAutoLCM();
@@ -166,8 +135,15 @@ export const handler = (argv: { config?: string }) => {
     case 'common-positive-xl':
       getConfigCommonNegativeXL();
       break;
-    case 'auto-cutoff':
-      getConfigCutoff();
+    case 'config-version':
+      getConfigVersion();
+      break;
+
+    case 'controlnet-models':
+      getConfigControlnetModels();
+      break;
+    case 'controlnet-modules':
+      getConfigControlnetModules();
       break;
     case 'cutoff-tokens':
       getConfigCutoffTokens();
@@ -175,18 +151,42 @@ export const handler = (argv: { config?: string }) => {
     case 'cutoff-weight':
       getConfigCutoffWeight();
       break;
-
+    case 'embeddings':
+      getConfigEmbeddings();
+      break;
     case 'endpoint':
       getConfigEndpoint();
+      break;
+    case 'extensions':
+      getConfigExtensions();
       break;
     case 'lcm':
       getConfigLCM();
       break;
+    case 'loras':
+      getConfigLoras();
+      break;
+    case 'models':
+      getConfigModels();
+      break;
     case 'redraw-models':
       getConfigRedrawModels();
       break;
+    case 'samplers':
+      getConfigSamplers();
+      break;
+
     case 'scheduler':
       getConfigScheduler();
+      break;
+    case 'styles':
+      getConfigStyles();
+      break;
+    case 'upscalers':
+      getConfigUpscalers();
+      break;
+    case 'vae':
+      getConfigVAE();
       break;
 
     default:

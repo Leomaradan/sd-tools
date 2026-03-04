@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, parse, relative, resolve, sep } from 'node:path';
 
 import { Config } from './config';
@@ -12,7 +12,7 @@ import {
   normalizeControlNetResizes
 } from './extensions/controlNet';
 import { getCutOffTokens } from './extensions/cutoff';
-import { type ITiledDiffusion, type ITiledVAE, defaultTiledDiffusionOptions } from './extensions/multidiffusionUpscaler';
+import { defaultTiledDiffusionOptions, type ITiledDiffusion, type ITiledVAE } from './extensions/multidiffusionUpscaler';
 import { getBase64Image, getImageSize } from './file';
 import { ExitCodes, loggerInfo, writeLog } from './logger';
 import {
@@ -702,7 +702,7 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-type SeriesItem = { input_image?: string[] } & Omit<IControlNet, 'input_image'>;
+type SeriesItem = Omit<IControlNet, 'input_image'> & { input_image?: string[] };
 
 const cartesianProduct = <T>(...arrays: T[][]): T[][] => {
   return arrays.reduce((acc, curr) => acc.flatMap((arr) => curr.map((item) => [...arr, item])), [[]] as T[][]);
@@ -763,7 +763,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
     ];
   }
 
-  const temporaryControlNetArray: Array<{ input_image?: string[] } & Omit<IControlNet, 'input_image'>> = [];
+  const temporaryControlNetArray: Array<Omit<IControlNet, 'input_image'> & { input_image?: string[] }> = [];
 
   controlNetArray.forEach((controlNet) => {
     const controlNetImage = controlNet.input_image;
@@ -822,7 +822,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
   });
 };
 
-const getArraysTiledVAE = (value: 'both' | ITiledVAE | boolean | undefined): Array<ITiledVAE | undefined> => {
+const getArraysTiledVAE = (value: 'both' | boolean | ITiledVAE | undefined): Array<ITiledVAE | undefined> => {
   if (typeof value === 'object') {
     return [value];
   }

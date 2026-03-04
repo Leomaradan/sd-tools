@@ -192,9 +192,9 @@ const setExtensions = (
   extensionsQuery: {
     img2img: string[];
   },
-  schedulerQuery: {
+  schedulerQuery: void | {
     tasks: string[];
-  } | void
+  }
 ) => {
   const extensions = new Set<Extensions>();
 
@@ -209,14 +209,14 @@ const setExtensions = (
       case 'cutoff':
         extensions.add('cutoff');
         break;
-      case 'ultimate-sd-upscale':
-        extensions.add('ultimate-sd-upscale');
-        break;
       case 'tiled diffusion':
         extensions.add('tiled diffusion');
         break;
       case 'tiled vae':
         extensions.add('tiled vae');
+        break;
+      case 'ultimate-sd-upscale':
+        extensions.add('ultimate-sd-upscale');
         break;
     }
   });
@@ -268,9 +268,9 @@ const setControlnet = async (extensions: Set<Extensions>) => {
 
 const setAdetailer = async (
   extensions: Set<Extensions>,
-  adModelsQuery: {
+  adModelsQuery: void | {
     ad_model: string[];
-  } | void
+  }
 ) => {
   if (extensions.has('adetailer') && adModelsQuery) {
     Config.set('adetailersModels', Array.from(adModelsQuery.ad_model));

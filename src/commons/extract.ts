@@ -2,6 +2,16 @@ import { type IFile } from './file';
 import { interrogateQuery } from './query';
 import { type IAdetailerPrompt, type IPromptSingle } from './types';
 
+export interface IBaseParams {
+  basePrompt: string;
+  cfg: number;
+  negativePrompt: string;
+  sampler: string;
+  seed: number;
+  sizes: null | { height: string; width: string };
+  steps: number;
+} //  otherParams: string;
+
 export interface IExtractOptions {
   addBefore?: string;
   format: 'json' | 'textbox';
@@ -24,16 +34,6 @@ interface IFormatTextbox {
   steps?: number;
   width?: number;
 }
-
-export interface IBaseParams {
-  basePrompt: string;
-  cfg: number;
-  negativePrompt: string;
-  sampler: string;
-  seed: number;
-  sizes: { height: string; width: string } | null;
-  steps: number;
-} //  otherParams: string;
 
 export const getPromptTextBox = (options: IBaseParams): string => {
   const { basePrompt, cfg, negativePrompt, sampler, seed, sizes, steps } = options;
@@ -92,7 +92,7 @@ export const getPromptJSON = (options: {
   negativePrompt: string;
   sampler: string;
   seed: number;
-  sizes: { height: string; width: string } | null;
+  sizes: null | { height: string; width: string };
   steps: number;
   vae: string;
 }): IPromptSingle => {
@@ -208,9 +208,9 @@ export const getAdetailerParams = (otherParams: string): IAdetailerPrompt[] => {
 
 export const getBaseParams = (
   data: string[]
-): {
+): IBaseParams & {
   otherParams: string;
-} & IBaseParams => {
+} => {
   if (data.length <= 1) {
     return {
       basePrompt: data?.[0] ?? '',

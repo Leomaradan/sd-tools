@@ -1,8 +1,8 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { type IExtractOptions, extractFromFile } from '../commons/extract';
-import { type IFile, getFiles } from '../commons/file';
+import { extractFromFile, type IExtractOptions } from '../commons/extract';
+import { getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { type IPromptSingle } from '../commons/types';
 

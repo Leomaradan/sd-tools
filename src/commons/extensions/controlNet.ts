@@ -1,13 +1,13 @@
-export enum ControlNetResizesLegacy {
-  Envelope = 2,
-  Resize = 0,
-  ScaleToFit = 1
-}
-
 export enum ControlNetResizes {
   Envelope = 'Resize and Fill',
   Resize = 'Just Resize',
   ScaleToFit = 'Crop and Resize'
+}
+
+export enum ControlNetResizesLegacy {
+  Resize = 0,
+  ScaleToFit = 1,
+  Envelope = 2
 }
 
 export const normalizeControlNetResizes = (input: ControlNetResizes | ControlNetResizesLegacy): ControlNetResizes => {
@@ -25,16 +25,16 @@ export const normalizeControlNetResizes = (input: ControlNetResizes | ControlNet
   }
 };
 
-export enum ControlNetModeLegacy {
-  Balanced = 0,
-  ControleNetImportant = 2,
-  PromptImportant = 1
-}
-
 export enum ControlNetMode {
   Balanced = 'Balanced',
   ControleNetImportant = 'ControlNet is more important',
   PromptImportant = 'My prompt is more important'
+}
+
+export enum ControlNetModeLegacy {
+  Balanced = 0,
+  PromptImportant = 1,
+  ControleNetImportant = 2
 }
 
 export const normalizeControlNetMode = (input: ControlNetMode | ControlNetModeLegacy): ControlNetMode => {

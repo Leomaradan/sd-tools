@@ -32,7 +32,7 @@ interface ISetConfigAutoLCM extends ISetConfig {
 
 interface ISetConfigAutoTiledDiffusion extends ISetConfig {
   config: 'auto-tiled-diffusion';
-  value: TiledDiffusionMethods | false;
+  value: false | TiledDiffusionMethods;
 }
 
 interface ISetConfigAutoTiledVAE extends ISetConfig {
@@ -97,6 +97,11 @@ const options: EditableOptions[] = [
   'scheduler'
 ];
 
+interface ISetConfigArgsOptions {
+  config: string;
+  value: unknown;
+}
+
 type ISetConfigOptions =
   | ISetConfigAutoLCM
   | ISetConfigAutoTiledDiffusion
@@ -109,11 +114,6 @@ type ISetConfigOptions =
   | ISetConfigLCMLoras
   | ISetConfigRedrawModels
   | ISetConfigScheduler;
-
-interface ISetConfigArgsOptions {
-  config: string;
-  value: unknown;
-}
 
 export const command = 'config-set <config> <value>';
 export const describe = 'set config value';
@@ -147,6 +147,9 @@ export const handler = (argv: ISetConfigArgsOptions) => {
   }
 
   switch (config) {
+    case 'auto-cutoff':
+      setConfigAutoCutoff(value);
+      break;
     case 'auto-lcm':
       setConfigAutoLCM(value);
 
@@ -168,9 +171,6 @@ export const handler = (argv: ISetConfigArgsOptions) => {
       break;
     case 'common-positive-xl':
       setConfigCommonPositiveXL(value);
-      break;
-    case 'auto-cutoff':
-      setConfigAutoCutoff(value);
       break;
 
     case 'cutoff-tokens':

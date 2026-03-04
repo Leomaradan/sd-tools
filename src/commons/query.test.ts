@@ -5,7 +5,7 @@ import type { IBaseQuery, ITxt2ImgQuery } from './types';
 
 import { Config } from './config';
 import { ControlNetMode, ControlNetResizes } from './extensions/controlNet';
-import { TiledDiffusionMethods, defaultTiledVAEnOptions } from './extensions/multidiffusionUpscaler';
+import { defaultTiledVAEnOptions, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { prepareRenderQuery } from './query';
 
 describe('query tests', () => {
@@ -89,16 +89,10 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
+    const expectedResponse: IBaseQuery & { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
-        },
-        /*Cutoff: {
-          args: [true, 'blue', 1, false, false, '', 'Lerp']
-        },*/
-        'Tiled Diffusion': {
-          args: [true, 'Mixture of Diffusers', true, false, 500, 768, 96, 96, 48, 4, '4x-UltraSharp', 2]
         },
         controlnet: {
           args: [
@@ -113,6 +107,12 @@ describe('query tests', () => {
               resize_mode: ControlNetResizes.Envelope
             }
           ]
+        },
+        /*Cutoff: {
+          args: [true, 'blue', 1, false, false, '', 'Lerp']
+        },*/
+        'Tiled Diffusion': {
+          args: [true, 'Mixture of Diffusers', true, false, 500, 768, 96, 96, 48, 4, '4x-UltraSharp', 2]
         }
       },
       cfg_scale: 5,
@@ -207,13 +207,10 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } & IBaseQuery = {
+    const expectedResponse: IBaseQuery & { hr_negative_prompt?: string; hr_prompt?: string; hr_scale?: number; hr_upscaler?: string } = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }]
-        },
-        Cutoff: {
-          args: [true, 'red', 0.8, false, false, '', 'Lerp']
         },
         controlnet: {
           args: [
@@ -228,6 +225,9 @@ describe('query tests', () => {
               resize_mode: ControlNetResizes.Envelope
             }
           ]
+        },
+        Cutoff: {
+          args: [true, 'red', 0.8, false, false, '', 'Lerp']
         }
       },
       cfg_scale: 5,

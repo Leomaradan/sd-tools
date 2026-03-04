@@ -1,20 +1,20 @@
 export enum RedrawMode {
-  Chess = 1,
   Linear = 0,
+  Chess = 1,
   None = 2
 }
 
 export enum SeamsFixType {
+  None = 0,
   BandPass = 1,
   HalfTile = 2,
-  HalfTilePlusIntersection = 3,
-  None = 0
+  HalfTilePlusIntersection = 3
 }
 
 export enum TargetSizeType {
   Base = 0,
-  CustomScale = 2,
-  CustomSize = 1
+  CustomSize = 1,
+  CustomScale = 2
 }
 
 export interface IUltimateSDUpscale {

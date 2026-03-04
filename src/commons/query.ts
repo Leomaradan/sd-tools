@@ -8,10 +8,10 @@ import { Cache, Config } from './config';
 import { getDefaultQuery } from './defaultQuery';
 import { type IControlNet, type IControlNetQuery, normalizeControlNetMode, normalizeControlNetResizes } from './extensions/controlNet';
 import {
-  type ITiledDiffusion,
-  type ITiledVAE,
   defaultTiledDiffusionOptions,
-  defaultTiledVAEnOptions
+  defaultTiledVAEnOptions,
+  type ITiledDiffusion,
+  type ITiledVAE
 } from './extensions/multidiffusionUpscaler';
 import { type IUltimateSDUpscale, RedrawMode, TargetSizeType } from './extensions/ultimateSdUpscale';
 import { getBase64Image } from './file';
@@ -34,10 +34,10 @@ const headerRequest = {
   }
 };
 
-type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
 type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
-
 type Query = Img2ImgQuery & Txt2ImgQuery;
+
+type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
 
 export const isTxt2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is ITxt2ImgQuery => {
   return (query as unknown as IImg2ImgQuery).init_images === undefined;
@@ -258,9 +258,9 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
   // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
   let baseQuery = JSON.parse(
     JSON.stringify({
-      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as {
+      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
         forcedSampler?: string;
-      } & IBaseQuery)
+      })
     })
   );
 

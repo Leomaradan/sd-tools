@@ -3,6 +3,16 @@ export enum TiledDiffusionMethods {
   MultiDiffusion = 'MultiDiffusion'
 }
 
+export interface ITiledDiffusion {
+  method: TiledDiffusionMethods;
+  scaleFactor?: number;
+  // regionalPrompt?: ITiledDiffusionRegion[];
+  tileBatchSize?: number;
+  tileHeight?: number;
+  tileOverlap?: number;
+  tileWidth?: number;
+}
+
 export interface ITiledDiffusionRegion {
   blend_mode: 'Background' | 'Foreground';
   feather_ratio?: number;
@@ -13,16 +23,6 @@ export interface ITiledDiffusionRegion {
   w: number;
   x: number;
   y: number;
-}
-
-export interface ITiledDiffusion {
-  method: TiledDiffusionMethods;
-  scaleFactor?: number;
-  // regionalPrompt?: ITiledDiffusionRegion[];
-  tileBatchSize?: number;
-  tileHeight?: number;
-  tileOverlap?: number;
-  tileWidth?: number;
 }
 
 export interface ITiledVAE {

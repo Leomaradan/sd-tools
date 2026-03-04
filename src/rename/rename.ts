@@ -3,9 +3,9 @@ import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 
 import renameSchema from '../../schema/rename.json';
-import { type IFile, getFiles } from '../commons/file';
+import { getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
-import { type IRenameConfig, executeConfig } from './config';
+import { executeConfig, type IRenameConfig } from './config';
 
 const validator = new Validator();
 

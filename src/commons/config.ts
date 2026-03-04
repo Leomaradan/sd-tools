@@ -43,7 +43,6 @@ const configMigration = async () => {
   }
 
   if (migrated) {
-
     // Manually manage the flags here
     mode.verbose = process.argv.includes('--verbose');
     mode.info = !process.argv.includes('--silent');

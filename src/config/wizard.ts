@@ -1,4 +1,4 @@
-import { Separator, confirm, input, select } from '@inquirer/prompts';
+import { confirm, input, select, Separator } from '@inquirer/prompts';
 
 import { Config } from '../commons/config';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';

@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { ControlNetMode, ControlNetResizes, type IControlNet } from '../commons/extensions/controlNet';
-import { type IFile, getBase64Image, getFiles } from '../commons/file';
+import { getBase64Image, getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
@@ -14,7 +14,7 @@ const IP_ADAPTER = 'ip-adapter';
 const LINEART = 'lineart';
 const HED = 'hed';
 
-const prepareQueryData = (baseParamsProps: { sdxl: boolean } & IClassicPrompt, file: IFile) => {
+const prepareQueryData = (baseParamsProps: IClassicPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
   const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
 
@@ -182,7 +182,7 @@ const prepareQueryClassical = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: { sdxl: boolean } & IClassicPrompt = {
+  let baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -248,7 +248,7 @@ const prepareQueryIpAdapter = async (
 
   const sd_model_checkpoint = getModelCheckpoint(style, sdxl);
 
-  let baseParams: { sdxl: boolean } & IClassicPrompt = {
+  let baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,

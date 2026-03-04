@@ -1,4 +1,4 @@
-import { Separator, input, select } from '@inquirer/prompts';
+import { input, select, Separator } from '@inquirer/prompts';
 import { existsSync } from 'node:fs';
 
 import type { IAutoAdetailer, IAutoControlnetPose, IConfig } from '../commons/types';
@@ -9,20 +9,6 @@ import { MULTIDIFFUSION_URL, TiledDiffusionMethods } from '../commons/extensions
 import { SCHEDULER_URL } from '../commons/extensions/scheduler';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { BaseUpscalers, findCheckpoint, findLORA } from '../commons/models';
-
-export type ReadonlyOptions =
-  | 'adetailers-models'
-  | 'config-version'
-  | 'controlnet-models'
-  | 'controlnet-modules'
-  | 'embeddings'
-  | 'extensions'
-  | 'loras'
-  | 'models'
-  | 'samplers'
-  | 'styles'
-  | 'upscalers'
-  | 'vae';
 
 export type EditableOptions =
   | 'auto-adetailers'
@@ -44,7 +30,21 @@ export type EditableOptions =
 
 export type Options = EditableOptions | ReadonlyOptions;
 
-const displayList = (list: { name: string }[] | Set<{ name: string } | string> | string[]) => {
+export type ReadonlyOptions =
+  | 'adetailers-models'
+  | 'config-version'
+  | 'controlnet-models'
+  | 'controlnet-modules'
+  | 'embeddings'
+  | 'extensions'
+  | 'loras'
+  | 'models'
+  | 'samplers'
+  | 'styles'
+  | 'upscalers'
+  | 'vae';
+
+const displayList = (list: Set<string | { name: string }> | string[] | { name: string }[]) => {
   if (list instanceof Set) {
     list = Array.from(list) as { name: string }[];
   }
@@ -166,7 +166,7 @@ export const setConfigAutoLCM = (value: boolean) => {
   getConfigAutoLCM();
 };
 
-export const setConfigAutoTiledDiffusion = (value: TiledDiffusionMethods | false) => {
+export const setConfigAutoTiledDiffusion = (value: false | TiledDiffusionMethods) => {
   if (!Config.get('extensions').includes('tiled diffusion')) {
     loggerInfo(`MultiDiffusion Upscaler extension must be installed. Re-Run "sd-tools init" after installing it`);
     loggerVerbose(`MultiDiffusion Upscaler extension url: ${MULTIDIFFUSION_URL}`);
