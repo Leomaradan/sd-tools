@@ -207,7 +207,7 @@ const prepareQueryClassicalBase = (
     stylesArray.push('Pixel Art');
   }
 
-  const baseParams: { sdxl: boolean } & IClassicPrompt = {
+  const baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,
@@ -398,7 +398,7 @@ const prepareQueryIpAdapterBase = (
     stylesArray.push('Pixel Art');
   }
 
-  const baseParams: { sdxl: boolean } & IClassicPrompt = {
+  const baseParams: IClassicPrompt & { sdxl: boolean } = {
     checkpoints: sd_model_checkpoint,
     controlNet: [],
     denoising: denoising_strength,

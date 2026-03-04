@@ -110,7 +110,7 @@ export const getDefaultQuery = (
   checkpointName: string,
   version: MetadataVersionKey,
   accelarator?: MetadataAccelerator
-): { enable_hr: boolean; forcedSampler?: string } & Partial<IBaseQuery> => {
+): Partial<IBaseQuery> & { enable_hr: boolean; forcedSampler?: string } => {
   const defaultQuery = Config.get('defaultQuery');
 
   const found =

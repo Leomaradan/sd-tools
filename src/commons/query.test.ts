@@ -29,7 +29,7 @@ describe('query tests', () => {
     };
     const result = prepareRenderQuery(config, 'txt2img');
 
-    const expectedResponse: { enable_hr: boolean } & IBaseQuery = {
+    const expectedResponse: IBaseQuery & { enable_hr: boolean } = {
       alwayson_scripts: {},
       cfg_scale: 7,
       enable_hr: false,
@@ -92,13 +92,13 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: {
+    const expectedResponse: IBaseQuery & {
       enable_hr: boolean;
       hr_negative_prompt?: string;
       hr_prompt?: string;
       hr_scale?: number;
       hr_upscaler?: string;
-    } & IBaseQuery = {
+    } = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.5, ad_model: 'ad1' }]
@@ -219,13 +219,13 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(input, 'txt2img');
 
-    const expectedResponse: {
+    const expectedResponse: IBaseQuery & {
       enable_hr: boolean;
       hr_negative_prompt?: string;
       hr_prompt?: string;
       hr_scale?: number;
       hr_upscaler?: string;
-    } & IBaseQuery = {
+    } = {
       alwayson_scripts: {
         ADetailer: {
           args: [{ ad_denoising_strength: 0.7, ad_model: 'ad2' }]
@@ -288,7 +288,7 @@ describe('query tests', () => {
 
     const result = prepareRenderQuery(config, 'txt2img');
 
-    const expectedResponse: { enable_hr: boolean } & IBaseQuery = {
+    const expectedResponse: IBaseQuery & { enable_hr: boolean } = {
       alwayson_scripts: {},
       cfg_scale: 7,
       enable_hr: false,

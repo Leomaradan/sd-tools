@@ -36,7 +36,7 @@ const config = [
       // noInlineConfig: true,
       reportUnusedDisableDirectives: 'warn'
     },
-    plugins: { jest, perfectionist },
+    plugins: { jest },
     rules: {
       ...perfectionist.configs['recommended-natural'].rules,
       '@typescript-eslint/no-unused-vars': [

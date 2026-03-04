@@ -61,8 +61,10 @@ export interface IBaseQuery {
   width?: number;
 }
 
-export interface IImg2ImgQuery
-  extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
+export interface IImg2ImgQuery extends Omit<
+  IBaseQuery,
+  'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'
+> {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
   couple?: IForgeCouple;
@@ -97,8 +99,10 @@ export interface IOverrideSettings {
   sd_vae: string;
 }
 
-export interface ITxt2ImgQuery
-  extends Omit<IBaseQuery, 'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'> {
+export interface ITxt2ImgQuery extends Omit<
+  IBaseQuery,
+  'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'
+> {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
   couple?: IForgeCouple;

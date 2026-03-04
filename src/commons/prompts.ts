@@ -117,10 +117,7 @@ const removePromptToken = (input: string) => {
 };
 
 const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
-  query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern).replace(
-    `{${token}}`,
-    value
-  );
+  query.override_settings.samples_filename_pattern = query.override_settings.samples_filename_pattern.replace(`{${token}}`, value);
 };
 
 const updateDirectoryPath = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
@@ -731,7 +728,7 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-type SeriesItem = { image?: string[]; input_image?: string[] } & Omit<IControlNet, 'image' | 'input_image'>;
+type SeriesItem = Omit<IControlNet, 'image' | 'input_image'> & { image?: string[]; input_image?: string[] };
 
 const cartesianProduct = <T>(...arrays: (T[] | undefined)[]): T[][] => {
   return arrays.reduce(
@@ -806,7 +803,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
     ];
   }
 
-  const temporaryControlNetArray: Array<{ image?: string[]; input_image?: string[] } & Omit<IControlNet, 'image' | 'input_image'>> = [];
+  const temporaryControlNetArray: Array<Omit<IControlNet, 'image' | 'input_image'> & { image?: string[]; input_image?: string[] }> = [];
 
   controlNetArray.forEach((controlNet) => {
     const controlNetInputImage = controlNet.input_image;
@@ -1356,7 +1353,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
             adetailerQuery.ad_use_inpaint_width_height = true;
           }
 
-          (query.adetailer).push(adetailerQuery);
+          query.adetailer.push(adetailerQuery);
         } else {
           loggerInfo(`Invalid Adetailer model ${adetailer.model}`);
           process.exit(ExitCodes.PROMPT_INVALID_ADETAILER_MODEL);

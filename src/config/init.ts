@@ -2,7 +2,7 @@ import { basename } from 'node:path';
 import { type Argv } from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
-import { Cache, Config, type ApiType } from '../commons/config';
+import { type ApiType, Cache, Config } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
 import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
@@ -196,9 +196,9 @@ const setExtensions = (
   extensionsQuery: {
     img2img: string[];
   },
-  schedulerQuery: void | {
+  schedulerQuery: void | void | {
     tasks: string[];
-  } | void,
+  },
   interrogatorQuery: string[] | void
 ) => {
   const extensions = new Set<Extensions>();

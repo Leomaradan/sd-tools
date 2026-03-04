@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync, statSync } from 'fs';
-import { parse, stringify } from 'yaml';
-import { Cache, Config } from '../config';
 import { relative, resolve } from 'path';
+import { parse, stringify } from 'yaml';
+
+import { Cache, Config } from '../config';
 
 /*const readFiles = (sourcepath: string, root: string, recursive?: boolean, noCache?: boolean): IFile[] => {
   const files = readdirSync(sourcepath);

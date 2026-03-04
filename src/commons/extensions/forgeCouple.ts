@@ -2,7 +2,7 @@ export interface IForgeCouple {
   background?: 'First Line' | 'Last Line' | 'None' | null;
   background_weight?: null | number;
   common_debug?: boolean | null;
-  common_parser?: '< >' | '{ }' | 'off' | null;
+  common_parser?: '< >' | 'off' | '{ }' | null;
   def_in_prompt?: boolean | null;
   direction?: 'Horizontal' | 'Vertical' | null;
   mapping?: Array<unknown> | null;
@@ -19,7 +19,7 @@ export type IForgeCoupleQuery = [
   background: 'First Line' | 'Last Line' | 'None' | null,
   background_weight: null | number,
   mapping: Array<unknown> | null,
-  common_parser: '< >' | '{ }' | 'off',
+  common_parser: '< >' | 'off' | '{ }',
   common_debug: boolean,
   def_in_prompt: boolean,
   null,

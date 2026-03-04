@@ -13,6 +13,16 @@ export interface ITiledDiffusion {
   tileWidth?: number;
 }
 
+export interface ITiledDiffusion {
+  method: TiledDiffusionMethods;
+  regionalPrompt?: ITiledDiffusionRegion[];
+  scaleFactor?: number;
+  tileBatchSize?: number;
+  tileHeight?: number;
+  tileOverlap?: number;
+  tileWidth?: number;
+}
+
 export interface ITiledDiffusionRegion {
   blend_mode: 'Background' | 'Foreground';
   feather_ratio?: number;
@@ -23,16 +33,6 @@ export interface ITiledDiffusionRegion {
   w: number;
   x: number;
   y: number;
-}
-
-export interface ITiledDiffusion {
-  method: TiledDiffusionMethods;
-  regionalPrompt?: ITiledDiffusionRegion[];
-  scaleFactor?: number;
-  tileBatchSize?: number;
-  tileHeight?: number;
-  tileOverlap?: number;
-  tileWidth?: number;
 }
 
 export interface ITiledVAE {

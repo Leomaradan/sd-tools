@@ -78,16 +78,6 @@ interface ISetConfigOutputFolder extends ISetConfig {
   value: string;
 }
 
-interface ISetConfigTemplatesFolder extends ISetConfig {
-  config: 'templates-folder';
-  value: string;
-}
-
-interface ISetConfigWildcardsFolder extends ISetConfig {
-  config: 'wildcards-folder';
-  value: string;
-}
-
 interface ISetConfigRedrawModels extends ISetConfig {
   config: 'redraw-models';
   value: string[];
@@ -96,6 +86,16 @@ interface ISetConfigRedrawModels extends ISetConfig {
 interface ISetConfigScheduler extends ISetConfig {
   config: 'scheduler';
   value: boolean;
+}
+
+interface ISetConfigTemplatesFolder extends ISetConfig {
+  config: 'templates-folder';
+  value: string;
+}
+
+interface ISetConfigWildcardsFolder extends ISetConfig {
+  config: 'wildcards-folder';
+  value: string;
 }
 
 const options: EditableOptions[] = [

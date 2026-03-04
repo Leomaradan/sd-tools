@@ -87,7 +87,7 @@
     "watch": "yarn schema && NODE_ENV=watch node ./esbuild.mjs",
     "start": "node build/index.cjs",
     "test": "jest --coverage --detectOpenHandles",
-    "lint": "oxlint --type-aware && eslint --report-unused-disable-directives",
+    "lint": "oxlint --type-aware --quiet && eslint --report-unused-disable-directives",
     "lint:fix": "oxlint --type-aware --fix && eslint --report-unused-disable-directives --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
