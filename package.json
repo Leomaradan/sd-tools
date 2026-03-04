@@ -48,7 +48,7 @@
     "oxlint": "^1.51.0",
     "oxlint-tsgolint": "^0.16.0",
     "pinst": "^3.0.0",
-    "prettier": "^3.2.5",
+    "prettier": "^3.8.1",
     "typescript": "6.0.0-beta",
     "typescript-eslint": "^8.56.1",
     "typescript-json-schema": "^0.63.0"
