@@ -1,8 +1,8 @@
 import axios from 'axios';
-import crypto from 'crypto';
 import DOMPurify from 'dompurify';
 import * as htmlparser2 from 'htmlparser2';
 import sizeOf from 'image-size';
+import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, lstatSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
@@ -136,7 +136,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
 
 const getHash = (url: string) => {
   return new Promise((resolve, reject) => {
-    const hashBuilder = crypto.createHash('sha256');
+    const hashBuilder = createHash('sha256');
     hashBuilder.setEncoding('hex');
     const stream = createReadStream(url);
 

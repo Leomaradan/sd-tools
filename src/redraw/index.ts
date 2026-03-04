@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type ArgumentsCamelCase, type Argv } from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
@@ -22,7 +22,7 @@ interface IRedrawArgsOptions {
 
 export const command = 'redraw <source> <style> <method>';
 export const describe = 'redraw image in specific style';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return addBaseCommandOptions(builder, true)
     .positional('source', {
       demandOption: true,
@@ -130,7 +130,7 @@ export const builder = (builder: yargs.Argv<object>) => {
     });
 };
 
-export const handler = (argv: IRedrawArgsOptions) => {
+export const handler = (argv: ArgumentsCamelCase<IRedrawArgsOptions>) => {
   const source = resolve(argv.source);
 
   resolveBaseOptions(argv);

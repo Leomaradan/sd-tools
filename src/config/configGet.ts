@@ -1,4 +1,4 @@
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { Config } from '../commons/config';
 import { ExitCodes, loggerInfo } from '../commons/logger';
@@ -72,7 +72,7 @@ export const options: { description: string; option: Options }[] = [
 
 export const command = 'config-get [config]';
 export const describe = 'get config value';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder
     .positional('config', {
       choices: options.map((o) => o.option).sort((a, b) => a.localeCompare(b)),

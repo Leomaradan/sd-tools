@@ -1,4 +1,4 @@
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { Config } from '../commons/config';
 import { TiledDiffusionMethods } from '../commons/extensions/multidiffusionUpscaler';
@@ -117,7 +117,7 @@ type ISetConfigOptions =
 
 export const command = 'config-set <config> <value>';
 export const describe = 'set config value';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder
     .positional('config', {
       choices: options,

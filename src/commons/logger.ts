@@ -12,7 +12,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const devLogPath = resolve(__dirname, '..', 'logs');
 
-const oldLogs = isProd ? new Date().getTime() - 7 * 24 * 60 * 60 * 1000 : new Date().getTime() - 30 * 24 * 60 * 60 * 1000;
+const oldLogs = isProd ? Date.now() - 7 * 24 * 60 * 60 * 1000 : Date.now() - 30 * 24 * 60 * 60 * 1000;
 
 export const loggerInfo = (message: string) => {
   if (mode.info) {
@@ -59,9 +59,7 @@ const clearOldLogs = (source: string) => {
 
 export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
-    if (session === undefined) {
-      session = new Date().toISOString();
-    }
+    session ??= new Date().toISOString();
 
     let logPath = resolve(__dirname, '..', 'logs');
 

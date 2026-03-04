@@ -113,11 +113,11 @@ interface IPrepareSingleQueryFromArray {
 const PROMPT_REGEX = /\{prompt\}/i;
 
 const removePromptToken = (input: string) => {
-  return input.replace(/\{prompt\}/gi, '').trim();
+  return input.replaceAll(/\{prompt\}/gi, '').trim();
 };
 
 const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
-  query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern as string).replace(
+  query.override_settings.samples_filename_pattern = (query.override_settings.samples_filename_pattern).replace(
     `{${token}}`,
     value
   );
@@ -168,10 +168,10 @@ const resolvePermutations = (permutation: IPromptPermutations, prompt: IPromptSi
 
   if (permutation.filenameReplace) {
     permutation.filenameReplace.forEach((filenameReplace) => {
-      if (!permutedPrompt.filename) {
-        permutedPrompt.filename = filenameReplace.to;
-      } else {
+      if (permutedPrompt.filename) {
         permutedPrompt.filename = permutedPrompt.filename.replace(filenameReplace.from, filenameReplace.to);
+      } else {
+        permutedPrompt.filename = filenameReplace.to;
       }
     });
   }
@@ -295,7 +295,7 @@ const prepareSingleQuery = (
     }
 
     const prompt: IPromptSingle = {
-      ...(updatedPrompt as IPromptSingle),
+      ...(updatedPrompt as unknown as IPromptSingle),
       autoCutOff,
       autoLCM,
       cfg,
@@ -313,7 +313,7 @@ const prepareSingleQuery = (
       scaleFactor,
       seed: seed !== undefined && seed !== -1 ? seed + i : undefined,
       steps,
-      styles: Array.from(new Set([...styles, ...stylesSet])).filter((style) => style !== undefined) as string[],
+      styles: Array.from(new Set([...styles, ...stylesSet])).filter((style) => style !== undefined),
       tiledVAE,
       tiling,
       upscaler,
@@ -523,6 +523,7 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
   return prompts;
 };
 
+// oxlint-disable-next-line sonarjs/pseudo-random -- Not a crypto
 const pickRandomItem = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 
 const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepareSingleQueryFromArray): [string, IPromptSingle][] => {
@@ -638,7 +639,7 @@ const getSeedArray = (seeds: `${string}-${string}` | number | number[] | undefin
   }
 
   if (typeof seeds === 'string') {
-    const [first, last] = seeds.split('-').map((s) => parseInt(s, 10));
+    const [first, last] = seeds.split('-').map((s) => Number.parseInt(s, 10));
 
     if (first === undefined || Number.isNaN(first) || last === undefined || Number.isNaN(last)) {
       return [undefined];
@@ -712,7 +713,7 @@ const permuteSeries = (series: SeriesItem[]): IControlNet[][] => {
   // Helper function to compute the cartesian product of arrays
 
   // Extract all image arrays
-  const imageArrays = series.map((item) => item.input_image as string[]);
+  const imageArrays = series.map((item) => item.input_image);
 
   // Generate the cartesian product of all image arrays
   const combinations = cartesianProduct(...imageArrays);
@@ -755,7 +756,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
         let prompt: string | undefined;
 
         if (existsSync(promptFile)) {
-          prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+          prompt = readFileSync(promptFile, 'utf-8').replaceAll('\n', '').trim();
         }
 
         return { ...controlNet, image_name: relative(initImageBase, initImage).replace(sep, '-'), input_image: initImage, prompt };
@@ -780,7 +781,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
       let files = readdirSync(controlNetImage);
 
       if (controlNet.regex) {
-        files = files.filter((file) => new RegExp(controlNet.regex as string).test(file));
+        files = files.filter((file) => new RegExp(controlNet.regex).test(file));
       }
 
       files = files.filter((file) => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
@@ -813,7 +814,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
         const promptFile = resolve(dirname(controlNetNormalized.input_image), `${parse(controlNetNormalized.input_image).name}.txt`);
 
         if (existsSync(promptFile)) {
-          controlNetNormalized.prompt = readFileSync(promptFile, 'utf-8').replace(/\n/g, '').trim();
+          controlNetNormalized.prompt = readFileSync(promptFile, 'utf-8').replaceAll('\n', '').trim();
         }
       }
 
@@ -931,37 +932,38 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
 
   const sorted = Array.from(prompts.keys()).sort((a, b) => a.localeCompare(b));
 
-  return sorted.map((key) => prompts.get(key) as IPromptSingle);
+  return sorted.map((key) => prompts.get(key));
 };
 
-const validTokensTemplate = [
+const validTokensTemplate = new Set([
+  '[cfg]',
+  '[clip_skip]',
+  '[date]',
+  '[datetime]',
+  '[full_prompt_hash]',
+  '[generation_number]',
+  '[height]',
+  '[image_hash]',
+  '[job_timestamp]',
+  '[model_hash]',
+  '[model_name]',
+  '[negative_prompt_hash]',
+  '[none]',
+  '[prompt]',
+  '[prompt_hash]',
+  '[prompt_no_styles]',
+  '[prompt_spaces]',
+  '[prompt_words]',
+  '[sampler]',
   '[seed]',
   '[seed_first]',
   '[seed_last]',
   '[steps]',
-  '[cfg]',
-  '[sampler]',
-  '[model_name]',
-  '[model_hash]',
-  '[width]',
-  '[height]',
   '[styles]',
-  '[date]',
-  '[datetime]',
-  '[job_timestamp]',
-  '[prompt_no_styles]',
-  '[prompt_spaces]',
-  '[prompt]',
-  '[prompt_words]',
-  '[prompt_hash]',
-  '[negative_prompt_hash]',
-  '[full_prompt_hash]',
-  '[clip_skip]',
-  '[generation_number]',
   '[user]',
-  '[image_hash]',
-  '[none]'
-];
+  '[width]'
+]);
+
 const validateTemplate = (template: string) => {
   const tokens = /\[([a-z0-9_]+)\]/gi;
 
@@ -972,7 +974,7 @@ const validateTemplate = (template: string) => {
   }
 
   matches.forEach((match) => {
-    if (!validTokensTemplate.includes(match)) {
+    if (!validTokensTemplate.has(match)) {
       loggerInfo(`Invalid token ${match} in ${template}`);
       process.exit(ExitCodes.PROMPT_INVALID_STRING_TOKEN);
     }
@@ -1105,9 +1107,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
       query.prompt = query.prompt.replace(`!pose:${pose.trigger}`, '');
 
-      if (query.controlNet === undefined) {
-        query.controlNet = [];
-      }
+      query.controlNet ??= [];
 
       const findExistingPose = query.controlNet.find((controlNet) => controlNet.model.includes('openpose'));
 
@@ -1225,7 +1225,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
             adetailerQuery.ad_use_inpaint_width_height = true;
           }
 
-          (query.adetailer as IAdetailer[]).push(adetailerQuery);
+          (query.adetailer).push(adetailerQuery);
         } else {
           loggerInfo(`Invalid Adetailer model ${adetailer.model}`);
           process.exit(ExitCodes.PROMPT_INVALID_ADETAILER_MODEL);
@@ -1237,14 +1237,12 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     const globalAdTriggers = query.prompt.match(/!ad( |,|$)/gi);
 
     if (allAdTriggers.length > 0 || globalAdTriggers) {
-      query.prompt = query.prompt.replace(/!ad:([a-z0-9]+)/gi, '');
-      query.prompt = query.prompt.replace(/!ad( |,|$)/gi, '');
+      query.prompt = query.prompt.replaceAll(/!ad:([a-z0-9]+)/gi, '');
+      query.prompt = query.prompt.replaceAll(/!ad( |,|$)/gi, '');
       autoAdetailers.forEach((autoAdetailer) => {
         const trigger = `!ad:${autoAdetailer.trigger}`;
         if (allAdTriggers.includes(trigger) || globalAdTriggers) {
-          if (query.adetailer === undefined) {
-            query.adetailer = [];
-          }
+          query.adetailer ??= [];
 
           const existing = query.adetailer.find((adetailer) => adetailer.ad_model === autoAdetailer.ad_model);
           if (!existing) {
@@ -1267,15 +1265,16 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     if (pattern) {
       query.override_settings.samples_filename_pattern = pattern;
 
-      const allowedTokens = [
-        'filename',
+      const allowedTokens = new Set([
         'cfg',
         'checkpoint',
         'clipSkip',
         'cutOff',
         'denoising',
         'enableHighRes',
+        'filename',
         'height',
+        'pose',
         'restoreFaces',
         'sampler',
         'scaleFactor',
@@ -1284,15 +1283,14 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
         'tiling',
         'upscaler',
         'vae',
-        'width',
-        'pose'
-      ];
+        'width'
+      ]);
 
       const matches = pattern.match(/\{([a-z0-9_]+)\}/gi);
 
       if (matches) {
         matches.forEach((match) => {
-          if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
+          if (!allowedTokens.has(match.replace('{', '').replace('}', ''))) {
             loggerInfo(`Invalid pattern token ${match}`);
             process.exit(ExitCodes.PROMPT_INVALID_PATTERN_TOKEN);
           }
@@ -1308,24 +1306,24 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       const findExistingPose = query.controlNet?.find((controlNet) => controlNet.model.includes('openpose'));
 
       // Alias to official tokens
-      updateFilename(query, 'cfg', query.cfg_scale !== undefined ? '[cfg]' : '');
-      updateFilename(query, 'checkpoint', query.override_settings.sd_model_checkpoint !== undefined ? '[model_name]' : '');
-      updateFilename(query, 'clipSkip', query.override_settings.CLIP_stop_at_last_layers !== undefined ? '[clip_skip]' : '');
-      updateFilename(query, 'height', query.height !== undefined ? '[height]' : '');
-      updateFilename(query, 'seed', query.seed !== undefined ? '[seed]' : '');
-      updateFilename(query, 'steps', query.steps !== undefined ? '[steps]' : '');
-      updateFilename(query, 'width', query.width !== undefined ? '[width]' : '');
+      updateFilename(query, 'cfg', query.cfg_scale === undefined ? '' : '[cfg]');
+      updateFilename(query, 'checkpoint', query.override_settings.sd_model_checkpoint === undefined ? '' : '[model_name]');
+      updateFilename(query, 'clipSkip', query.override_settings.CLIP_stop_at_last_layers === undefined ? '' : '[clip_skip]');
+      updateFilename(query, 'height', query.height === undefined ? '' : '[height]');
+      updateFilename(query, 'seed', query.seed === undefined ? '' : '[seed]');
+      updateFilename(query, 'steps', query.steps === undefined ? '' : '[steps]');
+      updateFilename(query, 'width', query.width === undefined ? '' : '[width]');
 
-      updateFilename(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
+      updateFilename(query, 'cutOff', autoCutOff === undefined ? '' : autoCutOff.toString());
       updateFilename(query, 'denoising', query.denoising_strength?.toFixed(2) ?? '');
-      updateFilename(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateFilename(query, 'enableHighRes', enableHighRes === undefined ? '' : enableHighRes.toString());
       updateFilename(query, 'pose', findExistingPose?.image_name ? findExistingPose.image_name.toString() : '');
-      updateFilename(query, 'restoreFaces', query.restore_faces !== undefined ? query.restore_faces.toString() : '');
-      updateFilename(query, 'sampler', query.sampler_name !== undefined ? query.sampler_name.toString() : '');
+      updateFilename(query, 'restoreFaces', query.restore_faces === undefined ? '' : query.restore_faces.toString());
+      updateFilename(query, 'sampler', query.sampler_name === undefined ? '' : query.sampler_name.toString());
       updateFilename(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
-      updateFilename(query, 'tiling', tiling !== undefined ? tiling.toString() : '');
-      updateFilename(query, 'upscaler', query.hr_upscaler !== undefined ? query.hr_upscaler.toString() : '');
-      updateFilename(query, 'vae', query.override_settings.sd_vae !== undefined ? query.override_settings.sd_vae.toString() : '');
+      updateFilename(query, 'tiling', tiling === undefined ? '' : tiling.toString());
+      updateFilename(query, 'upscaler', query.hr_upscaler === undefined ? '' : query.hr_upscaler.toString());
+      updateFilename(query, 'vae', query.override_settings.sd_vae === undefined ? '' : query.override_settings.sd_vae.toString());
     } else if (filename) {
       query.override_settings.samples_filename_pattern = `${filename}-[datetime]`;
     }
@@ -1397,7 +1395,7 @@ export const prompts = async (config: IPromptsResolved, validateOnly: boolean) =
     process.exit(0);
   }
 
-  for await (const queryParams of queries) {
+  for (const queryParams of queries) {
     if ((queryParams as IImg2ImgQuery).init_images) {
       await renderQuery(queryParams as IImg2ImgQuery, 'img2img');
     } else {

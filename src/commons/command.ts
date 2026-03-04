@@ -1,8 +1,8 @@
-import type yargs from 'yargs';
+import type { Argv } from 'yargs';
 
 import { mode } from './logger';
 
-export const addBaseCommandOptions = (builder: yargs.Argv<object>, simulate?: boolean) => {
+export const addBaseCommandOptions = (builder: Argv<object>, simulate?: boolean) => {
   const config = builder
     .options({
       silent: {

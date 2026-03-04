@@ -1,22 +1,35 @@
-import axios from 'axios';
-import { statSync } from 'node:fs';
+import axios from "axios";
+import { statSync } from "node:fs";
 
-import type { IAdetailer } from './extensions/adetailer';
-import type { ICutOff } from './extensions/cutoff';
+import type { IAdetailer } from "./extensions/adetailer";
+import type { ICutOff } from "./extensions/cutoff";
 
-import { Cache, Config } from './config';
-import { getDefaultQuery } from './defaultQuery';
-import { type IControlNet, type IControlNetQuery, normalizeControlNetMode, normalizeControlNetResizes } from './extensions/controlNet';
+import { Cache, Config } from "./config";
+import { getDefaultQuery } from "./defaultQuery";
+import {
+  type IControlNet,
+  type IControlNetQuery,
+  normalizeControlNetMode,
+  normalizeControlNetResizes,
+} from "./extensions/controlNet";
 import {
   defaultTiledDiffusionOptions,
   defaultTiledVAEnOptions,
   type ITiledDiffusion,
-  type ITiledVAE
-} from './extensions/multidiffusionUpscaler';
-import { type IUltimateSDUpscale, RedrawMode, TargetSizeType } from './extensions/ultimateSdUpscale';
-import { getBase64Image } from './file';
-import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from './logger';
-import { findCheckpoint, findUpscaler, findUpscalerUltimateSDUpscaler } from './models';
+  type ITiledVAE,
+} from "./extensions/multidiffusionUpscaler";
+import {
+  type IUltimateSDUpscale,
+  RedrawMode,
+  TargetSizeType,
+} from "./extensions/ultimateSdUpscale";
+import { getBase64Image } from "./file";
+import { ExitCodes, loggerInfo, loggerVerbose, mode, writeLog } from "./logger";
+import {
+  findCheckpoint,
+  findUpscaler,
+  findUpscalerUltimateSDUpscaler,
+} from "./models";
 import {
   AlwaysOnScriptsNames,
   type IBaseQuery,
@@ -24,37 +37,44 @@ import {
   type IInterrogateResponse,
   type IModel,
   type ITxt2ImgQuery,
-  type IUpscaler
-} from './types';
+  type IUpscaler,
+} from "./types";
 
 const headerRequest = {
   headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
 };
 
-type Img2ImgQuery = (query: IImg2ImgQuery, type: 'img2img') => Promise<void>;
+type Img2ImgQuery = (query: IImg2ImgQuery, type: "img2img") => Promise<void>;
 type Query = Img2ImgQuery & Txt2ImgQuery;
 
-type Txt2ImgQuery = (query: ITxt2ImgQuery, type: 'txt2img') => Promise<void>;
+type Txt2ImgQuery = (query: ITxt2ImgQuery, type: "txt2img") => Promise<void>;
 
-export const isTxt2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is ITxt2ImgQuery => {
+export const isTxt2ImgQuery = (
+  query: IImg2ImgQuery | ITxt2ImgQuery | Partial<IBaseQuery>,
+): query is ITxt2ImgQuery => {
   return (query as unknown as IImg2ImgQuery).init_images === undefined;
 };
 
-export const isImg2ImgQuery = (query: IBaseQuery | IImg2ImgQuery | ITxt2ImgQuery): query is IImg2ImgQuery => {
+export const isImg2ImgQuery = (
+  query: IImg2ImgQuery | ITxt2ImgQuery | Partial<IBaseQuery>,
+): query is IImg2ImgQuery => {
   return (query as unknown as IImg2ImgQuery).init_images !== undefined;
 };
 
-const prepareBaseQuery = (baseQuery: Partial<IBaseQuery>, baseQueryRaw: IImg2ImgQuery) => {
+const prepareBaseQuery = (
+  baseQuery: Partial<IBaseQuery>,
+  baseQueryRaw: IImg2ImgQuery,
+): Partial<IBaseQuery> => {
   const updatedQuery = { ...baseQuery };
 
   Object.keys(baseQueryRaw).forEach((key) => {
     const value = baseQueryRaw[key as keyof typeof baseQueryRaw];
 
     if (value !== undefined) {
-      if (typeof value === 'object') {
+      if (typeof value === "object") {
         if (updatedQuery[key as keyof typeof updatedQuery] === undefined) {
           (updatedQuery as unknown as Record<string, unknown>)[key] = {};
         }
@@ -62,7 +82,9 @@ const prepareBaseQuery = (baseQuery: Partial<IBaseQuery>, baseQueryRaw: IImg2Img
         Object.keys(value).forEach((subKey) => {
           const subValue = value[subKey as keyof typeof value];
           if (subValue !== undefined) {
-            (updatedQuery as unknown as Record<string, Record<string, unknown>>)[key][subKey] = subValue;
+            (
+              updatedQuery as unknown as Record<string, Record<string, unknown>>
+            )[key][subKey] = subValue;
           }
         });
       } else {
@@ -74,7 +96,10 @@ const prepareBaseQuery = (baseQuery: Partial<IBaseQuery>, baseQueryRaw: IImg2Img
   return updatedQuery;
 };
 
-const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | undefined) => {
+const prepareControlNet = (
+  baseQuery: Partial<IBaseQuery>,
+  controlNet: IControlNet[] | undefined,
+) => {
   const updatedQuery = { ...baseQuery };
   if (controlNet) {
     const args = controlNet.map((controlNet) => {
@@ -86,16 +111,12 @@ const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | un
         model: controlNet.model,
         module: controlNet.module,
         pixel_perfect: controlNet.pixel_perfect,
-        resize_mode: normalizeControlNetResizes(controlNet.resize_mode)
+        resize_mode: normalizeControlNetResizes(controlNet.resize_mode),
       };
 
-      if (params.lowvram === undefined) {
-        params.lowvram = true;
-      }
+      params.lowvram ??= true;
 
-      if (params.pixel_perfect === undefined) {
-        params.pixel_perfect = true;
-      }
+      params.pixel_perfect ??= true;
 
       return params;
     });
@@ -105,20 +126,35 @@ const prepareControlNet = (baseQuery: IBaseQuery, controlNet: IControlNet[] | un
   return updatedQuery;
 };
 
-const prepareAdetailer = (baseQuery: IBaseQuery, adetailer: IAdetailer[] | undefined) => {
+const prepareAdetailer = (
+  baseQuery: Partial<IBaseQuery>,
+  adetailer: IAdetailer[] | undefined,
+) => {
   const updatedQuery = { ...baseQuery };
   if (adetailer) {
-    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.ADetailer] = { args: adetailer };
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.ADetailer] = {
+      args: adetailer,
+    };
   }
 
   return updatedQuery;
 };
 
-const prepareTiledVAE = (baseQuery: IBaseQuery, tiledVAE: ITiledVAE | undefined, isSDXL: boolean) => {
+const prepareTiledVAE = (
+  baseQuery: Partial<IBaseQuery>,
+  tiledVAE: ITiledVAE | undefined,
+  isSDXL: boolean,
+) => {
   const updatedQuery = { ...baseQuery };
 
-  if (Config.get('autoTiledVAE') || (tiledVAE && Object.keys(tiledVAE).length > 0)) {
-    const tiledVAEConfig = { ...defaultTiledVAEnOptions, ...(Config.get('autoTiledVAE') ? {} : tiledVAE) } as Required<ITiledVAE>;
+  if (
+    Config.get("autoTiledVAE") ||
+    (tiledVAE && Object.keys(tiledVAE).length > 0)
+  ) {
+    const tiledVAEConfig = {
+      ...defaultTiledVAEnOptions,
+      ...(Config.get("autoTiledVAE") ? {} : tiledVAE),
+    } as Required<ITiledVAE>;
 
     if (isSDXL) {
       // Fast decoder is not supported in SDXL
@@ -127,24 +163,24 @@ const prepareTiledVAE = (baseQuery: IBaseQuery, tiledVAE: ITiledVAE | undefined,
 
     updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledVAE] = {
       args: [
-        'True',
+        "True",
         tiledVAEConfig.encoderTileSize,
         tiledVAEConfig.decoderTileSize,
         tiledVAEConfig.vaeToGPU,
         tiledVAEConfig.fastDecoder,
         tiledVAEConfig.fastEncoder,
-        tiledVAEConfig.colorFix
-      ]
+        tiledVAEConfig.colorFix,
+      ],
     };
   }
   return updatedQuery;
 };
 
 const prepareTiledDiffusion = (
-  baseQuery: IBaseQuery,
+  baseQuery: Partial<IBaseQuery>,
   tiledDiffusion: ITiledDiffusion | undefined,
   defaultUpscaler: IUpscaler | undefined,
-  isSDXL: boolean
+  isSDXL: boolean,
 ) => {
   const updatedQuery = { ...baseQuery };
 
@@ -160,14 +196,19 @@ const prepareTiledDiffusion = (
           updatedQuery.height ?? 1024,
           tiledDiffusion.tileWidth ?? defaultTiledDiffusionOptions.tileWidth,
           tiledDiffusion.tileHeight ?? defaultTiledDiffusionOptions.tileHeight,
-          tiledDiffusion.tileOverlap ?? defaultTiledDiffusionOptions.tileOverlap,
-          tiledDiffusion.tileBatchSize ?? defaultTiledDiffusionOptions.tileBatchSize,
-          defaultUpscaler?.name as string,
-          tiledDiffusion.scaleFactor ?? defaultTiledDiffusionOptions.scaleFactor
-        ]
+          tiledDiffusion.tileOverlap ??
+            defaultTiledDiffusionOptions.tileOverlap,
+          tiledDiffusion.tileBatchSize ??
+            defaultTiledDiffusionOptions.tileBatchSize,
+          defaultUpscaler?.name,
+          tiledDiffusion.scaleFactor ??
+            defaultTiledDiffusionOptions.scaleFactor,
+        ],
       };
-    } else if (Config.get('autoTiledDiffusion') !== false) {
-      updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = { args: ['True', Config.get('autoTiledDiffusion')] };
+    } else if (Config.get("autoTiledDiffusion") !== false) {
+      updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = {
+        args: ["True", Config.get("autoTiledDiffusion")],
+      };
     }
   }
   // Ensure that Tiled Diffusion is not used with SDXL
@@ -178,29 +219,41 @@ const prepareTiledDiffusion = (
   return updatedQuery;
 };
 
-const prepareCutOff = (baseQuery: IBaseQuery, cutOff: ICutOff | undefined) => {
+const prepareCutOff = (baseQuery: Partial<IBaseQuery>, cutOff: ICutOff | undefined) => {
   const updatedQuery = { ...baseQuery };
 
-  const autoCutOff = Config.get('cutoff');
+  const autoCutOff = Config.get("cutoff");
   if (autoCutOff || (cutOff && Object.keys(cutOff).length > 0)) {
-    const tokens = Array.from(new Set([...(cutOff?.tokens ?? []), ...(autoCutOff ? Array.from(Config.get('cutoffTokens')) : [])]));
-    const weight = cutOff?.weight ?? Config.get('cutoffWeight');
-    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Cutoff] = { args: [true, tokens.join(', '), weight, false, false, '', 'Lerp'] };
+    const tokens = Array.from(
+      new Set([
+        ...(cutOff?.tokens ?? []),
+        ...(autoCutOff ? Array.from(Config.get("cutoffTokens")) : []),
+      ]),
+    );
+    const weight = cutOff?.weight ?? Config.get("cutoffWeight");
+    updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.Cutoff] = {
+      args: [true, tokens.join(", "), weight, false, false, "", "Lerp"],
+    };
   }
 
   return updatedQuery;
 };
 
-const prepareLCM = (baseQuery: IBaseQuery, lcm: boolean | undefined, checkpoint: IModel | undefined, isSDXL: boolean) => {
+const prepareLCM = (
+  baseQuery: Partial<IBaseQuery>,
+  lcm: boolean | undefined,
+  checkpoint: IModel | undefined,
+  isSDXL: boolean,
+) => {
   const updatedQuery = { ...baseQuery };
 
-  const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get('lcm');
-  const accelarator = checkpoint?.accelarator ?? 'none';
-  const addLCM = (lcm ?? accelarator === 'lcm') || autoLcm;
+  const { auto: autoLcm, sd15: lcm15, sdxl: lcmXL } = Config.get("lcm");
+  const accelarator = checkpoint?.accelarator ?? "none";
+  const addLCM = (lcm ?? accelarator === "lcm") || autoLcm;
   if (addLCM) {
     const lcmModel = isSDXL ? lcmXL : lcm15;
     if (lcmModel) {
-      const defaultValues = getDefaultQuery(isSDXL ? 'sdxl' : 'sd15', 'lcm');
+      const defaultValues = getDefaultQuery(isSDXL ? "sdxl" : "sd15", "lcm");
 
       updatedQuery.prompt = `<lora:${lcmModel}:1> ${updatedQuery.prompt}`;
       updatedQuery.cfg_scale = defaultValues.cfg_scale;
@@ -214,15 +267,15 @@ const prepareLCM = (baseQuery: IBaseQuery, lcm: boolean | undefined, checkpoint:
 
 const prepareScriptUltimateSDUpscale = (
   script: boolean,
-  baseQuery: IBaseQuery,
+  baseQuery: Partial<IBaseQuery>,
   ultimateSdUpscale: IUltimateSDUpscale | undefined,
-  type: 'img2img' | 'txt2img'
-): [boolean, IBaseQuery] => {
+  type: "img2img" | "txt2img",
+): [boolean, Partial<IBaseQuery>] => {
   const updatedQuery = { ...baseQuery };
 
-  if (!script && ultimateSdUpscale && type === 'img2img') {
+  if (!script && ultimateSdUpscale && type === "img2img") {
     script = true;
-    updatedQuery.script_name = 'Ultimate SD upscale';
+    updatedQuery.script_name = "Ultimate SD upscale";
     updatedQuery.script_args = [
       null, // _ (not used)
       ultimateSdUpscale.tileWidth ?? 512, // tile_width
@@ -232,7 +285,8 @@ const prepareScriptUltimateSDUpscale = (
       64, // seams_fix_width
       0.35, // seams_fix_denoise
       32, // seams_fix_padding
-      findUpscalerUltimateSDUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Nearest')?.index ?? 0, // 10, // upscaler_index
+      findUpscalerUltimateSDUpscaler("4x-UltraSharp", "R-ESRGAN 4x+", "Nearest")
+        ?.index ?? 0, // 10, // upscaler_index
       true, // save_upscaled_image a.k.a Upscaled
       RedrawMode.None, // redraw_mode
       false, // save_seams_fix_image a.k.a Seams fix
@@ -241,61 +295,97 @@ const prepareScriptUltimateSDUpscale = (
       TargetSizeType.CustomSize, // target_size_type
       ultimateSdUpscale.width, // custom_width
       ultimateSdUpscale.height, // custom_height
-      ultimateSdUpscale.scale // custom_scale
+      ultimateSdUpscale.scale, // custom_scale
     ];
   }
 
   return [script, updatedQuery];
 };
 
-export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: 'img2img' | 'txt2img') => {
-  const { adetailer, controlNet, cutOff, lcm, tiledDiffusion, tiledVAE, ultimateSdUpscale, ...baseQueryRaw } = query as IImg2ImgQuery;
+export const prepareRenderQuery = (
+  query: IImg2ImgQuery | ITxt2ImgQuery,
+  type: "img2img" | "txt2img",
+) => {
+  const {
+    adetailer,
+    controlNet,
+    cutOff,
+    lcm,
+    tiledDiffusion,
+    tiledVAE,
+    ultimateSdUpscale,
+    ...baseQueryRaw
+  } = query as IImg2ImgQuery;
 
   const checkpoint = baseQueryRaw.override_settings.sd_model_checkpoint
     ? findCheckpoint(baseQueryRaw.override_settings.sd_model_checkpoint)
-    : ({ version: 'unknown' } as IModel);
+    : ({ version: "unknown" } as IModel);
 
   // The following code mutate the baseQuery, so subsequent calls must carry unwanted config
-  let baseQuery = JSON.parse(
-    JSON.stringify({
-      ...(getDefaultQuery(checkpoint?.version ?? 'unknown', checkpoint?.accelarator ?? 'none') as IBaseQuery & {
-        forcedSampler?: string;
-      })
-    })
-  );
+  let baseQuery: Partial<IBaseQuery> & {
+    forcedSampler?: string;
+  } = structuredClone({
+    ...(getDefaultQuery(
+      checkpoint?.version ?? "unknown",
+      checkpoint?.accelarator ?? "none",
+    ) as IBaseQuery & {
+      forcedSampler?: string;
+    }),
+  });
 
   baseQuery = prepareBaseQuery(baseQuery, baseQueryRaw as IImg2ImgQuery);
 
-  if (baseQuery.forcedSampler && baseQuery.sampler_name !== baseQuery.forcedSampler) {
-    loggerInfo(`Invalid sampler for this model (must be ${baseQuery.forcedSampler})`);
+  if (
+    baseQuery.forcedSampler &&
+    baseQuery.sampler_name !== baseQuery.forcedSampler
+  ) {
+    loggerInfo(
+      `Invalid sampler for this model (must be ${baseQuery.forcedSampler})`,
+    );
     process.exit(ExitCodes.QUERY_INVALID_SAMPLER);
   }
 
-  let script = false;
+  const isSDXL = checkpoint?.version === "sdxl";
 
-  const isSDXL = checkpoint?.version === 'sdxl';
-
-  const defaultUpscaler = findUpscaler('4x-UltraSharp', 'R-ESRGAN 4x+', 'Latent (nearest-exact)');
+  const defaultUpscaler = findUpscaler(
+    "4x-UltraSharp",
+    "R-ESRGAN 4x+",
+    "Latent (nearest-exact)",
+  );
 
   if (
     isTxt2ImgQuery(baseQuery) &&
-    (baseQuery.hr_upscaler || baseQuery.hr_scale || baseQuery.enable_hr || baseQuery.hr_negative_prompt || baseQuery.hr_prompt)
+    (baseQuery.hr_upscaler ||
+      baseQuery.hr_scale ||
+      baseQuery.enable_hr ||
+      baseQuery.hr_negative_prompt ||
+      baseQuery.hr_prompt)
   ) {
     baseQuery.enable_hr = true;
-    baseQuery.hr_upscaler = baseQuery.hr_upscaler ?? (defaultUpscaler?.name as string);
+    baseQuery.hr_upscaler = baseQuery.hr_upscaler ?? defaultUpscaler?.name;
     baseQuery.hr_scale = baseQuery.hr_scale ?? 2;
-    baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? '';
-    baseQuery.hr_prompt = baseQuery.hr_prompt ?? '';
+    baseQuery.hr_negative_prompt = baseQuery.hr_negative_prompt ?? "";
+    baseQuery.hr_prompt = baseQuery.hr_prompt ?? "";
   }
 
   baseQuery = prepareControlNet(baseQuery, controlNet);
   baseQuery = prepareAdetailer(baseQuery, adetailer);
   baseQuery = prepareTiledVAE(baseQuery, tiledVAE, isSDXL);
-  baseQuery = prepareTiledDiffusion(baseQuery, tiledDiffusion, defaultUpscaler, isSDXL);
+  baseQuery = prepareTiledDiffusion(
+    baseQuery,
+    tiledDiffusion,
+    defaultUpscaler,
+    isSDXL,
+  );
   baseQuery = prepareCutOff(baseQuery, cutOff);
   baseQuery = prepareLCM(baseQuery, lcm, checkpoint, isSDXL);
 
-  [script, baseQuery] = prepareScriptUltimateSDUpscale(script, baseQuery, ultimateSdUpscale, type);
+  [, baseQuery] = prepareScriptUltimateSDUpscale(
+    false,
+    baseQuery,
+    ultimateSdUpscale,
+    type,
+  );
 
   // Remove artifacts from the temporary query
   delete (baseQuery as ITxt2ImgQuery).adetailer;
@@ -310,28 +400,39 @@ export const prepareRenderQuery = (query: IImg2ImgQuery | ITxt2ImgQuery, type: '
 };
 
 export const renderQuery: Query = async (query, type) => {
-  const useScheduler = Config.get('scheduler');
+  const useScheduler = Config.get("scheduler");
 
-  const endpoint = useScheduler ? `agent-scheduler/v1/queue/${type}` : `sdapi/v1/${type}/`;
-  loggerVerbose(`Executing query to ${Config.get('endpoint')}/${endpoint}${useScheduler ? '' : '. This may take some time!'}`);
+  const endpoint = useScheduler
+    ? `agent-scheduler/v1/queue/${type}`
+    : `sdapi/v1/${type}/`;
+  loggerVerbose(
+    `Executing query to ${Config.get("endpoint")}/${endpoint}${useScheduler ? "" : ". This may take some time!"}`,
+  );
 
   const baseQuery = prepareRenderQuery(query, type);
 
   writeLog({ baseQuery, endpoint });
 
   if (!mode.simulate) {
-    await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-      loggerInfo(`Error: `);
-      loggerInfo(error.message);
-    });
+    await axios
+      .post(`${Config.get("endpoint")}/${endpoint}`, baseQuery, headerRequest)
+      .catch((error) => {
+        loggerInfo(`Error: `);
+        loggerInfo(error.message);
+      });
   }
 };
 
-export const interrogateQuery = async (imagePath: string): Promise<IInterrogateResponse | void> => {
-  const interrogatorCache = Cache.get('interrogator');
+export const interrogateQuery = async (
+  imagePath: string,
+): Promise<IInterrogateResponse | void> => {
+  const interrogatorCache = Cache.get("interrogator");
 
   if (interrogatorCache[imagePath]) {
-    if (interrogatorCache[imagePath].timestamp === statSync(imagePath).mtimeMs.toString()) {
+    if (
+      interrogatorCache[imagePath].timestamp ===
+      statSync(imagePath).mtimeMs.toString()
+    ) {
       return interrogatorCache[imagePath];
     }
 
@@ -342,13 +443,17 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
   const base64Image = getBase64Image(imagePath);
 
   const query = {
-    clip_model_name: 'ViT-L-14/openai',
+    clip_model_name: "ViT-L-14/openai",
     image: base64Image,
-    mode: 'fast'
+    mode: "fast",
   };
 
   const response = await axios
-    .post<IInterrogateResponse>(`${Config.get('endpoint')}/interrogator/prompt`, query, headerRequest)
+    .post<IInterrogateResponse>(
+      `${Config.get("endpoint")}/interrogator/prompt`,
+      query,
+      headerRequest,
+    )
     .then((response) => {
       return response.data;
     })
@@ -360,7 +465,7 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
   if (response) {
     interrogatorCache[imagePath] = {
       ...response,
-      timestamp: statSync(imagePath).mtimeMs.toString()
+      timestamp: statSync(imagePath).mtimeMs.toString(),
     };
   }
 
@@ -368,24 +473,26 @@ export const interrogateQuery = async (imagePath: string): Promise<IInterrogateR
 };
 
 type MiscQueryApi =
-  | 'adetailer/v1/ad_model'
-  | 'agent-scheduler/v1/history?limit=1'
-  | 'controlnet/model_list'
-  | 'controlnet/module_list'
-  | 'sdapi/v1/embeddings'
-  | 'sdapi/v1/loras'
-  | 'sdapi/v1/prompt-styles'
-  | 'sdapi/v1/samplers'
-  | 'sdapi/v1/scripts'
-  | 'sdapi/v1/sd-models'
-  | 'sdapi/v1/sd-vae'
-  | 'sdapi/v1/upscalers';
+  | "adetailer/v1/ad_model"
+  | "agent-scheduler/v1/history?limit=1"
+  | "controlnet/model_list"
+  | "controlnet/module_list"
+  | "sdapi/v1/embeddings"
+  | "sdapi/v1/loras"
+  | "sdapi/v1/prompt-styles"
+  | "sdapi/v1/samplers"
+  | "sdapi/v1/scripts"
+  | "sdapi/v1/sd-models"
+  | "sdapi/v1/sd-vae"
+  | "sdapi/v1/upscalers";
 
-const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> => {
+const miscQuery = async <Response>(
+  api: MiscQueryApi,
+): Promise<Response | void> => {
   loggerVerbose(`Executing misc query ${api}`);
 
   return await axios
-    .get(`${Config.get('endpoint')}/${api}`, headerRequest)
+    .get(`${Config.get("endpoint")}/${api}`, headerRequest)
     .then((response) => {
       return response.data;
     })
@@ -395,17 +502,37 @@ const miscQuery = async <Response>(api: MiscQueryApi): Promise<Response | void> 
     });
 };
 
-export const getModelsQuery = () => miscQuery<{ filename: string; model_name: string; title: string }[]>('sdapi/v1/sd-models');
-export const getVAEQuery = () => miscQuery<{ model_name: string }[]>('sdapi/v1/sd-vae');
-export const getSamplersQuery = () => miscQuery<{ aliases: string[]; name: string }[]>('sdapi/v1/samplers');
-export const getUpscalersQuery = () => miscQuery<{ model_path: null | string; name: string }[]>('sdapi/v1/upscalers');
-export const getExtensionsQuery = () => miscQuery<{ img2img: string[] }>('sdapi/v1/scripts');
-export const getSchedulerQuery = () => miscQuery<{ tasks: string[] }>('agent-scheduler/v1/history?limit=1');
-export const getLORAsQuery = () => miscQuery<{ alias: string; name: string; path: string }[]>('sdapi/v1/loras');
+export const getModelsQuery = () =>
+  miscQuery<{ filename: string; model_name: string; title: string }[]>(
+    "sdapi/v1/sd-models",
+  );
+export const getVAEQuery = () =>
+  miscQuery<{ model_name: string }[]>("sdapi/v1/sd-vae");
+export const getSamplersQuery = () =>
+  miscQuery<{ aliases: string[]; name: string }[]>("sdapi/v1/samplers");
+export const getUpscalersQuery = () =>
+  miscQuery<{ model_path: null | string; name: string }[]>(
+    "sdapi/v1/upscalers",
+  );
+export const getExtensionsQuery = () =>
+  miscQuery<{ img2img: string[] }>("sdapi/v1/scripts");
+export const getSchedulerQuery = () =>
+  miscQuery<{ tasks: string[] }>("agent-scheduler/v1/history?limit=1");
+export const getLORAsQuery = () =>
+  miscQuery<{ alias: string; name: string; path: string }[]>("sdapi/v1/loras");
 export const getEmbeddingsQuery = () =>
-  miscQuery<{ loaded: Record<string, unknown>; skipped: Record<string, unknown> }>('sdapi/v1/embeddings');
-export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
-export const getAdModelQuery = () => miscQuery<{ ad_model: string[] }>('adetailer/v1/ad_model');
+  miscQuery<{
+    loaded: Record<string, unknown>;
+    skipped: Record<string, unknown>;
+  }>("sdapi/v1/embeddings");
+export const getStylesQuery = () =>
+  miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>(
+    "sdapi/v1/prompt-styles",
+  );
+export const getAdModelQuery = () =>
+  miscQuery<{ ad_model: string[] }>("adetailer/v1/ad_model");
 
-export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list');
-export const getControlnetModulesQuery = () => miscQuery<{ module_list: string[] }>('controlnet/module_list');
+export const getControlnetModelsQuery = () =>
+  miscQuery<{ model_list: string[] }>("controlnet/model_list");
+export const getControlnetModulesQuery = () =>
+  miscQuery<{ module_list: string[] }>("controlnet/module_list");

@@ -1,7 +1,7 @@
 // xdg-basedir is a ES6 module, and Jest need CJS. Instead of tweaking Jest, it's easier to just copy the xdg-basedir source here
 // https://github.com/sindresorhus/xdg-basedir/blob/main/index.js
 import { homedir } from 'node:os';
-import { join } from 'path';
+import { join } from 'node:path';
 
 const homeDirectory = homedir();
 const { env } = process;

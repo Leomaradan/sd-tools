@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { default: Configstore } = require('configstore');
 
 import { handler as init } from '../config/init';
@@ -29,11 +28,9 @@ const migrations: Record<number, () => void> = {
 };
 
 const configMigration = async () => {
-  let configVersion = Config.get('configVersion') as number | undefined;
+  let configVersion = Config.get('configVersion');
 
-  if (configVersion === undefined) {
-    configVersion = 0;
-  }
+  configVersion ??= 0;
 
   let migrated = false;
 

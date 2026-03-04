@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type ArgumentsCamelCase, type Argv } from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { Config } from '../commons/config';
@@ -17,7 +17,7 @@ interface IRenameOptions {
 
 export const command = 'rename <source> <target>';
 export const describe = 'rename files from directory';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return (
     addBaseCommandOptions(builder)
       .positional('source', {
@@ -77,7 +77,7 @@ export const builder = (builder: yargs.Argv<object>) => {
   );
 };
 
-export const handler = (argv: IRenameOptions) => {
+export const handler = (argv: ArgumentsCamelCase<IRenameOptions>) => {
   const source = resolve(argv.source);
   const target = resolve(argv.target);
 

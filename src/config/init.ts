@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
 import { Cache, Config } from '../commons/config';
@@ -25,7 +25,7 @@ import { type Extensions, type ILora, type IModel, type IModelWithHash, type ISt
 export const command = 'init';
 export const describe = 'initialize config value. Can be used to refresh models';
 
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return builder.options({
     endpoint: {
       alias: 'e',

@@ -1,18 +1,31 @@
-import { type IAdetailer } from './extensions/adetailer';
-import { type IControlNet, type IControlNetQuery } from './extensions/controlNet';
-import { type ICutOff } from './extensions/cutoff';
-import { type ITiledDiffusion, type ITiledVAE, TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
-import { type IUltimateSDUpscale, type UltimateSDUpscaleArgs } from './extensions/ultimateSdUpscale';
+import { type IAdetailer } from "./extensions/adetailer";
+import {
+  type IControlNet,
+  type IControlNetQuery,
+} from "./extensions/controlNet";
+import { type ICutOff } from "./extensions/cutoff";
+import {
+  type ITiledDiffusion,
+  type ITiledVAE,
+  TiledDiffusionMethods,
+} from "./extensions/multidiffusionUpscaler";
+import {
+  type IUltimateSDUpscale,
+  type UltimateSDUpscaleArgs,
+} from "./extensions/ultimateSdUpscale";
 
 export enum AlwaysOnScriptsNames {
-  ADetailer = 'ADetailer',
-  ControlNet = 'controlnet',
-  Cutoff = 'Cutoff',
-  TiledDiffusion = 'Tiled Diffusion',
-  TiledVAE = 'Tiled VAE'
+  ADetailer = "ADetailer",
+  ControlNet = "controlnet",
+  Cutoff = "Cutoff",
+  TiledDiffusion = "Tiled Diffusion",
+  TiledVAE = "Tiled VAE",
 }
 
-export type AlwaysOnScripts = { args: Array<boolean | number | string> } | { args: IAdetailer[] } | { args: IControlNetQuery[] };
+export type AlwaysOnScripts =
+  | { args: Array<boolean | number | string> }
+  | { args: IAdetailer[] }
+  | { args: IControlNetQuery[] };
 
 export interface IBaseQuery {
   alwayson_scripts: Partial<Record<AlwaysOnScriptsNames, AlwaysOnScripts>>;
@@ -53,10 +66,14 @@ export interface IBaseQuery {
   width?: number;
 }
 
-export interface IImg2ImgQuery extends Omit<
-  IBaseQuery,
-  'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'
-> {
+export interface IImg2ImgQuery
+  extends Omit<
+    IBaseQuery,
+    | "alwayson_scripts"
+    | "override_settings_restore_afterwards"
+    | "script_args"
+    | "script_name"
+  > {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
   cutOff?: ICutOff;
@@ -88,10 +105,14 @@ export interface IOverrideSettings {
   sd_vae: string;
 }
 
-export interface ITxt2ImgQuery extends Omit<
-  IBaseQuery,
-  'alwayson_scripts' | 'override_settings_restore_afterwards' | 'script_args' | 'script_name'
-> {
+export interface ITxt2ImgQuery
+  extends Omit<
+    IBaseQuery,
+    | "alwayson_scripts"
+    | "override_settings_restore_afterwards"
+    | "script_args"
+    | "script_name"
+  > {
   adetailer?: IAdetailer[];
   controlNet?: IControlNet[];
   cutOff?: ICutOff;
@@ -110,60 +131,73 @@ export interface ITxt2ImgQuery extends Omit<
   //init_images: string[];
 }
 
-export type MetadataAccelerator = 'distilled' | 'lcm' | 'lightning' | 'none' | 'turbo';
+export type MetadataAccelerator =
+  | "distilled"
+  | "lcm"
+  | "lightning"
+  | "none"
+  | "turbo";
 
-export type MetadataVersionKey = 'sd14' | 'sd15' | 'sd20' | 'sd20-768' | 'sd21' | 'sd21-768' | 'sdxl' | 'unknown';
+export type MetadataVersionKey =
+  | "sd14"
+  | "sd15"
+  | "sd20"
+  | "sd20-768"
+  | "sd21"
+  | "sd21-768"
+  | "sdxl"
+  | "unknown";
 export type ScriptsArgs = [] | UltimateSDUpscaleArgs;
 export type VersionKey =
-  | 'Pony'
-  | 'SD 1.4'
-  | 'SD 1.5'
-  | 'SD 1.5 LCM'
-  | 'SD 2.0'
-  | 'SD 2.1'
-  | 'SD 2.1 768'
-  | 'SD 2.0 768'
-  | 'SDXL 0.9'
-  | 'SDXL 1.0'
-  | 'SDXL 1.0 LCM'
-  | 'SDXL Distilled'
-  | 'SDXL Lightning'
-  | 'SDXL Turbo';
+  | "Pony"
+  | "SD 1.4"
+  | "SD 1.5"
+  | "SD 1.5 LCM"
+  | "SD 2.0"
+  | "SD 2.1"
+  | "SD 2.1 768"
+  | "SD 2.0 768"
+  | "SDXL 0.9"
+  | "SDXL 1.0"
+  | "SDXL 1.0 LCM"
+  | "SDXL Distilled"
+  | "SDXL Lightning"
+  | "SDXL Turbo";
 
 export const Version: Record<string, MetadataVersionKey> = {
-  SD14: 'sd14',
-  SD15: 'sd15',
-  SD20: 'sd20',
-  SD20Full: 'sd20-768',
-  SD21: 'sd21',
-  SD21Full: 'sd21-768',
-  SDXL: 'sdxl',
-  Unknown: 'unknown'
+  SD14: "sd14",
+  SD15: "sd15",
+  SD20: "sd20",
+  SD20Full: "sd20-768",
+  SD21: "sd21",
+  SD21Full: "sd21-768",
+  SDXL: "sdxl",
+  Unknown: "unknown",
 };
 
 export enum IRedrawMethod {
-  Both = 'both',
-  Classical = 'classical',
-  IPAdapter = 'ip-adapter'
+  Both = "both",
+  Classical = "classical",
+  IPAdapter = "ip-adapter",
 }
 
 export enum IRedrawStyle {
-  Anime = 'anime',
-  Both = 'both',
-  Realism = 'realism'
+  Anime = "anime",
+  Both = "both",
+  Realism = "realism",
 }
 
 export interface BaseIPrompt {
   adetailer?: IAdetailerPrompt[];
-  autoCutOff?: 'both' | boolean;
-  autoLCM?: 'both' | boolean;
+  autoCutOff?: "both" | boolean;
+  autoLCM?: "both" | boolean;
   cfg?: number | number[];
   checkpoints?: ICheckpointWithVAE[] | string | string[];
   clipSkip?: number | number[];
   controlNet?: ControlNetSchema | ControlNetSchema[];
   count?: number;
   denoising?: number | number[];
-  enableHighRes?: 'both' | boolean;
+  enableHighRes?: "both" | boolean;
   filename?: string;
   height?: number | number[];
   highRes?: {
@@ -177,7 +211,7 @@ export interface BaseIPrompt {
   outDir?: string;
   pattern?: string;
   // prompt: string | string[];
-  restoreFaces?: 'both' | boolean;
+  restoreFaces?: "both" | boolean;
   sampler?: string | string[];
   scaleFactor?: number | number[];
   seed?: `${number}-${number}` | number | number[];
@@ -185,9 +219,9 @@ export interface BaseIPrompt {
   styles?: string | string[];
   stylesSets?: Array<string | string[]>;
   tiledDiffusion?: ITiledDiffusion | ITiledDiffusion[];
-  tiledVAE?: 'both' | boolean | ITiledVAE;
-  tiling?: 'both' | boolean;
-  ultimateSdUpscale?: 'both' | boolean;
+  tiledVAE?: "both" | boolean | ITiledVAE;
+  tiling?: "both" | boolean;
+  ultimateSdUpscale?: "both" | boolean;
   upscaler?: string | string[];
   // upscalingNegativePrompt?: string | string[];
   // upscalingPrompt?: string | string[];
@@ -195,13 +229,26 @@ export interface BaseIPrompt {
   width?: number | number[];
 }
 
-export type CacheImageData = Record<string, { data: string[]; timestamp: string }>;
+export type CacheImageData = Record<
+  string,
+  { data: string[]; timestamp: string }
+>;
 
-export type CacheInterrogator = Record<string, IInterrogateResponse & { timestamp: string }>;
+export type CacheInterrogator = Record<
+  string,
+  IInterrogateResponse & { timestamp: string }
+>;
 
 export type CacheMetadata = Record<string, IMetadata & { timestamp: string }>;
 
-export type Extensions = 'adetailer' | 'controlnet' | 'cutoff' | 'scheduler' | 'tiled diffusion' | 'tiled vae' | 'ultimate-sd-upscale';
+export type Extensions =
+  | "adetailer"
+  | "controlnet"
+  | "cutoff"
+  | "scheduler"
+  | "tiled diffusion"
+  | "tiled vae"
+  | "ultimate-sd-upscale";
 
 export interface IAdetailerPrompt {
   confidence?: number;
@@ -311,9 +358,9 @@ export interface IMetadata {
   sdVersion: MetadataVersionKey;
 }
 
-export interface IMetadataCheckpoint extends Omit<IMetadata, 'keywords'> {}
+export type IMetadataCheckpoint = Omit<IMetadata, "keywords">;
 
-export interface IMetadataLora extends Omit<IMetadata, 'accelerator'> {}
+export type IMetadataLora = Omit<IMetadata, "accelerator">;
 
 export interface IModel {
   accelarator?: MetadataAccelerator;
@@ -339,7 +386,10 @@ export interface IPromptPermutations {
   promptReplace?: IPromptReplace[];
 }
 
-export type IPrompts = IPromptsWithBasePrompt | IPromptsWithExtends | IPromptsWithPrompt;
+export type IPrompts =
+  | IPromptsWithBasePrompt
+  | IPromptsWithExtends
+  | IPromptsWithPrompt;
 
 export interface IPromptSingle {
   adetailer?: IAdetailerPrompt[];
@@ -381,7 +431,7 @@ export interface IPromptSingle {
   width?: number;
 }
 
-export interface IPromptSingleSchema extends Omit<IPromptSingle, 'controlNet'> {
+export interface IPromptSingleSchema extends Omit<IPromptSingle, "controlNet"> {
   controlNet?: ControlNetSchema[];
 }
 
@@ -423,7 +473,7 @@ export interface IUpscaler {
   name: string;
 }
 
-type ControlNetSchema = Omit<IControlNet, 'image_name'>;
+type ControlNetSchema = Omit<IControlNet, "image_name">;
 
 interface IPromptReplace {
   from: string;
@@ -432,7 +482,7 @@ interface IPromptReplace {
 
 interface IPromptsCommon {
   $schema?: string;
-  multiValueMethod?: 'permutation' | 'random-selection';
+  multiValueMethod?: "permutation" | "random-selection";
   permutations?: IPromptPermutations[];
 }
 
