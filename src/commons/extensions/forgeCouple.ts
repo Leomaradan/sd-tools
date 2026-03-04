@@ -11,8 +11,8 @@ export interface IForgeCouple {
 }
 
 export type IForgeCoupleQuery = [
-  true,
-  true,
+  enabled: true,
+  disable_hr: true,
   mode: 'Advanced' | 'Basic' | 'Mask',
   separator: string,
   direction: 'Horizontal' | 'Vertical' | null,
@@ -22,12 +22,12 @@ export type IForgeCoupleQuery = [
   common_parser: '< >' | 'off' | '{ }',
   common_debug: boolean,
   def_in_prompt: boolean,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null
+  tile0: null,
+  tile1: null,
+  tile2: null,
+  tile3: null,
+  tile4: null,
+  tile5: null
 ];
 
 /*

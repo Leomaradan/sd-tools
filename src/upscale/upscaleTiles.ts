@@ -28,15 +28,15 @@ export const upscaleTiles = async (
   const upscaling = upscalingArray ?? [2];
 
   for (const file of filesList) {
-    const query = (await extractFromFile(file, 'json', true)) as IClassicPrompt;
+    const query = (await extractFromFile(file, 'json', true)) as unknown as IClassicPrompt;
 
     if (query) {
       query.ultimateSdUpscale = true;
       query.controlNet = [
         {
           control_mode: ControlNetMode.ControleNetImportant,
-          model: findControlnetModel('tile')?.name as string,
-          module: findControlnetModule('tile_resample') as string,
+          model: findControlnetModel('tile')?.name,
+          module: findControlnetModule('tile_resample'),
           resize_mode: ControlNetResizes.Resize
         }
       ];

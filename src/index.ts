@@ -13,25 +13,29 @@ import * as rename from './rename';
 import * as stats from './stats';
 import * as upscale from './upscale';
 
-const argv = process.argv.slice(2);
+const run = async () => {
+  const argv = process.argv.slice(2);
 
-await Config.migrate();
+  await Config.migrate();
 
-yargs(argv)
-  .scriptName('sd-tools')
-  .command(init)
-  .command(wizard)
-  .command(configSet)
-  .command(configGet)
-  .command(queue)
-  .command(rename)
-  .command(extract)
-  .command(interrogate)
-  .command(upscale)
-  .command(redraw)
-  .command(stats)
-  .demandCommand(1, 'You need at least one command before moving on')
-  .help()
-  .version(process.env.VERSION ?? '0.0.0')
-  .strict()
-  .parse();
+  yargs(argv)
+    .scriptName('sd-tools')
+    .command(init)
+    .command(wizard)
+    .command(configSet)
+    .command(configGet)
+    .command(queue)
+    .command(rename)
+    .command(extract)
+    .command(interrogate)
+    .command(upscale)
+    .command(redraw)
+    .command(stats)
+    .demandCommand(1, 'You need at least one command before moving on')
+    .help()
+    .version(process.env.VERSION ?? '0.0.0')
+    .strict()
+    .parse();
+};
+
+run();

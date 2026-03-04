@@ -55,6 +55,7 @@
     "typescript-json-schema": "^0.63.0"
   },
   "bin": "sd-tools.cjs",
+  "license": "MIT",
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [
       "yarn lint:fix",
@@ -77,7 +78,9 @@
   },
   "files": [
     "dist/index.cjs",
-    "sd-tools.cjs"
+    "sd-tools.cjs",
+    "./schema/queue.json",
+    "./schema/rename.json"
   ],
   "type": "module",
   "packageManager": "yarn@4.2.2",
@@ -87,7 +90,7 @@
     "watch": "yarn schema && NODE_ENV=watch node ./esbuild.mjs",
     "start": "node build/index.cjs",
     "test": "jest --coverage --detectOpenHandles",
-    "lint": "oxlint --type-aware --quiet && eslint --report-unused-disable-directives",
+    "lint": "oxlint --type-aware && eslint --report-unused-disable-directives",
     "lint:fix": "oxlint --type-aware --fix && eslint --report-unused-disable-directives --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",

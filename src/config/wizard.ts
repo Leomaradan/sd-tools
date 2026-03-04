@@ -80,12 +80,12 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
 
       const actionType = await select<keyof typeof redrawModels>({
         choices: [
-          { name: 'Anime for SD 1.5', value: 'anime15' },
-          { name: 'Realist for SD 1.5', value: 'realist15' },
-          { name: 'Anime for SDXL', value: 'animexl' },
-          { name: 'Realist for SDXL', value: 'realistxl' },
-          { name: 'Pixel Art for SD 1.5', value: 'pixel15' },
-          { name: 'Pixel Art for SDXL', value: 'pixelxl' }
+          { name: 'Anime for SD 1.5', value: 'anime15' as const },
+          { name: 'Realist for SD 1.5', value: 'realist15' as const },
+          { name: 'Anime for SDXL', value: 'animexl' as const },
+          { name: 'Realist for SDXL', value: 'realistxl' as const },
+          { name: 'Pixel Art for SD 1.5', value: 'pixel15' as const },
+          { name: 'Pixel Art for SDXL', value: 'pixelxl' as const }
         ],
         message: 'Select model type'
       });
@@ -119,8 +119,8 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
 
       const actionType = await select<keyof typeof lcm>({
         choices: [
-          { name: 'SD 1.5', value: 'sd15' },
-          { name: 'SDXL', value: 'sdxl' }
+          { name: 'SD 1.5', value: 'sd15' as const },
+          { name: 'SDXL', value: 'sdxl' as const }
         ],
         message: 'Select model type'
       });
@@ -217,7 +217,7 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
         choices: [
           { name: 'Mixture of Diffusers', value: TiledDiffusionMethods.MixtureOfDiffusers },
           { name: 'MultiDiffusion', value: TiledDiffusionMethods.MultiDiffusion },
-          { name: 'Deactivate Auto-TiledDiffusion', value: 'false' }
+          { name: 'Deactivate Auto-TiledDiffusion', value: 'false' as const }
         ],
         default: autoTiledDiffusion,
         message: 'Activate Auto-TiledDiffusion ?'

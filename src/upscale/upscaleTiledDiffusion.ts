@@ -27,7 +27,7 @@ export const upscaleTiledDiffusion = async (
   const upscaling = upscalingArray ?? [2];
 
   for (const file of filesList) {
-    const query = (await extractFromFile(file, 'json', true)) as IClassicPrompt;
+    const query = (await extractFromFile(file, 'json', true)) as unknown as IClassicPrompt;
 
     if (query) {
       query.tiledDiffusion = {

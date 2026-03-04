@@ -2,13 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "anyOf": [
     {
-      "$ref": "#/definitions/IPromptsWithPrompt"
-    },
-    {
       "$ref": "#/definitions/IPromptsWithBasePrompt"
     },
     {
       "$ref": "#/definitions/IPromptsWithExtends"
+    },
+    {
+      "$ref": "#/definitions/IPromptsWithPrompt"
     }
   ],
   "definitions": {
@@ -564,64 +564,36 @@
       "additionalProperties": false,
       "properties": {
         "background": {
-          "anyOf": [
-            {
-              "enum": ["First Line", "Last Line", "None"],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "background"
+          "enum": ["First Line", "Last Line", "None"],
+          "title": "background",
+          "type": "string"
         },
         "background_weight": {
           "title": "background_weight",
-          "type": ["null", "number"]
+          "type": "number"
         },
         "common_debug": {
           "title": "common_debug",
-          "type": ["null", "boolean"]
+          "type": "boolean"
         },
         "common_parser": {
-          "anyOf": [
-            {
-              "enum": ["< >", "off", "{ }"],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "common_parser"
+          "enum": ["< >", "off", "{ }"],
+          "title": "common_parser",
+          "type": "string"
         },
         "def_in_prompt": {
           "title": "def_in_prompt",
-          "type": ["null", "boolean"]
+          "type": "boolean"
         },
         "direction": {
-          "anyOf": [
-            {
-              "enum": ["Horizontal", "Vertical"],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "direction"
+          "enum": ["Horizontal", "Vertical"],
+          "title": "direction",
+          "type": "string"
         },
         "mapping": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "mapping"
+          "items": {},
+          "title": "mapping",
+          "type": "array"
         },
         "mode": {
           "enum": ["Advanced", "Basic", "Mask"],
@@ -760,14 +732,7 @@
           "type": "string"
         },
         "basePrompt": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Partial<IClassicPrompt>"
-            },
-            {
-              "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
-            }
-          ],
+          "$ref": "#/definitions/Partial<IPrompt>",
           "title": "basePrompt"
         },
         "extends": {
@@ -806,14 +771,7 @@
           "type": "string"
         },
         "basePrompt": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Partial<IClassicPrompt>"
-            },
-            {
-              "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
-            }
-          ],
+          "$ref": "#/definitions/Partial<IPrompt>",
           "title": "basePrompt"
         },
         "extends": {

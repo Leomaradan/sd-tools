@@ -48,7 +48,7 @@ const extractBasePrompt = (prompts: IPromptSingle[] = []): IPrompts => {
     identicalKeys.forEach((key) => {
       delete newPrompt[key as keyof IPromptSingle];
     });
-    return newPrompt as IPrompt;
+    return newPrompt as unknown as IPrompt;
   });
 
   return { basePrompt, prompts: newPrompts };

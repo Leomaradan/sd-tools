@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 
 import { Config } from '../commons/config';
 import { ControlNetMode, ControlNetResizes, type IControlNet } from '../commons/extensions/controlNet';
-import { getBase64Image, getFiles, type IFile } from '../commons/file';
+import { getFiles, type IFile } from '../commons/file';
 import { ExitCodes, loggerInfo } from '../commons/logger';
 import { findControlnetModel, findControlnetModule, findSampler } from '../commons/models';
 import { prompts } from '../commons/prompts';
@@ -15,7 +15,7 @@ const INTERROGATE_MODEL_OPENAI = 'ViT-L-14/openai';
 
 const prepareQueryData = (baseParamsProps: IClassicPrompt & { sdxl: boolean }, file: IFile) => {
   const baseParams = { ...baseParamsProps };
-  const [basePrompt, negativePromptRaw, otherParams] = file.data as string[];
+  const [basePrompt, negativePromptRaw, otherParams] = file.data;
 
   const negativePrompt = negativePromptRaw.replace('Negative prompt: ', '');
 
@@ -265,7 +265,6 @@ const prepareQueryLineart = async (
   let baseParams = prepareQueryClassicalBase(file, style, IRedrawMethod.Lineart, denoising_strength, addToPrompt, sdxl);
 
   const controlNet = getControlNetLineart(sdxl ?? false, style);
-  //const controlNet2 = getControlNetOpenPose(sdxl ?? false, style);
 
   if (controlNet) {
     (baseParams.controlNet as IControlNet[]).push(controlNet);
@@ -539,8 +538,6 @@ const prepareQueries = async (
         break;
     }
 
-    // const prepareQuery = combination.method === IP_ADAPTER ? prepareQueryIpAdapter : prepareQueryClassical;
-
     const query = await prepareQuery(combination.file, combination.style, denoising, prefix, sdxl);
 
     if (noTime && query) {
@@ -549,13 +546,13 @@ const prepareQueries = async (
 
     if (query) {
       query.prompt = Array.isArray(query.prompt)
-        ? query.prompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
-        : query.prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
+        ? query.prompt.map((prompt) => prompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
+        : query.prompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
 
       if (query.negativePrompt) {
         query.negativePrompt = Array.isArray(query.negativePrompt)
-          ? query.negativePrompt.map((prompt) => prompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
-          : query.negativePrompt.replace(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
+          ? query.negativePrompt.map((prompt) => prompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, ''))
+          : query.negativePrompt.replaceAll(/<lora:[a-z0-9- _]+:[0-9.]+>/gi, '');
       }
 
       if (negativePrompt) {
@@ -638,7 +635,11 @@ export const redraw = async (source: string, options: IRedrawOptions) => {
   const denoising = denoisingArray ?? [0.55];
   const upscales = upscalingArray ?? [1];
 
-  const queries = await prepareQueries(combinations, { ...options, denoising, upscales });
+  const queries = await prepareQueries(combinations, {
+    ...options,
+    denoising,
+    upscales
+  });
 
   queries.sort((a, b) => (a.checkpoints as string).localeCompare(b.checkpoints as string));
 
