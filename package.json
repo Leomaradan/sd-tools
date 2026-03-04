@@ -34,29 +34,33 @@
     "@types/yargs": "^17.0.32",
     "babel-jest": "^29.7.0",
     "esbuild": "^0.21.4",
-    "eslint": "^9.3.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jest": "^28.5.0",
-    "eslint-plugin-only-warn": "^1.1.0",
-    "eslint-plugin-perfectionist": "^2.10.0",
-    "eslint-plugin-sonarjs": "^1.0.3",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jest": "^28.14.0",
+    "eslint-plugin-only-warn": "^1.2.1",
+    "eslint-plugin-oxlint": "^1.51.0",
+    "eslint-plugin-perfectionist": "^5.6.0",
+    "eslint-plugin-sonarjs": "^4.0.0",
     "husky": "^9.0.11",
     "jest": "^29.7.0",
     "lint-staged": "^15.2.5",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
+    "oxlint-tsgolint": "^0.16.0",
     "pinst": "^3.0.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.5",
-    "typescript-eslint": "^7.11.0",
+    "typescript": "6.0.0-beta",
+    "typescript-eslint": "^8.56.1",
     "typescript-json-schema": "^0.63.0"
   },
   "bin": "sd-tools.cjs",
   "lint-staged": {
-    "*.{ts,js}": [
-      "eslint --quiet --fix",
-      "prettier --write --ignore-unknown"
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "yarn lint:fix",
+      "oxfmt --no-error-on-unmatched-pattern"
     ],
-    "*.{json}": [
-      "prettier --write --ignore-unknown"
+    "*": [
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
   "main": "./dist/index.cjs",
@@ -82,7 +86,10 @@
     "watch": "yarn schema && NODE_ENV=watch node ./esbuild.mjs",
     "start": "node build/index.cjs",
     "test": "jest --coverage --detectOpenHandles",
-    "lint": "eslint --report-unused-disable-directives",
+    "lint": "oxlint --type-aware && eslint --report-unused-disable-directives",
+    "lint:fix": "oxlint --type-aware --fix && eslint --report-unused-disable-directives --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "schema": "yarn schema:queue && yarn schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
     "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword",

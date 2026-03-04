@@ -1,8 +1,7 @@
 import eslint from '@eslint/js';
-import prettier from 'eslint-config-prettier';
 import jest from 'eslint-plugin-jest';
+import oxlint from 'eslint-plugin-oxlint';
 import perfectionist from 'eslint-plugin-perfectionist';
-import perfectionistRecommendedNatural from 'eslint-plugin-perfectionist/configs/recommended-natural';
 import sonarjs from 'eslint-plugin-sonarjs';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
@@ -20,9 +19,8 @@ const config = [
 
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
-  perfectionistRecommendedNatural,
+  perfectionist.configs['recommended-natural'],
   sonarjs.configs.recommended,
-  prettier,
   {
     linterOptions: {
       // noInlineConfig: true,
@@ -53,7 +51,6 @@ const config = [
       'sonarjs/no-inverted-boolean-check': 'warn',
       'sonarjs/no-nested-switch': 'warn',
       'sonarjs/no-nested-template-literals': 'warn',
-      'sonarjs/no-one-iteration-loop': 'warn',
       'sonarjs/no-redundant-boolean': 'warn',
       'sonarjs/no-redundant-jump': 'warn',
       'sonarjs/no-same-line-conditional': 'warn',
@@ -86,7 +83,8 @@ const config = [
       'jest/prefer-importing-jest-globals': 'off',
       'sonarjs/no-duplicate-string': 'off'
     }
-  }
+  },
+  ...oxlint.configs['flat/recommended']
 ];
 
 export default config;
