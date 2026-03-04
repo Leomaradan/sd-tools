@@ -7,7 +7,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "module": "ESNext",
-    "types": [],
+    "types": ["node", "jest"],
     "verbatimModuleSyntax": true,
     "noEmit": true
   },

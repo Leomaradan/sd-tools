@@ -36,7 +36,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const prompt = Config.get('commonPositive');
-      const response = await input({ default: prompt, message: 'Common prompt?' });
+      const response = await input({
+        default: prompt,
+        message: 'Common prompt?'
+      });
       setConfigCommonPositive(response);
     },
     description: 'Set common positive prompt',
@@ -46,7 +49,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const prompt = Config.get('commonPositiveXL');
-      const response = await input({ default: prompt, message: 'Common prompt (SDXL) ?' });
+      const response = await input({
+        default: prompt,
+        message: 'Common prompt (SDXL) ?'
+      });
       setConfigCommonPositiveXL(response);
     },
     description: 'Set common positive prompt for SDXL',
@@ -56,7 +62,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const prompt = Config.get('commonNegative');
-      const response = await input({ default: prompt, message: 'Common negative prompt?' });
+      const response = await input({
+        default: prompt,
+        message: 'Common negative prompt?'
+      });
       setConfigCommonNegative(response);
     },
     description: 'Set common negative prompt',
@@ -66,7 +75,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const prompt = Config.get('commonNegativeXL');
-      const response = await input({ default: prompt, message: 'Common negative prompt (SDXL) ?' });
+      const response = await input({
+        default: prompt,
+        message: 'Common negative prompt (SDXL) ?'
+      });
       setConfigCommonNegativeXL(response);
     },
     description: 'Set common negative prompt for SDXL',
@@ -170,7 +182,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const scheduler = Config.get('scheduler');
-      const response = await confirm({ default: scheduler, message: 'Activate Agent Scheduler ?' });
+      const response = await confirm({
+        default: scheduler,
+        message: 'Activate Agent Scheduler ?'
+      });
       setConfigScheduler(response);
     },
     description: 'Enable or disable using Agent Scheduler',
@@ -181,7 +196,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const lcm = Config.get('lcm');
-      const response = await confirm({ default: lcm.auto, message: 'Activate Auto-LCM ?' });
+      const response = await confirm({
+        default: lcm.auto,
+        message: 'Activate Auto-LCM ?'
+      });
       setConfigAutoLCM(response);
     },
     description: 'Enable or disable auto lcm',
@@ -203,7 +221,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const cutoff = Config.get('cutoff');
-      const response = await confirm({ default: cutoff, message: 'Activate Auto-CutOff ?' });
+      const response = await confirm({
+        default: cutoff,
+        message: 'Activate Auto-CutOff ?'
+      });
       setConfigAutoCutoff(response);
     },
     description: 'Enable or disable auto cutoff',
@@ -215,11 +236,17 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
       const autoTiledDiffusion = Config.get('autoTiledDiffusion');
       const response = await select<'false' | TiledDiffusionMethods>({
         choices: [
-          { name: 'Mixture of Diffusers', value: TiledDiffusionMethods.MixtureOfDiffusers },
-          { name: 'MultiDiffusion', value: TiledDiffusionMethods.MultiDiffusion },
+          {
+            name: 'Mixture of Diffusers',
+            value: TiledDiffusionMethods.MixtureOfDiffusers
+          },
+          {
+            name: 'MultiDiffusion',
+            value: TiledDiffusionMethods.MultiDiffusion
+          },
           { name: 'Deactivate Auto-TiledDiffusion', value: 'false' as const }
         ],
-        default: autoTiledDiffusion,
+        default: autoTiledDiffusion === false ? 'false' : autoTiledDiffusion,
         message: 'Activate Auto-TiledDiffusion ?'
       });
 
@@ -236,7 +263,10 @@ export const wizardOptions: Array<IWizardOptions | Separator> = [
   {
     callback: async () => {
       const autoTiledVAE = Config.get('autoTiledVAE');
-      const response = await confirm({ default: autoTiledVAE, message: 'Activate Auto-TiledVAE ?' });
+      const response = await confirm({
+        default: autoTiledVAE,
+        message: 'Activate Auto-TiledVAE ?'
+      });
       setConfigAutoTiledVAE(response);
     },
     description: 'Enable or disable auto tiled vae',
@@ -314,7 +344,7 @@ let selectedOption: string | undefined = undefined;
 const runWizard = async () => {
   const configSelect = await select({
     choices: wizardOptions,
-    default: selectedOption,
+    default: selectedOption as EditableOptions,
     message: 'Which option do you want to configure?'
   });
 
@@ -333,7 +363,9 @@ export const handler = async () => {
   while (run) {
     await runWizard();
 
-    const response = await confirm({ message: 'Do you want to configure another option?' });
+    const response = await confirm({
+      message: 'Do you want to configure another option?'
+    });
 
     if (!response) {
       run = false;

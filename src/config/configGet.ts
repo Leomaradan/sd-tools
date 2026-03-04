@@ -37,43 +37,118 @@ import {
 } from './functions';
 
 export const options: { description: string; option: Options }[] = [
-  { description: 'List of Add Details models, if existing', option: 'adetailers-models' },
+  {
+    description: 'List of Add Details models, if existing',
+    option: 'adetailers-models'
+  },
   { description: 'If set, the LCM models will be used', option: 'auto-lcm' },
   { description: 'LCM models to Auto LCM', option: 'lcm' },
   {
     description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled Diffusion will be enabled',
     option: 'auto-tiled-diffusion'
   },
-  { description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled', option: 'auto-tiled-vae' },
-  { description: 'If the Add Details extension exists, it will allow to automatically add models', option: 'auto-adetailers' },
-  { description: 'If the ControlNet extension exists, it will allow to automatically set a pose', option: 'auto-controlnet-pose' },
-  { description: 'Negative prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-negative' },
-  { description: 'Negative prompt to add on each queries using SD XL (except queue query)', option: 'common-negative-xl' },
-  { description: 'Prompt to add on each queries using SD 1.5 (except queue query)', option: 'common-positive' },
-  { description: 'Prompt to add on each queries using SD XL (except queue query)', option: 'common-positive-xl' },
-  { description: 'Version of the config. Read-only option', option: 'config-version' },
-  { description: 'Available models for ControlNet. Refreshed with command "init"', option: 'controlnet-models' },
-  { description: 'Available modules for ControlNet. Refreshed with command "init"', option: 'controlnet-modules' },
-  { description: 'If set and the CutOff extension exists, the Tiled VAE will be enabled', option: 'auto-cutoff' },
-  { description: 'List of color token used in Auto Cutoff', option: 'cutoff-tokens' },
+  {
+    description: 'If set and the MultiDiffusion Upscaler extension exists, the Tiled VAE will be enabled',
+    option: 'auto-tiled-vae'
+  },
+  {
+    description: 'If the Add Details extension exists, it will allow to automatically add models',
+    option: 'auto-adetailers'
+  },
+  {
+    description: 'If the ControlNet extension exists, it will allow to automatically set a pose',
+    option: 'auto-controlnet-pose'
+  },
+  {
+    description: 'Negative prompt to add on each queries using SD 1.5 (except queue query)',
+    option: 'common-negative'
+  },
+  {
+    description: 'Negative prompt to add on each queries using SD XL (except queue query)',
+    option: 'common-negative-xl'
+  },
+  {
+    description: 'Prompt to add on each queries using SD 1.5 (except queue query)',
+    option: 'common-positive'
+  },
+  {
+    description: 'Prompt to add on each queries using SD XL (except queue query)',
+    option: 'common-positive-xl'
+  },
+  {
+    description: 'Version of the config. Read-only option',
+    option: 'config-version'
+  },
+  {
+    description: 'Available models for ControlNet. Refreshed with command "init"',
+    option: 'controlnet-models'
+  },
+  {
+    description: 'Available modules for ControlNet. Refreshed with command "init"',
+    option: 'controlnet-modules'
+  },
+  {
+    description: 'If set and the CutOff extension exists, the Tiled VAE will be enabled',
+    option: 'auto-cutoff'
+  },
+  {
+    description: 'List of color token used in Auto Cutoff',
+    option: 'cutoff-tokens'
+  },
   { description: 'Weight used in Auto Cutoff', option: 'cutoff-weight' },
-  { description: 'Available embeddings. Refreshed with command "init"', option: 'embeddings' },
+  {
+    description: 'Available embeddings. Refreshed with command "init"',
+    option: 'embeddings'
+  },
   { description: 'Url to API', option: 'endpoint' },
-  { description: 'Available extensions. Refreshed with command "init"', option: 'extensions' },
-  { description: 'Available LoRA. Refreshed with command "init"', option: 'loras' },
-  { description: 'Available Checkpoints. Refreshed with command "init"', option: 'models' },
-  { description: 'Output folder for generated images', option: 'output-folder' },
-  { description: 'Wildcards folder for generated images', option: 'wildcards-folder' },
-  { description: 'Templates folder for generated images', option: 'templates-folder' },
-  { description: 'Checkpoints for the Redraw command', option: 'redraw-models' },
-  { description: 'Available Samplers. Refreshed with command "init"', option: 'samplers' },
+  {
+    description: 'Available extensions. Refreshed with command "init"',
+    option: 'extensions'
+  },
+  {
+    description: 'Available LoRA. Refreshed with command "init"',
+    option: 'loras'
+  },
+  {
+    description: 'Available Checkpoints. Refreshed with command "init"',
+    option: 'models'
+  },
+  {
+    description: 'Output folder for generated images',
+    option: 'output-folder'
+  },
+  {
+    description: 'Wildcards folder for generated images',
+    option: 'wildcards-folder'
+  },
+  {
+    description: 'Templates folder for generated images',
+    option: 'templates-folder'
+  },
+  {
+    description: 'Checkpoints for the Redraw command',
+    option: 'redraw-models'
+  },
+  {
+    description: 'Available Samplers. Refreshed with command "init"',
+    option: 'samplers'
+  },
   {
     description: 'If set and the Agent Scheduler extension exists, all queries will be sent to the Scheduler instead of resolved directly',
     option: 'scheduler'
   },
-  { description: 'Available styles. Refreshed with command "init"', option: 'styles' },
-  { description: 'Available upscalers. Refreshed with command "init"', option: 'upscalers' },
-  { description: 'Available VAEs. Refreshed with command "init"', option: 'vae' }
+  {
+    description: 'Available styles. Refreshed with command "init"',
+    option: 'styles'
+  },
+  {
+    description: 'Available upscalers. Refreshed with command "init"',
+    option: 'upscalers'
+  },
+  {
+    description: 'Available VAEs. Refreshed with command "init"',
+    option: 'vae'
+  }
 ];
 
 export const command = 'config-get [config]';
@@ -107,104 +182,42 @@ export const handler = (argv: { config?: string }) => {
     process.exit(ExitCodes.CONFIG_GET_NO_OPTIONS);
   }
 
-  switch (config) {
-    case 'adetailers-models':
-      getConfigAddDetailerModels();
-      break;
-    case 'auto-adetailers':
-      getConfigAutoAdetailers();
-      break;
-    case 'auto-controlnet-pose':
-      getConfigAutoControlnetPoses();
-      break;
-    case 'auto-cutoff':
-      getConfigCutoff();
-      break;
-    case 'auto-lcm':
-      getConfigAutoLCM();
-      break;
-    case 'auto-tiled-diffusion':
-      getConfigAutoTiledDiffusion();
-      break;
-    case 'auto-tiled-vae':
-      getConfigAutoTiledVAE();
-      break;
-    case 'common-negative':
-      getConfigCommonNegative();
-      break;
-    case 'common-negative-xl':
-      getConfigCommonNegativeXL();
-      break;
-    case 'common-positive':
-      getConfigCommonPositive();
-      break;
-    case 'common-positive-xl':
-      getConfigCommonNegativeXL();
-      break;
-    case 'config-version':
-      getConfigVersion();
-      break;
+  const configHandlers: Record<Options, () => void> = {
+    'adetailers-models': getConfigAddDetailerModels,
+    'auto-adetailers': getConfigAutoAdetailers,
+    'auto-controlnet-pose': getConfigAutoControlnetPoses,
+    'auto-cutoff': getConfigCutoff,
+    'auto-lcm': getConfigAutoLCM,
+    'auto-tiled-diffusion': getConfigAutoTiledDiffusion,
+    'auto-tiled-vae': getConfigAutoTiledVAE,
+    'common-negative': getConfigCommonNegative,
+    'common-negative-xl': getConfigCommonNegativeXL,
+    'common-positive': getConfigCommonPositive,
+    'common-positive-xl': getConfigCommonNegativeXL,
+    'config-version': getConfigVersion,
+    'controlnet-models': getConfigControlnetModels,
+    'controlnet-modules': getConfigControlnetModules,
+    'cutoff-tokens': getConfigCutoffTokens,
+    'cutoff-weight': getConfigCutoffWeight,
+    embeddings: getConfigEmbeddings,
+    endpoint: getConfigEndpoint,
+    extensions: getConfigExtensions,
+    lcm: getConfigLCM,
+    loras: getConfigLoras,
+    models: getConfigModels,
+    'output-folder': getConfigOutputFolder,
+    'redraw-models': getConfigRedrawModels,
+    samplers: getConfigSamplers,
+    scheduler: getConfigScheduler,
+    styles: getConfigStyles,
+    'templates-folder': getConfigTemplatesFolder,
+    upscalers: getConfigUpscalers,
+    vae: getConfigVAE,
+    'wildcards-folder': getConfigWildcardsFolder
+  };
 
-    case 'controlnet-models':
-      getConfigControlnetModels();
-      break;
-    case 'controlnet-modules':
-      getConfigControlnetModules();
-      break;
-    case 'cutoff-tokens':
-      getConfigCutoffTokens();
-      break;
-    case 'cutoff-weight':
-      getConfigCutoffWeight();
-      break;
-    case 'embeddings':
-      getConfigEmbeddings();
-      break;
-    case 'endpoint':
-      getConfigEndpoint();
-      break;
-    case 'extensions':
-      getConfigExtensions();
-      break;
-    case 'lcm':
-      getConfigLCM();
-      break;
-    case 'loras':
-      getConfigLoras();
-      break;
-    case 'models':
-      getConfigModels();
-      break;
-    case 'output-folder':
-      getConfigOutputFolder();
-      break;
-    case 'redraw-models':
-      getConfigRedrawModels();
-      break;
-    case 'samplers':
-      getConfigSamplers();
-      break;
-    case 'scheduler':
-      getConfigScheduler();
-      break;
-    case 'styles':
-      getConfigStyles();
-      break;
-
-    case 'templates-folder':
-      getConfigTemplatesFolder();
-      break;
-    case 'upscalers':
-      getConfigUpscalers();
-      break;
-    case 'vae':
-      getConfigVAE();
-      break;
-    case 'wildcards-folder':
-      getConfigWildcardsFolder();
-      break;
-
-    default:
-      break;
+  const handler = configHandlers[config];
+  if (handler) {
+    handler();
   }
 };

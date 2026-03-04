@@ -1,0 +1,2 @@
+patchedDependencies:
+  eslint-plugin-sonarjs: patches/eslint-plugin-sonarjs.patch

@@ -753,8 +753,8 @@ const permuteSeries = (series: SeriesItem[]): IControlNet[][] => {
   // Helper function to compute the cartesian product of arrays
 
   // Extract all image arrays
-  const imageArrays = series.map((item) => item.image as string[]);
-  const inputImageArrays = series.map((item) => item.input_image as string[]);
+  const imageArrays = series.map((item) => item.image);
+  const inputImageArrays = series.map((item) => item.input_image);
 
   // Generate the cartesian product of all image arrays
   const combinations = cartesianProduct(...imageArrays, ...inputImageArrays);
@@ -795,7 +795,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
           return controlNet;
         }
 
-        const initImage = controlNet.input_image ?? (controlNet.image as string);
+        const initImage = controlNet.input_image ?? controlNet.image;
         const initImageBase = dirname(initImage);
         const promptFile = resolve(initImageBase, `${parse(initImage).name}.txt`);
         let prompt: string | undefined;
@@ -834,7 +834,7 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
       return;
     }
 
-    const imageToUse = controlNetInputImage ?? (controlNetImage as string);
+    const imageToUse = controlNetInputImage ?? controlNetImage;
 
     let initImageBase = dirname(imageToUse);
 
@@ -1492,15 +1492,16 @@ export const preparePrompts = async (config: IPromptsResolved): Promise<Array<II
     if (directoryPath) {
       query.override_settings.directories_filename_pattern = directoryPath;
 
-      const allowedTokens = [
-        'filename',
+      const allowedTokens = new Set([
         'cfg',
         'checkpoint',
         'clipSkip',
         'cutOff',
         'denoising',
         'enableHighRes',
+        'filename',
         'height',
+        'pose',
         'restoreFaces',
         'sampler',
         'scaleFactor',
@@ -1509,15 +1510,14 @@ export const preparePrompts = async (config: IPromptsResolved): Promise<Array<II
         'tiling',
         'upscaler',
         'vae',
-        'width',
-        'pose'
-      ];
+        'width'
+      ]);
 
       const matches = directoryPath.match(/\{([a-z0-9_]+)\}/gi);
 
       if (matches) {
         matches.forEach((match) => {
-          if (!allowedTokens.includes(match.replace('{', '').replace('}', ''))) {
+          if (!allowedTokens.has(match.replace('{', '').replace('}', ''))) {
             loggerInfo(`Invalid pattern token ${match}`);
             process.exit(ExitCodes.PROMPT_INVALID_PATTERN_TOKEN);
           }
@@ -1529,24 +1529,24 @@ export const preparePrompts = async (config: IPromptsResolved): Promise<Array<II
       const findExistingPose = query.controlNet?.find((controlNet) => controlNet.model.includes('openpose'));
 
       // Alias to official tokens
-      updateDirectoryPath(query, 'cfg', query.cfg_scale !== undefined ? '[cfg]' : '');
-      updateDirectoryPath(query, 'checkpoint', query.override_settings.sd_model_checkpoint !== undefined ? '[model_name]' : '');
-      updateDirectoryPath(query, 'clipSkip', query.override_settings.CLIP_stop_at_last_layers !== undefined ? '[clip_skip]' : '');
-      updateDirectoryPath(query, 'height', query.height !== undefined ? '[height]' : '');
-      updateDirectoryPath(query, 'seed', query.seed !== undefined ? '[seed]' : '');
-      updateDirectoryPath(query, 'steps', query.steps !== undefined ? '[steps]' : '');
-      updateDirectoryPath(query, 'width', query.width !== undefined ? '[width]' : '');
+      updateDirectoryPath(query, 'cfg', query.cfg_scale === undefined ? '' : '[cfg]');
+      updateDirectoryPath(query, 'checkpoint', query.override_settings.sd_model_checkpoint === undefined ? '' : '[model_name]');
+      updateDirectoryPath(query, 'clipSkip', query.override_settings.CLIP_stop_at_last_layers === undefined ? '' : '[clip_skip]');
+      updateDirectoryPath(query, 'height', query.height === undefined ? '' : '[height]');
+      updateDirectoryPath(query, 'seed', query.seed === undefined ? '' : '[seed]');
+      updateDirectoryPath(query, 'steps', query.steps === undefined ? '' : '[steps]');
+      updateDirectoryPath(query, 'width', query.width === undefined ? '' : '[width]');
 
-      updateDirectoryPath(query, 'cutOff', autoCutOff !== undefined ? autoCutOff.toString() : '');
+      updateDirectoryPath(query, 'cutOff', autoCutOff === undefined ? '' : autoCutOff.toString());
       updateDirectoryPath(query, 'denoising', query.denoising_strength?.toFixed(2) ?? '');
-      updateDirectoryPath(query, 'enableHighRes', enableHighRes !== undefined ? enableHighRes.toString() : '');
+      updateDirectoryPath(query, 'enableHighRes', enableHighRes === undefined ? '' : enableHighRes.toString());
       updateDirectoryPath(query, 'pose', findExistingPose?.image_name ? findExistingPose.image_name.toString() : '');
-      updateDirectoryPath(query, 'restoreFaces', query.restore_faces !== undefined ? query.restore_faces.toString() : '');
-      updateDirectoryPath(query, 'sampler', query.sampler_name !== undefined ? query.sampler_name.toString() : '');
+      updateDirectoryPath(query, 'restoreFaces', query.restore_faces === undefined ? '' : query.restore_faces.toString());
+      updateDirectoryPath(query, 'sampler', query.sampler_name === undefined ? '' : query.sampler_name.toString());
       updateDirectoryPath(query, 'scaleFactor', scaleFactor?.toFixed(0) ?? '');
-      updateDirectoryPath(query, 'tiling', tiling !== undefined ? tiling.toString() : '');
-      updateDirectoryPath(query, 'upscaler', query.hr_upscaler !== undefined ? query.hr_upscaler.toString() : '');
-      updateDirectoryPath(query, 'vae', query.override_settings.sd_vae !== undefined ? query.override_settings.sd_vae.toString() : '');
+      updateDirectoryPath(query, 'tiling', tiling === undefined ? '' : tiling.toString());
+      updateDirectoryPath(query, 'upscaler', query.hr_upscaler === undefined ? '' : query.hr_upscaler.toString());
+      updateDirectoryPath(query, 'vae', query.override_settings.sd_vae === undefined ? '' : query.override_settings.sd_vae.toString());
     }
 
     if (query.override_settings.samples_filename_pattern) {

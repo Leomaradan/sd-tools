@@ -655,7 +655,7 @@
           "type": "array"
         },
         "overwrite": {
-          "$ref": "#/definitions/Partial<IPromptSingleSchema>",
+          "$ref": "#/definitions/Partial%3CIPromptSingleSchema%3E",
           "title": "overwrite"
         },
         "promptReplace": {
@@ -693,7 +693,7 @@
           "type": "string"
         },
         "basePrompt": {
-          "$ref": "#/definitions/Partial<IPrompt>",
+          "$ref": "#/definitions/Partial%3CIPrompt%3E",
           "title": "basePrompt"
         },
         "extends": {
@@ -732,7 +732,7 @@
           "type": "string"
         },
         "basePrompt": {
-          "$ref": "#/definitions/Partial<IPrompt>",
+          "$ref": "#/definitions/Partial%3CIPrompt%3E",
           "title": "basePrompt"
         },
         "extends": {
@@ -771,7 +771,7 @@
           "type": "string"
         },
         "basePrompt": {
-          "$ref": "#/definitions/Partial<IPrompt>",
+          "$ref": "#/definitions/Partial%3CIPrompt%3E",
           "title": "basePrompt"
         },
         "extends": {
@@ -1763,10 +1763,10 @@
     "Partial<IPrompt>": {
       "anyOf": [
         {
-          "$ref": "#/definitions/Partial<IClassicPrompt>"
+          "$ref": "#/definitions/Partial%3CIClassicPrompt%3E"
         },
         {
-          "$ref": "#/definitions/Partial<IStyleSubjectPrompt>"
+          "$ref": "#/definitions/Partial%3CIStyleSubjectPrompt%3E"
         }
       ],
       "title": "Partial<IPrompt>"

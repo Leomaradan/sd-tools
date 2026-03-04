@@ -241,34 +241,35 @@ const prepareTiledDiffusion = (
 
       if (tiledDiffusion.regionalPrompt && tiledDiffusion.regionalPrompt.length > 0) {
         const updatedArgs = updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion].args;
-
-        updatedArgs.push(true); // Enable Noise Inversion
-        updatedArgs.push(10); // Inversion Steps
-        updatedArgs.push(1); // Retouch
-        updatedArgs.push(1); // Renoise strength
-        updatedArgs.push(64); // Renoise kernel size
-        updatedArgs.push(false); // Move ControlNet tensor to CPU (if applicable)
-        updatedArgs.push(true); // Enable Control
-        updatedArgs.push(false); // Draw full canvas background
-        updatedArgs.push(false); // Causalize layers
+        updatedArgs.push(
+          true, // Enable Noise Inversion
+          10, // Inversion Steps
+          1, // Retouch
+          1, // Renoise strength
+          64, // Renoise kernel size
+          false, // Move ControlNet tensor to CPU (if applicable)
+          true, // Enable Control
+          false, // Draw full canvas background
+          false // Causalize layers
+        );
 
         tiledDiffusion.regionalPrompt.forEach((regionalPrompt) => {
-          updatedArgs.push(true);
-          updatedArgs.push(regionalPrompt.x);
-          updatedArgs.push(regionalPrompt.y);
-          updatedArgs.push(regionalPrompt.w);
-          updatedArgs.push(regionalPrompt.h);
-          updatedArgs.push(regionalPrompt.prompt);
-          updatedArgs.push(regionalPrompt.neg_prompt ?? '');
-          updatedArgs.push(regionalPrompt.blend_mode ?? 'Background');
-          updatedArgs.push(regionalPrompt.feather_ratio ?? 0);
-          updatedArgs.push(regionalPrompt.seed ?? -1);
+          updatedArgs.push(
+            true,
+            regionalPrompt.x,
+            regionalPrompt.y,
+            regionalPrompt.w,
+            regionalPrompt.h,
+            regionalPrompt.prompt,
+            regionalPrompt.neg_prompt ?? '',
+            regionalPrompt.blend_mode ?? 'Background',
+            regionalPrompt.feather_ratio ?? 0,
+            regionalPrompt.seed ?? -1
+          );
         });
 
         updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion].args = updatedArgs;
       }
-    } else if (Config.get('autoTiledDiffusion') !== false) {
-      updatedQuery.alwayson_scripts[AlwaysOnScriptsNames.TiledDiffusion] = { args: ['True', Config.get('autoTiledDiffusion')] };
     }
   }
   // Ensure that Tiled Diffusion is not used with SDXL
@@ -423,7 +424,6 @@ export const renderQuery: Query = async (query, type) => {
 
   if (!mode.simulate) {
     await axios.post(`${Config.get('endpoint')}/${endpoint}`, baseQuery, headerRequest).catch((error) => {
-      console.log(error);
       loggerInfo(`Error: `);
       loggerInfo(error.message);
     });
@@ -543,6 +543,7 @@ type MiscQueryApi =
   | 'adetailer/v1/ad_model'
   | 'agent-scheduler/v1/history?limit=1'
   | 'controlnet/model_list'
+  | 'controlnet/model_list?update=true'
   | 'controlnet/module_list'
   | 'internal/sysinfo?attachment=false'
   | 'interrogator/models'
@@ -610,5 +611,5 @@ export const getEmbeddingsQuery = () =>
 export const getStylesQuery = () => miscQuery<{ name: string; negative_prompt: string; prompt: string }[]>('sdapi/v1/prompt-styles');
 export const getAdModelQuery = () => miscQuery<{ ad_model: string[] }>('adetailer/v1/ad_model');
 
-export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list?update=true' as any);
+export const getControlnetModelsQuery = () => miscQuery<{ model_list: string[] }>('controlnet/model_list?update=true');
 export const getControlnetModulesQuery = () => miscQuery<{ module_list: string[] }>('controlnet/module_list');

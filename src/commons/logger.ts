@@ -3,8 +3,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ApiType } from './config';
-
 import { xdgState } from './xdgBaseDir';
 
 export const mode = {
@@ -16,14 +14,16 @@ export const mode = {
   verbose: false
 };
 
+export type ApiType = 'automatic1111' | 'forge' | 'proxy';
+
 let session: string | undefined = undefined;
 
 const isProd = process.env.NODE_ENV === 'production';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __filenameNew = process.env.JEST === 'true' ? __filename : fileURLToPath(import.meta.url);
+const __dirnameNew = process.env.JEST === 'true' ? __dirname : dirname(__filenameNew);
 
-const devLogPath = resolve(__dirname, '..', 'logs');
+const devLogPath = resolve(__dirnameNew, '..', 'logs');
 
 const oldLogs = isProd ? Date.now() - 7 * 24 * 60 * 60 * 1000 : Date.now() - 30 * 24 * 60 * 60 * 1000;
 
@@ -74,7 +74,7 @@ export const writeLog = (data: object, force = false) => {
   if (mode.log || force) {
     session ??= new Date().toISOString();
 
-    let logPath = resolve(__dirname, '..', 'logs');
+    let logPath = resolve(__dirnameNew, '..', 'logs');
 
     if (isProd) {
       if (existsSync(devLogPath)) {

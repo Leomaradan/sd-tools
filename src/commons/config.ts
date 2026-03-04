@@ -1,8 +1,8 @@
+import axios from 'axios';
 import Configstore from 'configstore';
 
 import { initFunction } from '../config/init';
-import { loggerInfo, loggerVerbose, mode } from './logger';
-import { checkApiQuery } from './query';
+import { type ApiType, loggerInfo, loggerVerbose, mode } from './logger';
 import { type ICache, type IConfig } from './types';
 
 const config = new Configstore('sd-tools');
@@ -10,7 +10,44 @@ const cache = new Configstore('sd-tools-cache');
 
 const LATEST_CONFIG_VERSION = 4;
 
-export type ApiType = 'automatic1111' | 'forge' | 'proxy';
+const headerRequest = {
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }
+};
+
+const checkApiQuery = async () => {
+  try {
+    const result = await axios
+      .get(`${Config.get('endpoint')}/internal/sysinfo?attachment=false`, headerRequest)
+      .then((response) => {
+        return response.data;
+      })
+      .catch((error) => {
+        loggerVerbose(`Error: `);
+        loggerVerbose(error.message);
+      });
+
+    if (!result?.Version) {
+      return false;
+    }
+
+    if (result.Version.includes('f2.0')) {
+      loggerInfo('Forge API detected');
+      return 'forge';
+    }
+
+    if (result.Version.includes('proxy')) {
+      loggerInfo('Proxy API detected');
+      return 'proxy';
+    }
+
+    return 'automatic1111';
+  } catch {
+    return false;
+  }
+};
 
 const migrations: Record<number, () => void> = {
   0: () => {

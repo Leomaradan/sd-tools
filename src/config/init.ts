@@ -2,9 +2,9 @@ import { basename } from 'node:path';
 import { type Argv } from 'yargs';
 
 import { ratedCheckpoints } from '../commons/checkpoints';
-import { type ApiType, Cache, Config } from '../commons/config';
+import { Cache, Config } from '../commons/config';
 import { getMetadataCheckpoint, getMetadataLora } from '../commons/file';
-import { ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
+import { type ApiType, ExitCodes, loggerInfo, loggerVerbose } from '../commons/logger';
 import { findCheckpoint } from '../commons/models';
 import {
   checkApiQuery,
@@ -59,7 +59,11 @@ const setModels = async (
   const modelsQueryResolved: IModelWithHash[] = [];
 
   for (const modelQuery of modelsQuery) {
-    const item: IModelWithHash = { accelarator: 'none', name: modelQuery.title, version: Version.Unknown };
+    const item: IModelWithHash = {
+      accelarator: 'none',
+      name: modelQuery.title,
+      version: Version.Unknown
+    };
     const hash = /[a-f0-9]{8,10}/.exec(modelQuery.title);
     const metadata = await getMetadataCheckpoint(modelQuery.filename);
 
@@ -89,7 +93,12 @@ const setLoras = async (
   const lorasQueryResolved: ILora[] = [];
 
   for (const loraQuery of lorasQuery) {
-    const item: ILora = { alias: loraQuery.alias, keywords: [], name: loraQuery.name, version: Version.Unknown };
+    const item: ILora = {
+      alias: loraQuery.alias,
+      keywords: [],
+      name: loraQuery.name,
+      version: Version.Unknown
+    };
 
     const metadata = await getMetadataLora(loraQuery.path);
 
@@ -129,7 +138,14 @@ const setSamplers = (
 ) => {
   Config.set(
     'samplers',
-    Array.from(new Set(samplersQuery.map((samplerQuery) => ({ aliases: samplerQuery.aliases, name: samplerQuery.name }))))
+    Array.from(
+      new Set(
+        samplersQuery.map((samplerQuery) => ({
+          aliases: samplerQuery.aliases,
+          name: samplerQuery.name
+        }))
+      )
+    )
   );
 };
 
@@ -170,7 +186,11 @@ const setStyles = (
       new Set(
         stylesQuery
           .map((styleQuery) => {
-            const style: IStyle = { name: styleQuery.name, negativePrompt: '', prompt: '' };
+            const style: IStyle = {
+              name: styleQuery.name,
+              negativePrompt: '',
+              prompt: ''
+            };
 
             if (styleQuery.prompt) {
               style.prompt = styleQuery.prompt;
@@ -196,7 +216,7 @@ const setExtensions = (
   extensionsQuery: {
     img2img: string[];
   },
-  schedulerQuery: void | void | {
+  schedulerQuery: void | {
     tasks: string[];
   },
   interrogatorQuery: string[] | void
