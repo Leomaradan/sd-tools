@@ -1,4 +1,4 @@
-const { default: Configstore } = require('configstore');
+import Configstore from 'configstore';
 
 import { initFunction } from '../config/init';
 import { loggerInfo, loggerVerbose, mode } from './logger';
@@ -90,7 +90,7 @@ export const Config = {
 
 export const Cache = {
   get: <T extends keyof ICache>(key: T): ICache[T] => {
-    const store = cache.get(key);
+    const store = cache.get<ICache[T]>(key);
     if (store) {
       return store;
     }

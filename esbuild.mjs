@@ -12,22 +12,25 @@ const baseOptions = {
     'process.env.VERSION': `"${packageJson.version}"`
   },
   entryPoints: ['./src/index.ts'],
+  format: 'esm',
+  packages: 'external',
   platform: 'node',
-  target: 'node20'
+  target: 'node20',
+  treeShaking: true
 };
 
 const buildProd = async () => {
   await esbuild.build({
     ...baseOptions,
     minify: true,
-    outfile: './dist/index.cjs'
+    outfile: './dist/index.js'
   });
 };
 
 const watch = async () => {
   const context = await esbuild.context({
     ...baseOptions,
-    outfile: './build/index.cjs'
+    outfile: './build/index.js'
   });
   await context.watch();
   console.log('Watching...');
@@ -36,7 +39,7 @@ const watch = async () => {
 const buildDev = async () => {
   await esbuild.build({
     ...baseOptions,
-    outfile: './build/index.cjs'
+    outfile: './build/index.js'
   });
 };
 

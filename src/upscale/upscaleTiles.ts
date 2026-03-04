@@ -22,7 +22,7 @@ export const upscaleTiles = async (
 
   const queries: IClassicPrompt[] = [];
 
-  const filesList = getFiles(source, recursive);
+  const filesList = await getFiles(source, recursive);
 
   const denoising = denoisingArray ?? [0.3];
   const upscaling = upscalingArray ?? [2];

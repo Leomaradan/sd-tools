@@ -29,13 +29,13 @@ jobs:
 
       - run: corepack enable
 
-      - run: yarn --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - run: yarn build
+      - run: pnpm build
 
-      - run: yarn test
+      - run: pnpm test
 
-      - run: yarn lint
+      - run: pnpm lint
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master

@@ -9,12 +9,16 @@ jest.mock<typeof import('node:fs')>('node:fs', () => {
 });
 
 import { writeFileSync } from 'node:fs';
-import path from 'node:path';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { IFile } from '../commons/file';
 
 import { interrogateFromFile } from '../commons/extract';
 import { interrogate } from './interrogate';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 describe('interrogate', () => {
   // eslint-disable-next-line jest/no-hooks

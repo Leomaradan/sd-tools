@@ -8,17 +8,17 @@
   "dependencies": {
     "@inquirer/prompts": "^5.3.8",
     "axios": "^1.7.5",
-    "configstore": "^7.0.0",
+    "configstore": "^8.0.0",
     "dompurify": "^3.1.6",
     "htmlparser2": "^9.1.0",
-    "image-size": "^1.1.1",
+    "image-size": "^2.0.2",
     "jsonschema": "^1.4.1",
     "png-chunk-text": "^1.0.0",
     "png-chunks-extract": "^1.0.0",
     "table": "^6.8.2",
     "xdg-basedir": "^5.1.0",
     "yaml": "^2.8.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -34,7 +34,7 @@
     "@types/png-chunks-extract": "^1.0.2",
     "@types/yargs": "^17.0.33",
     "babel-jest": "^29.7.0",
-    "esbuild": "^0.21.4",
+    "esbuild": "^0.27.3",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^28.14.0",
@@ -54,47 +54,42 @@
     "typescript-eslint": "^8.56.1",
     "typescript-json-schema": "^0.63.0"
   },
-  "bin": "sd-tools.cjs",
+  "bin": "./bin/sd-tools",
   "license": "MIT",
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [
-      "yarn lint:fix",
+      "pnpm lint:fix",
       "oxfmt --no-error-on-unmatched-pattern"
     ],
     "*": [
       "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
-  "main": "./dist/index.cjs",
   "exports": {
+    ".": "./dist/index.js",
     "./package.json": "./package.json",
     "./schema/queue.json": "./schema/queue.json",
-    "./schema/rename.json": "./schema/rename.json",
-    ".": {
-      "require": {
-        "default": "./dist/index.cjs"
-      }
-    }
+    "./schema/rename.json": "./schema/rename.json"
   },
   "files": [
-    "dist/index.cjs",
-    "sd-tools.cjs",
-    "./schema/queue.json",
-    "./schema/rename.json"
+    "dist/index.js",
+    "bin/sd-tools",
+    "schema/queue.json",
+    "schema/rename.json"
   ],
   "type": "module",
-  "packageManager": "yarn@4.2.2",
+  "packageManager": "pnpm@10.27.0+sha512.72d699da16b1179c14ba9e64dc71c9a40988cbdc65c264cb0e489db7de917f20dcf4d64d8723625f2969ba52d4b7e2a1170682d9ac2a5dcaeaab732b7e16f04a",
   "scripts": {
-    "build": "yarn schema && node ./esbuild.mjs",
-    "build:prod": "yarn schema && NODE_ENV=production node ./esbuild.mjs",
-    "watch": "yarn schema && NODE_ENV=watch node ./esbuild.mjs",
-    "start": "node build/index.cjs",
+    "build": "pnpm schema && node ./esbuild.mjs",
+    "build:prod": "pnpm schema && NODE_ENV=production node ./esbuild.mjs",
+    "watch": "pnpm schema && NODE_ENV=watch node ./esbuild.mjs",
+    "start": "node build/index.js",
     "test": "jest --coverage --detectOpenHandles",
     "lint": "oxlint --type-aware && eslint --report-unused-disable-directives",
     "lint:fix": "oxlint --type-aware --fix && eslint --report-unused-disable-directives --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "schema": "yarn schema:queue && yarn schema:rename",
+    "schema": "pnpm schema:queue && pnpm schema:rename",
     "schema:queue": "typescript-json-schema ./tsconfig.json IPrompts --required --noExtraProps --out schema/queue.json --titles --useTypeOfKeyword",
     "schema:rename": "typescript-json-schema ./tsconfig.json IRenameConfig --required --noExtraProps --out schema/rename.json --titles --useTypeOfKeyword",
     "postinstall": "husky install",

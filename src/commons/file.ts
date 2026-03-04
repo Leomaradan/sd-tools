@@ -1,4 +1,4 @@
-import sizeOf from 'image-size';
+import { imageSizeFromFile } from 'image-size/fromFile';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname, relative, resolve, sep } from 'node:path';
 import text from 'png-chunk-text';
@@ -72,13 +72,13 @@ export interface IFile {
   width: number;
 }
 
-export const readFiles = (sourcepath: string, root: string, recursive?: boolean, noCache?: boolean): IFile[] => {
+export const readFiles = async (sourcepath: string, root: string, recursive?: boolean, noCache?: boolean): Promise<IFile[]> => {
   const files = readdirSync(sourcepath);
   const result: IFile[] = [];
 
-  files.forEach((file) => {
+  for (const file of files) {
     if (recursive && lstatSync(resolve(sourcepath, file)).isDirectory()) {
-      result.push(...readFiles(resolve(sourcepath, file), root, recursive));
+      result.push(...(await readFiles(resolve(sourcepath, file), root, recursive)));
     }
 
     const prefix = recursive ? relative(root, sourcepath).split(sep).join(', ') : undefined;
@@ -87,7 +87,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
       loggerVerbose(`Read ${file}`);
       const filename = resolve(sourcepath, file);
       const data = readFile(filename, noCache);
-      const sizes = sizeOf(filename);
+      const sizes = await imageSizeFromFile(filename);
       const date = statSync(filename).birthtime.toISOString();
 
       result.push({
@@ -105,7 +105,7 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
     if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
       loggerVerbose(`Read ${file}`);
       const filename = resolve(sourcepath, file);
-      const sizes = sizeOf(filename);
+      const sizes = await imageSizeFromFile(filename);
       const date = statSync(filename).birthtime.toISOString();
 
       result.push({
@@ -119,17 +119,17 @@ export const readFiles = (sourcepath: string, root: string, recursive?: boolean,
         width: sizes.width ?? -1
       });
     }
-  });
+  }
 
   loggerVerbose(`Read ${result.length} files`);
 
   return result;
 };
 
-export const getFiles = (source: string, recursive?: boolean, noCache?: boolean) => {
+export const getFiles = async (source: string, recursive?: boolean, noCache?: boolean) => {
   const filesList: IFile[] = [];
 
-  readFiles(source, source, recursive, noCache).forEach((file) => {
+  (await readFiles(source, source, recursive, noCache)).forEach((file) => {
     filesList.push(file);
   });
 
@@ -138,7 +138,7 @@ export const getFiles = (source: string, recursive?: boolean, noCache?: boolean)
 
 const imageCache: Record<string, { data: string; height: number; width: number }> = {};
 
-export const getBase64Image = (url: string) => {
+export const getBase64Image = async (url: string) => {
   if (imageCache[url] !== undefined) {
     return imageCache[url].data;
   }
@@ -150,7 +150,7 @@ export const getBase64Image = (url: string) => {
   const buffer = readFileSync(url);
   const data = buffer.toString('base64');
 
-  const sizes = sizeOf(url);
+  const sizes = await imageSizeFromFile(url);
   imageCache[url] = {
     data,
     height: sizes.height ?? -1,
@@ -160,7 +160,7 @@ export const getBase64Image = (url: string) => {
   return data;
 };
 
-export const getImageSize = (url: string) => {
+export const getImageSize = async (url: string) => {
   if (imageCache[url] !== undefined) {
     return { height: imageCache[url].height, width: imageCache[url].width };
   }
@@ -172,7 +172,7 @@ export const getImageSize = (url: string) => {
   const buffer = readFileSync(url);
   const data = buffer.toString('base64');
 
-  const sizes = sizeOf(url);
+  const sizes = await imageSizeFromFile(url);
   imageCache[url] = {
     data,
     height: sizes.height ?? -1,

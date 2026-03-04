@@ -121,10 +121,7 @@ const updateFilename = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, val
 };
 
 const updateDirectoryPath = (query: IImg2ImgQuery | ITxt2ImgQuery, token: string, value: string) => {
-  query.override_settings.directories_filename_pattern = (query.override_settings.directories_filename_pattern as string).replace(
-    `{${token}}`,
-    value
-  );
+  query.override_settings.directories_filename_pattern = query.override_settings.directories_filename_pattern.replace(`{${token}}`, value);
 };
 
 const resolveStyleSubjectPrompt = (promptStyle: string, promptSubject: string): string => {
@@ -191,11 +188,11 @@ const resolvePermutations = (permutation: IPromptPermutations, prompt: IPromptSi
   return permutedPrompt;
 };
 
-const prepareSingleQuery = (
+const prepareSingleQuery = async (
   basePrompt: IPrompt,
   permutations: IPromptPermutations[] | undefined,
   options: IPrepareSingleQuery
-): [string, IPromptSingle][] => {
+): Promise<[string, IPromptSingle][]> => {
   const {
     autoCutOff,
     autoLCM,
@@ -347,7 +344,7 @@ const prepareSingleQuery = (
     };
 
     if (prompt.initImage) {
-      const { height, width } = getImageSize(prompt.initImage);
+      const { height, width } = await getImageSize(prompt.initImage);
       prompt.width = !prompt.width && width != -1 ? width : prompt.width;
       prompt.height = !prompt.height && height != -1 ? height : prompt.height;
     }
@@ -356,10 +353,10 @@ const prepareSingleQuery = (
       prompt.controlNet = controlNet;
 
       if (prompt.controlNet.some((controlNet) => controlNet.input_image || controlNet.image)) {
-        const element = prompt.controlNet.find((controlNet) => controlNet.input_image || controlNet.image) as IControlNet;
+        const element = prompt.controlNet.find((controlNet) => controlNet.input_image || controlNet.image);
         const firstImage = element.input_image ?? element.image;
         if (firstImage) {
-          const { height, width } = getImageSize(firstImage);
+          const { height, width } = await getImageSize(firstImage);
 
           prompt.width = !prompt.width && width != -1 ? width : prompt.width;
           prompt.height = !prompt.height && height != -1 ? height : prompt.height;
@@ -428,7 +425,10 @@ const getPermutations = (permutations: Partial<IPrepareSingleQuery>[], options: 
   }, [] as Partial<IPrepareSingleQuery>[]);
 };
 
-const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSingleQueryFromArray): [string, IPromptSingle][] => {
+const prepareSingleQueryPermutations = async (
+  basePrompt: IPrompt,
+  options: IPrepareSingleQueryFromArray
+): Promise<[string, IPromptSingle][]> => {
   let prompts: [string, IPromptSingle][] = [];
   const {
     autoCutOffArray,
@@ -506,10 +506,10 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
 
   permutationsArray = getPermutations(permutationsArray, controlNetArray, 'controlNet');
 
-  (permutationsArray as IPrepareSingleQuery[]).forEach((permutationItem) => {
+  for (const permutationItem of permutationsArray as IPrepareSingleQuery[]) {
     prompts = [
       ...prompts,
-      ...prepareSingleQuery(basePrompt, permutations, {
+      ...(await prepareSingleQuery(basePrompt, permutations, {
         autoCutOff: permutationItem.autoCutOff,
         autoLCM: permutationItem.autoLCM,
         cfg: permutationItem.cfg,
@@ -541,9 +541,9 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
         upscalingPrompt: permutationItem.upscalingPrompt,
         vaeOption: permutationItem.vaeOption,
         width: permutationItem.width
-      })
+      }))
     ];
-  });
+  }
 
   return prompts;
 };
@@ -551,7 +551,10 @@ const prepareSingleQueryPermutations = (basePrompt: IPrompt, options: IPrepareSi
 // oxlint-disable-next-line sonarjs/pseudo-random -- Not a crypto
 const pickRandomItem = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 
-const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepareSingleQueryFromArray): [string, IPromptSingle][] => {
+const prepareSingleQueryRandomSelection = async (
+  basePrompt: IPrompt,
+  options: IPrepareSingleQueryFromArray
+): Promise<[string, IPromptSingle][]> => {
   const {
     autoCutOffArray,
     autoLCMArray,
@@ -619,7 +622,7 @@ const prepareSingleQueryRandomSelection = (basePrompt: IPrompt, options: IPrepar
   const promptStyle = pickRandomItem(promptStyleArray);
   const promptSubject = pickRandomItem(promptSubjectArray);
 
-  return prepareSingleQuery(basePrompt, permutations, {
+  return await prepareSingleQuery(basePrompt, permutations, {
     autoCutOff,
     autoLCM,
     cfg,
@@ -728,7 +731,10 @@ const getArraysInitImage = (value: string | string[] | undefined, defaultValue: 
   return initImagesArray;
 };
 
-type SeriesItem = Omit<IControlNet, 'image' | 'input_image'> & { image?: string[]; input_image?: string[] };
+type SeriesItem = Omit<IControlNet, 'image' | 'input_image'> & {
+  image?: string[];
+  input_image?: string[];
+};
 
 const cartesianProduct = <T>(...arrays: (T[] | undefined)[]): T[][] => {
   return arrays.reduce(
@@ -798,19 +804,33 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
           prompt = readFileSync(promptFile, 'utf-8').replaceAll('\n', '').trim();
         }
 
-        return { ...controlNet, image: initImage, image_name: relative(initImageBase, initImage).replace(sep, '-'), prompt };
+        return {
+          ...controlNet,
+          image: initImage,
+          image_name: relative(initImageBase, initImage).replace(sep, '-'),
+          prompt
+        };
       })
     ];
   }
 
-  const temporaryControlNetArray: Array<Omit<IControlNet, 'image' | 'input_image'> & { image?: string[]; input_image?: string[] }> = [];
+  const temporaryControlNetArray: Array<
+    Omit<IControlNet, 'image' | 'input_image'> & {
+      image?: string[];
+      input_image?: string[];
+    }
+  > = [];
 
   controlNetArray.forEach((controlNet) => {
     const controlNetInputImage = controlNet.input_image;
     const controlNetImage = controlNet.image;
 
     if (!controlNetImage && !controlNetInputImage) {
-      temporaryControlNetArray.push({ ...controlNet, image: [''], input_image: undefined });
+      temporaryControlNetArray.push({
+        ...controlNet,
+        image: [''],
+        input_image: undefined
+      });
       return;
     }
 
@@ -839,7 +859,12 @@ export const getArraysControlNet = (value: IControlNet | IControlNet[] | undefin
         input_image: undefined
       });
     } else {
-      temporaryControlNetArray.push({ ...controlNet, image: [imageToUse], image_name: initImageBase, input_image: undefined });
+      temporaryControlNetArray.push({
+        ...controlNet,
+        image: [imageToUse],
+        image_name: initImageBase,
+        input_image: undefined
+      });
     }
   });
 
@@ -890,7 +915,7 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
 
   const isPermutation = (basePrompts.multiValueMethod ?? 'permutation') === 'permutation';
 
-  basePrompts.prompts.forEach((basePrompt) => {
+  basePrompts.prompts.forEach(async (basePrompt) => {
     const autoCutOffArray = getArraysBoolean(basePrompt.autoCutOff);
     const autoLCMArray = getArraysBoolean(basePrompt.autoLCM);
     const enableHighResArray = getArraysBoolean(basePrompt.enableHighRes);
@@ -968,8 +993,8 @@ const prepareQueries = (basePrompts: IPromptsResolved): IPromptSingle[] => {
     };
 
     const results = isPermutation
-      ? prepareSingleQueryPermutations(basePrompt, prepareSingleQueryParameter)
-      : prepareSingleQueryRandomSelection(basePrompt, prepareSingleQueryParameter);
+      ? await prepareSingleQueryPermutations(basePrompt, prepareSingleQueryParameter)
+      : await prepareSingleQueryRandomSelection(basePrompt, prepareSingleQueryParameter);
 
     results.forEach(([key, prompt]) => {
       prompts.set(key, prompt);
@@ -1094,7 +1119,7 @@ const manageExistingImages = (
   return query;
 };
 
-export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | ITxt2ImgQuery> => {
+export const preparePrompts = async (config: IPromptsResolved): Promise<Array<IImg2ImgQuery | ITxt2ImgQuery>> => {
   const queries: Array<IImg2ImgQuery | ITxt2ImgQuery> = [];
 
   const queriesArray = prepareQueries(config);
@@ -1102,7 +1127,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
   const autoAdetailers = Config.get('autoAdetailers');
   const autoControlnetPose = Config.get('autoControlnetPose');
 
-  queriesArray.forEach((singleQuery) => {
+  for (const singleQuery of queriesArray) {
     const {
       adetailer,
       autoCutOff,
@@ -1149,7 +1174,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
       enable_hr: enableHighRes,
       height: height,
       hr_scale: scaleFactor,
-      init_images: (initImage ? [getBase64Image(initImage)] : undefined) as string[],
+      init_images: (initImage ? [await getBase64Image(initImage)] : undefined) as string[],
       lcm: autoLCM ?? false,
       negative_prompt: negativePrompt,
       override_settings: {},
@@ -1180,7 +1205,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     }
 
     if (controlNet) {
-      controlNet.forEach((controlNetPrompt) => {
+      for (const controlNetPrompt of controlNet) {
         let controlNetModule = findControlnetModule(controlNetPrompt.module);
         const controlNetModel = findControlnetModel(controlNetPrompt.model);
 
@@ -1215,13 +1240,13 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
         query.controlNet.push({
           control_mode: normalizeControlNetMode(controlNetPrompt.control_mode ?? ControlNetMode.Balanced),
-          image: imageToUse ? getBase64Image(imageToUse) : undefined,
+          image: imageToUse ? await getBase64Image(imageToUse) : undefined,
           image_name: controlNetPrompt.image_name ?? imageToUse,
           model: controlNetModel.name,
           module: controlNetModule,
           resize_mode: normalizeControlNetResizes(controlNetPrompt.resize_mode ?? ControlNetResizes.Envelope)
         });
-      });
+      }
     }
 
     const findPose = autoControlnetPose.filter((pose) => query.prompt.includes(`!pose:${pose.trigger}`));
@@ -1251,7 +1276,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
 
           query.controlNet.push({
             control_mode: ControlNetMode.Balanced,
-            image: getBase64Image(pose.pose),
+            image: await getBase64Image(pose.pose),
             image_name: pose.pose,
             model,
             module: 'none',
@@ -1560,7 +1585,7 @@ export const preparePrompts = (config: IPromptsResolved): Array<IImg2ImgQuery | 
     if (finalQuery) {
       queries.push(query);
     }
-  });
+  }
 
   return queries;
 };
@@ -1596,7 +1621,7 @@ const resolveStyles = (query: IImg2ImgQuery & ITxt2ImgQuery, foundStyle: IStyle)
 };
 
 export const prompts = async (config: IPromptsResolved, validateOnly: boolean) => {
-  const queries = preparePrompts(config);
+  const queries = await preparePrompts(config);
 
   loggerInfo(`Your configuration seems valid. ${queries.length} queries has been generated.`);
   if (validateOnly) {

@@ -628,7 +628,7 @@ export const redraw = async (source: string, options: IRedrawOptions) => {
 
   const { denoising: denoisingArray, method, recursive, style, upscales: upscalingArray } = options;
 
-  const filesList = getFiles(source, recursive);
+  const filesList = await getFiles(source, recursive);
 
   const combinations = getCombination(filesList, style, method);
 

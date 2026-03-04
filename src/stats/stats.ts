@@ -2,8 +2,8 @@ import { table } from 'table';
 
 import { getFiles } from '../commons/file';
 
-export const getStats = (source: string) => {
-  const files = getFiles(source, true, true);
+export const getStats = async (source: string) => {
+  const files = await getFiles(source, true, true);
 
   const stats: Record<string, Record<string, number>> = {};
 

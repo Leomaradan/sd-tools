@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import yargs from 'yargs';
+import { type Argv } from 'yargs';
 
 import { addBaseCommandOptions, resolveBaseOptions } from '../commons/command';
 import { type IInterrogateOptions, type IInterrogateOptionsFull } from '../commons/extract';
@@ -9,7 +9,7 @@ import { interrogate } from './interrogate';
 
 export const command = 'interrogate <source>';
 export const describe = 'interrogate source directory for prompts';
-export const builder = (builder: yargs.Argv<object>) => {
+export const builder = (builder: Argv<object>) => {
   return addBaseCommandOptions(builder)
     .positional('source', {
       demandOption: true,

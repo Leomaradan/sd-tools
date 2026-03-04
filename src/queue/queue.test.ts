@@ -1,10 +1,14 @@
 jest.mock('../commons/prompts');
 
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { ExitCodes } from '../commons/logger';
 import { prompts } from '../commons/prompts';
 import { queueFromFile } from './queue';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 describe('queue loader test', () => {
   describe('simple config', () => {

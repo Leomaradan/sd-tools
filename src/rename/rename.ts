@@ -29,7 +29,7 @@ const executeOnFile = (file: IFile, config: IRenameConfig, target: string, test:
   }
 };
 
-export const renameConfig = (source: string, target: string, config: IRenameConfig, test: boolean) => {
+export const renameConfig = async (source: string, target: string, config: IRenameConfig, test: boolean) => {
   if (!existsSync(source)) {
     loggerInfo(`Source directory ${source} does not exist`);
     process.exit(ExitCodes.RENAME_NO_SOURCE_INTERNAL);
@@ -46,7 +46,7 @@ export const renameConfig = (source: string, target: string, config: IRenameConf
     process.exit(ExitCodes.RENAME_INVALID_JSON);
   }
 
-  const filesList = getFiles(source);
+  const filesList = await getFiles(source);
 
   filesList.forEach((file) => {
     executeOnFile(file, config, target, test);

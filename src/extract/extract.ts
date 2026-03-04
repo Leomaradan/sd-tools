@@ -73,7 +73,7 @@ export const extract = async (source: string, { addBefore, format, output, recur
     process.exit(ExitCodes.EXTRACT_NO_SOURCE);
   }
 
-  const filesList = getFiles(source, recursive);
+  const filesList = await getFiles(source, recursive);
 
   const prompts = await executeOnFiles(filesList, format, addBefore);
 

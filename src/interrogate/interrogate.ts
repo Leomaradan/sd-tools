@@ -45,7 +45,7 @@ export const interrogate = async (source: string, { addBefore, models, recursive
     process.exit(ExitCodes.EXTRACT_NO_SOURCE);
   }
 
-  const filesList = getFiles(source, recursive);
+  const filesList = await getFiles(source, recursive);
 
   const prompts = await executeOnFiles(filesList, models, addBefore);
 

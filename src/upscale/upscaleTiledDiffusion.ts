@@ -21,7 +21,7 @@ export const upscaleTiledDiffusion = async (
 
   const queries: IClassicPrompt[] = [];
 
-  const filesList = getFiles(source, recursive);
+  const filesList = await getFiles(source, recursive);
 
   const denoising = denoisingArray ?? [0.4];
   const upscaling = upscalingArray ?? [2];

@@ -1,9 +1,12 @@
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { TiledDiffusionMethods } from './extensions/multidiffusionUpscaler';
 import { getArraysControlNet, preparePrompts } from './prompts';
 import { type IPrompts, type ITxt2ImgQuery } from './types';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const root = resolve(__dirname, '..', '..');
 
 const imageSingle = resolve(root, 'test', 'images', 'close-front.pose.png');
@@ -91,7 +94,7 @@ describe('prompt test', () => {
       });
     });
 
-    it('should generate all the queries from config', () => {
+    it('should generate all the queries from config', async () => {
       expect.assertions(3);
 
       const config: IPrompts = {
@@ -135,7 +138,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config);
+      const result = await preparePrompts(config);
 
       const filtered = result.filter((r) => r.prompt === 'before, test prompt 2' && r.height === 768 && r.cfg_scale === 8);
 
@@ -161,7 +164,7 @@ describe('prompt test', () => {
       });
     });
 
-    it('should generate all the queries from config with additional permutations', () => {
+    it('should generate all the queries from config with additional permutations', async () => {
       expect.assertions(3);
 
       const config: IPrompts = {
@@ -214,7 +217,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config);
+      const result = await preparePrompts(config);
 
       const filtered = result.filter(
         (r) =>
@@ -640,7 +643,7 @@ describe('prompt test', () => {
   });
 
   describe('prompts for Style and Subject', () => {
-    it('should override the classic prompt if we use style ans subject prompt', () => {
+    it('should override the classic prompt if we use style ans subject prompt', async () => {
       expect.assertions(5);
 
       const config1: IPrompts = {
@@ -682,7 +685,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config1);
+      const result = await preparePrompts(config1);
 
       expect(result).toHaveLength(3);
 
@@ -695,7 +698,7 @@ describe('prompt test', () => {
       expect(result[index2].negative_prompt).toBe('negative subject prompt 2 BREAK negative style prompt 2');
     });
 
-    it('should remove the negativePrompt of the classic prompt if we use style and subject prompt', () => {
+    it('should remove the negativePrompt of the classic prompt if we use style and subject prompt', async () => {
       expect.assertions(3);
 
       const config1: IPrompts = {
@@ -737,7 +740,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config1);
+      const result = await preparePrompts(config1);
 
       expect(result).toHaveLength(3);
 
@@ -747,7 +750,7 @@ describe('prompt test', () => {
       expect(result[index3].negative_prompt).toBeUndefined();
     });
 
-    it('should generate correct prompts with promptStyle and promptSubject without hiRes prompt', () => {
+    it('should generate correct prompts with promptStyle and promptSubject without hiRes prompt', async () => {
       expect.assertions(5);
 
       const config1: IPrompts = {
@@ -788,7 +791,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config1) as ITxt2ImgQuery[];
+      const result = (await preparePrompts(config1)) as ITxt2ImgQuery[];
 
       expect(result).toHaveLength(3);
 
@@ -813,7 +816,7 @@ describe('prompt test', () => {
       });
     });
 
-    it('should generate correct prompts with promptStyle and promptSubject with hiRes prompt', () => {
+    it('should generate correct prompts with promptStyle and promptSubject with hiRes prompt', async () => {
       expect.assertions(4);
 
       const config1: IPrompts = {
@@ -857,7 +860,7 @@ describe('prompt test', () => {
         ]
       };
 
-      const result = preparePrompts(config1) as ITxt2ImgQuery[];
+      const result = (await preparePrompts(config1)) as ITxt2ImgQuery[];
 
       expect(result).toHaveLength(3);
 

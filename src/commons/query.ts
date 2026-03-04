@@ -496,7 +496,7 @@ export const interrogateQuery = async (
   }
 
   loggerVerbose(`Executing query to interrogator for ${imagePath}`);
-  const base64Image = getBase64Image(imagePath);
+  const base64Image = await getBase64Image(imagePath);
   const interrogatorModels = Config.get('interrogatorModels');
 
   if (!base64Image) {
